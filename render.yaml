@@ -1,0 +1,25 @@
+# Render Blueprint — backend FastAPI service. Versioned here rather than
+# clicked together in the console, so changes can be reviewed and reproduced.
+services:
+  - type: web
+    name: zijing-cup-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    # uv is not preinstalled on Render's image; install it, then sync the
+    # locked dependencies. --no-dev skips pytest, which the production image
+    # does not need.
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    # $PORT is injected by Render — never hardcode it. --host 0.0.0.0 is
+    # required, or the process only listens on loopback and Render's own
+    # health check can never reach it.
+    startCommand: uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      # Values are entered in the Render console (Supabase pooler / session
+      # mode connection string) and never committed. sync: false means "no
+      # value here, wait for a human".
+      - key: DATABASE_URL
+        sync: false
+      - key: BACKEND_SECRET
+        sync: false
