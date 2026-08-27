@@ -14,8 +14,12 @@ UTR官网查询 + Google Sheets的流程。需求见 `docs/requirements.md`；�
 - Supabase 仅作为纯 Postgres 托管使用：不开 RLS，不用自动生成的 REST API。
 - **本项目与另一个应用共享同一个 Supabase 项目**（`randyudbxqfdqrvgkmmc`）。
   所有表、migration 都必须显式指定 `zijing_cup` schema，绝不能建在 `public`
-  下——那是另一个应用的数据。`backend/app/db.py` 的 `SCHEMA` 常量和
-  `search_path` 设置是这条规则的唯一强制点，改动前先读那段注释。
+  下——那是另一个应用的数据。这条规则有两个独立的强制点，缺一不可：
+  - 应用查询：`backend/app/db.py` 的 `SCHEMA` 常量和 `search_path` 设置。
+  - Migration DDL：每个 migration 文件必须以 `set search_path to zijing_cup, public;`
+    开头，或者把每个对象都写成 `zijing_cup.<name>` 全限定名——`supabase db push`/
+    `db reset` 是以 `postgres` 角色的默认 search_path 执行 DDL 的，`db.py` 的
+    search_path设置管不到这条路径。
 - Migration 是 schema 变更唯一来源（`supabase/migrations/*.sql`），不用
   Alembic 或任何 ORM 自动迁移。
 

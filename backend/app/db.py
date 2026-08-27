@@ -1,3 +1,4 @@
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -6,6 +7,8 @@ from sqlmodel import Session, create_engine, text
 # Local development reads backend/.env; deployed environments inject the
 # variable directly and have no such file, so this is a no-op there.
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 # Every table this project owns lives here, never in `public` — this
 # Supabase project is shared with an unrelated app that already occupies
@@ -69,7 +72,16 @@ def get_session():
 
 def check_db_connection() -> bool:
     """Round-trip one trivial query to prove the app can actually reach
-    Postgres — not just that a URL was configured. Used by /health."""
-    with Session(engine) as session:
-        session.execute(text("SELECT 1"))
-    return True
+    Postgres — not just that a URL was configured. Used by /health.
+
+    Returns False (never raises) on any failure, so a DB outage surfaces as
+    {"status": "ok", "db": "error"} with a 200, not a 500 — a 500 here would
+    make Render restart an otherwise-healthy process during a transient blip.
+    """
+    try:
+        with Session(engine) as session:
+            session.execute(text("SELECT 1"))
+        return True
+    except Exception:
+        logger.exception("Database health check failed")
+        return False

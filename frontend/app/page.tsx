@@ -10,7 +10,8 @@ export default async function Page() {
         <p>Database: {health.db}</p>
       </main>
     );
-  } catch {
+  } catch (err) {
+    console.error("Failed to reach backend:", err);
     return (
       <main className="p-8 font-sans">
         <h1 className="text-2xl font-bold">Zijing Cup Analysis</h1>

@@ -3,14 +3,14 @@ schema: superpowers-driven
 project:
   dev_stack_command: "npm run dev --prefix frontend"
   test_commands:
-    - "cd backend && pytest"
+    - "cd backend && uv run pytest"
     - "cd frontend && npm run test"
   e2e_command: ""
   design_system: "linear"
   custom_verification_checks:
     - "grep -rn 'console.log' frontend/app frontend/lib || true"
     - "grep -rnE 'SUPABASE_SERVICE|DATABASE_URL|BACKEND_SECRET|NEXT_PUBLIC_(DATABASE|SUPABASE|BACKEND|API)' frontend/ --include=*.ts --include=*.tsx --include=*.js --include=*.jsx && exit 1 || true"
-    - "grep -rn 'public\.' supabase/migrations/ && exit 1 || true"
+    - "for f in supabase/migrations/*.sql; do grep -qE 'create (table|index|type)' \"$f\" && ! grep -q 'search_path' \"$f\" && ! grep -qE '\\bzijing_cup\\.' \"$f\" && echo \"BLOCKED: $f creates objects without zijing_cup schema qualification or a search_path header\" && exit 1; done; true"
 
 context: |
   紫荆杯（Zijing Cup）分析系统 —— 湾区华人校友网球团体赛的球队/球员/UTR 与阵容排布管理。

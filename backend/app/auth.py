@@ -7,10 +7,11 @@ from fastapi.responses import JSONResponse
 SECRET_HEADER = "X-Backend-Secret"
 
 # /health has to answer without the shared secret: Render's own platform
-# health check cannot be configured to send a custom header, and if this
-# route required it, Render would see every check as a 401 and treat the
-# service as unhealthy.
-EXEMPT_PATHS = {"/health"}
+# health check cannot be configured to send a custom header. /docs, /redoc,
+# and /openapi.json also need to be exempt so ENABLE_API_DOCS actually works
+# in a browser (which likewise can't send the header) — when docs are
+# disabled these routes don't exist at all, so exempting them is harmless.
+EXEMPT_PATHS = {"/health", "/docs", "/redoc", "/openapi.json"}
 
 
 async def require_shared_secret(request: Request, call_next):
