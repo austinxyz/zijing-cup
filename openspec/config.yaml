@@ -1,0 +1,61 @@
+schema: superpowers-driven
+
+project:
+  dev_stack_command: "npm run dev --prefix frontend"
+  test_commands:
+    - "cd backend && pytest"
+    - "cd frontend && npm run test"
+  e2e_command: ""
+  design_system: "linear"
+  custom_verification_checks:
+    - "grep -rn 'console.log' frontend/app frontend/lib || true"
+    - "grep -rnE 'SUPABASE_SERVICE|DATABASE_URL|BACKEND_SECRET|NEXT_PUBLIC_(DATABASE|SUPABASE|BACKEND|API)' frontend/ --include=*.ts --include=*.tsx --include=*.js --include=*.jsx && exit 1 || true"
+    - "grep -rn 'public\.' supabase/migrations/ && exit 1 || true"
+
+context: |
+  紫荆杯（Zijing Cup）分析系统 —— 湾区华人校友网球团体赛的球队/球员/UTR 与阵容排布管理。
+  使用者是各校队长与赛事组织者，不面向普通球员。需求见 docs/requirements.md。
+  参考实现（不照搬技术栈，只参考领域逻辑）：后端 austinxyz/MatchApp 的 ZiJingController
+  与策略模式阵容优化引擎；前端 austinxyz/tennis-analysis-app 的 Zijing Cup Analysis 模块。
+
+  技术栈：
+  - frontend/  Next.js 15 App Router + TypeScript + Tailwind（Node 20+）
+  - backend/   FastAPI + Python 3.12 + SQLModel，uv 管理依赖
+  - supabase/migrations/  唯一 migration 来源（.sql，禁用 Alembic）
+  - DB: Supabase 托管 Postgres（仅作托管 Postgres，不用 RLS、不用自动 REST API）
+  - 部署: Vercel（前端）+ Render free tier（后端）
+
+  架构纪律（不可违反）：
+  - 浏览器只与 Next.js 通信，不直连 FastAPI，不直连 Supabase
+  - 前端通过 Server Component / Server Action 内的 server-side fetch 调 FastAPI，
+    统一封装于 frontend/lib/api.ts（单一出口）
+  - 只有 FastAPI 可以访问数据库
+  - BACKEND_URL / BACKEND_SECRET / DATABASE_URL 等敏感变量禁止带 NEXT_PUBLIC_ 前缀
+
+  Schema 隔离（与 ai-course-management 的关键差异）：
+  - 本项目与 ai-course-management 共用同一个 Supabase 项目（免费版 2 project 上限已满）
+  - 所有表必须建在独立 schema `zijing_cup`，禁止使用 public schema
+  - migration 必须写成 schema-qualified DDL
+
+  认证：不做 per-user 登录与多租户隔离。前后端之间用共享密钥 X-Backend-Secret
+  中间件（fail-closed）。不要在表上预留 user_id 列。
+
+  领域约束：
+  - UTR（Universal Tennis Rating）是排阵的核心指标，来源为 UTR 官网，
+    取数策略（快照同步 vs 实时拉取）见对应 change 的 design
+  - 阵容合法性受 UTR cap 约束：一条线两名球员 UTR 之和不得超过赛事规定上限
+  - 球队规模约 20+ 队 × 20-30 人，需保留往年赛季数据用于对比
+
+  隐私：处理真实校友姓名与 UTR ID。仓库不得提交真实球员个人数据，
+  测试一律使用虚构姓名。
+
+rules:
+  specs:
+    - "Scenario（Given/When/Then）由 agent 起草、人工 review 确认或修改再定稿；agent 起草时须标出自己不确定/可能遗漏边界的地方。"
+  design:
+    - "涉及数据库变更时必须说明 migration 策略与回滚方案。"
+    - "任何把表建在 public schema、或写出非 schema-qualified DDL 的设计，直接 BLOCK。"
+    - "任何让浏览器直连 FastAPI 或 Supabase 的设计，直接 BLOCK。"
+  tasks:
+    - "涉及外部 API 调用（UTR 抓取等）的任务，必须包含超时与异常路径的 RED 测试。"
+    - "涉及阵容优化算法的任务，必须包含 UTR cap 边界值与固定搭档锁定的 RED 测试。"
