@@ -43,4 +43,5 @@ Render免费版会在闲置后休眠，冷启动可能要接近1分钟——`fro
 
 ## Pitfalls
 
-（后续开发中发现的坑，按`/opsx:archive`的清理步骤持续补充到这里）
+- 本机(austin的Windows开发机)有Application Control安全策略，`uv run uvicorn ...`直接调uvicorn.exe会被拦(`os error 4551`)。改用`uv run python -m uvicorn app.main:app ...`绕过——通过python解释器跑module而不是直接执行独立可执行文件。Render上是Linux容器，不受此限制，`render.yaml`按原计划保留`uv run uvicorn`即可，仅本地开发要注意这条。
+- 本机8000端口经常被其他项目占用，本地跑backend建议换个端口(比如`--port 8010`)，`frontend/.env.local`的`BACKEND_URL`跟着改。
