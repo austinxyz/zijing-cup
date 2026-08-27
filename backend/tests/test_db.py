@@ -36,7 +36,22 @@ def test_engine_search_path_targets_the_dedicated_schema():
     # first, and fall back to public only for extensions/shared objects —
     # never the other way around, or a query here could silently read the
     # other app's rows in the shared Supabase project.
+
+    # Check if search_path is in the URL query (would indicate URL-based approach)
     options = engine.url.query.get("options", "") if engine.url.query else ""
-    assert f"-csearch_path={SCHEMA},public" in (
-        options or str(engine.dialect.create_connect_args(engine.url)[1])
-    )
+
+    if not options:
+        # With connect_args approach, check the pool's creator function closure
+        # The creator is a function that captures connection args in its closure
+        creator = engine.pool._creator
+        if creator.__closure__:
+            # The connect_args are in a dictionary in the closure (usually at index 1)
+            for cell in creator.__closure__:
+                cell_content = cell.cell_contents
+                if isinstance(cell_content, dict) and "options" in cell_content:
+                    options = cell_content.get("options", "")
+                    break
+
+        assert options, "search_path not found in URL query or connect_args"
+
+    assert f"-csearch_path={SCHEMA},public" in options

@@ -1,7 +1,6 @@
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import URL, make_url
 from sqlmodel import Session, create_engine, text
 
 # Local development reads backend/.env; deployed environments inject the
@@ -57,19 +56,10 @@ def resolve_database_url() -> str:
 
 DATABASE_URL = resolve_database_url()
 
-# Parse the database URL and add search_path to the query parameters
-parsed = make_url(DATABASE_URL)
-engine_url = URL.create(
-    drivername=parsed.drivername,
-    username=parsed.username,
-    password=parsed.password,
-    host=parsed.host,
-    port=parsed.port,
-    database=parsed.database,
-    query={"options": f"-csearch_path={SCHEMA},public"},
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"options": f"-csearch_path={SCHEMA},public"},
 )
-
-engine = create_engine(engine_url)
 
 
 def get_session():
