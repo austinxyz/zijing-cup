@@ -22,6 +22,16 @@ UTR官网查询 + Google Sheets的流程。需求见 `docs/requirements.md`；�
     search_path设置管不到这条路径。
 - Migration 是 schema 变更唯一来源（`supabase/migrations/*.sql`），不用
   Alembic 或任何 ORM 自动迁移。
+- **禁止对远程共享项目跑 `supabase db push` / `supabase migration repair`**。
+  CLI 的 migration 追踪表是整个 Supabase 项目共用的，不是按 schema 分的；
+  这个远程项目里已经有 ai-course-management 那个 app 的 migration 历史
+  （本 repo 里没有那些文件），`db push` 会报错要求 `migration repair`，但
+  repair 会把对方的 migration 标记成 reverted，可能搞坏它自己的部署流程
+  （它的 GitHub Action 每次 push main 都会跑 `db push`）。
+  正确做法：本地开发继续用 `supabase start` + `supabase db reset` 跑本地
+  stack；要把 migration 应用到远程共享项目时，去 Supabase Dashboard 的
+  SQL Editor 手动执行 migration 文件里的 SQL，不要用 CLI 的 push/repair
+  碰这个共享项目。
 
 ## 技术栈与部署
 
