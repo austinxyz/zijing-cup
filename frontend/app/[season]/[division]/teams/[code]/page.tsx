@@ -51,7 +51,11 @@ export default async function TeamRosterPage({ params }: PageProps) {
         </span>
       </div>
 
-      <RosterTable players={roster.players} />
+      {/* Only the table scrolls: the team's name and head count stay in
+          view, and the column labels stick to the top of this box. */}
+      <div className="flex-1 overflow-y-auto">
+        <RosterTable players={roster.players} />
+      </div>
     </>
   );
 }

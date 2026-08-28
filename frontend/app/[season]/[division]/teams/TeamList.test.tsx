@@ -130,3 +130,27 @@ describe("TeamList", () => {
     expect(screen.getByText("47 人")).toBeTruthy();
   });
 });
+
+describe("TeamList overflow", () => {
+  it("scrolls the list of teams rather than being clipped", () => {
+    // The division shell is h-screen overflow-hidden, so nothing inside
+    // scrolls unless it says so. Silver has 18 teams at 46px a row — past
+    // the fold on a short window, and the rows below simply vanish.
+    renderList();
+
+    const list = screen.getAllByRole("listitem")[0].parentElement as HTMLElement;
+    expect(list.className).toMatch(/overflow-y-auto/);
+  });
+
+  it("leaves the count header outside the scrolling area", () => {
+    // Putting the scroll on the whole column instead would carry the header
+    // away with the rows — which reads as the count having disappeared.
+    renderList();
+
+    const header = screen.getByText("球队 · 3").parentElement as HTMLElement;
+    const list = screen.getAllByRole("listitem")[0].parentElement as HTMLElement;
+    expect(header.className).toMatch(/flex-none/);
+    expect(header.contains(list)).toBe(false);
+    expect(list.contains(header)).toBe(false);
+  });
+});

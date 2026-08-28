@@ -26,7 +26,9 @@ export default async function TeamsLayout({ children, params }: LayoutProps) {
   return (
     <div className="flex flex-1 min-h-0">
       <SelectedTeamList season={season} division={division} teams={teams} />
-      <main className="flex flex-1 min-w-0 flex-col bg-background">
+      {/* Each page decides what scrolls inside it, so a page can keep its
+          own header fixed while its body moves. */}
+      <main className="flex flex-1 min-w-0 flex-col overflow-hidden bg-background">
         {children}
       </main>
     </div>

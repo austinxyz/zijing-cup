@@ -155,3 +155,15 @@ describe("RosterTable", () => {
     expect(within(rows()[0]).getAllByRole("cell")[3].textContent).toBe("10.25");
   });
 });
+
+describe("RosterTable overflow", () => {
+  it("keeps the column labels visible while the rows scroll", () => {
+    // The largest 2025 rosters run to 26 players — about 1100px of table in
+    // a viewport that does not scroll on its own. Once the header row is
+    // gone you cannot tell 参赛 UTR from 当前 anything.
+    render(<RosterTable players={[player()]} />);
+
+    const head = screen.getAllByRole("columnheader")[0];
+    expect(head.className).toMatch(/sticky/);
+  });
+});

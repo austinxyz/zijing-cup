@@ -28,7 +28,12 @@ export function TeamList({
   const players = teams.reduce((sum, team) => sum + team.player_count, 0);
 
   return (
-    <div className="flex w-[248px] flex-none flex-col border-r border-border bg-surface">
+    // The division shell is h-screen with overflow hidden, so something in
+    // here has to scroll or the lower rows are simply cut off — 18 silver
+    // teams at 46px already overflow a short window. The scroll goes on the
+    // list, not this column: on the column it would carry the count header
+    // away with it.
+    <div className="flex w-[248px] flex-none flex-col overflow-hidden border-r border-border bg-surface">
       <div className="flex flex-none items-baseline justify-between gap-2 border-b border-border px-3.5 py-[13px]">
         <span className="font-mono text-[11px] tracking-wide text-muted-foreground">
           球队 · {teams.length}
@@ -38,7 +43,7 @@ export function TeamList({
         </span>
       </div>
 
-      <ul className="flex flex-col p-1.5">
+      <ul className="flex flex-1 flex-col overflow-y-auto p-1.5">
         {teams.map((team) => (
           <TeamRow
             key={team.code}

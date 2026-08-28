@@ -103,7 +103,10 @@ function SourceCell({ status }: { status: string }) {
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th className="h-[34px] whitespace-nowrap border-b border-border bg-surface-muted px-3.5 text-left font-mono text-[11px] font-medium tracking-wide text-muted">
+    // Sticky because the longest 2025 rosters run to 26 players: once the
+    // labels scroll away there is nothing to tell 参赛 UTR from the other
+    // numeric column.
+    <th className="sticky top-0 z-10 h-[34px] whitespace-nowrap border-b border-border bg-surface-muted px-3.5 text-left font-mono text-[11px] font-medium tracking-wide text-muted">
       {children}
     </th>
   );
