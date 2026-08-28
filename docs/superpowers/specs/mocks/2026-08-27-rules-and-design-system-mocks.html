@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rules-and-design-system — mocks</title>
+<style>
+  :root {
+    --bg: #f6f4f0; --fg: #1a1917; --surface: #ffffff; --surface-muted: #f2efe9;
+    --border: #e4e0d8; --primary: #9c3417; --muted: #79736a; --muted-fg: #a09a90;
+    --danger: #b3261e; --success: #4c8a63; --warning: #b8860b;
+    --sidebar: #1c1b18; --sidebar-border: #2a2823; --radius: 0.5rem;
+  }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: "Noto Sans SC", "Segoe UI", sans-serif;
+  }
+  .page { max-width: 1720px; margin: 0 auto; padding: 32px 24px 64px; }
+  .intro { max-width: 760px; margin-bottom: 32px; }
+  .intro h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+  .intro p { font-size: 14px; line-height: 1.7; color: var(--muted); margin: 0 0 8px; }
+  .intro code, .src code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; }
+  .tokens { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .tok {
+    display: flex; align-items: center; gap: 7px; border: 1px solid var(--border);
+    border-radius: var(--radius); background: var(--surface); padding: 5px 10px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--muted);
+  }
+  .sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,.08); }
+  section { margin-bottom: 40px; }
+  .mockHead { margin-bottom: 12px; }
+  .mockHead h2 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .mockHead p { font-size: 13px; line-height: 1.6; color: var(--muted); margin: 0; }
+  .mockHead .src { margin-top: 4px; font-size: 12px; color: var(--muted-fg); }
+  .frame {
+    display: inline-block; max-width: 100%; overflow-x: auto;
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+  }
+/* ---- 桌面 · 赛制规则页 ---- */
+
+#desktop{ margin: 0; }
+#desktop a{ color: #9c3417; text-decoration: none; }
+#desktop a:hover{ color: #7d290f; }
+#desktop .th{
+      height: 34px; padding: 0 14px; text-align: left; white-space: nowrap;
+      border-bottom: 1px solid #e4e0d8; background: #f2efe9;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.025em; color: #79736a;
+    }
+#desktop .td{ height: 40px; padding: 0 14px; vertical-align: middle; border-bottom: 1px solid #eae7e0; }
+#desktop .num{ font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; color: #1a1917; }
+#desktop .cardTitle{ font-size: 14px; font-weight: 600; }
+#desktop .k{ font-size: 13px; color: #79736a; }
+#desktop .v{ font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; color: #1a1917; }
+#desktop .chg{
+      display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9;
+      border: 1px solid #e4e0d8; padding: 1px 7px;
+      font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: #b8860b;
+    }
+#desktop .new{ border-color: #e8d9ae; background: #fbf6e8; }
+/* ---- 移动 · 赛制规则页 ---- */
+
+#mobile{ margin: 0; }
+#mobile a{ color: #9c3417; text-decoration: none; }
+#mobile a:hover{ color: #7d290f; }
+#mobile .th{
+      height: 34px; padding: 0 14px; text-align: left; white-space: nowrap;
+      border-bottom: 1px solid #e4e0d8; background: #f2efe9;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.025em; color: #79736a;
+    }
+#mobile .td{ height: 40px; padding: 0 14px; vertical-align: middle; border-bottom: 1px solid #eae7e0; }
+#mobile .num{ font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; color: #1a1917; }
+#mobile .cardTitle{ font-size: 14px; font-weight: 600; }
+#mobile .k{ font-size: 13px; color: #79736a; }
+#mobile .v{ font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; color: #1a1917; }
+#mobile .chg{
+      display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9;
+      border: 1px solid #e4e0d8; padding: 1px 7px;
+      font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: #b8860b;
+    }
+#mobile .new{ border-color: #e8d9ae; background: #fbf6e8; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="intro">
+    <h1>rules-and-design-system — 界面稿</h1>
+    <p>本文件由 <code>design/*.dc.html</code> 生成，<strong>不要手工编辑</strong>。
+       画板是唯一事实来源；改动画板后重新生成，避免同一套 token 存在两份而漂移。</p>
+    <p>设计系统移植自 ai-course-management，数值逐项照搬。锁定的是 token 与文案，
+       不是像素尺寸。</p>
+    <div class="tokens">
+      <span class="tok"><span class="sw" style="background:#f6f4f0"></span>bg #f6f4f0</span>
+      <span class="tok"><span class="sw" style="background:#ffffff"></span>surface #ffffff</span>
+      <span class="tok"><span class="sw" style="background:#f2efe9"></span>surface-muted #f2efe9</span>
+      <span class="tok"><span class="sw" style="background:#e4e0d8"></span>border #e4e0d8</span>
+      <span class="tok"><span class="sw" style="background:#9c3417"></span>primary #9c3417</span>
+      <span class="tok"><span class="sw" style="background:#1c1b18"></span>sidebar #1c1b18</span>
+      <span class="tok"><span class="sw" style="background:#b8860b"></span>warning #b8860b</span>
+      <span class="tok"><span class="sw" style="background:#b3261e"></span>danger #b3261e</span>
+      <span class="tok">radius 0.5rem</span>
+      <span class="tok">Noto Sans SC / JetBrains Mono</span>
+    </div>
+  </div>
+
+  <section id="desktop">
+    <header class="mockHead">
+      <h2>桌面 · 赛制规则页</h2>
+      <p>/2026/silver/rules —— 应用壳 + 赛制规则页。侧栏含赛季×组别切换器；队伍与分析为禁用态。</p>
+      <p class="src">来源画板：<code>design/Rules.dc.html</code></p>
+    </header>
+    <div class="frame">
+<div style="display: flex; width: 1440px; height: 980px; background: #f6f4f0; color: #1a1917; font-family: 'Noto Sans SC', 'Segoe UI', sans-serif; overflow: hidden;">
+
+  <aside style="display: flex; width: 216px; flex: none; flex-direction: column; border-right: 1px solid #2a2823; background: #1c1b18; color: #b8b2a6;">
+    <div style="display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #2a2823; padding: 18px 16px 16px;">
+      <div style="display: flex; flex-direction: column; gap: 3px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; height: 20px; width: 20px; flex: none; align-items: center; justify-content: center; border-radius: 5px; background: #9c3417; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; line-height: 1; color: #ffffff;">紫</div>
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.25; letter-spacing: 0.025em; color: #f2eee7;">紫荆杯</div>
+        </div>
+        <div style="padding-left: 28px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1.25; letter-spacing: 0.025em; color: #6f6a60;">TEAM ANALYSIS</div>
+      </div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; border-radius: 8px; border: 1px solid #33322c; background: #14130f; padding: 0 10px;">
+        <span style="font-size: 12.5px; font-weight: 500; color: #f2eee7;">2026 · 银组</span>
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#6f6a60" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg>
+      </div>
+    </div>
+
+    <nav style="display: flex; flex: 1; flex-direction: column; gap: 2px; padding: 8px;">
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #6f6a60;">
+        <span style="display: flex; min-width: 0; align-items: center; gap: 9px;">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.45;">
+            <path d="M2.6 2.6h4.2v4.2H2.6zM9.2 2.6h4.2v4.2H9.2zM2.6 9.2h4.2v4.2H2.6zM9.2 9.2h4.2v4.2H9.2z"></path>
+          </svg>
+          <span>队伍</span>
+        </span>
+        <span style="flex: none; border-radius: 8px; border: 1px solid #33322c; padding: 1px 6px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; line-height: 1.5; color: #6f6a60;">未开放</span>
+      </div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #6f6a60;">
+        <span style="display: flex; min-width: 0; align-items: center; gap: 9px;">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.45;">
+            <path d="M2.6 13.4h10.8M4.8 11V7.2M8 11V3.4M11.2 11V5.8"></path>
+          </svg>
+          <span>分析</span>
+        </span>
+        <span style="flex: none; border-radius: 8px; border: 1px solid #33322c; padding: 1px 6px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; line-height: 1.5; color: #6f6a60;">未开放</span>
+      </div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; border-left: 2px solid #c9502f; border-radius: 8px; background: #2c2a25; padding: 0 10px 0 8px; font-size: 13px; font-weight: 500; color: #f2eee7;">
+        <span style="display: flex; min-width: 0; align-items: center; gap: 9px;">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;">
+            <path d="M4 2.4h8v11.2H4zM6.4 5.4h3.2M6.4 8h3.2M6.4 10.6h2"></path>
+          </svg>
+          <span>赛制规则</span>
+        </span>
+      </div>
+    </nav>
+
+    <div style="display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #2a2823; padding: 10px 14px;">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; color: rgba(184, 178, 166, 0.8);">规则来源</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1.6; color: #6f6a60;">seed · 2026 官方规则</div>
+    </div>
+  </aside>
+
+  <main style="display: flex; flex: 1; min-width: 0; flex-direction: column;">
+    <div style="display: flex; flex: none; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e4e0d8; background: #ffffff; padding: 11px 22px;">
+      <div style="display: flex; min-width: 0; flex-direction: column; gap: 2px;">
+        <div style="font-size: 16px; font-weight: 600; line-height: 1.375;">赛制规则</div>
+        <div style="font-size: 12.5px; color: #79736a;">2026 第十一届 · 银组 · 五线双打，三场男双 + 一场女双 + 一场混双</div>
+      </div>
+      <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">对照赛季</span>
+        <div class="sel" style="display: flex; height: 34px; align-items: center; gap: 8px; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #1a1917;">
+          <span>2025</span>
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; padding: 18px 22px;">
+
+      <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+          <div style="display: flex; flex-direction: column; gap: 3px; border-bottom: 1px solid #e4e0d8; padding: 14px 16px 16px;">
+            <div class="cardTitle">各线 UTR Cap</div>
+            <div style="font-size: 12.5px; line-height: 1.5; color: #79736a;">Cap 约束的是一条线上两名队员参赛 UTR 之和</div>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+            <colgroup>
+              <col style="width: 72px;">
+              <col style="width: 150px;">
+              <col style="width: 110px;">
+              <col>
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="th">线</th>
+                <th class="th">类型</th>
+                <th class="th">UTR Cap</th>
+                <th class="th">较 2025</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D1</span></td>
+                <td class="td"><span style="font-size: 13px;">第一男双</span></td>
+                <td class="td"><span class="num">13.00</span></td>
+                <td class="td"><span style="font-size: 12.5px; color: #a09a90;">未变</span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D2</span></td>
+                <td class="td"><span style="font-size: 13px;">第二男双</span></td>
+                <td class="td"><span class="num">12.00</span></td>
+                <td class="td"><span style="font-size: 12.5px; color: #a09a90;">未变</span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D3</span></td>
+                <td class="td"><span style="font-size: 13px;">第三男双</span></td>
+                <td class="td"><span class="num">11.00</span></td>
+                <td class="td"><span style="font-size: 12.5px; color: #a09a90;">未变</span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">MD</span></td>
+                <td class="td"><span style="font-size: 13px;">混双</span></td>
+                <td class="td"><span class="num">10.25</span></td>
+                <td class="td"><span class="chg">10.5 → 10.25</span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">WD</span></td>
+                <td class="td"><span style="font-size: 13px;">女双</span></td>
+                <td class="td"><span class="num">9.25</span></td>
+                <td class="td"><span class="chg">9.5 → 9.25</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      <div style="display: flex; align-items: flex-start; gap: 16px;">
+        <div style="display: flex; width: 582px; flex: none; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+          <div style="display: flex; flex-direction: column; gap: 3px; border-bottom: 1px solid #e4e0d8; padding: 14px 16px 16px;">
+            <div class="cardTitle">UTR Buffer</div>
+            <div style="font-size: 12.5px; line-height: 1.5; color: #79736a;">2026 新增</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 16px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+              <span class="k">全队预算</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500; color: #1a1917;">0.50</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px; border-radius: 8px; border: 1px solid #e8d9ae; background: #fbf6e8; padding: 10px 12px;">
+              <div style="font-size: 12.5px; font-weight: 500; color: #1a1917;">这是共享预算，不是每线容差</div>
+              <div style="font-size: 12px; line-height: 1.6; color: #79736a;">五线各自最多超 Cap 0.50，<b>且五线超出量之和也不得超过 0.50</b>。逐线判定会放出五线各超 0.2、合计 1.0 的非法阵容。</div>
+            </div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+              <span class="k">2025 赛季</span>
+              <span class="chg new">本届新增</span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 16px;">
+          <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+          <div style="display: flex; flex-direction: column; gap: 3px; border-bottom: 1px solid #e4e0d8; padding: 14px 16px 16px;">
+            <div class="cardTitle">胜负判定</div>
+            
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 12px 16px 16px;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                <span class="k">胜负判定</span><span class="v">按场次</span>
+              </div>
+              <div style="font-size: 11.5px; line-height: 1.5; color: #a09a90;">五线胜场数多者胜；记分制是金组独有</div>
+            </div>
+          </div>
+        </div>
+          <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+          <div style="display: flex; flex-direction: column; gap: 3px; border-bottom: 1px solid #e4e0d8; padding: 14px 16px 16px;">
+            <div class="cardTitle">上场资格限制</div>
+            
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 12px 16px 16px;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                <span class="k">男队员 UTR &gt; 7.00</span><span class="v">≤ 1 名</span>
+              </div>
+              
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                <span class="k">女队员 UTR &gt; 5.50</span><span class="v">≤ 1 名</span>
+              </div>
+              
+            </div>
+          </div>
+          <div style="border-top: 1px solid #eae7e0; padding: 10px 16px; font-size: 11.5px; line-height: 1.6; color: #a09a90;">
+            女队员可以打男队员的位置，此时按男队员的限制判定。
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: flex-start; gap: 16px;">
+        <div style="display: flex; width: 582px; flex: none; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+          <div style="display: flex; flex-direction: column; gap: 3px; border-bottom: 1px solid #e4e0d8; padding: 14px 16px 16px;">
+            <div class="cardTitle">通用阵容约束</div>
+            <div style="font-size: 12.5px; line-height: 1.5; color: #79736a;">两组通用</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 9px; padding: 12px 16px 16px;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                <span class="k">搭档 UTR 差距</span><span class="v">≤ 3.50</span>
+              </div>
+              <div style="font-size: 11.5px; line-height: 1.5; color: #a09a90;">两组、所有线通用</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                <span class="k">三线男双</span><span class="v">不得倒序</span>
+              </div>
+              <div style="font-size: 11.5px; line-height: 1.5; color: #a09a90;">规则原文未给数值定义，判定方式待组委会确认</div>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+          <div style="display: flex; flex-direction: column; gap: 3px; border-bottom: 1px solid #e4e0d8; padding: 14px 16px 16px;">
+            <div class="cardTitle">参赛 UTR 的确定</div>
+            <div style="font-size: 12.5px; line-height: 1.5; color: #79736a;">赛季冻结值，不是实时 UTR</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 16px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+              <span class="k">取样窗口</span>
+              <span class="v">9/21 – 9/25 五日均值</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 7px;">
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="display: inline-flex; flex: none; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 1px 8px; font-size: 11.5px; font-weight: 500; color: #79736a;">已认证</span>
+                <span style="font-size: 12px; line-height: 1.5; color: #79736a;">有 Verified Doubles UTR，直接取均值</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="display: inline-flex; flex: none; align-items: center; border-radius: 8px; background: #b8860b; padding: 1px 8px; font-size: 11.5px; font-weight: 500; color: #ffffff;">委员会审定</span>
+                <span style="font-size: 12px; line-height: 1.5; color: #79736a;">有 USTA 等级或比赛记录，由竞赛委员会定级</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="display: inline-flex; flex: none; align-items: center; border-radius: 8px; background: #b3261e; padding: 1px 8px; font-size: 11.5px; font-weight: 500; color: #ffffff;">自评</span>
+                <span style="font-size: 12px; line-height: 1.5; color: #79736a;">上场 10 人中最多 2 名，且不得互相搭档</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+    </div>
+  </section>
+
+  <section id="mobile">
+    <header class="mockHead">
+      <h2>移动 · 赛制规则页</h2>
+      <p>同一页面的移动版。侧栏收为顶栏，切换器仍在首屏；命中区 ≥44px；参赛 UTR 明细收为二级入口。</p>
+      <p class="src">来源画板：<code>design/RulesMobile.dc.html</code></p>
+    </header>
+    <div class="frame">
+<div style="display: flex; width: 390px; height: 844px; flex-direction: column; background: #f6f4f0; color: #1a1917; font-family: 'Noto Sans SC', 'Segoe UI', sans-serif; overflow: hidden;">
+
+  <div style="display: flex; flex: none; flex-direction: column; gap: 10px; border-bottom: 1px solid #2a2823; background: #1c1b18; padding: 14px 16px 12px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; height: 20px; width: 20px; flex: none; align-items: center; justify-content: center; border-radius: 5px; background: #9c3417; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; line-height: 1; color: #ffffff;">紫</div>
+        <div style="font-size: 14px; font-weight: 600; letter-spacing: 0.025em; color: #f2eee7;">紫荆杯</div>
+      </div>
+      <div style="display: flex; height: 44px; width: 44px; flex: none; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #33322c;">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="#b8b2a6" stroke-width="1.4" stroke-linecap="round"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"></path></svg>
+      </div>
+    </div>
+    <div style="display: flex; height: 44px; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; border-radius: 8px; border: 1px solid #33322c; background: #14130f; padding: 0 12px;">
+      <span style="font-size: 14px; font-weight: 500; color: #f2eee7;">2026 · 银组</span>
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#6f6a60" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg>
+    </div>
+  </div>
+
+  <div style="display: flex; flex: none; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e4e0d8; background: #ffffff; padding: 12px 16px;">
+    <div style="font-size: 17px; font-weight: 600;">赛制规则</div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">对照 2025</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px; padding: 14px 16px;">
+
+    <div style="display: flex; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+      <div style="display: flex; flex-direction: column; gap: 3px; border-bottom: 1px solid #e4e0d8; padding: 12px 14px;">
+        <div class="cardTitle">各线 UTR Cap</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #79736a;">一条线两名队员参赛 UTR 之和</div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 11px 14px;">
+        <div style="display: flex; min-width: 0; align-items: baseline; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D1</span>
+          <span style="font-size: 13px; color: #79736a;">第一男双</span>
+        </div>
+        <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+          
+          <span class="num" style="font-size: 14px;">13.00</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 11px 14px;">
+        <div style="display: flex; min-width: 0; align-items: baseline; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D2</span>
+          <span style="font-size: 13px; color: #79736a;">第二男双</span>
+        </div>
+        <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+          
+          <span class="num" style="font-size: 14px;">12.00</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 11px 14px;">
+        <div style="display: flex; min-width: 0; align-items: baseline; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D3</span>
+          <span style="font-size: 13px; color: #79736a;">第三男双</span>
+        </div>
+        <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+          
+          <span class="num" style="font-size: 14px;">11.00</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 11px 14px;">
+        <div style="display: flex; min-width: 0; align-items: baseline; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">MD</span>
+          <span style="font-size: 13px; color: #79736a;">混双</span>
+        </div>
+        <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+          <span class="chg">10.5 → 10.25</span>
+          <span class="num" style="font-size: 14px;">10.25</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 11px 14px;">
+        <div style="display: flex; min-width: 0; align-items: baseline; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">WD</span>
+          <span style="font-size: 13px; color: #79736a;">女双</span>
+        </div>
+        <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+          <span class="chg">9.5 → 9.25</span>
+          <span class="num" style="font-size: 14px;">9.25</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e4e0d8; padding: 12px 14px;">
+        <div class="cardTitle">UTR Buffer</div>
+        <span class="chg new">本届新增</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px; padding: 12px 14px 14px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">全队预算</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500;">0.50</span>
+        </div>
+        <div style="border-radius: 8px; border: 1px solid #e8d9ae; background: #fbf6e8; padding: 10px 12px; font-size: 12px; line-height: 1.6; color: #79736a;">
+          <b style="color: #1a1917;">共享预算，不是每线容差。</b>五线超出量之和也不得超过 0.50。
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+      <div style="border-bottom: 1px solid #e4e0d8; padding: 12px 14px;">
+        <div class="cardTitle">上场资格与通用约束</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px; padding: 12px 14px 14px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">男队员 UTR &gt; 7.00</span><span class="v">≤ 1 名</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">女队员 UTR &gt; 5.50</span><span class="v">≤ 1 名</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">搭档 UTR 差距</span><span class="v">≤ 3.50</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">三线男双</span><span class="v">不得倒序</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">胜负判定</span><span class="v">按场次</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 0 16px; height: 44px; font-size: 13px; color: #79736a;">
+      <span>参赛 UTR 的确定</span>
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5L10.5 8L6 12.5"></path></svg>
+    </div>
+
+  </div>
+</div>
+    </div>
+  </section>
+</div>
+</body>
+</html>
