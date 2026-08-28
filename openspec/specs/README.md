@@ -38,13 +38,33 @@ HTTP 侧只读：`GET /api/seasons`（赛季×组别索引，驱动切换器）�
 
 ---
 
+### `team-roster` ✅ 已实现 · 🌐 已上线
+**用户故事**: 作为队长，我想把组委会总表里的名单一次导进来、之后按赛季和组别查，而不是每次排阵都去 Google Sheet 里翻；作为组织者，我想在导入时就知道哪些行没读懂、哪些队人数不对，而不是等排阵算出怪结果才发现名单缺了人。
+
+**覆盖需求**: docs/superpowers/specs/2026-08-28-roster-import-requirements.md（名单数据模型、CSV 导入与字段归属、对账报告、只读查询）
+
+**后台**: `zijing_cup` schema 下两张表 —— `teams` / `roster_entries`。**没有 `players` 表**：总表里没有任何字段能证明「2025 银组的张三」和「2026 金组的张三」是同一个人，凭姓名归并会把它猜错，所以名单行是终态记录，唯一键 `(赛季, 组别, 球队, 姓, 名)`。`is_borrowed_player` 是三态可空布尔且**无默认值** —— NULL 读作「没人标过」，与 false（「确认不是外援」）是不同的断言，而外援有每队与每场的人数上限，这个区别决定一套阵容到底有没有被真正检查过。
+
+解析与导入分离：`app/rosters/parse.py` 是纯函数（文本进，记录与报告出），`load.py` 走「解析 → 读库 → 比对 → 只写差异」，`--check` 复用同一个比对函数。导入只覆盖 CSV 拥有的五个字段（`gender` / `match_utr` / `dutr_status` / `source_note` / `daily_utrs`）—— 外援标记与 UTR 档案链接由人手工维护，整行重写会把它们清掉。
+
+总表是工作文档而非导出格式，解析器有一半工作是**说出它读不懂的东西**：表头不在第 1 行（前有空行与两行脚注，按内容在前 20 行内定位）；合并单元格脚注漏成了数据行（`Borrowed Player` / `Unrated/Projected/Appeal` 两个伪队名跳过并报告）；取样列日期逐年变（按前缀匹配）；取样格里可能写着 `Early Lock` 这类文字注记（跳过该次取样、**保留球员**，按球员合并后报告 —— `Match UTR` 才是权威值，为一个佐证列丢掉一名真实球员是错的取舍）。`NaN` 反而整行拒绝：它能被 `Decimal` 解析，进库后与任何 cap 比较都返回 false，一条含 NaN 的阵容会看起来通过了所有限制。
+
+评级类别只在能判定时判定：`Rated`→已认证、`Projected`→委员会审定，`Unrated` 留 NULL —— 它属于第 2 类还是第 3 类取决于该队员有无 USTA 比赛历史，总表不带这个信息，猜一个就等于替人决定了谁占用「场上至多 2 名自评级」的名额。
+
+HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_count`，一次分组查询，无 N+1）与 `.../teams/{team_code}/roster`。**没有任何写入端点** —— 本项目不做 per-user 登录，一个公开的写接口等于谁都能覆盖所有队的名单，测试断言 OpenAPI 里不存在写方法。
+
+**前台**: 本次无。两条端点已上线待 `roster-display` 消费。
+
+**验收标准**: 2025 赛季金组 6 队 120 人、银组 18 队 339 人落库；两个伪队名不出现在球队表；重复导入报告无变化且不产生重复行；导入器一次都不写 `is_borrowed_player`；`Unrated` 行的 `rating_class` 为 NULL 而非猜测值；名单 CSV 不进版本库（`custom_verification_checks` 按内容扫描前 20 行拦截）。
+
+---
+
 ## 规划中的能力（路线图）
 
 | 能力 | 说明 | 状态 |
 |---|---|---|
-| `roster-import` | 球队/球员/roster 数据模型 + UTR 取数策略（参赛 UTR 取 9/21–9/25 五日均值，与当前 UTR 分开存） | 📋 规划中 |
-| `roster-display` | 前端浏览球队/球员/UTR | 📋 规划中 |
-| `lineup-engine` | 移植 MatchApp 策略模式阵容优化引擎（Top-5 候选阵容、逐线 cap + 全局 buffer 预算、固定搭档）。开工前需先确认「三线男双不能田忌赛马」的判定方式 | 📋 规划中 |
+| `roster-display` | 前端浏览球队/球员/UTR（后端 `team-roster` 的两条端点已就绪） | 📋 规划中 |
+| `lineup-engine` | 移植 MatchApp 策略模式阵容优化引擎（Top-5 候选阵容、逐线 cap + 全局 buffer 预算、固定搭档）。田忌赛马判定已定（三线男双 UTR 和非递增，相等不算违规）；开工前仍需组委会澄清 `Unrated` 分类、`/ Appeal` 语义、金组 4:4 抢七判定三项 | 📋 规划中 |
 | `lineup-ui` | 前端锁定搭档 + 阵容对比交互界面 | 📋 规划中 |
 
 > `project-bootstrap` 已随 bootstrap 完成并部署，但未走 opsx change 流程，故无归档 spec。

@@ -59,7 +59,10 @@ Render免费版会在闲置后休眠，冷启动可能要接近1分钟——`fro
 
 - 本机(austin的Windows开发机)有Application Control安全策略，`uv run uvicorn ...`直接调uvicorn.exe会被拦(`os error 4551`)。改用`uv run python -m uvicorn app.main:app ...`绕过——通过python解释器跑module而不是直接执行独立可执行文件。Render上是Linux容器，不受此限制，`render.yaml`按原计划保留`uv run uvicorn`即可，仅本地开发要注意这条。
 - 本机8000端口经常被其他项目占用，本地跑backend建议换个端口(比如`--port 8010`)，`frontend/.env.local`的`BACKEND_URL`跟着改。
-- **测试会清空规则表——别让`DATABASE_URL`指着生产库跑pytest。** `backend/tests/`的fixture在拆解时`TRUNCATE`四张规则表。`app/db.py`用`load_dotenv()`默认`override=False`，即**已存在的环境变量优先于`backend/.env`**——这正是`$env:DATABASE_URL='<远程串>'`能让导入命令打远程的原因，也意味着同一个shell窗口里接着跑`uv run pytest`会清空线上规则数据。导完远程立刻`Remove-Item Env:\DATABASE_URL`(PowerShell)或`unset DATABASE_URL`，或干脆换个窗口跑测试。
+- **测试会清空规则表与名单表——别让`DATABASE_URL`指着生产库跑pytest。** `backend/tests/`的fixture在拆解时`TRUNCATE`四张规则表以及`teams`/`roster_entries`。`app/db.py`用`load_dotenv()`默认`override=False`，即**已存在的环境变量优先于`backend/.env`**——这正是`$env:DATABASE_URL='<远程串>'`能让导入命令打远程的原因，也意味着同一个shell窗口里接着跑`uv run pytest`会清空线上规则数据。导完远程立刻`Remove-Item Env:\DATABASE_URL`(PowerShell)或`unset DATABASE_URL`，或干脆换个窗口跑测试。
 - 手动在Dashboard执行migration(见上面的no-CLI-push规则)意味着远程`supabase_migrations`表里没有这次记录。这是那条规则的既定代价，不是新问题，但别指望远程的migration历史是完整的。
 - `openspec status`会一直把`requirements`和`mocks`显示成未完成。schema里这两个产物的`generates`路径写的是字面量`{{date}}`，CLI不做替换，存在性检查永远匹配不上；文件其实在带日期的路径下。同样的原因会让新建change时所有产物一开始都显示blocked——`openspec instructions`照常输出，可以往下走。
 - 审计路由不要遍历`app.routes`。当前FastAPI版本把`include_router`存成单个不透明的`_IncludedRouter`条目，不把子路由摊平，遍历它会**看不见任何`/api`路由**而静默通过。用`app.openapi()["paths"]`，并配一条"读路由确实注册了"的断言防止守卫再次空转。
+- 上面那条TRUNCATE还有个本地的连带后果：跑完`pytest`本地库的规则表就空了，此时任何名单导入都会以`no division 'silver' in season 2025`失败。先`uv run python -m app.seeds.load_rules`补回规则再导名单——报错信息本身已经这么提示，但连着跑两条命令时很容易误读成导入器坏了。
+- **Google Sheets导出的CSV表头不在第1行。** 前面有一个空行、两行合并单元格脚注、再一个空行，列名在第5行；第1行是`,,,,,,,,,,,,,`。任何"读第1行判断这是不是名单文件"的逻辑都会静默失败：解析器会把整份文件判成不可读（看起来像空名单，不像读错了），而按内容识别的安全扫描会对一份真实名单报clean。解析和扫描都要在前若干行内找表头（`parse.py`的`HEADER_SEARCH_LIMIT`=20，`config.yaml`的真实数据扫描用`head -20`）。
+- **别拿抓取来的表格markdown当事实源。** Drive/网页抓取会静默截断：一次银组名单只回了11支队，据此写进requirements的"13队211人"、"5支球队有排名却没名单"、"`SJTU`只有1行"三条全是假的（实际18队339人，那5支队各有17-26人）。真实导出一跑就全推翻了。凡是要写进验收标准的数量，用真实导出文件核对过再写。
