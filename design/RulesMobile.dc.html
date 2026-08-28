@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #9c3417; text-decoration: none; }
+    a:hover { color: #7d290f; }
+    .th {
+      height: 34px; padding: 0 14px; text-align: left; white-space: nowrap;
+      border-bottom: 1px solid #e4e0d8; background: #f2efe9;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.025em; color: #79736a;
+    }
+    .td { height: 40px; padding: 0 14px; vertical-align: middle; border-bottom: 1px solid #eae7e0; }
+    .num { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; color: #1a1917; }
+    .cardTitle { font-size: 14px; font-weight: 600; }
+    .k { font-size: 13px; color: #79736a; }
+    .v { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; color: #1a1917; }
+    .chg {
+      display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9;
+      border: 1px solid #e4e0d8; padding: 1px 7px;
+      font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: #b8860b;
+    }
+    .new { border-color: #e8d9ae; background: #fbf6e8; }
+  </style>
+</helmet>
+
+<div style="display: flex; width: 390px; height: 844px; flex-direction: column; background: #f6f4f0; color: #1a1917; font-family: 'Noto Sans SC', 'Segoe UI', sans-serif; overflow: hidden;">
+
+  <div style="display: flex; flex: none; flex-direction: column; gap: 10px; border-bottom: 1px solid #2a2823; background: #1c1b18; padding: 14px 16px 12px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; height: 20px; width: 20px; flex: none; align-items: center; justify-content: center; border-radius: 5px; background: #9c3417; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; line-height: 1; color: #ffffff;">紫</div>
+        <div style="font-size: 14px; font-weight: 600; letter-spacing: 0.025em; color: #f2eee7;">紫荆杯</div>
+      </div>
+      <div style="display: flex; height: 44px; width: 44px; flex: none; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #33322c;">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="#b8b2a6" stroke-width="1.4" stroke-linecap="round"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"></path></svg>
+      </div>
+    </div>
+    <div style="display: flex; height: 44px; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; border-radius: 8px; border: 1px solid #33322c; background: #14130f; padding: 0 12px;">
+      <span style="font-size: 14px; font-weight: 500; color: #f2eee7;">2026 · 银组</span>
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#6f6a60" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg>
+    </div>
+  </div>
+
+  <div style="display: flex; flex: none; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e4e0d8; background: #ffffff; padding: 12px 16px;">
+    <div style="font-size: 17px; font-weight: 600;">赛制规则</div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">对照 2025</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px; padding: 14px 16px;">
+
+    <div style="display: flex; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+      <div style="display: flex; flex-direction: column; gap: 3px; border-bottom: 1px solid #e4e0d8; padding: 12px 14px;">
+        <div class="cardTitle">各线 UTR Cap</div>
+        <div style="font-size: 12px; line-height: 1.5; color: #79736a;">一条线两名队员参赛 UTR 之和</div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 11px 14px;">
+        <div style="display: flex; min-width: 0; align-items: baseline; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D1</span>
+          <span style="font-size: 13px; color: #79736a;">第一男双</span>
+        </div>
+        <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+          
+          <span class="num" style="font-size: 14px;">13.00</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 11px 14px;">
+        <div style="display: flex; min-width: 0; align-items: baseline; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D2</span>
+          <span style="font-size: 13px; color: #79736a;">第二男双</span>
+        </div>
+        <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+          
+          <span class="num" style="font-size: 14px;">12.00</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 11px 14px;">
+        <div style="display: flex; min-width: 0; align-items: baseline; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D3</span>
+          <span style="font-size: 13px; color: #79736a;">第三男双</span>
+        </div>
+        <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+          
+          <span class="num" style="font-size: 14px;">11.00</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 11px 14px;">
+        <div style="display: flex; min-width: 0; align-items: baseline; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">MD</span>
+          <span style="font-size: 13px; color: #79736a;">混双</span>
+        </div>
+        <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+          <span class="chg">10.5 → 10.25</span>
+          <span class="num" style="font-size: 14px;">10.25</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 11px 14px;">
+        <div style="display: flex; min-width: 0; align-items: baseline; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">WD</span>
+          <span style="font-size: 13px; color: #79736a;">女双</span>
+        </div>
+        <div style="display: flex; flex: none; align-items: center; gap: 8px;">
+          <span class="chg">9.5 → 9.25</span>
+          <span class="num" style="font-size: 14px;">9.25</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e4e0d8; padding: 12px 14px;">
+        <div class="cardTitle">UTR Buffer</div>
+        <span class="chg new">本届新增</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px; padding: 12px 14px 14px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">全队预算</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500;">0.50</span>
+        </div>
+        <div style="border-radius: 8px; border: 1px solid #e8d9ae; background: #fbf6e8; padding: 10px 12px; font-size: 12px; line-height: 1.6; color: #79736a;">
+          <b style="color: #1a1917;">共享预算，不是每线容差。</b>五线超出量之和也不得超过 0.50。
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+      <div style="border-bottom: 1px solid #e4e0d8; padding: 12px 14px;">
+        <div class="cardTitle">上场资格与通用约束</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px; padding: 12px 14px 14px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">男队员 UTR &gt; 7.00</span><span class="v">≤ 1 名</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">女队员 UTR &gt; 5.50</span><span class="v">≤ 1 名</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">搭档 UTR 差距</span><span class="v">≤ 3.50</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">三线男双</span><span class="v">不得倒序</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <span class="k">胜负判定</span><span class="v">按场次</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 0 16px; height: 44px; font-size: 13px; color: #79736a;">
+      <span>参赛 UTR 的确定</span>
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5L10.5 8L6 12.5"></path></svg>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,12 +1,35 @@
 {
+  "pages": [
+    { "id": "page-1", "name": "本次 change · 赛制规则" },
+    { "id": "page-2", "name": "后续 change · 队伍与分析" }
+  ],
   "artboards": [
-    { "file": "Main.dc.html", "title": "队伍页 · 银组", "x": 0, "y": 0, "w": 1440, "h": 980 },
-    { "file": "Analysis.dc.html", "title": "分析页 · 银组", "x": 1560, "y": 0, "w": 1600, "h": 1180 },
-    { "file": "AnalysisGold.dc.html", "title": "分析页 · 金组", "x": 3280, "y": 0, "w": 1600, "h": 1180 }
+    { "file": "Rules.dc.html", "title": "赛制规则页 · 桌面", "page": "page-1", "x": 0, "y": 0, "w": 1440, "h": 980 },
+    { "file": "RulesMobile.dc.html", "title": "赛制规则页 · 移动", "page": "page-1", "x": 1560, "y": 0, "w": 390, "h": 844 },
+    { "file": "Main.dc.html", "title": "队伍页 · 银组", "page": "page-2", "x": 0, "y": 0, "w": 1440, "h": 980 },
+    { "file": "Analysis.dc.html", "title": "分析页 · 银组", "page": "page-2", "x": 1560, "y": 0, "w": 1600, "h": 1180 },
+    { "file": "AnalysisGold.dc.html", "title": "分析页 · 金组", "page": "page-2", "x": 3280, "y": 0, "w": 1600, "h": 1180 }
   ],
   "annotations": [
     {
+      "id": "note-scope",
+      "page": "page-1",
+      "x": 0,
+      "y": -250,
+      "w": 620,
+      "text": "rules-and-design-system change 的交付范围：\n设计系统 token + 4 个基础组件 + 深色侧栏壳 + 这一个页面。\n\n队伍与分析在侧栏里是禁用态并标注「未开放」——\n不做成可点击但跳到空页的死键（ai-course-management 有过这个教训）。\n\n「较 2025」列直接服务于队长的真实问题：今年 cap 变了，\n去年那套阵容还合法吗。"
+    },
+    {
+      "id": "note-mobile",
+      "page": "page-1",
+      "x": 1560,
+      "y": -250,
+      "w": 420,
+      "text": "移动端：侧栏收成顶栏，赛季×组别切换器仍是首屏可见的\n第一个控件 —— 它决定整页规则语义，不能藏进汉堡菜单。\n\n命中区 ≥44px。参赛 UTR 明细收成二级入口。"
+    },
+    {
       "id": "note-tokens",
+      "page": "page-2",
       "x": 0,
       "y": -250,
       "w": 520,
@@ -14,6 +37,7 @@
     },
     {
       "id": "note-season",
+      "page": "page-2",
       "x": 1560,
       "y": -250,
       "w": 600,
@@ -21,11 +45,12 @@
     },
     {
       "id": "note-gold",
+      "page": "page-2",
       "x": 3280,
       "y": -250,
       "w": 600,
       "text": "金组与银组不是「同一张页面换几个数字」：\n· D1／MD 是开放线，无 Cap，但每线只值 1 分\n· 胜负按记分制 8 分（1/1/2/2/2），4:4 平走三级抢先\n· Buffer 0.3 只在 D2／D3／WD 之间共享\n· 上场资格阈值也不同（>9.0 男限 D1/MD、>8.0 男 ≤3、>7.75 女 ≤1）\n\nBuffer 是全队共享预算，不是每线容差 —— 逐线判定会放出五线各超 0.2、\n合计 1.0 的非法阵容。引擎必须当作全局约束求解。"
     }
   ],
-  "launch": { "view": "canvas" }
+  "launch": { "view": "canvas", "page": "page-1" }
 }
