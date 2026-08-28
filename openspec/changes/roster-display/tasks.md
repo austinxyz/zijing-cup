@@ -125,8 +125,8 @@
 - [x] 4.5 GREEN — 实现 `teams/layout.tsx` 的球队列
 - [x] 4.6 RED — 空状态：`teams/page.tsx` 渲染提示文案，且不渲染名单表格的表头或行；不重定向
 - [x] 4.7 GREEN — 实现空状态页
-- [ ] 4.8 RED — 侧栏：「队伍」是指向 `/[season]/[division]/teams` 的链接且不再标注未开放；「分析」仍是禁用态且不是链接
-- [ ] 4.9 GREEN — 改 `Sidebar.tsx`：「队伍」由 `PendingNavItem` 改为 `Link`
+- [x] 4.8 RED — 侧栏：「队伍」是指向 `/[season]/[division]/teams` 的链接且不再标注未开放；「分析」仍是禁用态且不是链接
+- [x] 4.9 GREEN — 改 `Sidebar.tsx`：「队伍」由 `PendingNavItem` 改为 `Link`
 - [x] 4.10 VISUAL DIFF — `npm run dev --prefix frontend`，访问 `/2025/silver/teams`，对照 `design/TeamsEmpty.dc.html` 核对 token、配色与逐字文案（桌面 1440px）。移动端已于 2026-08-28 移出本 change 范围——应用壳从未实现窄屏版式，规则页在 375px 下同样被压缩，属后续 `mobile-shell`
 - [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
@@ -171,9 +171,9 @@
 
 ## 6. 验证与上线
 
-- [ ] 6.1 Run backend test suite — `cd backend && uv run pytest`，确认无回归
-- [ ] 6.2 Run frontend test suite — `cd frontend && npm run test`，确认无回归
-- [ ] 6.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明
-- [ ] 6.4 用 2025 真实数据本地验一遍：金组 6 队 120 人、银组 18 队 339 人；某队三档性别人数之和等于总人数；`Unrated` 行显示「待定」。**导入前确认 `DATABASE_URL` 指向本地栈**——测试 fixture 会清空表，跑完 pytest 需先补跑 `load_rules` 与名单导入（CLAUDE.md Pitfalls）
-- [ ] 6.5 Run superpowers:verification-before-completion —— 跑 `project.test_commands` 与全部 `project.custom_verification_checks`（console.log 扫描、敏感变量泄漏扫描、客户端 bundle 扫描、migration 的 `zijing_cup` 限定检查、真实球员数据扫描）
+- [x] 6.1 Run backend test suite — `cd backend && uv run pytest`，确认无回归
+- [x] 6.2 Run frontend test suite — `cd frontend && npm run test`，确认无回归
+- [x] 6.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明 —— 已确认 `openspec/config.yaml` 的 `e2e_command` 为空。
+- [x] 6.4 用 2025 真实数据本地验一遍：金组 6 队 120 人、银组 18 队 339 人；某队三档性别人数之和等于总人数；`Unrated` 行显示「待定」。**导入前确认 `DATABASE_URL` 指向本地栈**——测试 fixture 会清空表，跑完 pytest 需先补跑 `load_rules` 与名单导入（CLAUDE.md Pitfalls）
+- [x] 6.5 Run superpowers:verification-before-completion —— 跑 `project.test_commands` 与全部 `project.custom_verification_checks`（console.log 扫描、敏感变量泄漏扫描、客户端 bundle 扫描、migration 的 `zijing_cup` 限定检查、真实球员数据扫描）
 - [ ] 6.6 上线：`git push`（Render + Vercel 自动部署）；**手工在 Supabase Dashboard 的 SQL Editor 执行本次 migration**（共享项目禁用 `db push` / `migration repair`）；远程执行球队显示名 seed 导入，完成后立即清除 `DATABASE_URL`；远程复核球队列表的显示名与人数分布
