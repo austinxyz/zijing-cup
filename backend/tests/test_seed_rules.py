@@ -25,7 +25,13 @@ from sqlmodel import Session, delete, select
 
 from app.db import engine
 from app.models import Division, DivisionEligibilityLimit, DivisionLine, Season
-from app.seeds.load_rules import DEFAULT_SEED_DIR, check_rules, load_rules, main
+from app.seeds.load_rules import (
+    DEFAULT_SEED_DIR,
+    check_rules,
+    load_rules,
+    main,
+    parse_seed_dir,
+)
 
 
 @pytest.fixture
@@ -378,3 +384,28 @@ def test_check_and_import_agree_on_what_differs(session, seed_dir):
 
     # And after importing, check is clean.
     assert check_rules(session, seed_dir).is_clean
+
+
+def test_conflicting_season_metadata_is_rejected_at_parse_time(seed_dir):
+    """Two divisions share one season row, so their season blocks must agree.
+
+    Without this guard the importer never converges: each division's write
+    sets the shared edition_name, the other division then reads back a value
+    its file disagrees with, and every run flips it. --check would report
+    drift forever, pointing at a field nobody edited.
+    """
+    path = seed_dir / "2026-gold.toml"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            'edition_name = "第十一届"', 'edition_name = "第 11 届"'
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        parse_seed_dir(seed_dir)
+
+    message = str(excinfo.value)
+    assert "2026" in message
+    # Name both spellings so the fix is obvious without opening the files.
+    assert "第十一届" in message and "第 11 届" in message

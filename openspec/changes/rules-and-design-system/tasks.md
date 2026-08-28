@@ -56,7 +56,7 @@
 - [x] 3.5 GREEN — 补齐幂等与差异写入逻辑（含删除语义）
 - [x] 3.6 RED — pytest：`--check` 在一致时退出码 0；改 seed 未导入时退出码非 0 且输出含赛季/组别/字段；`--check` 执行后 DB 数据未变
 - [x] 3.7 GREEN — 实现 `--check` 模式，复用 3.3 的比对函数
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 规则查询端点
 
@@ -105,5 +105,5 @@
 - [ ] 6.1 Run backend test suite — `cd backend && uv run pytest`，确认无回归
 - [ ] 6.2 Run frontend test suite — `cd frontend && npm run test`，确认无回归
 - [ ] 6.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明
-- [ ] 6.4 执行 `python -m app.seeds.load_rules --check`，确认 DB 与 seed 一致（退出码 0）
+- [ ] 6.4 先执行 `uv run python -m app.seeds.load_rules` 再执行 `--check`，确认退出码 0。顺序不能反：测试夹具在拆解时会清空规则表，紧接着跑 --check 必然报漂移
 - [ ] 6.5 Run superpowers:verification-before-completion —— 跑 `project.test_commands`；跑 `project.custom_verification_checks`（前端 console.log 扫描、敏感变量泄漏扫描、migration 的 `zijing_cup` 限定检查）

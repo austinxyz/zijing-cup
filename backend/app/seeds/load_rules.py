@@ -165,7 +165,40 @@ def parse_seed_dir(seed_dir: Path) -> list[DivisionSpec]:
     files = sorted(seed_dir.glob("*.toml"))
     if not files:
         raise FileNotFoundError(f"no seed files found in {seed_dir}")
-    return [parse_seed_file(path) for path in files]
+    specs = [parse_seed_file(path) for path in files]
+    _reject_conflicting_season_metadata(specs)
+    return specs
+
+
+def _reject_conflicting_season_metadata(specs: Sequence[DivisionSpec]) -> None:
+    """Both divisions of a season share one `seasons` row, so their `[season]`
+    blocks have to agree.
+
+    If they disagree the importer never converges: writing one division sets
+    the shared row, the other division then reads back a value its own file
+    contradicts, and every run flips it. `--check` would report drift forever,
+    pointing at a field nobody edited. Failing here — before anything is
+    written — turns a baffling permanent-red into a one-line message.
+    """
+    by_year: dict[int, dict[Optional[str], list[str]]] = {}
+    for spec in specs:
+        by_year.setdefault(spec.season_year, {}).setdefault(
+            spec.edition_name, []
+        ).append(spec.code)
+
+    for year, editions in sorted(by_year.items()):
+        if len(editions) > 1:
+            detail = "; ".join(
+                f"{sorted(codes)} say {edition!r}"
+                for edition, codes in sorted(
+                    editions.items(), key=lambda item: str(item[0])
+                )
+            )
+            raise ValueError(
+                f"season {year}: divisions disagree on [season] metadata "
+                f"({detail}). Both divisions of a season share one row — "
+                f"make the [season] blocks identical."
+            )
 
 
 # --------------------------------------------------------------------------
