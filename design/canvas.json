@@ -1,14 +1,19 @@
 {
   "pages": [
     { "id": "page-1", "name": "本次 change · 赛制规则" },
-    { "id": "page-2", "name": "后续 change · 队伍与分析" }
+    { "id": "page-2", "name": "后续 change · 队伍与分析" },
+    { "id": "page-3", "name": "本次 change · 队伍名单" }
   ],
   "artboards": [
     { "file": "Rules.dc.html", "title": "赛制规则页 · 桌面", "page": "page-1", "x": 0, "y": 0, "w": 1440, "h": 980 },
     { "file": "RulesMobile.dc.html", "title": "赛制规则页 · 移动", "page": "page-1", "x": 1560, "y": 0, "w": 390, "h": 844 },
-    { "file": "Main.dc.html", "title": "队伍页 · 银组", "page": "page-2", "x": 0, "y": 0, "w": 1440, "h": 980 },
+    { "file": "Main.dc.html", "title": "队伍页 · 早期草图", "page": "page-2", "x": 0, "y": 0, "w": 1440, "h": 980 },
     { "file": "Analysis.dc.html", "title": "分析页 · 银组", "page": "page-2", "x": 1560, "y": 0, "w": 1600, "h": 1180 },
-    { "file": "AnalysisGold.dc.html", "title": "分析页 · 金组", "page": "page-2", "x": 3280, "y": 0, "w": 1600, "h": 1180 }
+    { "file": "AnalysisGold.dc.html", "title": "分析页 · 金组", "page": "page-2", "x": 3280, "y": 0, "w": 1600, "h": 1180 },
+    { "file": "Teams.dc.html", "title": "队伍页 · 已选球队", "page": "page-3", "x": 0, "y": 0, "w": 1440, "h": 980 },
+    { "file": "TeamsEmpty.dc.html", "title": "队伍页 · 未选球队", "page": "page-3", "x": 1560, "y": 0, "w": 1440, "h": 980 },
+    { "file": "TeamsMobile.dc.html", "title": "队伍页 · 移动 · 球队列表", "page": "page-3", "x": 3120, "y": 0, "w": 390, "h": 844 },
+    { "file": "TeamsMobileRoster.dc.html", "title": "队伍页 · 移动 · 名单", "page": "page-3", "x": 3630, "y": 0, "w": 390, "h": 844 }
   ],
   "annotations": [
     {
@@ -31,9 +36,9 @@
       "id": "note-tokens",
       "page": "page-2",
       "x": 0,
-      "y": -250,
+      "y": -290,
       "w": 520,
-      "text": "设计系统直接取自 ai-course-management：\n底色 #f6f4f0 · 主色 #9c3417 · 边框 #e4e0d8 · 侧栏 #1c1b18\n圆角 8px · Noto Sans SC + JetBrains Mono\n侧栏 216px · 表头 34px · 表行 40px · 按钮 40/32px"
+      "text": "⚠ 这一页是 roster-import 之前画的早期草图，已被 page-3 取代。\n差异（page-3 才是 roster-display 的实际范围）：\n· 当前 UTR 一列删掉 —— 没有任何数据源，需要对接 UTR 官网\n· 各线最优搭档删掉 —— 属于 lineup-engine\n· 球队列不再显示队伍平均 UTR，改显示男/女人数\n\n设计系统直接取自 ai-course-management：\n底色 #f6f4f0 · 主色 #9c3417 · 边框 #e4e0d8 · 侧栏 #1c1b18\n圆角 8px · Noto Sans SC + JetBrains Mono\n侧栏 216px · 表头 34px · 表行 40px · 按钮 40/32px"
     },
     {
       "id": "note-season",
@@ -50,7 +55,31 @@
       "y": -250,
       "w": 600,
       "text": "金组与银组不是「同一张页面换几个数字」：\n· D1／MD 是开放线，无 Cap，但每线只值 1 分\n· 胜负按记分制 8 分（1/1/2/2/2），4:4 平走三级抢先\n· Buffer 0.3 只在 D2／D3／WD 之间共享\n· 上场资格阈值也不同（>9.0 男限 D1/MD、>8.0 男 ≤3、>7.75 女 ≤1）\n\nBuffer 是全队共享预算，不是每线容差 —— 逐线判定会放出五线各超 0.2、\n合计 1.0 的非法阵容。引擎必须当作全局约束求解。"
+    },
+    {
+      "id": "note-roster-scope",
+      "page": "page-3",
+      "x": 0,
+      "y": -320,
+      "w": 640,
+      "text": "roster-display 的交付范围。数据是 2025 银组真实的队数与人数\n（18 队 339 人，各队男女比也是真的）；球员姓名全部虚构。\n\n球队列显示男/女人数而不是队伍平均 UTR：场上五条线要\n1 名女子打混双、2 名打女双，至少 3 名女队员是硬约束。\n26 人名单的平均 UTR 跟他们真正上场的 8 个人关系不大。\n女队员数 <4 时该数字加重 —— 合法，但一人退赛就凑不出阵容\n（SJSU / SJTU-XJTU / BUAA-UMN-UCB 各 4 名）。\n\n中文名是人工维护的可选字段，走 seed 文件。三校联队没有自然\n叫法就留空，界面上只显示 code —— 不强求每支队都有名字。"
+    },
+    {
+      "id": "note-roster-pending",
+      "page": "page-3",
+      "x": 1560,
+      "y": -320,
+      "w": 620,
+      "text": "「UTR 来源」= 我们的判断 + 总表原文，两者都给。\n\nRated → 已认证，Projected → 委员会审定，\nUnrated → 「待定」，不是「自评」。\n\n这条差别不是措辞问题：Unrated 属于第 2 类还是第 3 类，取决于\n该队员有没有 USTA 比赛历史，而总表不带这个信息。页面替它下\n结论，就等于决定了谁占用「场上至多 2 名自评级、且不得互相搭档」\n的名额。2025 全部 459 行里有 36 行是这个状态。\n\n未选球队时右边是空状态而不是空表格 —— 空表格读作\n「这支队没有球员」，是另一句话。"
+    },
+    {
+      "id": "note-roster-mobile",
+      "page": "page-3",
+      "x": 3120,
+      "y": -320,
+      "w": 560,
+      "text": "移动端拆成两屏：球队列表 → 某队名单。\n\n名单在 390px 下不用表格改用行卡片：五列表格要么横向溢出，\n要么把 UTR 压到看不清 —— 而 UTR 正是整页存在的理由。\n每行 56px，命中区远超 44px 下限。\n\n顶栏保留赛季×组别切换器（同规则页），不藏进汉堡菜单。"
     }
   ],
-  "launch": { "view": "canvas", "page": "page-1" }
+  "launch": { "view": "canvas", "page": "page-3" }
 }
