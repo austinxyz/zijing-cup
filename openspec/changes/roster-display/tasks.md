@@ -27,7 +27,7 @@
 - [x] 1.6 GREEN — 使名单导入的 `teams` upsert 只写它拥有的字段，不触碰 `display_name`
 - [x] 1.7 RED — `tests/test_roster_import.py`：库中球队带显示名时执行名单导入的 `--check`，断言报告为 clean（显示名不算漂移）
 - [x] 1.8 GREEN — 最小实现使 `--check` 忽略显示名
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 球队显示名：seed 与导入命令
 
@@ -48,21 +48,21 @@
   - CLI 输出含中文，需 `configure_stdout()`（Windows cp1252 会崩）。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/roster-display/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — `tests/test_team_names.py`：解析一份 TOML seed，得到 (赛季, 组别, code, 显示名) 记录；缺字段或赛季组别不一致时报错
-- [ ] 2.2 GREEN — `app/seeds/team_names.py`（或同层模块）实现解析，`tomllib` 读取，零新依赖
-- [ ] 2.3 RED — 空库首次导入：seed 中列出的球队各自获得显示名；未列出的保持 None 且不报错
-- [ ] 2.4 GREEN — 实现「解析 → 读库 → 比对 → 只写差异」的导入
-- [ ] 2.5 RED — 幂等：同一份 seed 再导一次，报告无变化
-- [ ] 2.6 GREEN — 最小实现使重复导入无写入
-- [ ] 2.7 RED — 改名与移除：seed 改值后重导则更新；seed 删除条目后重导则清空该球队显示名，且球队与其名单记录不受影响
-- [ ] 2.8 GREEN — 实现更新与清空
-- [ ] 2.9 RED — seed 指向库中不存在的球队时，报告中列出该未匹配条目；命令不因此失败
-- [ ] 2.10 GREEN — 实现未匹配条目的报告
-- [ ] 2.11 RED — `--check`：库与 seed 不一致时以非零退出码结束并指出差异
-- [ ] 2.12 GREEN — 复用同一个比对函数实现 `--check`
-- [ ] 2.13 RED — CLI 在 cp1252 编码的输出流上打印中文报告不崩溃
-- [ ] 2.14 GREEN — 命令入口调用 `configure_stdout()`
+- [x] 2.0 CONTRACT — write openspec/changes/roster-display/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 RED — `tests/test_team_names.py`：解析一份 TOML seed，得到 (赛季, 组别, code, 显示名) 记录；缺字段或赛季组别不一致时报错
+- [x] 2.2 GREEN — `app/seeds/team_names.py`（或同层模块）实现解析，`tomllib` 读取，零新依赖
+- [x] 2.3 RED — 空库首次导入：seed 中列出的球队各自获得显示名；未列出的保持 None 且不报错
+- [x] 2.4 GREEN — 实现「解析 → 读库 → 比对 → 只写差异」的导入
+- [x] 2.5 RED — 幂等：同一份 seed 再导一次，报告无变化
+- [x] 2.6 GREEN — 最小实现使重复导入无写入
+- [x] 2.7 RED — 改名与移除：seed 改值后重导则更新；seed 删除条目后重导则清空该球队显示名，且球队与其名单记录不受影响
+- [x] 2.8 GREEN — 实现更新与清空
+- [x] 2.9 RED — seed 指向库中不存在的球队时，报告中列出该未匹配条目；命令不因此失败
+- [x] 2.10 GREEN — 实现未匹配条目的报告
+- [x] 2.11 RED — `--check`：库与 seed 不一致时以非零退出码结束并指出差异
+- [x] 2.12 GREEN — 复用同一个比对函数实现 `--check`
+- [x] 2.13 RED — CLI 在 cp1252 编码的输出流上打印中文报告不崩溃
+- [x] 2.14 GREEN — 命令入口调用 `configure_stdout()`
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 只读端点带出显示名与性别构成
