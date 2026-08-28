@@ -16,7 +16,7 @@
 - [x] 1.2 GREEN — 新增 `supabase/migrations/<timestamp>_create_team_rosters.sql`，建两张表、外键（`teams` → `divisions(season_year, code)`）与唯一索引，首行设置 search_path
 - [x] 1.3 RED — pytest：断言 `roster_entries(team_id, last_name, first_name)` 唯一；断言同一 `utr_profile_id` 在同组别内插入第二条被拒、在另一组别可插入；断言 `daily_utrs` 能存回多个小数值；断言 `is_borrowed_player` 可为 NULL（未标注）且能存 true/false 三态
 - [x] 1.4 GREEN — 实现 `backend/app/models/roster.py` 的 SQLModel 定义，可空性与 migration 一致
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. CSV 解析与评级类别判定
 
@@ -30,13 +30,13 @@
   - 解析阶段纯函数：输入 CSV 文本，输出记录与报告，不碰数据库
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/roster-import/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — pytest：`Rated` → verified、`Projected` → committee、`Unrated` → None；`Rated / Appeal` → verified 且 `dutr_status` 保留 `"Rated / Appeal"` 原文；`Unrated / Appeal` → None
-- [ ] 2.2 GREEN — 实现 `backend/app/rosters/parse.py` 的行解析与评级类别判定
-- [ ] 2.3 RED — pytest：`Borrowed Player` 与 `Unrated/Projected/Appeal` 两个伪队名的行被跳过且出现在报告的「跳过」一节；字段缺失的行不产出记录且出现在报告的「无法解析」一节并带原因
-- [ ] 2.4 GREEN — 实现伪队名识别与不可解析行的收集
-- [ ] 2.5 RED — pytest：取样窗口列名改为另一组日期（模拟 2026）时仍能解析出每日 UTR 值；出现未知列时该列进报告而不导致失败
-- [ ] 2.6 GREEN — 按前缀匹配实现列定位与未知列上报
+- [x] 2.0 CONTRACT — write openspec/changes/roster-import/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 RED — pytest：`Rated` → verified、`Projected` → committee、`Unrated` → None；`Rated / Appeal` → verified 且 `dutr_status` 保留 `"Rated / Appeal"` 原文；`Unrated / Appeal` → None
+- [x] 2.2 GREEN — 实现 `backend/app/rosters/parse.py` 的行解析与评级类别判定
+- [x] 2.3 RED — pytest：`Borrowed Player` 与 `Unrated/Projected/Appeal` 两个伪队名的行被跳过且出现在报告的「跳过」一节；字段缺失的行不产出记录且出现在报告的「无法解析」一节并带原因
+- [x] 2.4 GREEN — 实现伪队名识别与不可解析行的收集
+- [x] 2.5 RED — pytest：取样窗口列名改为另一组日期（模拟 2026）时仍能解析出每日 UTR 值；出现未知列时该列进报告而不导致失败
+- [x] 2.6 GREEN — 按前缀匹配实现列定位与未知列上报
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 导入命令：幂等写入、--check 与对账报告
