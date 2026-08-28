@@ -11,7 +11,7 @@
 - docs/superpowers/specs/2026-08-27-rules-and-design-system-requirements.md（赛制规则数据模型、seed 与导入、只读查询、赛制规则页面）
 - 领域依据见 docs/domain/rules.md
 
-**后台**: `zijing_cup` schema 下四张表 —— `seasons` / `divisions` / `division_lines` / `division_eligibility_limits`。不用 JSONB，因为两件事要能被 schema 表达并查询：`division_lines.cap` 为 NULL 即金组的开放线（是另一种线，不是上限很高的线，且分值不同），`division_eligibility_limits.restricted_to_lines` 是可空 text[]，让「UTR>9.0 男队员 ≤1 名且只能打 D1/MD」这条同时带人数上限与线位白名单的规则装进一行；NULL 表示不限线位，check 约束拒绝空数组（那读作「一条线都不能打」）。`buffer_per_line` 与 `buffer_total` 分两列 —— 2026 两组恰好相等，但规则原文是两条独立约束，一列会断言它们永远相等。`mens_doubles_must_be_ordered` 只存开关，判定方式未定（见 docs/domain/rules.md「待澄清」）。
+**后台**: `zijing_cup` schema 下四张表 —— `seasons` / `divisions` / `division_lines` / `division_eligibility_limits`。不用 JSONB，因为两件事要能被 schema 表达并查询：`division_lines.cap` 为 NULL 即金组的开放线（是另一种线，不是上限很高的线，且分值不同），`division_eligibility_limits.restricted_to_lines` 是可空 text[]，让「UTR>9.0 男队员 ≤1 名且只能打 D1/MD」这条同时带人数上限与线位白名单的规则装进一行；NULL 表示不限线位，check 约束拒绝空数组（那读作「一条线都不能打」）。`buffer_per_line` 与 `buffer_total` 分两列 —— 2026 两组恰好相等，但规则原文是两条独立约束，一列会断言它们永远相等。`mens_doubles_must_be_ordered` 只存开关；判定方式已定（三条男双线的参赛 UTR 之和非递增，相等不算违规——见 docs/domain/rules.md §6），判定本身属 `lineup-engine`。
 
 规则内容以 `backend/seeds/rules/{year}-{division}.toml` 为唯一事实来源，标准库 `tomllib` 读取（零新依赖，且能在每个数值旁贴规则原文出处）；数值写成字符串按 Decimal 精确解析 —— TOML 浮点存不下 0.30，而这些数字决定阵容合法与否。导入命令 `python -m app.seeds.load_rules` 走「解析 → 读库 → 比对 → 只写差异」，`--check` 复用同一个比对函数并转成退出码，供 CI 拦截「改了 seed 忘了导入」的漂移。seed 中消失的规则集按删除处理（否则 seed 就成了只增不减的叠加，不再是事实来源）。同赛季两个组别的 `[season]` 块不一致会在解析阶段拒绝 —— 它们共用一行 `seasons`，不一致会导致导入永不收敛。
 

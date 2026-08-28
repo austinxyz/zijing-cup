@@ -94,11 +94,11 @@ backend/          FastAPI + SQLModel，唯一能访问数据库的一层
 frontend/         Next.js App Router；lib/api.ts 是调后端的唯一出口
 supabase/         migration，schema 变更的唯一来源
 design/           设计画板源文件（.dc.html）
-docs/domain/      领域模型：赛制规则与待澄清的规则歧义
+docs/domain/      领域模型：赛制规则，以及规则原文歧义的澄清结论
 openspec/         opsx 四阶段开发流程的 change 与能力 spec
 ```
 
 架构铁律（浏览器只连 Next.js、只有 FastAPI 碰数据库、所有表在 `zijing_cup` schema、
 共享 Supabase 项目禁用 CLI push）见 [CLAUDE.md](CLAUDE.md)。
 
-规则本身的依据与两处待组委会确认的歧义见 [docs/domain/rules.md](docs/domain/rules.md)。
+规则本身的依据，以及原文四处歧义的澄清结论（含「为什么外援限制先不判定」），见 [docs/domain/rules.md](docs/domain/rules.md)。
