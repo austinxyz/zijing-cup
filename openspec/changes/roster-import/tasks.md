@@ -11,11 +11,11 @@
   - migration 首行 `set search_path to zijing_cup, public;`，否则 DDL 以 `postgres` 角色落进 `public`（对方应用的 schema）
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/roster-import/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — pytest：断言 `teams` 与 `roster_entries` 存在且位于 `zijing_cup` schema、`public` 中无同名表；断言 `rating_class` / `source_note` / `utr_profile_id` 可空而 `match_utr` / `dutr_status` 非空
-- [ ] 1.2 GREEN — 新增 `supabase/migrations/<timestamp>_create_team_rosters.sql`，建两张表、外键（`teams` → `divisions(season_year, code)`）与唯一索引，首行设置 search_path
-- [ ] 1.3 RED — pytest：断言 `roster_entries(team_id, last_name, first_name)` 唯一；断言同一 `utr_profile_id` 在同组别内插入第二条被拒、在另一组别可插入；断言 `daily_utrs` 能存回多个小数值；断言 `is_borrowed_player` 可为 NULL（未标注）且能存 true/false 三态
-- [ ] 1.4 GREEN — 实现 `backend/app/models/roster.py` 的 SQLModel 定义，可空性与 migration 一致
+- [x] 1.0 CONTRACT — write openspec/changes/roster-import/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — pytest：断言 `teams` 与 `roster_entries` 存在且位于 `zijing_cup` schema、`public` 中无同名表；断言 `rating_class` / `source_note` / `utr_profile_id` 可空而 `match_utr` / `dutr_status` 非空
+- [x] 1.2 GREEN — 新增 `supabase/migrations/<timestamp>_create_team_rosters.sql`，建两张表、外键（`teams` → `divisions(season_year, code)`）与唯一索引，首行设置 search_path
+- [x] 1.3 RED — pytest：断言 `roster_entries(team_id, last_name, first_name)` 唯一；断言同一 `utr_profile_id` 在同组别内插入第二条被拒、在另一组别可插入；断言 `daily_utrs` 能存回多个小数值；断言 `is_borrowed_player` 可为 NULL（未标注）且能存 true/false 三态
+- [x] 1.4 GREEN — 实现 `backend/app/models/roster.py` 的 SQLModel 定义，可空性与 migration 一致
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. CSV 解析与评级类别判定
