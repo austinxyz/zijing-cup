@@ -31,8 +31,16 @@ REQUIRED_COLUMNS = ("Team", "Last Name", "First Name", "DUTR Status", "Match UTR
 OPTIONAL_COLUMNS = ("Gender", "Notes")
 
 # Reference columns that exist in the sheet and are deliberately not stored.
+# The gold and silver tabs spell these differently — silver has an extra
+# "For" — which is exactly why unrecognised columns are reported rather than
+# dropped: the real file taught us the second spelling.
 IGNORED_COLUMNS = frozenset(
-    {"Verified SUTR (Reference)", "SUTR Status (Reference)"}
+    {
+        "Verified SUTR (Reference)",
+        "SUTR Status (Reference)",
+        "Verified SUTR (For Reference)",
+        "SUTR Status (For Reference)",
+    }
 )
 
 # The sampling-window columns. Matched by prefix because the dates move: 2025
@@ -74,6 +82,9 @@ class ParseResult:
     unparsable_rows: list[tuple[str, str]] = field(default_factory=list)
     #: Headers present in the file that this parser does not understand.
     unknown_columns: list[str] = field(default_factory=list)
+    #: Sampling cells holding an annotation instead of a number, e.g.
+    #: "Early Lock". The sample is dropped, the player is kept.
+    annotated_cells: list[str] = field(default_factory=list)
 
 
 def _clean(value: Optional[str]) -> str:
@@ -125,17 +136,41 @@ def _daily_columns(fieldnames: list[str]) -> list[str]:
     ]
 
 
+#: How far into the file to look for the header row. The real Google Sheets
+#: export starts with a blank row, then the merged-cell footnotes as their own
+#: rows, then another blank — the column names are on line 5.
+HEADER_SEARCH_LIMIT = 20
+
+
+def _find_header(text: str) -> tuple[int, list[str]]:
+    """Locate the header row and return its index and column names.
+
+    The exported tab does not begin with the header: assuming row 1 would make
+    every subsequent row unparsable and the import would "succeed" with zero
+    players — a failure that looks like an empty roster rather than a broken
+    read.
+    """
+    rows = list(csv.reader(io.StringIO(text)))
+    for index, row in enumerate(rows[:HEADER_SEARCH_LIMIT]):
+        names = [cell.strip() for cell in row]
+        if all(column in names for column in REQUIRED_COLUMNS):
+            return index, names
+
+    inspected = min(len(rows), HEADER_SEARCH_LIMIT)
+    raise ValueError(
+        "roster CSV has no header row with the required columns "
+        f"({', '.join(REQUIRED_COLUMNS)}) in its first {inspected} row(s)"
+    )
+
+
 def parse_roster_csv(text: str) -> ParseResult:
     """Parse roster CSV text. Raises ValueError only when the file's shape is
     wrong; individual bad rows are reported, never raised."""
-    reader = csv.DictReader(io.StringIO(text))
-    fieldnames = [name.strip() for name in (reader.fieldnames or [])]
+    header_index, fieldnames = _find_header(text)
 
-    missing = [name for name in REQUIRED_COLUMNS if name not in fieldnames]
-    if missing:
-        raise ValueError(
-            f"roster CSV is missing required column(s): {', '.join(missing)}"
-        )
+    # Re-read from the header line so DictReader sees the real column names.
+    body = "\n".join(text.splitlines()[header_index:])
+    reader = csv.DictReader(io.StringIO(body))
 
     daily_columns = _daily_columns(fieldnames)
     known = (
@@ -187,16 +222,40 @@ def parse_roster_csv(text: str) -> ParseResult:
             result.unparsable_rows.append((raw, reason))
             continue
 
-        try:
-            daily = [
-                value
-                for value in (
-                    _decimal_or_none(_clean(row.get(name))) for name in daily_columns
-                )
-                if value is not None
-            ]
-        except (InvalidOperation, ValueError) as exc:
-            result.unparsable_rows.append((raw, f"bad daily UTR value: {exc}"))
+        # The sampling cells sometimes hold an annotation rather than a
+        # number ("Early Lock"). They are evidence for how Match UTR was
+        # derived, and Match UTR is the authoritative value — dropping the
+        # whole player because a note sits in an evidence cell trades a real
+        # roster entry for a footnote. Skip the sample, keep the player, and
+        # report the annotation so a new one cannot pass unnoticed.
+        # `NaN` is not an annotation and is not skipped: it parses as a Decimal
+        # and would then compare false against every cap it met. Only text that
+        # is not a number at all is treated as a note.
+        daily = []
+        bad_daily: Optional[str] = None
+        # Grouped per player: the real export annotates all five sampling
+        # columns at once, and a line per cell would bury the summary an
+        # operator is reading.
+        annotations: dict[str, list[str]] = {}
+        for name in daily_columns:
+            cell = _clean(row.get(name))
+            if not cell:
+                continue
+            try:
+                daily.append(_finite_decimal(cell))
+            except InvalidOperation:
+                annotations.setdefault(cell, []).append(name)
+            except ValueError as exc:
+                bad_daily = f"bad daily UTR value in {name}: {exc}"
+                break
+
+        for note, columns in annotations.items():
+            result.annotated_cells.append(
+                f"{team_code} {last_name}{first_name}: {note!r} in {', '.join(columns)}"
+            )
+
+        if bad_daily:
+            result.unparsable_rows.append((raw, bad_daily))
             continue
 
         gender = _clean(row.get("Gender")) or None

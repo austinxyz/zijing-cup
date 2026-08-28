@@ -27,3 +27,6 @@ frontend/next-env.d.ts
 
 # 名单 CSV 含真实个人数据，只在本地/运行环境存在
 backend/data/rosters/*.csv
+
+# 用户从组委会总表导出的名单 CSV 落点（真实个人数据）
+migration/

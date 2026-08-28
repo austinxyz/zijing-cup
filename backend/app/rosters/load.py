@@ -52,6 +52,10 @@ class RosterReport:
     skipped_rows: list[str] = field(default_factory=list)
     unparsable_rows: list[tuple[str, str]] = field(default_factory=list)
     unknown_columns: list[str] = field(default_factory=list)
+    #: Sampling cells holding a note instead of a number. The player is
+    #: imported and the sample dropped, so this is the only thing that says a
+    #: new kind of annotation has appeared in the sheet.
+    annotated_cells: list[str] = field(default_factory=list)
     suspicious_teams: list[str] = field(default_factory=list)
 
     #: Cross-tab reconciliation, populated only when a ranking CSV is given.
@@ -70,6 +74,7 @@ class RosterReport:
             self.skipped_rows
             or self.unparsable_rows
             or self.unknown_columns
+            or self.annotated_cells
             or self.suspicious_teams
             or self.ranked_without_roster
             or self.rostered_without_ranking
@@ -95,6 +100,10 @@ class RosterReport:
         if self.unknown_columns:
             lines.append("")
             lines.append(f"unrecognised columns: {', '.join(self.unknown_columns)}")
+        if self.annotated_cells:
+            lines.append("")
+            lines.append("每日 UTR 单元格是文字注记，已跳过该次取样（球员照常导入）:")
+            lines.extend(f"  · {cell}" for cell in self.annotated_cells)
         if self.suspicious_teams:
             lines.append("")
             lines.append("teams with a suspicious row count (check by hand):")
@@ -259,6 +268,7 @@ def _compare(
         skipped_rows=list(parsed.skipped_rows),
         unparsable_rows=list(parsed.unparsable_rows),
         unknown_columns=list(parsed.unknown_columns),
+        annotated_cells=list(parsed.annotated_cells),
         suspicious_teams=_suspicious(parsed.entries),
     )
     _reconcile_with_ranking(report, parsed, ranking_text)

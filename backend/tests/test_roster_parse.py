@@ -176,6 +176,27 @@ class TestNonRosterRows:
         assert len(result.unparsable_rows) == 1
         assert "finite" in result.unparsable_rows[0][1].lower()
 
+    def test_annotated_daily_cell_does_not_lose_the_player(self):
+        """The real sheet writes notes like "Early Lock" in sampling cells.
+
+        The daily values are evidence for how the participation UTR was
+        derived; Match UTR is the authoritative number. Dropping a whole
+        roster entry because an evidence cell holds an annotation trades a
+        real player for a footnote — 39 silver players were lost this way on
+        the first run against the real export.
+        """
+        result = parse_roster_csv(
+            csv_of("TEST-A,南,望舒,M,Rated,6.38,Early Lock,Early Lock,6.4,,,,,")
+        )
+
+        assert len(result.entries) == 1
+        entry = result.entries[0]
+        assert entry.match_utr == Decimal("6.38")
+        # The annotated cells are treated as absent samples, not zeros.
+        assert entry.daily_utrs == [Decimal("6.4")]
+        # Still surfaced, so a new annotation cannot slip by unnoticed.
+        assert any("Early Lock" in note for note in result.annotated_cells)
+
     def test_non_finite_daily_value_is_rejected(self):
         result = parse_roster_csv(
             csv_of("TEST-A,南,望舒,M,Rated,6.50,6.4,NaN,6.5,,,,,")
@@ -219,6 +240,30 @@ class TestColumnLayout:
         result = parse_roster_csv(csv_text)
         assert len(result.entries) == 1
         assert "Mystery Column" in result.unknown_columns
+
+    def test_header_below_preamble_rows_is_found(self):
+        """The real Google Sheets export does not start with the header.
+
+        Exporting the pre-event tab yields a blank row, then the merged-cell
+        footnotes as their own rows, then another blank, and only then the
+        column names. Assuming row 1 is the header makes every subsequent row
+        unparsable — the import "succeeds" with zero players.
+        """
+        real_shape = "\n".join(
+            [
+                ",,,,,,,,,,,,,",
+                "Borrowed Player,请参考单校和两校联队外援上场人数限制,,,,,,,,,,,,",
+                "Unrated/Projected/Appeal,Captain Provided UTR: 有出场限制,,,,,,,,,,,,",
+                ",,,,,,,,,,,,,",
+                HEADER_2025,
+                "TEST-A,南,望舒,M,Rated,6.50,6.4,6.5,6.5,6.6,6.5,,,",
+            ]
+        ) + "\n"
+
+        result = parse_roster_csv(real_shape)
+
+        assert len(result.entries) == 1
+        assert result.entries[0].team_code == "TEST-A"
 
     def test_missing_required_column_fails_loudly(self):
         # No Match UTR column at all means the file is not what we think it

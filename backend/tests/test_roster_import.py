@@ -441,3 +441,45 @@ class TestRankingReconciliation:
         # Nothing to write, but the source still does not add up.
         assert report.is_clean
         assert any("TEST-GHOST" in line for line in report.ranked_without_roster)
+
+
+class TestAnnotatedCells:
+    def test_annotation_is_reported_not_silently_dropped(self, session):
+        """A sampling cell holding text is kept out of the data and named in
+        the report.
+
+        The player is imported either way, so nothing draws attention to the
+        annotation unless the report says so. Silence would let a new kind of
+        note — a scoring change, a disqualification marker — enter the sheet
+        and be discarded without anyone knowing.
+        """
+        report = load_rosters(
+            session,
+            csv_text("TEST-ALPHA,南,望舒,M,Rated,6.38,Early Lock,6.4,,"),
+            TEST_YEAR,
+            "silver",
+        )
+
+        assert report.has_concerns
+        assert "Early Lock" in report.render()
+
+    def test_annotations_are_grouped_not_one_line_per_cell(self, session):
+        """One line per player, not one per annotated cell.
+
+        The real silver export annotates all five sampling columns for 39
+        players. Reported cell-by-cell that is ~200 lines, which buries the
+        added/changed summary the operator is actually reading.
+        """
+        report = load_rosters(
+            session,
+            csv_text("TEST-ALPHA,南,望舒,M,Rated,6.38,Early Lock,Early Lock,Early Lock,"),
+            TEST_YEAR,
+            "silver",
+        )
+
+        assert len(report.annotated_cells) == 1
+        note = report.annotated_cells[0]
+        assert "Early Lock" in note
+        # The columns are still named, so a note appearing in only one day's
+        # sampling is distinguishable from one covering the whole window.
+        assert "09/22" in note and "09/24" in note

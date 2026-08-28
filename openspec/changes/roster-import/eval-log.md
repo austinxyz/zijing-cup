@@ -48,3 +48,20 @@
     - "rating-class: RATING_CLASS_BY_STATUS deliberately omits Unrated; _rating_class_update() returns None for Unrated, leaving hand-set values untouched"
     - "runtime: All 29 tests pass (4 FirstImport, 5 Idempotence, 5 FieldOwnership, 4 CheckMode, 4 Reconciliation, 7 RankingReconciliation)"
     - "code: Code-reviewer found zero CRITICAL/HIGH/MEDIUM issues; all five critical scrutiny points verified correct; only 1 LOW: unused Decimal import at line 21"
+
+- group: 4
+  attempt: 1
+  scores: {spec: 100, runtime: 100, code: 100}
+  total: 100
+  status: PASS
+  findings:
+    - "spec: Both SHALL statements satisfied — two read-only endpoints provided, no write methods exposed; all 5 spec scenarios verified (team list 200, roster 200, 3× 404 cases)"
+    - "endpoints: GET /api/seasons/{year}/divisions/{code}/teams + GET /api/seasons/{year}/divisions/{code}/teams/{team_code}/roster both implemented and tested"
+    - "roster-fields: All required fields present in response (match_utr, dutr_status, rating_class, source_note, is_borrowed_player, utr_profile_id, daily_utrs, gender)"
+    - "nullable-serialization: rating_class, is_borrowed_player, utr_profile_id all serialize as JSON null when unset, not defaulted to values; verified by test_undetermined_rating_class_is_null_not_guessed, test_borrowed_player_flag_is_three_state, test_profile_id_is_exposed_when_set"
+    - "unknown-team-404: test_unknown_team_is_404_not_an_empty_roster confirms 404 returned, not empty player list"
+    - "grouped-query: list_teams() uses single select(Team.code, func.count(RosterEntry.id)).join(...).group_by(Team.code) query; no N+1"
+    - "no-write-methods: test_no_write_route_exists reads app.openapi()['paths'] and asserts zero POST/PUT/PATCH/DELETE methods; test_roster_routes_are_registered prevents guard from passing vacuously"
+    - "auth: Both routes protected by X-Backend-Secret middleware; test_team_list_requires_the_shared_secret and test_roster_requires_the_shared_secret pass"
+    - "runtime: All 14 tests passed (4 team list, 6 roster, 2 access control, 2 schema validation)"
+    - "code-review: Zero CRITICAL/HIGH/MEDIUM/LOW issues; all five critical scrutiny points independently verified against source code and live test execution"

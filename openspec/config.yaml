@@ -17,6 +17,12 @@ project:
     # 产物检查：断言浏览器真正下载的 bundle 里没有凭据。这才是泄漏的定义——
     # 服务端 chunk 里出现是正常的。需先 `npm run build`。
     - 'test -d frontend/.next/static && { grep -rl ''BACKEND_SECRET\|X-Backend-Secret'' frontend/.next/static/ && exit 1 || true; } || true'
+    # 真实球员数据扫描：名单 CSV 含真实校友姓名/性别/UTR，只允许存在于本地或
+    # 运行环境。按**内容**识别（表头含 Last Name 且含 Match UTR/DUTR），而不是
+    # 按路径 —— 真实导出的表头不在第 1 行（前有空行和两行脚注），所以扫前 20 行。
+    # 按目录——第一版只扫 backend/data/rosters/，结果漏掉了用户导出到仓库根
+    # migration/ 的那两份真实名单。
+    - 'bad=$(git ls-files -z "*.csv" | while IFS= read -r -d "" f; do head -20 "$f" | grep -qi "Last Name" && head -20 "$f" | grep -qiE "Match UTR|DUTR" && printf "%s;" "$f"; done); test -z "$bad" || { echo "BLOCKED: tracked roster CSV holds real personal data: $bad"; exit 1; }'
     - "for f in supabase/migrations/*.sql; do grep -qE 'create (table|index|type)' \"$f\" && ! grep -q 'search_path' \"$f\" && ! grep -qE '\\bzijing_cup\\.' \"$f\" && echo \"BLOCKED: $f creates objects without zijing_cup schema qualification or a search_path header\" && exit 1; done; true"
 
 context: |

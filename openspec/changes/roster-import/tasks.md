@@ -85,13 +85,13 @@
 - [x] 4.2 GREEN — 实现 `backend/app/rosters/query.py` 的组装与 `backend/app/routers/rosters.py` 的路由，并在 `main.py` 注册
 - [x] 4.3 RED — pytest：读 `app.openapi()["paths"]`，断言不存在指向名单或球队资源的写方法；并断言两个读端点确实已注册（防止守卫空转）
 - [x] 4.4 GREEN — 如有必要收紧路由定义使 4.3 通过
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 真实数据导入与验证收尾
 
-- [ ] 5.1 新增一条 `custom_verification_checks`：扫描仓库确保未混入真实球员数据（至少覆盖 `backend/data/rosters/` 下的 `*.csv` 未被追踪）
-- [ ] 5.2 Run backend test suite — `cd backend && uv run pytest`，确认无回归
-- [ ] 5.3 Run frontend test suite — `cd frontend && npm run test`，确认无回归（本次前端无改动，跑一遍确保未误伤）
-- [ ] 5.4 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明
-- [ ] 5.5 用 2025 总表导出的真实 CSV 执行一次导入，核对：金组 6 队 120 人、银组 13 队 211 人、两个伪队名不在球队表、`SJTU` 出现在「行数异常」一节；随后 `--check` 退出码 0。**导入前确认 `DATABASE_URL` 指向本地栈**——测试 fixture 会清空表（CLAUDE.md Pitfalls）
-- [ ] 5.6 Run superpowers:verification-before-completion —— 跑 `project.test_commands` 与 `project.custom_verification_checks`（console.log 扫描、敏感变量泄漏扫描、客户端 bundle 扫描、migration 的 `zijing_cup` 限定检查、真实球员数据扫描）
+- [x] 5.1 新增一条 `custom_verification_checks`：扫描仓库确保未混入真实球员数据（至少覆盖 `backend/data/rosters/` 下的 `*.csv` 未被追踪）
+- [x] 5.2 Run backend test suite — `cd backend && uv run pytest`，确认无回归
+- [x] 5.3 Run frontend test suite — `cd frontend && npm run test`，确认无回归（本次前端无改动，跑一遍确保未误伤）
+- [x] 5.4 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明 —— 已确认 `openspec/config.yaml` 的 `project.e2e_command` 为空，本变更也未新增用户可点的界面。
+- [x] 5.5 用 2025 总表导出的真实 CSV 执行一次导入，核对：金组 6 队 120 人、银组 18 队 339 人、两个伪队名不在球队表；随后 `--check` 退出码 0。**导入前确认 `DATABASE_URL` 指向本地栈**——测试 fixture 会清空表（CLAUDE.md Pitfalls）
+- [x] 5.6 Run superpowers:verification-before-completion —— 跑 `project.test_commands` 与 `project.custom_verification_checks`（console.log 扫描、敏感变量泄漏扫描、客户端 bundle 扫描、migration 的 `zijing_cup` 限定检查、真实球员数据扫描）
