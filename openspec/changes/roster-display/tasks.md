@@ -91,7 +91,7 @@
 - [x] 3.4 GREEN — `list_teams` 的聚合查询加 `gender` 维度，应用层合并成三档；保持一次查询
 - [x] 3.5 RED — 名单端点的响应带该球队的 code 与 `display_name`
 - [x] 3.6 GREEN — `TeamRosterOut.team` 带出显示名
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 球队列表页与空状态
 
@@ -117,7 +117,7 @@
 - **Threshold**: 70
 - **Note**: 含 VISUAL DIFF 任务，阈值取 70（视觉判断有固有主观性）
 
-- [ ] 4.0 CONTRACT — write openspec/changes/roster-display/contracts/group-4.md with the ### Contract block above
+- [x] 4.0 CONTRACT — write openspec/changes/roster-display/contracts/group-4.md with the ### Contract block above
 - [ ] 4.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-28-roster-display-mocks.html`（对应 `design/Teams.dc.html` 与 `design/TeamsEmpty.dc.html`）；记下 token 与逐字文案：「从左侧选一支球队」「球队 · 18」「未开放」
 - [ ] 4.2 RED — `lib/api.ts` 的两个取数函数：球队列表与球队名单，类型含 `display_name` 与三档性别人数；断言不带 `NEXT_PUBLIC_` 前缀的变量不进客户端
 - [ ] 4.3 GREEN — 在 `lib/api.ts` 实现两个取数函数

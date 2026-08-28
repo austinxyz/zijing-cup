@@ -108,7 +108,6 @@ def list_teams(
     if not _division_exists(session, year, division_code):
         return None
 
-    # One grouped query rather than a count per team.
     # One grouped query with gender as a second dimension, not a count per
     # team: a division has up to two dozen teams, and a query each would be
     # two dozen round trips for a number that is already one GROUP BY away.
