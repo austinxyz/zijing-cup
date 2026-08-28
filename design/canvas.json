@@ -1,19 +1,131 @@
 {
   "pages": [
-    { "id": "page-1", "name": "本次 change · 赛制规则" },
-    { "id": "page-2", "name": "后续 change · 队伍与分析" },
-    { "id": "page-3", "name": "本次 change · 队伍名单" }
+    {
+      "id": "page-1",
+      "name": "本次 change · 赛制规则"
+    },
+    {
+      "id": "page-2",
+      "name": "后续 change · 队伍与分析"
+    },
+    {
+      "id": "page-3",
+      "name": "本次 change · 队伍名单"
+    },
+    {
+      "id": "page-4",
+      "name": "本次 change · 阵容排布"
+    }
   ],
   "artboards": [
-    { "file": "Rules.dc.html", "title": "赛制规则页 · 桌面", "page": "page-1", "x": 0, "y": 0, "w": 1440, "h": 980 },
-    { "file": "RulesMobile.dc.html", "title": "赛制规则页 · 移动", "page": "page-1", "x": 1560, "y": 0, "w": 390, "h": 844 },
-    { "file": "Main.dc.html", "title": "队伍页 · 早期草图", "page": "page-2", "x": 0, "y": 0, "w": 1440, "h": 980 },
-    { "file": "Analysis.dc.html", "title": "分析页 · 银组", "page": "page-2", "x": 1560, "y": 0, "w": 1600, "h": 1180 },
-    { "file": "AnalysisGold.dc.html", "title": "分析页 · 金组", "page": "page-2", "x": 3280, "y": 0, "w": 1600, "h": 1180 },
-    { "file": "Teams.dc.html", "title": "队伍页 · 已选球队", "page": "page-3", "x": 0, "y": 0, "w": 1440, "h": 980 },
-    { "file": "TeamsEmpty.dc.html", "title": "队伍页 · 未选球队", "page": "page-3", "x": 1560, "y": 0, "w": 1440, "h": 980 },
-    { "file": "TeamsMobile.dc.html", "title": "队伍页 · 移动 · 球队列表", "page": "page-3", "x": 3120, "y": 0, "w": 390, "h": 844 },
-    { "file": "TeamsMobileRoster.dc.html", "title": "队伍页 · 移动 · 名单", "page": "page-3", "x": 3630, "y": 0, "w": 390, "h": 844 }
+    {
+      "file": "Rules.dc.html",
+      "title": "赛制规则页 · 桌面",
+      "page": "page-1",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 980
+    },
+    {
+      "file": "RulesMobile.dc.html",
+      "title": "赛制规则页 · 移动",
+      "page": "page-1",
+      "x": 1560,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Main.dc.html",
+      "title": "队伍页 · 早期草图",
+      "page": "page-2",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 980
+    },
+    {
+      "file": "Analysis.dc.html",
+      "title": "分析页 · 银组",
+      "page": "page-2",
+      "x": 1560,
+      "y": 0,
+      "w": 1600,
+      "h": 1180
+    },
+    {
+      "file": "AnalysisGold.dc.html",
+      "title": "分析页 · 金组",
+      "page": "page-2",
+      "x": 3280,
+      "y": 0,
+      "w": 1600,
+      "h": 1180
+    },
+    {
+      "file": "Teams.dc.html",
+      "title": "队伍页 · 已选球队",
+      "page": "page-3",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 980
+    },
+    {
+      "file": "TeamsEmpty.dc.html",
+      "title": "队伍页 · 未选球队",
+      "page": "page-3",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 980
+    },
+    {
+      "file": "TeamsMobile.dc.html",
+      "title": "队伍页 · 移动 · 球队列表",
+      "page": "page-3",
+      "x": 3120,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "TeamsMobileRoster.dc.html",
+      "title": "队伍页 · 移动 · 名单",
+      "page": "page-3",
+      "x": 3630,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Lineup.dc.html",
+      "title": "阵容页 · 未锁定",
+      "page": "page-4",
+      "x": 0,
+      "y": 0,
+      "w": 1600,
+      "h": 1000
+    },
+    {
+      "file": "LineupLocked.dc.html",
+      "title": "阵容页 · 已锁 2 线",
+      "page": "page-4",
+      "x": 1720,
+      "y": 0,
+      "w": 1600,
+      "h": 1000
+    },
+    {
+      "file": "LineupBlocked.dc.html",
+      "title": "阵容页 · 无解",
+      "page": "page-4",
+      "x": 3440,
+      "y": 0,
+      "w": 1600,
+      "h": 1000
+    }
   ],
   "annotations": [
     {
@@ -79,7 +191,34 @@
       "y": -320,
       "w": 560,
       "text": "移动端拆成两屏：球队列表 → 某队名单。\n\n名单在 390px 下不用表格改用行卡片：五列表格要么横向溢出，\n要么把 UTR 压到看不清 —— 而 UTR 正是整页存在的理由。\n每行 56px，命中区远超 44px 下限。\n\n顶栏保留赛季×组别切换器（同规则页），不藏进汉堡菜单。"
+    },
+    {
+      "id": "note-lineup-ceiling",
+      "page": "page-4",
+      "x": 0,
+      "y": -330,
+      "w": 700,
+      "text": "为什么头条信息是「上限」而不是「Top 5」。\n\n目标是上场十人参赛 UTR 总和最大，而它会顶满预算然后大面积并列：\n实测 UCSD-ZJU-MU 与 USTC-CMU-HQU 在 56.00 各有 400+ 套并列、\n其中 175/177 组是不同的十人；而 SJSU、NYU-UMICH 等队 270+ 套并列里\n只有 1 组十人——同一批人换线冒充多个选项。\n\n所以界面先说「本队可达 55.92 / 规则允许 56.00 / 差 0.08」，\n再说「达到上限的十人组合只有 1 组」。后面这句把「上限」和「推荐」\n分开：顶点没得选，选择发生在次优那一层。\n\n候选列表按十人组合去重——同一批十人换线不算两套。\n\n数据来源：PKU 的 2025 名单，按 **2026** 银组规则搜索。\n2025 银组的 MD/WD 是 10.5/9.5 且没有 buffer 制度，而 buffer 正是这屏\n一半内容的主题——所以赛季选择器显示 2026。姓名全部虚构，其余数字真实。\n\n侧栏这一项叫「阵容」不叫「分析」：「分析」是对手对比那个功能的名字，\n本次不做，在侧栏里保留为未开放项。"
+    },
+    {
+      "id": "note-lineup-lock",
+      "page": "page-4",
+      "x": 1720,
+      "y": -330,
+      "w": 620,
+      "text": "锁定是收窄的手段，不是许愿。\n\n锁 D1、MD 并排除一人后，候选从 162 套降到 24 套，上限从 55.92 降到 55.71——\n锁定有代价，界面把这 0.21 显式说出来，而不是让人以为锁了不亏。\n\n锁定与排除都写在 URL 里：刷新不丢，链接可以直接发给队友，\n且现有「OpenAPI 里没有写方法」的断言不用放宽。\n\n「搜索被截断」必须是一等状态。Render 免费实例比开发机慢数倍，\n触到节点预算就停——把截断的结果当成完整搜索呈现，等于骗人。"
+    },
+    {
+      "id": "note-lineup-blocked",
+      "page": "page-4",
+      "x": 3440,
+      "y": -330,
+      "w": 640,
+      "text": "无解 ≠ 空列表。\n\n空列表读作「搜过了，没有」；实际是「你这套限制本身没有解」。\n两句话对队长意味着完全不同的下一步。\n\n诊断给两样东西：哪条线凑不出（WD），以及六名女队员现在各自在哪。\n后者是直接读当前锁定与排除得到的，不需要重新搜索。\n**不做**「是哪一条锁定该负责」——那要逐条拆锁重算，最多五次完整搜索，\n在 Render 上代价不成比例，且多条锁定共同导致时仍然指不准。\n页面上写明了这个区别，免得「谁去了哪」被读成因果归属。"
     }
   ],
-  "launch": { "view": "canvas", "page": "page-3" }
+  "launch": {
+    "view": "canvas",
+    "page": "page-4"
+  }
 }

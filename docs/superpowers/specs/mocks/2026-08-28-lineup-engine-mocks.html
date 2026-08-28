@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lineup-engine — mocks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+  :root {
+    --bg: #f6f4f0; --fg: #1a1917; --surface: #ffffff; --surface-muted: #f2efe9;
+    --border: #e4e0d8; --primary: #9c3417; --muted: #79736a; --muted-fg: #a09a90;
+    --danger: #b3261e; --success: #4c8a63; --warning: #b8860b;
+    --warning-surface: #fbf5e6; --warning-border: #ecd9a4;
+    --sidebar: #1c1b18; --sidebar-border: #2a2823; --radius: 0.5rem;
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font-family: "Noto Sans SC", "Segoe UI", sans-serif; }
+  .page { max-width: 1720px; margin: 0 auto; padding: 32px 24px 64px; }
+  .intro { max-width: 780px; margin-bottom: 32px; }
+  .intro h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+  .intro p { font-size: 14px; line-height: 1.7; color: var(--muted); margin: 0 0 8px; }
+  .intro code, .src code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; }
+  .tokens { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .tok { display: flex; align-items: center; gap: 7px; border: 1px solid var(--border);
+         border-radius: var(--radius); background: var(--surface); padding: 5px 10px;
+         font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--muted); }
+  .sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,.08); }
+  section { margin-bottom: 40px; }
+  .mockHead { margin-bottom: 12px; }
+  .mockHead h2 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .mockHead p { font-size: 13px; line-height: 1.6; color: var(--muted); margin: 0; max-width: 900px; }
+  .mockHead .src { margin-top: 4px; font-size: 12px; color: var(--muted-fg); }
+  .frame { display: inline-block; max-width: 100%; overflow-x: auto;
+           border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="intro">
+  <h1>lineup-engine — 视觉稿</h1>
+  <p>锁住已定的搭档、排除本场不能上的人，引擎在规则允许的范围内补齐其余，并告诉你
+     这支队最多能部署多少实力。</p>
+  <p>所有数字来自一次真实的分支限界搜索：PKU 的 2025 名单，按 <strong>2026</strong> 银组规则
+     （2025 没有 buffer 制度，而 buffer 是这屏一半内容的主题）。<strong>球员姓名全部虚构</strong>，
+     其余数值真实且逐项自检过（每对之和、超出量、buffer 合计、搭档差距、男双非递增、
+     高 UTR 人数、无重复用人）。</p>
+  <p>不做：对手对比、胜负预测、外援校验、金组第一级抢先、保存阵容、移动端版式。</p>
+  <div class="tokens">
+    <span class="tok"><span class="sw" style="background:#f6f4f0"></span>bg #f6f4f0</span>
+    <span class="tok"><span class="sw" style="background:#9c3417"></span>primary #9c3417 · 已锁</span>
+    <span class="tok"><span class="sw" style="background:#b8860b"></span>warning #b8860b · 超 cap / 截断</span>
+    <span class="tok"><span class="sw" style="background:#b3261e"></span>danger #b3261e · 无解</span>
+    <span class="tok"><span class="sw" style="background:#1c1b18"></span>sidebar #1c1b18</span>
+  </div>
+</div>
+<section>
+<div class="mockHead"><h2>桌面 · 未锁定</h2><p>头条是「本队可达上限 / 规则允许 / 差多少」，紧跟一句「达到上限的十人组合只有 1 组」——把上限和推荐分开。候选按十人组合去重：同一批人换线不算两套。</p><p class="src"><code>design/Lineup.dc.html</code></p></div>
+<div class="frame"><div style="display: flex; width: 1600px; height: 1000px; background: #f6f4f0; color: #1a1917; font-family: 'Noto Sans SC', 'Segoe UI', sans-serif; overflow: hidden;">
+
+  <aside style="display: flex; flex-direction: column; width: 216px; flex: none; border-right: 1px solid #2a2823; background: #1c1b18; color: #b8b2a6;">
+    <div style="display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #2a2823; padding: 18px 16px 16px;">
+      <div style="display: flex; flex-direction: column; gap: 3px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; height: 20px; width: 20px; flex: none; align-items: center; justify-content: center; border-radius: 5px; background: #9c3417; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; line-height: 1; color: #ffffff;">紫</div>
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.25; letter-spacing: 0.025em; color: #f2eee7;">紫荆杯</div>
+        </div>
+        <div style="padding-left: 28px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; line-height: 1.25; letter-spacing: 0.025em; color: #6f6a60;">TEAM ANALYSIS</div>
+      </div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; border-radius: 8px; border: 1px solid #33322c; background: #14130f; padding: 0 10px;">
+        <span style="font-size: 12.5px; font-weight: 500; color: #f2eee7;">2026 · 银组</span>
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#6f6a60" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg>
+      </div>
+    </div>
+    <nav style="display: flex; flex: 1; flex-direction: column; gap: 2px; padding: 8px;">
+      <div style="display: flex; height: 34px; align-items: center; gap: 9px; border-radius: 8px; font-size: 13px; padding: 0 10px; color: #b8b2a6;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M2.6 2.6h4.2v4.2H2.6zM9.2 2.6h4.2v4.2H9.2zM2.6 9.2h4.2v4.2H2.6zM9.2 9.2h4.2v4.2H9.2z"></path></svg><span>队伍</span></div>
+      <div style="display: flex; height: 34px; align-items: center; gap: 9px; border-radius: 8px; font-size: 13px; border-left: 2px solid #c9502f; background: #2c2a25; padding: 0 10px 0 8px; font-weight: 500; color: #f2eee7;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M2.6 13.4h10.8M4.8 11V7.2M8 11V3.4M11.2 11V5.8"></path></svg><span>阵容</span></div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #6f6a60;"><span style="display: flex; align-items: center; gap: 9px; opacity: 0.45;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M2.6 5.2h9.4M9.4 2.6L12 5.2 9.4 7.8M13.4 10.8H4M6.6 8.2L4 10.8l2.6 2.6"></path></svg><span>对手对比</span></span><span style="flex: none; border-radius: 8px; border: 1px solid #2a2823; padding: 0 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; line-height: 1.6; color: #6f6a60;">未开放</span></div>
+      <div style="display: flex; height: 34px; align-items: center; gap: 9px; border-radius: 8px; font-size: 13px; padding: 0 10px; color: #b8b2a6;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M4 2.4h8v11.2H4zM6.4 5.4h3.2M6.4 8h3.2M6.4 10.6h2"></path></svg><span>赛制规则</span></div>
+    </nav>
+    <div style="display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #2a2823; padding: 10px 14px;">
+      <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; line-height: 1.6; color: #9a948a;">规则来源</div>
+      <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; line-height: 1.6; color: #6f6a60;">seed · 2026 银组</div>
+    </div>
+  </aside>
+  <div style="display: flex; width: 420px; flex: none; flex-direction: column; gap: 14px; border-right: 1px solid #e4e0d8; background: #ffffff; padding: 16px 18px;">
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-size: 13px; font-weight: 600; color: #1a1917;">锁定搭档</span>
+      <span style="font-size: 11.5px; line-height: 1.6; color: #79736a;">留空的线交给引擎。锁定与排除都写在地址里，链接可以直接发给队友。</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 7px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">D1</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 13.00</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">D2</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 12.00</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">D3</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 11.00</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">MD</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 10.25</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">WD</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 9.25</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+      </div>
+    </div>
+    <div style="height: 1px; background: #e4e0d8;"></div>
+    <div style="display: flex; flex-direction: column; gap: 7px;">
+      <span style="font-size: 13px; font-weight: 600; color: #1a1917;">本场不能上</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px;"><span style="font-size: 12.5px; color: #a09a90;">全员可用</span></div>
+    </div>
+    <div style="display: flex; height: 36px; align-items: center; justify-content: center; border-radius: 8px; background: #9c3417; font-size: 13px; font-weight: 500; color: #ffffff;">搜索阵容</div>
+    <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; line-height: 1.7; color: #a09a90;">未锁定任何线 · 全员可用</span>
+  </div>
+  <main style="display: flex; flex: 1; min-width: 0; flex-direction: column; background: #f6f4f0;">
+    <div style="display: flex; flex: none; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e4e0d8; background: #ffffff; padding: 11px 20px;">
+      <div style="display: flex; min-width: 0; flex-direction: column; gap: 2px;">
+        <div style="display: flex; align-items: baseline; gap: 9px;">
+          <span style="font-size: 16px; font-weight: 600; color: #1a1917;">PKU</span>
+          <span style="font-size: 13px; color: #79736a;">北京大学</span>
+          <span style="font-size: 12.5px; color: #a09a90;">19 人 · 13 男 · 6 女</span>
+        </div>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #a09a90;">五线 cap 13 / 12 / 11 / 10.25 / 9.25 · 全队 buffer 0.50 · 搭档差距 ≤3.50 · >7.0 男 ≤1 · >5.5 女 ≤1</span>
+      </div>
+      <span style="flex: none; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; color: #a09a90;">参赛 UTR · 赛前冻结</span>
+    </div>
+    <div style="display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 12px; overflow: hidden; padding: 16px 20px;">
+
+    <div style="display: flex; flex: none; flex-direction: column; gap: 8px; border: 1px solid #e4e0d8; border-radius: 8px; background: #ffffff; padding: 14px 16px;">
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span style="display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.025em; color: #a09a90;">本队可达上限</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 22px; font-weight: 500; color: #1a1917;">55.92</span>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.025em; color: #a09a90;">规则允许</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #79736a;">56.00</span>
+        </span>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">差 0.08</span>
+      </div>
+      <div style="font-size: 12.5px; line-height: 1.65; color: #79736a;">达到这个上限的十人组合<strong>只有 1 组</strong>——顶点没有可选的余地。下面 162 套是去重后的合法阵容（同一批十人换线不算两套），按总和从高到低。</div>
+    </div>
+    <div style="display: flex; flex: none; align-items: baseline; justify-content: space-between;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">候选阵容 · 去重后 162 套</span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; color: #a09a90;">显示前 3 套</span></div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: stretch; border: 1px solid #e4e0d8; border-radius: 8px; background: #ffffff; padding: 11px 12px;">
+        <div style="display: flex; width: 96px; flex: none; flex-direction: column; gap: 3px; padding-right: 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">#1</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: #1a1917;">55.92</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #79736a;">buffer 0.49/0.50</span>
+        </div>
+        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D1</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">陈嘉禾<span style="color: #a09a90;">男</span> + 徐鹏远<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">13.21<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.21</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D2</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">叶明轩<span style="color: #a09a90;">男</span> + 郑一鸣<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">11.93</span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D3</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">吴普强<span style="color: #a09a90;">男</span> + 秦朗<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">11.00</span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">MD</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">张冠宇<span style="color: #a09a90;">男</span> + 林可欣<span style="color: #a09a90;">女</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">10.25</span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">WD</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">韩雨萌<span style="color: #a09a90;">女</span> + 沈佳怡<span style="color: #a09a90;">女</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">9.53<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.28</span></span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: stretch; border: 1px solid #e4e0d8; border-radius: 8px; background: #ffffff; padding: 11px 12px;">
+        <div style="display: flex; width: 96px; flex: none; flex-direction: column; gap: 3px; padding-right: 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">#2</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: #1a1917;">55.90</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #79736a;">buffer 0.44/0.50</span>
+        </div>
+        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D1</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">吴普强<span style="color: #a09a90;">男</span> + 叶明轩<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">13.02<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.02</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D2</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">张冠宇<span style="color: #a09a90;">男</span> + 徐鹏远<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">11.96</span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D3</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">陈嘉禾<span style="color: #a09a90;">男</span> + 罗砚清<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">11.25<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.25</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">MD</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">孙靖凡<span style="color: #a09a90;">男</span> + 沈佳怡<span style="color: #a09a90;">女</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">10.42<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.17</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">WD</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">韩雨萌<span style="color: #a09a90;">女</span> + 林可欣<span style="color: #a09a90;">女</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">9.25</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: stretch; border: 1px solid #e4e0d8; border-radius: 8px; background: #ffffff; padding: 11px 12px;">
+        <div style="display: flex; width: 96px; flex: none; flex-direction: column; gap: 3px; padding-right: 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">#3</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: #1a1917;">55.89</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #79736a;">buffer 0.49/0.50</span>
+        </div>
+        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D1</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">陈嘉禾<span style="color: #a09a90;">男</span> + 徐鹏远<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">13.21<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.21</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D2</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">叶明轩<span style="color: #a09a90;">男</span> + 郑一鸣<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">11.93</span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D3</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">吴普强<span style="color: #a09a90;">男</span> + 温若谷<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">10.97</span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">MD</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">张冠宇<span style="color: #a09a90;">男</span> + 林可欣<span style="color: #a09a90;">女</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">10.25</span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">WD</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">韩雨萌<span style="color: #a09a90;">女</span> + 沈佳怡<span style="color: #a09a90;">女</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">9.53<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.28</span></span>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex: none; flex-direction: column; gap: 5px; border: 1px solid #ecd9a4; border-radius: 8px; background: #fbf5e6; padding: 12px 14px;">
+      <span style="font-size: 12.5px; font-weight: 500; color: #b8860b;">外援限制未校验</span>
+      <span style="font-size: 12px; line-height: 1.65; color: #79736a;">规则对外援有每队名额与每场上场人数限制，但每场上限取决于该队由几所学校组成，这个信息不在系统里。以上阵容<strong>没有</strong>就这一项做过检查。</span>
+    </div>
+    </div>
+  </main>
+</div></div>
+</section>
+<section>
+<div class="mockHead"><h2>桌面 · 已锁 2 线并排除 1 人</h2><p>锁定是收窄手段，代价要显式说出来：候选 162→24，上限 55.92→55.71。「搜索被截断」是一等状态，不靠省略表达。</p><p class="src"><code>design/LineupLocked.dc.html</code></p></div>
+<div class="frame"><div style="display: flex; width: 1600px; height: 1000px; background: #f6f4f0; color: #1a1917; font-family: 'Noto Sans SC', 'Segoe UI', sans-serif; overflow: hidden;">
+
+  <aside style="display: flex; flex-direction: column; width: 216px; flex: none; border-right: 1px solid #2a2823; background: #1c1b18; color: #b8b2a6;">
+    <div style="display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #2a2823; padding: 18px 16px 16px;">
+      <div style="display: flex; flex-direction: column; gap: 3px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; height: 20px; width: 20px; flex: none; align-items: center; justify-content: center; border-radius: 5px; background: #9c3417; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; line-height: 1; color: #ffffff;">紫</div>
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.25; letter-spacing: 0.025em; color: #f2eee7;">紫荆杯</div>
+        </div>
+        <div style="padding-left: 28px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; line-height: 1.25; letter-spacing: 0.025em; color: #6f6a60;">TEAM ANALYSIS</div>
+      </div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; border-radius: 8px; border: 1px solid #33322c; background: #14130f; padding: 0 10px;">
+        <span style="font-size: 12.5px; font-weight: 500; color: #f2eee7;">2026 · 银组</span>
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#6f6a60" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg>
+      </div>
+    </div>
+    <nav style="display: flex; flex: 1; flex-direction: column; gap: 2px; padding: 8px;">
+      <div style="display: flex; height: 34px; align-items: center; gap: 9px; border-radius: 8px; font-size: 13px; padding: 0 10px; color: #b8b2a6;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M2.6 2.6h4.2v4.2H2.6zM9.2 2.6h4.2v4.2H9.2zM2.6 9.2h4.2v4.2H2.6zM9.2 9.2h4.2v4.2H9.2z"></path></svg><span>队伍</span></div>
+      <div style="display: flex; height: 34px; align-items: center; gap: 9px; border-radius: 8px; font-size: 13px; border-left: 2px solid #c9502f; background: #2c2a25; padding: 0 10px 0 8px; font-weight: 500; color: #f2eee7;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M2.6 13.4h10.8M4.8 11V7.2M8 11V3.4M11.2 11V5.8"></path></svg><span>阵容</span></div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #6f6a60;"><span style="display: flex; align-items: center; gap: 9px; opacity: 0.45;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M2.6 5.2h9.4M9.4 2.6L12 5.2 9.4 7.8M13.4 10.8H4M6.6 8.2L4 10.8l2.6 2.6"></path></svg><span>对手对比</span></span><span style="flex: none; border-radius: 8px; border: 1px solid #2a2823; padding: 0 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; line-height: 1.6; color: #6f6a60;">未开放</span></div>
+      <div style="display: flex; height: 34px; align-items: center; gap: 9px; border-radius: 8px; font-size: 13px; padding: 0 10px; color: #b8b2a6;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M4 2.4h8v11.2H4zM6.4 5.4h3.2M6.4 8h3.2M6.4 10.6h2"></path></svg><span>赛制规则</span></div>
+    </nav>
+    <div style="display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #2a2823; padding: 10px 14px;">
+      <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; line-height: 1.6; color: #9a948a;">规则来源</div>
+      <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; line-height: 1.6; color: #6f6a60;">seed · 2026 银组</div>
+    </div>
+  </aside>
+  <div style="display: flex; width: 420px; flex: none; flex-direction: column; gap: 14px; border-right: 1px solid #e4e0d8; background: #ffffff; padding: 16px 18px;">
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-size: 13px; font-weight: 600; color: #1a1917;">锁定搭档</span>
+      <span style="font-size: 11.5px; line-height: 1.6; color: #79736a;">留空的线交给引擎。锁定与排除都写在地址里，链接可以直接发给队友。</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 7px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">D1</span><span style="flex: none; border-radius: 6px; background: #faf5f3; padding: 1px 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; color: #9c3417;">已锁</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 13.00</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; border: 1px solid #9c3417; background: #faf5f3; padding: 0 10px;"><span style="font-size: 12.5px; color: #1a1917;">吴普强<span style="font-size: 11px; color: #79736a;"> 男</span></span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #9c3417;">6.75</span></span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; border: 1px solid #9c3417; background: #faf5f3; padding: 0 10px;"><span style="font-size: 12.5px; color: #1a1917;">叶明轩<span style="font-size: 11px; color: #79736a;"> 男</span></span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #9c3417;">6.27</span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">D2</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 12.00</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">D3</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 11.00</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">MD</span><span style="flex: none; border-radius: 6px; background: #faf5f3; padding: 1px 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; color: #9c3417;">已锁</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 10.25</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; border: 1px solid #9c3417; background: #faf5f3; padding: 0 10px;"><span style="font-size: 12.5px; color: #1a1917;">孙靖凡<span style="font-size: 11px; color: #79736a;"> 男</span></span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #9c3417;">5.89</span></span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; border: 1px solid #9c3417; background: #faf5f3; padding: 0 10px;"><span style="font-size: 12.5px; color: #1a1917;">沈佳怡<span style="font-size: 11px; color: #79736a;"> 女</span></span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #9c3417;">4.53</span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">WD</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 9.25</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+      </div>
+    </div>
+    <div style="height: 1px; background: #e4e0d8;"></div>
+    <div style="display: flex; flex-direction: column; gap: 7px;">
+      <span style="font-size: 13px; font-weight: 600; color: #1a1917;">本场不能上</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px;"><span style="display: inline-flex; height: 24px; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 8px; font-size: 12px; color: #79736a;">陈嘉禾 男<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">×</span></span></div>
+    </div>
+    <div style="display: flex; height: 36px; align-items: center; justify-content: center; border-radius: 8px; background: #9c3417; font-size: 13px; font-weight: 500; color: #ffffff;">搜索阵容</div>
+    <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; line-height: 1.7; color: #a09a90;">已锁 D1 · MD ／ 排除 1 人 ／ 其余 3 线搜索</span>
+  </div>
+  <main style="display: flex; flex: 1; min-width: 0; flex-direction: column; background: #f6f4f0;">
+    <div style="display: flex; flex: none; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e4e0d8; background: #ffffff; padding: 11px 20px;">
+      <div style="display: flex; min-width: 0; flex-direction: column; gap: 2px;">
+        <div style="display: flex; align-items: baseline; gap: 9px;">
+          <span style="font-size: 16px; font-weight: 600; color: #1a1917;">PKU</span>
+          <span style="font-size: 13px; color: #79736a;">北京大学</span>
+          <span style="font-size: 12.5px; color: #a09a90;">19 人 · 13 男 · 6 女</span>
+        </div>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #a09a90;">五线 cap 13 / 12 / 11 / 10.25 / 9.25 · 全队 buffer 0.50 · 搭档差距 ≤3.50 · >7.0 男 ≤1 · >5.5 女 ≤1 · 已锁 2 线</span>
+      </div>
+      <span style="flex: none; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; color: #a09a90;">参赛 UTR · 赛前冻结</span>
+    </div>
+    <div style="display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 12px; overflow: hidden; padding: 16px 20px;">
+
+    <div style="display: flex; flex: none; flex-direction: column; gap: 8px; border: 1px solid #e4e0d8; border-radius: 8px; background: #ffffff; padding: 14px 16px;">
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span style="display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.025em; color: #a09a90;">本队可达上限</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 22px; font-weight: 500; color: #1a1917;">55.71</span>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.025em; color: #a09a90;">规则允许</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #79736a;">56.00</span>
+        </span>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">差 0.29</span>
+      </div>
+      <div style="font-size: 12.5px; line-height: 1.65; color: #79736a;">锁定 D1、MD 并排除陈嘉禾后，候选从 162 套收窄到 <strong>24 套</strong>，上限也从 55.92 降到 55.71——锁定是有代价的，这里是 0.21。</div>
+    </div>
+    <div style="display: flex; flex: none; align-items: baseline; justify-content: space-between;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">候选阵容 · 去重后 24 套</span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; color: #a09a90;">显示前 2 套</span></div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: stretch; border: 1px solid #e4e0d8; border-radius: 8px; background: #ffffff; padding: 11px 12px;">
+        <div style="display: flex; width: 96px; flex: none; flex-direction: column; gap: 3px; padding-right: 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">#1</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: #1a1917;">55.71</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #79736a;">buffer 0.25/0.50</span>
+        </div>
+        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D1</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">吴普强<span style="color: #a09a90;">男</span> + 叶明轩<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">13.02<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.02</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D2</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">张冠宇<span style="color: #a09a90;">男</span> + 徐鹏远<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">11.96</span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D3</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">郑一鸣<span style="color: #a09a90;">男</span> + 曹思远<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">11.06<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.06</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">MD</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">孙靖凡<span style="color: #a09a90;">男</span> + 沈佳怡<span style="color: #a09a90;">女</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">10.42<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.17</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">WD</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">韩雨萌<span style="color: #a09a90;">女</span> + 林可欣<span style="color: #a09a90;">女</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">9.25</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: stretch; border: 1px solid #e4e0d8; border-radius: 8px; background: #ffffff; padding: 11px 12px;">
+        <div style="display: flex; width: 96px; flex: none; flex-direction: column; gap: 3px; padding-right: 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">#2</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: #1a1917;">55.69</span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #79736a;">buffer 0.23/0.50</span>
+        </div>
+        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D1</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">吴普强<span style="color: #a09a90;">男</span> + 叶明轩<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">13.02<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.02</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D2</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">张冠宇<span style="color: #a09a90;">男</span> + 徐鹏远<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">11.96</span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">D3</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">郑一鸣<span style="color: #a09a90;">男</span> + 邱阿岚<span style="color: #a09a90;">男</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">11.04<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.04</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">MD</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">孙靖凡<span style="color: #a09a90;">男</span> + 沈佳怡<span style="color: #a09a90;">女</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">10.42<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #b8860b;"> 超0.17</span></span>
+        </div>        <div style="display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; border-left: 1px solid #e4e0d8; padding: 0 10px;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.025em; color: #a09a90;">WD</span>
+          <span style="font-size: 12px; line-height: 1.45; color: #1a1917;">韩雨萌<span style="color: #a09a90;">女</span> + 林可欣<span style="color: #a09a90;">女</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #79736a;">9.25</span>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex: none; flex-direction: column; gap: 5px; border: 1px solid #ecd9a4; border-radius: 8px; background: #fbf5e6; padding: 12px 14px;">
+      <span style="font-size: 12.5px; font-weight: 500; color: #b8860b;">搜索被截断</span>
+      <span style="font-size: 12px; line-height: 1.65; color: #79736a;">达到 200 万个节点的预算上限就停下了，因此这不是一次完整搜索——可能还有没被看到的阵容。缩小范围（多锁一条线，或排除几名本场不能上的队员）可以让它跑完。</span>
+    </div>
+    <div style="display: flex; flex: none; flex-direction: column; gap: 5px; border: 1px solid #ecd9a4; border-radius: 8px; background: #fbf5e6; padding: 12px 14px;">
+      <span style="font-size: 12.5px; font-weight: 500; color: #b8860b;">外援限制未校验</span>
+      <span style="font-size: 12px; line-height: 1.65; color: #79736a;">规则对外援有每队名额与每场上场人数限制，但每场上限取决于该队由几所学校组成，这个信息不在系统里。以上阵容<strong>没有</strong>就这一项做过检查。</span>
+    </div>
+    </div>
+  </main>
+</div></div>
+</section>
+<section>
+<div class="mockHead"><h2>桌面 · 无解</h2><p>无解 ≠ 空列表。诊断给「哪条线凑不出」加「六名女队员现在各自在哪」——后者是读状态，不是因果归属，页面上写明了这个区别。</p><p class="src"><code>design/LineupBlocked.dc.html</code></p></div>
+<div class="frame"><div style="display: flex; width: 1600px; height: 1000px; background: #f6f4f0; color: #1a1917; font-family: 'Noto Sans SC', 'Segoe UI', sans-serif; overflow: hidden;">
+
+  <aside style="display: flex; flex-direction: column; width: 216px; flex: none; border-right: 1px solid #2a2823; background: #1c1b18; color: #b8b2a6;">
+    <div style="display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #2a2823; padding: 18px 16px 16px;">
+      <div style="display: flex; flex-direction: column; gap: 3px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; height: 20px; width: 20px; flex: none; align-items: center; justify-content: center; border-radius: 5px; background: #9c3417; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; line-height: 1; color: #ffffff;">紫</div>
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.25; letter-spacing: 0.025em; color: #f2eee7;">紫荆杯</div>
+        </div>
+        <div style="padding-left: 28px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; line-height: 1.25; letter-spacing: 0.025em; color: #6f6a60;">TEAM ANALYSIS</div>
+      </div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; border-radius: 8px; border: 1px solid #33322c; background: #14130f; padding: 0 10px;">
+        <span style="font-size: 12.5px; font-weight: 500; color: #f2eee7;">2026 · 银组</span>
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#6f6a60" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg>
+      </div>
+    </div>
+    <nav style="display: flex; flex: 1; flex-direction: column; gap: 2px; padding: 8px;">
+      <div style="display: flex; height: 34px; align-items: center; gap: 9px; border-radius: 8px; font-size: 13px; padding: 0 10px; color: #b8b2a6;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M2.6 2.6h4.2v4.2H2.6zM9.2 2.6h4.2v4.2H9.2zM2.6 9.2h4.2v4.2H2.6zM9.2 9.2h4.2v4.2H9.2z"></path></svg><span>队伍</span></div>
+      <div style="display: flex; height: 34px; align-items: center; gap: 9px; border-radius: 8px; font-size: 13px; border-left: 2px solid #c9502f; background: #2c2a25; padding: 0 10px 0 8px; font-weight: 500; color: #f2eee7;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M2.6 13.4h10.8M4.8 11V7.2M8 11V3.4M11.2 11V5.8"></path></svg><span>阵容</span></div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #6f6a60;"><span style="display: flex; align-items: center; gap: 9px; opacity: 0.45;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M2.6 5.2h9.4M9.4 2.6L12 5.2 9.4 7.8M13.4 10.8H4M6.6 8.2L4 10.8l2.6 2.6"></path></svg><span>对手对比</span></span><span style="flex: none; border-radius: 8px; border: 1px solid #2a2823; padding: 0 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; line-height: 1.6; color: #6f6a60;">未开放</span></div>
+      <div style="display: flex; height: 34px; align-items: center; gap: 9px; border-radius: 8px; font-size: 13px; padding: 0 10px; color: #b8b2a6;"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;"><path d="M4 2.4h8v11.2H4zM6.4 5.4h3.2M6.4 8h3.2M6.4 10.6h2"></path></svg><span>赛制规则</span></div>
+    </nav>
+    <div style="display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #2a2823; padding: 10px 14px;">
+      <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; line-height: 1.6; color: #9a948a;">规则来源</div>
+      <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; line-height: 1.6; color: #6f6a60;">seed · 2026 银组</div>
+    </div>
+  </aside>
+  <div style="display: flex; width: 420px; flex: none; flex-direction: column; gap: 14px; border-right: 1px solid #e4e0d8; background: #ffffff; padding: 16px 18px;">
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-size: 13px; font-weight: 600; color: #1a1917;">锁定搭档</span>
+      <span style="font-size: 11.5px; line-height: 1.6; color: #79736a;">留空的线交给引擎。锁定与排除都写在地址里，链接可以直接发给队友。</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 7px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">D1</span><span style="flex: none; border-radius: 6px; background: #faf5f3; padding: 1px 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; color: #9c3417;">已锁</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 13.00</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; border: 1px solid #9c3417; background: #faf5f3; padding: 0 10px;"><span style="font-size: 12.5px; color: #1a1917;">陈嘉禾<span style="font-size: 11px; color: #79736a;"> 男</span></span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #9c3417;">7.25</span></span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; border: 1px solid #9c3417; background: #faf5f3; padding: 0 10px;"><span style="font-size: 12.5px; color: #1a1917;">徐鹏远<span style="font-size: 11px; color: #79736a;"> 男</span></span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #9c3417;">5.96</span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">D2</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 12.00</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">D3</span><span style="flex: none; border-radius: 6px; background: #faf5f3; padding: 1px 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; color: #9c3417;">已锁</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 11.00</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; border: 1px solid #9c3417; background: #faf5f3; padding: 0 10px;"><span style="font-size: 12.5px; color: #1a1917;">吴普强<span style="font-size: 11px; color: #79736a;"> 男</span></span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #9c3417;">6.75</span></span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; border: 1px solid #9c3417; background: #faf5f3; padding: 0 10px;"><span style="font-size: 12.5px; color: #1a1917;">林可欣<span style="font-size: 11px; color: #79736a;"> 女</span></span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #9c3417;">4.25</span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">MD</span><span style="flex: none; border-radius: 6px; background: #faf5f3; padding: 1px 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; color: #9c3417;">已锁</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 10.25</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; border: 1px solid #9c3417; background: #faf5f3; padding: 0 10px;"><span style="font-size: 12.5px; color: #1a1917;">张冠宇<span style="font-size: 11px; color: #79736a;"> 男</span></span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #9c3417;">6.00</span></span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; justify-content: space-between; gap: 6px; border-radius: 8px; border: 1px solid #9c3417; background: #faf5f3; padding: 0 10px;"><span style="font-size: 12.5px; color: #1a1917;">沈佳怡<span style="font-size: 11px; color: #79736a;"> 女</span></span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #9c3417;">4.53</span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; width: 62px; flex: none; flex-direction: column; gap: 1px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">WD</span></span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">cap 9.25</span>
+        </span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+        <span style="display: flex; height: 34px; flex: 1; align-items: center; border-radius: 8px; border: 1px dashed #e4e0d8; background: #ffffff; padding: 0 10px; font-size: 12.5px; color: #a09a90;">交给引擎</span>
+      </div>
+    </div>
+    <div style="height: 1px; background: #e4e0d8;"></div>
+    <div style="display: flex; flex-direction: column; gap: 7px;">
+      <span style="font-size: 13px; font-weight: 600; color: #1a1917;">本场不能上</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px;"><span style="display: inline-flex; height: 24px; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 8px; font-size: 12px; color: #79736a;">杨柏宁 女<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">×</span></span><span style="display: inline-flex; height: 24px; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 8px; font-size: 12px; color: #79736a;">谢一文 女<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">×</span></span><span style="display: inline-flex; height: 24px; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 8px; font-size: 12px; color: #79736a;">何雪莉 女<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">×</span></span></div>
+    </div>
+    <div style="display: flex; height: 36px; align-items: center; justify-content: center; border-radius: 8px; background: #9c3417; font-size: 13px; font-weight: 500; color: #ffffff;">搜索阵容</div>
+    <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; line-height: 1.7; color: #a09a90;">已锁 3 线 ／ 排除 3 人</span>
+  </div>
+  <main style="display: flex; flex: 1; min-width: 0; flex-direction: column; background: #f6f4f0;">
+    <div style="display: flex; flex: none; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e4e0d8; background: #ffffff; padding: 11px 20px;">
+      <div style="display: flex; min-width: 0; flex-direction: column; gap: 2px;">
+        <div style="display: flex; align-items: baseline; gap: 9px;">
+          <span style="font-size: 16px; font-weight: 600; color: #1a1917;">PKU</span>
+          <span style="font-size: 13px; color: #79736a;">北京大学</span>
+          <span style="font-size: 12.5px; color: #a09a90;">19 人 · 13 男 · 6 女</span>
+        </div>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #a09a90;">五线 cap 13 / 12 / 11 / 10.25 / 9.25 · 全队 buffer 0.50 · 搭档差距 ≤3.50 · >7.0 男 ≤1 · >5.5 女 ≤1 · 无解</span>
+      </div>
+      <span style="flex: none; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; color: #a09a90;">参赛 UTR · 赛前冻结</span>
+    </div>
+    <div style="display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 12px; overflow: hidden; padding: 16px 20px;">
+    <div style="display: flex; flex: none; flex-direction: column; gap: 5px; border: 1px solid #f0cfc9; border-radius: 8px; background: #fbf0ee; padding: 12px 14px;">
+      <span style="font-size: 12.5px; font-weight: 500; color: #b3261e;">凑不出合法阵容</span>
+      <span style="font-size: 12px; line-height: 1.65; color: #79736a;">在当前的锁定与排除下，<strong>女双（WD）没有任何合法搭档</strong>。<br><br>这不是「搜索没找到」——这套限制本身就没有解，再等也不会有结果。松开一条锁定，或让一名被排除的队员归队。</span>
+    </div>
+    <div style="display: flex; flex: none; flex-direction: column; gap: 8px; border: 1px solid #e4e0d8; border-radius: 8px; background: #ffffff; padding: 14px 16px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">各线还剩多少合法搭档</span><div style="display: flex; gap: 22px; padding-top: 2px;"><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">D1</span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: #1a1917;">已锁</span></span><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">D2</span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: #1a1917;">31</span></span><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">D3</span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: #1a1917;">已锁</span></span><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">MD</span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: #1a1917;">已锁</span></span><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">WD</span><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; color: #b3261e;">0</span></span></div></div>
+    <div style="display: flex; flex: none; flex-direction: column; gap: 8px; border: 1px solid #e4e0d8; border-radius: 8px; background: #ffffff; padding: 14px 16px;"><span style="font-size: 12.5px; font-weight: 500; color: #1a1917;">六名女队员现在的去向</span><div style="display: flex; flex-wrap: wrap; gap: 7px;"><span style="display: inline-flex; height: 26px; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 9px; font-size: 12px; color: #79736a;">沈佳怡<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">已锁 MD</span></span><span style="display: inline-flex; height: 26px; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 9px; font-size: 12px; color: #79736a;">林可欣<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">已锁 D3</span></span><span style="display: inline-flex; height: 26px; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 9px; font-size: 12px; color: #79736a;">杨柏宁<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">排除</span></span><span style="display: inline-flex; height: 26px; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 9px; font-size: 12px; color: #79736a;">谢一文<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">排除</span></span><span style="display: inline-flex; height: 26px; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 9px; font-size: 12px; color: #79736a;">何雪莉<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">排除</span></span><span style="display: inline-flex; height: 26px; align-items: center; gap: 6px; border-radius: 6px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 9px; font-size: 12px; color: #79736a;">韩雨萌<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #a09a90;">可用</span></span></div><span style="font-size: 11.5px; line-height: 1.65; color: #79736a;">女双要两名女队员，现在只剩一名可用。这是直接读当前的锁定与排除得到的，不是逐条拆锁重算——系统不声称知道是哪一条锁定「该负责」。</span></div>
+
+    </div>
+  </main>
+</div></div>
+</section>
+
+</div>
+</body>
+</html>
