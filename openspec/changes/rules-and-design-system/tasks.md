@@ -69,11 +69,11 @@
   - 只读：不新增任何写入端点；路由仍在既有的 `X-Backend-Secret` 中间件之后
 - **Threshold**: 80
 
-- [ ] 4.0 CONTRACT — write openspec/changes/rules-and-design-system/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 RED — pytest：`/api/seasons/2026/divisions/silver/rules` 返回 200 且响应含五线定义、buffer 两个额度、资格限制与 scoring_mode；未知赛季与未知组别代码均返回 404
-- [ ] 4.2 GREEN — 实现 `backend/app/rules.py` 的查询组装与 `backend/app/routers/rules.py` 的路由，并在 `main.py` 注册
-- [ ] 4.3 RED — pytest：断言应用路由表中不存在任何指向规则资源的写方法（POST/PUT/PATCH/DELETE）
-- [ ] 4.4 GREEN — 如有必要收紧路由定义，使 4.3 通过
+- [x] 4.0 CONTRACT — write openspec/changes/rules-and-design-system/contracts/group-4.md with the ### Contract block above
+- [x] 4.1 RED — pytest：`/api/seasons/2026/divisions/silver/rules` 返回 200 且响应含五线定义、buffer 两个额度、资格限制与 scoring_mode；未知赛季与未知组别代码均返回 404
+- [x] 4.2 GREEN — 实现 `backend/app/rules.py` 的查询组装与 `backend/app/routers/rules.py` 的路由，并在 `main.py` 注册
+- [x] 4.3 RED — pytest：断言应用路由表中不存在任何指向规则资源的写方法（POST/PUT/PATCH/DELETE）
+- [x] 4.4 GREEN — 如有必要收紧路由定义，使 4.3 通过
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 应用壳与赛制规则页

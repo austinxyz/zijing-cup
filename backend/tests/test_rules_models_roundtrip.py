@@ -22,25 +22,48 @@ from app.db import engine
 from app.models import Division, DivisionEligibilityLimit, DivisionLine, Season
 
 
+# A season no real rule set uses, so this module's rows can never collide
+# with seeded data another test module left behind.
+TEST_YEAR = 1999
+
+
 @pytest.fixture
 def session():
     with Session(engine) as s:
+        _cleanup(s)
         yield s
-        # These tests write real rows; leave the table as we found it so the
-        # seed-importer tests in the next group start from a known state.
-        s.execute(delete(DivisionEligibilityLimit))
-        s.execute(delete(DivisionLine))
-        s.execute(delete(Division))
-        s.execute(delete(Season))
-        s.commit()
+        _cleanup(s)
+
+
+def _cleanup(s: Session) -> None:
+    """Remove only this module's rows.
+
+    Truncating every table would delete rule sets other modules loaded, which
+    makes the suite order-dependent — the kind of failure that shows up once
+    in CI and never locally.
+    """
+    ids = [
+        d.id
+        for d in s.exec(select(Division).where(Division.season_year == TEST_YEAR)).all()
+    ]
+    if ids:
+        s.execute(
+            delete(DivisionEligibilityLimit).where(
+                DivisionEligibilityLimit.division_id.in_(ids)
+            )
+        )
+        s.execute(delete(DivisionLine).where(DivisionLine.division_id.in_(ids)))
+        s.execute(delete(Division).where(Division.id.in_(ids)))
+    s.execute(delete(Season).where(Season.year == TEST_YEAR))
+    s.commit()
 
 
 @pytest.fixture
 def division(session) -> Division:
-    session.add(Season(year=1999, edition_name="测试赛季"))
+    session.add(Season(year=TEST_YEAR, edition_name="测试赛季"))
     session.commit()
     d = Division(
-        season_year=1999,
+        season_year=TEST_YEAR,
         code="gold",
         display_name="金组",
         scoring_mode="points",
@@ -68,7 +91,11 @@ def test_open_line_round_trips_as_none_not_zero(session, division):
     session.commit()
     session.expire_all()
 
-    line = session.exec(select(DivisionLine).where(DivisionLine.code == "D1")).one()
+    line = session.exec(
+        select(DivisionLine).where(
+            DivisionLine.division_id == division.id, DivisionLine.code == "D1"
+        )
+    ).one()
     # The distinction that matters: no ceiling at all, versus a ceiling of 0.
     assert line.cap is None
     assert line.points == 1
@@ -91,7 +118,11 @@ def test_capped_line_keeps_two_decimal_places(session, division):
     session.commit()
     session.expire_all()
 
-    line = session.exec(select(DivisionLine).where(DivisionLine.code == "MD")).one()
+    line = session.exec(
+        select(DivisionLine).where(
+            DivisionLine.division_id == division.id, DivisionLine.code == "MD"
+        )
+    ).one()
     assert line.cap == Decimal("10.25")
 
 
@@ -118,7 +149,11 @@ def test_eligibility_limit_round_trips_a_line_whitelist(session, division):
     session.commit()
     session.expire_all()
 
-    limit = session.exec(select(DivisionEligibilityLimit)).one()
+    limit = session.exec(
+        select(DivisionEligibilityLimit).where(
+            DivisionEligibilityLimit.division_id == division.id
+        )
+    ).one()
     assert limit.restricted_to_lines == ["D1", "MD"]
     assert limit.max_players == 1
 
@@ -138,5 +173,9 @@ def test_eligibility_limit_without_whitelist_round_trips_as_none(session, divisi
     session.commit()
     session.expire_all()
 
-    limit = session.exec(select(DivisionEligibilityLimit)).one()
+    limit = session.exec(
+        select(DivisionEligibilityLimit).where(
+            DivisionEligibilityLimit.division_id == division.id
+        )
+    ).one()
     assert limit.restricted_to_lines is None

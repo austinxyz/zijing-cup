@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from app.auth import require_shared_secret
 from app.db import check_db_connection
+from app.routers import rules
 
 # Opt in to interactive docs rather than switching them off when the
 # environment looks like production — a misread environment leaves docs
@@ -17,6 +18,7 @@ app = FastAPI(
     openapi_url="/openapi.json" if _docs_enabled else None,
 )
 app.middleware("http")(require_shared_secret)
+app.include_router(rules.router)
 
 
 @app.get("/health")
