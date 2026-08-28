@@ -1,22 +1,30 @@
 {
   "artboards": [
-    { "file": "Main.dc.html", "title": "队伍页", "x": 0, "y": 0, "w": 1440, "h": 980 },
-    { "file": "Analysis.dc.html", "title": "分析页", "x": 1560, "y": 0, "w": 1600, "h": 1120 }
+    { "file": "Main.dc.html", "title": "队伍页 · 银组", "x": 0, "y": 0, "w": 1440, "h": 980 },
+    { "file": "Analysis.dc.html", "title": "分析页 · 银组", "x": 1560, "y": 0, "w": 1600, "h": 1180 },
+    { "file": "AnalysisGold.dc.html", "title": "分析页 · 金组", "x": 3280, "y": 0, "w": 1600, "h": 1180 }
   ],
   "annotations": [
     {
       "id": "note-tokens",
       "x": 0,
-      "y": -190,
+      "y": -250,
       "w": 520,
       "text": "设计系统直接取自 ai-course-management：\n底色 #f6f4f0 · 主色 #9c3417 · 边框 #e4e0d8 · 侧栏 #1c1b18\n圆角 8px · Noto Sans SC + JetBrains Mono\n侧栏 216px · 表头 34px · 表行 40px · 按钮 40/32px"
     },
     {
-      "id": "note-open-1",
+      "id": "note-season",
       "x": 1560,
-      "y": -190,
-      "w": 560,
-      "text": "待确认：\n1. 各线 UTR 上限（D1/D2/D3 11.00、MD 10.00、WD 9.00）取自 tennis-analysis-app 截图，2026 规则要按实际赛制核对。\n2. 「指定 UTR / 最新 UTR」两种口径沿用 MatchApp 的 grantUTR 开关，页面只按当前口径显示合计。\n3. 名单与球员名均为虚构测试数据。"
+      "y": -250,
+      "w": 600,
+      "text": "赛季 × 组别是全局上下文，放在侧栏顶部而不是页面工具栏 ——\n它决定各线 Cap、Buffer 额度、胜负判定方式和上场资格阈值，\n换组别整个页面的判定规则都换掉，不只是换一份数据。\n\n银组 2026：D1 13 / D2 12 / D3 11 / MD 10.25 / WD 9.25，Buffer 0.5\n（2025 的 MD 10.5、WD 9.5，且无 Buffer —— 逐年会变）"
+    },
+    {
+      "id": "note-gold",
+      "x": 3280,
+      "y": -250,
+      "w": 600,
+      "text": "金组与银组不是「同一张页面换几个数字」：\n· D1／MD 是开放线，无 Cap，但每线只值 1 分\n· 胜负按记分制 8 分（1/1/2/2/2），4:4 平走三级抢先\n· Buffer 0.3 只在 D2／D3／WD 之间共享\n· 上场资格阈值也不同（>9.0 男限 D1/MD、>8.0 男 ≤3、>7.75 女 ≤1）\n\nBuffer 是全队共享预算，不是每线容差 —— 逐线判定会放出五线各超 0.2、\n合计 1.0 的非法阵容。引擎必须当作全局约束求解。"
     }
   ],
   "launch": { "view": "canvas" }
