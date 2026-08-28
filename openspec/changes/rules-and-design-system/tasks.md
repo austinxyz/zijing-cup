@@ -16,7 +16,7 @@
 - [x] 1.4 GREEN — 实现 `components/ui/{card,badge,input}.tsx` 与 `components/ui/index.ts` 导出
 - [x] 1.5 在 `app/layout.tsx` 接入 next/font 的 Noto Sans SC 与 JetBrains Mono，绑定到 `--font-sans` / `--font-mono`
 - [x] 1.6 校验未新增运行时依赖：`git diff frontend/package.json` 的 dependencies 段无新增条目
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 赛制规则数据模型与 migration
 
@@ -29,11 +29,11 @@
   - migration 首行 `set search_path to zijing_cup, public;`；`postgres` 角色默认 search_path 不含 `zijing_cup`，无限定 DDL 会静默落到 `public`（对方应用的 schema）
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/rules-and-design-system/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — pytest：断言四张表存在且全部位于 `zijing_cup` schema、`public` 中不存在同名表（查 `information_schema.tables`），当前必然失败
-- [ ] 2.2 GREEN — 新增 `supabase/migrations/<timestamp>_create_competition_rules.sql`，建四张表、外键与唯一索引（`divisions(season_year, code)`、`division_lines(division_id, code)`），首行设置 search_path
-- [ ] 2.3 RED — pytest：断言 `division_lines.cap` 可为 NULL、`division_eligibility_limits.restricted_to_lines` 可为 NULL 且能存多个线位代码
-- [ ] 2.4 GREEN — 实现 `backend/app/models/rules.py` 的 SQLModel 定义，字段可空性与 migration 一致
+- [x] 2.0 CONTRACT — write openspec/changes/rules-and-design-system/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 RED — pytest：断言四张表存在且全部位于 `zijing_cup` schema、`public` 中不存在同名表（查 `information_schema.tables`），当前必然失败
+- [x] 2.2 GREEN — 新增 `supabase/migrations/<timestamp>_create_competition_rules.sql`，建四张表、外键与唯一索引（`divisions(season_year, code)`、`division_lines(division_id, code)`），首行设置 search_path
+- [x] 2.3 RED — pytest：断言 `division_lines.cap` 可为 NULL、`division_eligibility_limits.restricted_to_lines` 可为 NULL 且能存多个线位代码
+- [x] 2.4 GREEN — 实现 `backend/app/models/rules.py` 的 SQLModel 定义，字段可空性与 migration 一致
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. TOML seed 与幂等导入命令
