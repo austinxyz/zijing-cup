@@ -27,7 +27,8 @@
 
 **Non-Goals:**
 
-- 阵容判定、UTR 抓取、前端页面、外援识别。
+- 阵容判定、UTR 抓取、前端页面。
+- **从总表识别外援**——总表做不到。外援字段本次建出来，值由人工设置。
 
 ## Decisions
 
@@ -37,7 +38,8 @@
 teams(id, season_year, division_code, code, unique(season_year, division_code, code))
   └─ roster_entries(id, team_id, last_name, first_name, gender,
                     match_utr, dutr_status, rating_class NULL,
-                    source_note NULL, daily_utrs numeric[], utr_profile_id NULL,
+                    source_note NULL, daily_utrs numeric[],
+                    utr_profile_id NULL, is_borrowed_player NULL,
                     unique(team_id, last_name, first_name))
 ```
 
@@ -53,6 +55,29 @@ teams(id, season_year, division_code, code, unique(season_year, division_code, c
 
 考虑过建 `players` + `roster_entries` 两层。否决理由如上：为一个数据无法支撑的概念
 预留结构，代价是每次导入都要面对一个无解的匹配问题。
+
+### D1b. 字段分两类归属：CSV 拥有的，与人工拥有的
+
+三个字段不来自 CSV，由人工维护：
+
+| 字段 | 谁写 | 为什么不在 CSV 里 |
+|---|---|---|
+| `is_borrowed_player` | 人工 | 总表无法识别外援，只有一条漏成数据行的脚注提到 |
+| `utr_profile_id` | 人工 | 总表没有这一列；填它等于人工断言跨赛季同一性 |
+| `rating_class`（`Unrated` 行） | 人工 | 类别取决于有无 USTA 比赛历史，不在总表中 |
+
+这直接约束导入器：**比对与写入只覆盖 CSV 拥有的字段**。若按整行比对重写，
+每次重导都会把人工设过的外援标记清回默认、抹掉 profile 关联、把回填的评级类别
+打回 NULL——而导入是每次名单更新都要跑的操作，这种清除会反复发生且无声。
+
+`rating_class` 是混合归属的特例：导入器只在能判定时写它（`Rated` / `Projected`），
+对 `Unrated` **一次都不碰这一列**，无论其中是 NULL 还是人工填的值。
+
+`is_borrowed_player` 用可空布尔而非 `not null default false`：未标注与「确认不是外援」
+是两回事。规则对外援有名额限制，把「没人标过」呈现为「没有外援」会让下游算出一个
+看起来通过、实则未经检验的结论。
+
+`--check` 的比对同样只看 CSV 拥有的字段，否则人工设一个外援标记就会让漂移检测永远报红。
 
 ### D2. 每日 UTR 值存数组，不建单独的表
 
@@ -118,6 +143,9 @@ Non-Goals 的「TPI 不入库」与 Success Criteria 的「报出有排名无名
   长出实体而不必重导；代价是一次 migration，可接受。
 - **同队重名会破坏唯一键** → 2025 全部 331 行已核对无同队重名；导入遇到时报错
   而非覆盖，这是快照语义唯一会被悄悄破坏的地方。
+- **人工字段被重导抹掉**（外援标记、profile 关联、回填的评级类别）→ 见 D1b：
+  比对与写入按字段归属划界；spec 为此写了独立 requirement 与 5 个 scenario，
+  其中一条专门断言 `--check` 不把人工字段报成漂移。
 - **真实个人数据误入仓库** → `.gitignore` + 新增一条 verification check 扫描；
   测试数据全部虚构姓名。
 - **CSV 列名随年份变**（2025 是 `Verified DUTR 09/22`，2026 会变成 09/21）→
@@ -133,6 +161,7 @@ Non-Goals 的「TPI 不入库」与 Success Criteria 的「报出有排名无名
 外键与唯一索引（`teams(season_year, division_code, code)`、
 `roster_entries(team_id, last_name, first_name)`、
 `roster_entries(team_id, utr_profile_id)` 部分唯一索引 where not null）。
+`is_borrowed_player` 为可空布尔，无默认值。
 `teams` 的 `(season_year, division_code)` 引用 `divisions(season_year, code)`。
 
 **回滚**：本次全部新增。回滚 = 反向 migration `drop table roster_entries, teams`
