@@ -13,10 +13,10 @@ project:
     # 之前这条会扫到 .next 的**服务端** chunk 和 stub 环境变量的测试文件，
     # 每次都报一堆非泄漏命中——一条总是响的警报等于没有警报。
     # lib/api.ts 是唯一允许读这些变量的地方（server-only 单一出口），故排除。
-    - "grep -rnE 'SUPABASE_SERVICE|DATABASE_URL|BACKEND_SECRET|NEXT_PUBLIC_(DATABASE|SUPABASE|BACKEND|API)' frontend/app frontend/components frontend/lib --include=*.ts --include=*.tsx --include=*.js --include=*.jsx | grep -v '\.test\.' | grep -v '^frontend/lib/api\.ts:' && exit 1 || true"
+    - 'grep -rnE ''SUPABASE_SERVICE|DATABASE_URL|BACKEND_SECRET|NEXT_PUBLIC_(DATABASE|SUPABASE|BACKEND|API)'' frontend/app frontend/components frontend/lib --include=*.ts --include=*.tsx --include=*.js --include=*.jsx | grep -v ''\.test\.'' | grep -v ''^frontend/lib/api\.ts:'' && exit 1 || true'
     # 产物检查：断言浏览器真正下载的 bundle 里没有凭据。这才是泄漏的定义——
     # 服务端 chunk 里出现是正常的。需先 `npm run build`。
-    - "test -d frontend/.next/static && { grep -rl 'BACKEND_SECRET\|X-Backend-Secret' frontend/.next/static/ && exit 1 || true; } || true"
+    - 'test -d frontend/.next/static && { grep -rl ''BACKEND_SECRET\|X-Backend-Secret'' frontend/.next/static/ && exit 1 || true; } || true'
     - "for f in supabase/migrations/*.sql; do grep -qE 'create (table|index|type)' \"$f\" && ! grep -q 'search_path' \"$f\" && ! grep -qE '\\bzijing_cup\\.' \"$f\" && echo \"BLOCKED: $f creates objects without zijing_cup schema qualification or a search_path header\" && exit 1; done; true"
 
 context: |
