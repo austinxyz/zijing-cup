@@ -33,3 +33,18 @@
     - "runtime: All 17 tests passing (rating classes, daily values, pseudo-teams, columns)"
     - "code: Meets all Code section requirements (Unrated NULL, no Notes inference, / Appeal preserved, prefix matching, pure function)"
     - "code: Two MEDIUM issues noted by reviewer: (1) Decimal('NaN'/'Infinity') not caught; (2) csv.DictReader can raise uncaught on malformed line. These are edge cases not in contract scope but should be addressed before production."
+
+- group: 3
+  attempt: 1
+  scores: {spec: 100, runtime: 100, code: 90}
+  total: 98
+  status: PASS
+  findings:
+    - "spec: All 10 SHALL statements from contract verified; idempotence, field ownership, shared comparison, ranking CSV read-only all correct"
+    - "field-ownership: SOURCE_FIELDS defines CSV-owned columns; is_borrowed_player, utr_profile_id, and Unrated rating_class are never written by importer"
+    - "comparison-function: Both check_rosters() and load_rosters() route through single _compare() function; no duplicate logic that could diverge"
+    - "ranking-csv: parse_ranking_teams() returns set for reconciliation only; TPI values never persisted to database; test_ranking_values_are_never_stored verifies"
+    - "duplicate-detection: _reject_duplicates() raises ValueError as first statement in _compare(); called before any _write() path; test_duplicate_name_on_one_team_aborts_the_import confirms batch abort"
+    - "rating-class: RATING_CLASS_BY_STATUS deliberately omits Unrated; _rating_class_update() returns None for Unrated, leaving hand-set values untouched"
+    - "runtime: All 29 tests pass (4 FirstImport, 5 Idempotence, 5 FieldOwnership, 4 CheckMode, 4 Reconciliation, 7 RankingReconciliation)"
+    - "code: Code-reviewer found zero CRITICAL/HIGH/MEDIUM issues; all five critical scrutiny points verified correct; only 1 LOW: unused Decimal import at line 21"

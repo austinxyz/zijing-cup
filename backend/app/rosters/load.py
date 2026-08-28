@@ -18,7 +18,6 @@ from __future__ import annotations
 import csv
 import io
 from dataclasses import dataclass, field
-from decimal import Decimal
 from typing import Optional
 
 from sqlmodel import Session, select

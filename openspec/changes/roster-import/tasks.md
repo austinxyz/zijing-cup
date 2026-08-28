@@ -67,7 +67,7 @@
 - [x] 3.11 GREEN — 按字段归属实现比对与写入的划界
 - [x] 3.12 RED — pytest：CSV 中同一球队出现两个同姓同名球员时导入报错，且该批次数据未写入
 - [x] 3.13 GREEN — 实现同队重名的拒绝
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 名单只读端点
 
@@ -80,11 +80,11 @@
   - 路由仍在既有的 `X-Backend-Secret` 中间件之后
 - **Threshold**: 80
 
-- [ ] 4.0 CONTRACT — write openspec/changes/roster-import/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 RED — pytest：球队列表端点返回 200 与该组别球队清单；名单端点返回 200 且含参赛 UTR、原始状态、评级类别、来源依据与外援标记；未知赛季、未知组别、未知球队三种情况均返回 404 而非空列表
-- [ ] 4.2 GREEN — 实现 `backend/app/rosters/query.py` 的组装与 `backend/app/routers/rosters.py` 的路由，并在 `main.py` 注册
-- [ ] 4.3 RED — pytest：读 `app.openapi()["paths"]`，断言不存在指向名单或球队资源的写方法；并断言两个读端点确实已注册（防止守卫空转）
-- [ ] 4.4 GREEN — 如有必要收紧路由定义使 4.3 通过
+- [x] 4.0 CONTRACT — write openspec/changes/roster-import/contracts/group-4.md with the ### Contract block above
+- [x] 4.1 RED — pytest：球队列表端点返回 200 与该组别球队清单；名单端点返回 200 且含参赛 UTR、原始状态、评级类别、来源依据与外援标记；未知赛季、未知组别、未知球队三种情况均返回 404 而非空列表
+- [x] 4.2 GREEN — 实现 `backend/app/rosters/query.py` 的组装与 `backend/app/routers/rosters.py` 的路由，并在 `main.py` 注册
+- [x] 4.3 RED — pytest：读 `app.openapi()["paths"]`，断言不存在指向名单或球队资源的写方法；并断言两个读端点确实已注册（防止守卫空转）
+- [x] 4.4 GREEN — 如有必要收紧路由定义使 4.3 通过
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 真实数据导入与验证收尾
