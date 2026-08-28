@@ -483,3 +483,56 @@ class TestAnnotatedCells:
         # The columns are still named, so a note appearing in only one day's
         # sampling is distinguishable from one covering the whole window.
         assert "09/22" in note and "09/24" in note
+
+
+class TestTeamDisplayName:
+    def test_reimport_keeps_the_hand_set_team_name(self, session):
+        """A differing CSV, deliberately.
+
+        Re-importing an unchanged CSV writes nothing, so a test built on one
+        would pass no matter what the importer does to teams — three of the
+        field-ownership tests in roster-import were vacuous for exactly this
+        reason. Here one player's participation UTR changes, which forces the
+        write path to run, and the team name must survive it.
+        """
+        load_rosters(session, csv_text(), TEST_YEAR, "silver")
+
+        team = session.exec(
+            select(Team).where(
+                Team.season_year == TEST_YEAR, Team.code == "TEST-ALPHA"
+            )
+        ).one()
+        team.display_name = "测试甲队"
+        session.add(team)
+        session.commit()
+
+        changed = [r for r in ROWS]
+        changed[0] = "TEST-ALPHA,南,望舒,M,Rated,6.75,6.4,6.5,6.6,"
+        report = load_rosters(session, csv_text(*changed), TEST_YEAR, "silver")
+
+        # The write path really ran.
+        assert report.changed, "expected the differing CSV to produce a change"
+        session.expire_all()
+
+        assert session.get(Team, team.id).display_name == "测试甲队"
+        entry = session.exec(
+            select(RosterEntry).where(RosterEntry.first_name == "望舒")
+        ).one()
+        assert entry.match_utr == Decimal("6.75")
+
+    def test_check_does_not_report_the_team_name_as_drift(self, session):
+        # The CSV has no concept of a team name, so its presence in the
+        # database is not a divergence from the source.
+        load_rosters(session, csv_text(), TEST_YEAR, "silver")
+        team = session.exec(
+            select(Team).where(
+                Team.season_year == TEST_YEAR, Team.code == "TEST-ALPHA"
+            )
+        ).one()
+        team.display_name = "测试甲队"
+        session.add(team)
+        session.commit()
+
+        report = check_rosters(session, csv_text(), TEST_YEAR, "silver")
+
+        assert report.is_clean, report.render()

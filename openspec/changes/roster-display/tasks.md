@@ -18,15 +18,15 @@
     不写，测试会空转（`roster-import` 有三个字段归属测试曾因此假通过）。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/roster-display/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — `tests/test_roster_model.py`：断言 `Team` 有可空的 `display_name` 且默认为 None（未配置 ≠ 空串）
-- [ ] 1.2 GREEN — `supabase/migrations/` 新增 migration 给 `zijing_cup.teams` 加 `display_name text`（可空、无默认值）；`app/models/roster.py` 加字段；`supabase db reset` 应用
-- [ ] 1.3 RED — `tests/test_roster_models_roundtrip.py`：写入带显示名与不带显示名的两支球队，读回分别为该值与 None
-- [ ] 1.4 GREEN — 最小实现使往返通过
-- [ ] 1.5 RED — `tests/test_roster_import.py`：先给球队设显示名，再导入一份**与库中有差异**的名单 CSV（改掉某球员的参赛 UTR），断言显示名仍在、且该球员的 UTR 已更新
-- [ ] 1.6 GREEN — 使名单导入的 `teams` upsert 只写它拥有的字段，不触碰 `display_name`
-- [ ] 1.7 RED — `tests/test_roster_import.py`：库中球队带显示名时执行名单导入的 `--check`，断言报告为 clean（显示名不算漂移）
-- [ ] 1.8 GREEN — 最小实现使 `--check` 忽略显示名
+- [x] 1.0 CONTRACT — write openspec/changes/roster-display/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — `tests/test_roster_model.py`：断言 `Team` 有可空的 `display_name` 且默认为 None（未配置 ≠ 空串）
+- [x] 1.2 GREEN — `supabase/migrations/` 新增 migration 给 `zijing_cup.teams` 加 `display_name text`（可空、无默认值）；`app/models/roster.py` 加字段；`supabase db reset` 应用
+- [x] 1.3 RED — `tests/test_roster_models_roundtrip.py`：写入带显示名与不带显示名的两支球队，读回分别为该值与 None
+- [x] 1.4 GREEN — 最小实现使往返通过
+- [x] 1.5 RED — `tests/test_roster_import.py`：先给球队设显示名，再导入一份**与库中有差异**的名单 CSV（改掉某球员的参赛 UTR），断言显示名仍在、且该球员的 UTR 已更新
+- [x] 1.6 GREEN — 使名单导入的 `teams` upsert 只写它拥有的字段，不触碰 `display_name`
+- [x] 1.7 RED — `tests/test_roster_import.py`：库中球队带显示名时执行名单导入的 `--check`，断言报告为 clean（显示名不算漂移）
+- [x] 1.8 GREEN — 最小实现使 `--check` 忽略显示名
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 球队显示名：seed 与导入命令

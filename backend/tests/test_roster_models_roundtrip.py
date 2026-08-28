@@ -183,3 +183,21 @@ def test_many_entries_may_have_no_profile_id(session, teams):
         select(RosterEntry).where(RosterEntry.team_id == teams["silver"].id)
     ).all()
     assert len(found) == 3
+
+
+def test_team_display_name_round_trips_and_defaults_to_none(session, teams):
+    """A named team keeps its name; an unnamed one reads back as None.
+
+    None, not "" — the two would otherwise be indistinguishable, and the
+    roster importer's field-ownership check needs to tell "nobody named this
+    team" apart from "the name was wiped".
+    """
+    named = teams["silver"]
+    named.display_name = "测试银队"
+    session.add(named)
+    session.commit()
+    session.expire_all()
+
+    assert session.get(Team, named.id).display_name == "测试银队"
+    # The gold team was created without one and was never touched.
+    assert session.get(Team, teams["gold"].id).display_name is None

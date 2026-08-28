@@ -111,3 +111,26 @@ def test_daily_utrs_is_an_array(session):
 def test_team_is_scoped_to_a_season_and_division(session):
     columns = set(_nullability(session, "teams"))
     assert {"season_year", "division_code", "code"} <= columns
+
+
+def test_team_display_name_is_nullable_with_no_default(session):
+    """The Chinese team name is optional and hand-maintained.
+
+    Nullable because most joint teams have no natural Chinese name — a
+    three-school side like USTC-CMU-HQU is spelled by its code, and inventing
+    one would be worse than leaving it blank. No default because "" and NULL
+    would then both mean "unnamed", and the importer's field-ownership check
+    could not tell an unnamed team from one whose name it had wiped.
+    """
+    nullability = _nullability(session, "teams")
+    assert nullability.get("display_name") == "YES"
+
+    default = session.execute(
+        text(
+            "select column_default from information_schema.columns "
+            "where table_schema = :schema and table_name = 'teams' "
+            "and column_name = 'display_name'"
+        ),
+        {"schema": SCHEMA},
+    ).scalar_one_or_none()
+    assert default is None

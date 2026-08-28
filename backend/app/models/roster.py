@@ -39,6 +39,14 @@ class Team(SQLModel, table=True):
     # behalf.
     code: str
 
+    # ---- human-owned, never written by the roster importer -----------------
+
+    # An optional friendlier name, maintained in a seed file. Sparse on
+    # purpose: most joint sides have no natural Chinese name, and the code is
+    # what people actually say. None means nobody has named this team — the
+    # importer must leave it exactly as it found it.
+    display_name: Optional[str] = None
+
 
 class RosterEntry(SQLModel, table=True):
     __tablename__ = "roster_entries"
