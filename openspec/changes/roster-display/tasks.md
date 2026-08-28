@@ -176,4 +176,4 @@
 - [x] 6.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明 —— 已确认 `openspec/config.yaml` 的 `e2e_command` 为空。
 - [x] 6.4 用 2025 真实数据本地验一遍：金组 6 队 120 人、银组 18 队 339 人；某队三档性别人数之和等于总人数；`Unrated` 行显示「待定」。**导入前确认 `DATABASE_URL` 指向本地栈**——测试 fixture 会清空表，跑完 pytest 需先补跑 `load_rules` 与名单导入（CLAUDE.md Pitfalls）
 - [x] 6.5 Run superpowers:verification-before-completion —— 跑 `project.test_commands` 与全部 `project.custom_verification_checks`（console.log 扫描、敏感变量泄漏扫描、客户端 bundle 扫描、migration 的 `zijing_cup` 限定检查、真实球员数据扫描）
-- [ ] 6.6 上线：`git push`（Render + Vercel 自动部署）；**手工在 Supabase Dashboard 的 SQL Editor 执行本次 migration**（共享项目禁用 `db push` / `migration repair`）；远程执行球队显示名 seed 导入，完成后立即清除 `DATABASE_URL`；远程复核球队列表的显示名与人数分布
+- [x] 6.6 上线：`git push` 已完成（Render + Vercel 自动部署）；migration 已由项目负责人在 Supabase Dashboard 的 SQL Editor 手工执行；线上复核通过（银组 18 队、PKU 19 人降序、未知球队 404、「待定」正常呈现）。**球队中文名的 seed 导入按负责人决定暂缓** —— `display_name` 可空，未导时全部球队只显示 code，页面行为不受影响；要导时跑 `uv run python -m app.seeds.team_names`（远程需先设 `DATABASE_URL`，跑完立即清除）
