@@ -513,6 +513,12 @@ def load_rules(session: Session, seed_dir: Path = DEFAULT_SEED_DIR) -> Report:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    # Same reason as the roster CLI: this report can name editions like
+    # 第十一届, and a cp1252 console would kill the command while printing it.
+    reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if reconfigure is not None:
+        reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(
         prog="load_rules",
         description="Import competition rules from TOML seed files.",

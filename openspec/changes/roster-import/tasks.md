@@ -54,19 +54,19 @@
 - **Threshold**: 80
 
 - [x] 3.0 CONTRACT — write openspec/changes/roster-import/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 建立 `backend/data/rosters/` 目录（`.gitkeep` + 说明 CSV 列格式的 `README.md`），并在 `.gitignore` 忽略该目录下的 `*.csv`
-- [ ] 3.2 RED — pytest：用虚构姓名的小 CSV，空库导入后球队与名单条目落库，参赛 UTR、原始状态、来源依据、每日 UTR 值都正确
-- [ ] 3.3 GREEN — 实现 `backend/app/rosters/load.py` 的读库、比对与写入
-- [ ] 3.4 RED — pytest：同一 CSV 连续导入两次，第二次报告为空且数据（含主键）与第一次完全一致；改一名球员的参赛 UTR 后重新导入，该条更新且其他球队记录的主键不变
-- [ ] 3.5 GREEN — 补齐幂等与差异写入
-- [ ] 3.6 RED — pytest：`--check` 一致时退出码 0；CSV 改动未导入时非零退出且输出含球队与球员；`--check` 执行后数据未变
-- [ ] 3.7 GREEN — 实现 `--check`，复用 3.3 的比对函数
-- [ ] 3.8 RED — pytest：只有 1 条记录的球队出现在报告的「行数异常」一节且仍被导入；提供排名表时报出「有排名无名单」与「有名单无排名」两节且排名数值未入库；不提供排名表时两节缺席且不报错
-- [ ] 3.9 GREEN — 实现对账报告与可选排名表比对
-- [ ] 3.10 RED — pytest：人工设置外援标记、关联 profile ID、回填某条 `Unrated` 的评级类别后重新导入，三者都保持不变，而该记录来自 CSV 的参赛 UTR 仍按差异更新；带外援标记时 `--check` 不报漂移
-- [ ] 3.11 GREEN — 按字段归属实现比对与写入的划界
-- [ ] 3.12 RED — pytest：CSV 中同一球队出现两个同姓同名球员时导入报错，且该批次数据未写入
-- [ ] 3.13 GREEN — 实现同队重名的拒绝
+- [x] 3.1 建立 `backend/data/rosters/` 目录（`.gitkeep` + 说明 CSV 列格式的 `README.md`），并在 `.gitignore` 忽略该目录下的 `*.csv`
+- [x] 3.2 RED — pytest：用虚构姓名的小 CSV，空库导入后球队与名单条目落库，参赛 UTR、原始状态、来源依据、每日 UTR 值都正确
+- [x] 3.3 GREEN — 实现 `backend/app/rosters/load.py` 的读库、比对与写入
+- [x] 3.4 RED — pytest：同一 CSV 连续导入两次，第二次报告为空且数据（含主键）与第一次完全一致；改一名球员的参赛 UTR 后重新导入，该条更新且其他球队记录的主键不变
+- [x] 3.5 GREEN — 补齐幂等与差异写入
+- [x] 3.6 RED — pytest：`--check` 一致时退出码 0；CSV 改动未导入时非零退出且输出含球队与球员；`--check` 执行后数据未变
+- [x] 3.7 GREEN — 实现 `--check`，复用 3.3 的比对函数
+- [x] 3.8 RED — pytest：只有 1 条记录的球队出现在报告的「行数异常」一节且仍被导入；提供排名表时报出「有排名无名单」与「有名单无排名」两节且排名数值未入库；不提供排名表时两节缺席且不报错
+- [x] 3.9 GREEN — 实现对账报告与可选排名表比对
+- [x] 3.10 RED — pytest：人工设置外援标记、关联 profile ID、回填某条 `Unrated` 的评级类别后重新导入，三者都保持不变，而该记录来自 CSV 的参赛 UTR 仍按差异更新；带外援标记时 `--check` 不报漂移
+- [x] 3.11 GREEN — 按字段归属实现比对与写入的划界
+- [x] 3.12 RED — pytest：CSV 中同一球队出现两个同姓同名球员时导入报错，且该批次数据未写入
+- [x] 3.13 GREEN — 实现同队重名的拒绝
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 名单只读端点
