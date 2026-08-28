@@ -37,6 +37,9 @@ ROWS = [
     "API-ALPHA,南,望舒,M,Rated,6.50,6.4,6.5,",
     "API-ALPHA,西,门吹雪,F,Unrated,4.00,,,Captain Provided UTR",
     "API-BETA,北,冥子,M,Projected,7.10,7.1,7.2,Zijing Cup 2024 UTR",
+    # Gender left blank on purpose: the column is nullable, and the team-list
+    # counts have to have somewhere to put this player that is neither 男 nor 女.
+    "API-BETA,东,方朔,,Rated,5.00,5.0,5.1,",
 ]
 
 
@@ -60,6 +63,17 @@ def client():
             session, "\n".join([HEADER, *ROWS]) + "\n", TEST_YEAR, "silver"
         )
 
+        # Hand-set state the importer deliberately never produces, so the
+        # endpoints are exercised with it rather than only with what an
+        # import can make.
+        alpha = session.exec(
+            select(Team).where(
+                Team.season_year == TEST_YEAR, Team.code == "API-ALPHA"
+            )
+        ).one()
+        alpha.display_name = "接口测试甲队"
+        session.add(alpha)
+        session.commit()
         # One hand-set field, so the endpoint is exercised with the state the
         # importer deliberately never produces.
         entry = session.exec(
@@ -112,7 +126,7 @@ class TestTeamList:
         by_code = {t["code"]: t for t in body}
 
         assert by_code["API-ALPHA"]["player_count"] == 2
-        assert by_code["API-BETA"]["player_count"] == 1
+        assert by_code["API-BETA"]["player_count"] == 2
 
     def test_unknown_season_is_404(self, client):
         assert client.get(teams_url(year=1899), headers=AUTH).status_code == 404
@@ -207,3 +221,84 @@ def test_no_write_route_exists():
     }
 
     assert offenders == {}
+
+
+class TestTeamDisplayName:
+    def test_team_list_carries_the_display_name(self, client):
+        body = client.get(teams_url(), headers=AUTH).json()
+        by_code = {t["code"]: t for t in body}
+
+        assert by_code["API-ALPHA"]["display_name"] == "接口测试甲队"
+        # Null, not the code echoed back: the UI decides how to present an
+        # unnamed team, and a name invented here would be indistinguishable
+        # from one a human chose.
+        assert by_code["API-BETA"]["display_name"] is None
+
+    def test_roster_response_carries_the_display_name(self, client):
+        body = client.get(roster_url(), headers=AUTH).json()
+
+        assert body["team"]["code"] == "API-ALPHA"
+        assert body["team"]["display_name"] == "接口测试甲队"
+
+
+class TestGenderBreakdown:
+    def test_team_list_splits_the_roster_by_gender(self, client):
+        # Fielding a lineup needs one woman for mixed doubles and two for
+        # women's doubles — at least three on court. That constraint is what
+        # this breakdown exists to make visible from the list.
+        body = client.get(teams_url(), headers=AUTH).json()
+        by_code = {t["code"]: t for t in body}
+
+        assert by_code["API-ALPHA"]["men_count"] == 1
+        assert by_code["API-ALPHA"]["women_count"] == 1
+
+    def test_players_without_a_gender_are_counted_separately(self, client):
+        # Not folded into either side: gender is nullable, and adding an
+        # unknown to 男 or 女 would invent a player on that side — while the
+        # count is precisely what a captain reads to check feasibility.
+        body = client.get(teams_url(), headers=AUTH).json()
+        by_code = {t["code"]: t for t in body}
+
+        assert by_code["API-BETA"]["men_count"] == 1
+        assert by_code["API-BETA"]["women_count"] == 0
+        assert by_code["API-BETA"]["unknown_gender_count"] == 1
+
+    def test_the_three_buckets_sum_to_the_player_count(self, client):
+        body = client.get(teams_url(), headers=AUTH).json()
+
+        for entry in body:
+            total = (
+                entry["men_count"]
+                + entry["women_count"]
+                + entry["unknown_gender_count"]
+            )
+            assert total == entry["player_count"], entry["code"]
+
+
+def test_team_list_does_not_issue_a_query_per_team(client):
+    """The breakdown must stay one grouped query.
+
+    Counting genders per team is the obvious way to write this and the
+    expensive one: a division has up to two dozen teams, so it would be two
+    dozen round trips for a number that is one GROUP BY away. Asserted rather
+    than commented, because nothing else would notice the regression.
+    """
+    import sqlalchemy
+
+    from app.db import engine
+    from app.rosters.query import list_teams
+
+    statements: list[str] = []
+    listener = lambda conn, cur, stmt, *a: statements.append(stmt)  # noqa: E731
+    sqlalchemy.event.listen(engine, "before_cursor_execute", listener)
+    try:
+        with Session(engine) as session:
+            teams = list_teams(session, TEST_YEAR, "silver")
+    finally:
+        sqlalchemy.event.remove(engine, "before_cursor_execute", listener)
+
+    assert len(teams) == 2  # the fixture's two teams — not a vacuous pass
+    selects = [s for s in statements if s.lstrip().upper().startswith("SELECT")]
+    # One existence check for the division, one aggregate. Constant in the
+    # number of teams.
+    assert len(selects) == 2, "\n\n".join(selects)

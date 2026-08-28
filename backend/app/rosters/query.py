@@ -24,13 +24,29 @@ from app.models import Division, RosterEntry, Team
 class TeamSummaryOut(BaseModel):
     code: str
 
+    #: null when nobody has named this team. Not the code echoed back — the
+    #: client decides how to present an unnamed team, and a name invented
+    #: here would be indistinguishable from one a human chose.
+    display_name: Optional[str] = None
+
     #: Lets a captain spot an under-strength or suspiciously small team from
     #: the list without opening each one.
     player_count: int
 
+    #: Fielding a lineup needs one woman for mixed doubles and two for
+    #: women's doubles — at least three on court. Which teams are close to
+    #: that floor is the thing a captain reads off this list.
+    men_count: int = 0
+    women_count: int = 0
+
+    #: Its own bucket, never folded into either side: `gender` is nullable,
+    #: and adding an unknown to 男 or 女 would invent a player on that side.
+    unknown_gender_count: int = 0
+
 
 class TeamOut(BaseModel):
     code: str
+    display_name: Optional[str] = None
     season_year: int
     division_code: str
 
@@ -93,15 +109,40 @@ def list_teams(
         return None
 
     # One grouped query rather than a count per team.
+    # One grouped query with gender as a second dimension, not a count per
+    # team: a division has up to two dozen teams, and a query each would be
+    # two dozen round trips for a number that is already one GROUP BY away.
     rows = session.exec(
-        select(Team.code, func.count(RosterEntry.id))
+        select(
+            Team.code,
+            Team.display_name,
+            RosterEntry.gender,
+            func.count(RosterEntry.id),
+        )
         .join(RosterEntry, RosterEntry.team_id == Team.id, isouter=True)
         .where(Team.season_year == year, Team.division_code == division_code)
-        .group_by(Team.code)
+        .group_by(Team.code, Team.display_name, RosterEntry.gender)
         .order_by(Team.code)
     ).all()
 
-    return [TeamSummaryOut(code=code, player_count=count) for code, count in rows]
+    summaries: dict[str, TeamSummaryOut] = {}
+    for code, name, gender, count in rows:
+        summary = summaries.get(code)
+        if summary is None:
+            summary = TeamSummaryOut(code=code, display_name=name, player_count=0)
+            summaries[code] = summary
+        # A team with no roster comes back from the outer join as one row
+        # with a null gender and a count of zero, so it needs no special
+        # case: adding zero leaves every bucket at zero.
+        summary.player_count += count
+        if gender == "M":
+            summary.men_count += count
+        elif gender == "F":
+            summary.women_count += count
+        else:
+            summary.unknown_gender_count += count
+
+    return list(summaries.values())
 
 
 def get_team_roster(
@@ -129,6 +170,7 @@ def get_team_roster(
     return TeamRosterOut(
         team=TeamOut(
             code=team.code,
+            display_name=team.display_name,
             season_year=team.season_year,
             division_code=team.division_code,
         ),

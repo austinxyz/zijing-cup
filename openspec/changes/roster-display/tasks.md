@@ -63,7 +63,7 @@
 - [x] 2.12 GREEN — 复用同一个比对函数实现 `--check`
 - [x] 2.13 RED — CLI 在 cp1252 编码的输出流上打印中文报告不崩溃
 - [x] 2.14 GREEN — 命令入口调用 `configure_stdout()`
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 只读端点带出显示名与性别构成
 
@@ -84,13 +84,13 @@
     任何 `/api` 路由而静默通过。
 - **Threshold**: 80
 
-- [ ] 3.0 CONTRACT — write openspec/changes/roster-display/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 RED — `tests/test_roster_api.py`：球队列表每项带 `display_name`（未配置为 null）
-- [ ] 3.2 GREEN — `TeamSummaryOut` / `TeamOut` 加字段，`query.py` 带出
-- [ ] 3.3 RED — 球队列表每项带男 / 女 / 性别未填三档人数，且三者之和等于总人数；构造一条 `gender` 为 NULL 的记录验证第三档
-- [ ] 3.4 GREEN — `list_teams` 的聚合查询加 `gender` 维度，应用层合并成三档；保持一次查询
-- [ ] 3.5 RED — 名单端点的响应带该球队的 code 与 `display_name`
-- [ ] 3.6 GREEN — `TeamRosterOut.team` 带出显示名
+- [x] 3.0 CONTRACT — write openspec/changes/roster-display/contracts/group-3.md with the ### Contract block above
+- [x] 3.1 RED — `tests/test_roster_api.py`：球队列表每项带 `display_name`（未配置为 null）
+- [x] 3.2 GREEN — `TeamSummaryOut` / `TeamOut` 加字段，`query.py` 带出
+- [x] 3.3 RED — 球队列表每项带男 / 女 / 性别未填三档人数，且三者之和等于总人数；构造一条 `gender` 为 NULL 的记录验证第三档
+- [x] 3.4 GREEN — `list_teams` 的聚合查询加 `gender` 维度，应用层合并成三档；保持一次查询
+- [x] 3.5 RED — 名单端点的响应带该球队的 code 与 `display_name`
+- [x] 3.6 GREEN — `TeamRosterOut.team` 带出显示名
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 球队列表页与空状态
