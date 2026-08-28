@@ -63,6 +63,9 @@ Render免费版会在闲置后休眠，冷启动可能要接近1分钟——`fro
 - 手动在Dashboard执行migration(见上面的no-CLI-push规则)意味着远程`supabase_migrations`表里没有这次记录。这是那条规则的既定代价，不是新问题，但别指望远程的migration历史是完整的。
 - `openspec status`会一直把`requirements`和`mocks`显示成未完成。schema里这两个产物的`generates`路径写的是字面量`{{date}}`，CLI不做替换，存在性检查永远匹配不上；文件其实在带日期的路径下。同样的原因会让新建change时所有产物一开始都显示blocked——`openspec instructions`照常输出，可以往下走。
 - 审计路由不要遍历`app.routes`。当前FastAPI版本把`include_router`存成单个不透明的`_IncludedRouter`条目，不把子路由摊平，遍历它会**看不见任何`/api`路由**而静默通过。用`app.openapi()["paths"]`，并配一条"读路由确实注册了"的断言防止守卫再次空转。
-- 上面那条TRUNCATE还有个本地的连带后果：跑完`pytest`本地库的规则表就空了，此时任何名单导入都会以`no division 'silver' in season 2025`失败。先`uv run python -m app.seeds.load_rules`补回规则再导名单——报错信息本身已经这么提示，但连着跑两条命令时很容易误读成导入器坏了。
+- 上面那条TRUNCATE还有个本地的连带后果：跑完`pytest`本地库就空了，此时任何名单导入会以`no division 'silver' in season 2025`失败，前端页面则全是404，读起来像路由坏了。跑`bash backend/scripts/reseed-local.sh`一次补回三份seed（规则→名单→球队中文名，有依赖顺序），该脚本拒绝对非本地库运行。
 - **Google Sheets导出的CSV表头不在第1行。** 前面有一个空行、两行合并单元格脚注、再一个空行，列名在第5行；第1行是`,,,,,,,,,,,,,`。任何"读第1行判断这是不是名单文件"的逻辑都会静默失败：解析器会把整份文件判成不可读（看起来像空名单，不像读错了），而按内容识别的安全扫描会对一份真实名单报clean。解析和扫描都要在前若干行内找表头（`parse.py`的`HEADER_SEARCH_LIMIT`=20，`config.yaml`的真实数据扫描用`head -20`）。
 - **别拿抓取来的表格markdown当事实源。** Drive/网页抓取会静默截断：一次银组名单只回了11支队，据此写进requirements的"13队211人"、"5支球队有排名却没名单"、"`SJTU`只有1行"三条全是假的（实际18队339人，那5支队各有17-26人）。真实导出一跑就全推翻了。凡是要写进验收标准的数量，用真实导出文件核对过再写。
+- **本机跑不了`supabase` CLI**：`supabase db reset`/`db push`都以`EUNKNOWN: uv_spawn`失败，Bash和PowerShell都一样，跟上面uvicorn.exe那条是同一类Application Control拦截。本地要应用新migration，就直接把该文件的SQL打到本地栈（执行前断言连接串含`127.0.0.1`）。migration文件仍是唯一来源，谁将来跑`db reset`都会照常重放，所以不产生漂移——代价只是本地`supabase_migrations`表里没有记录，与远程手工执行是同一种代价。
+- **别在会`notFound()`的路由下放`loading.tsx`。** 路由级Suspense边界让Next在页面代码跑之前就flush响应头，于是`notFound()`再也设不了状态码——实测同一个未知球队，有它返回200、去掉返回404。同一批实测里fallback还始终没被替换（生产构建也一样），名单挂在隐藏容器里、页面停在加载文案。冷启动的加载反馈要做的话，得找别的做法。
+- **`h-screen overflow-hidden`的壳里，任何可能变长的列表都必须自带滚动容器**，否则超出部分被静默裁掉且**不出现滚动条**，看不出还有内容。滚动要放在内层：加在整列/整个main上会把列头和标题一起卷走（表头加`flex-none`并不能钉住它——滚动在共同祖先上时它照样跟着走）。这个缺陷五轮评审加视觉对照都没抓到，因为对照是在「刚好放得下」的视口下做的；是交付后在真实窗口里翻到底部才发现的。视觉核对要挑最长的数据（2025最大名单26人）并把窗口调矮。

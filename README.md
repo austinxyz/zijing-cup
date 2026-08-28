@@ -19,8 +19,21 @@ Google Sheets 手工维护的流程。
 
 赛季与组别在 URL 里：`/2026/silver/rules`、`/2026/gold/rules`。
 
-**还没做**：球队/球员名单、UTR 同步、阵容优化引擎与对比界面。侧栏里「队伍」「分析」
-是禁用态，路线图见 [openspec/specs/README.md](openspec/specs/README.md)。
+**球队名单** —— 按赛季与组别浏览各队名单：左边是球队列，右边是选中队的球员与参赛 UTR，
+按强弱排好。`/2025/silver/teams`、`/2025/silver/teams/PKU`。
+
+球队列显示的是人数与男/女构成，不是队伍平均 UTR。因为一场比赛要 1 名女子打混双、
+2 名打女双，场上至少 3 名女队员是硬约束，而 26 人名单的平均值跟真正上场的 8 个人
+关系不大 —— 2025 金组 `JNU-UCLA` 恰好只有 3 名女队员，一人退赛就凑不出阵容。
+
+名单里的「UTR 来源」同时给出判定与总表原文。评级类别判不出来时显示**「待定」**，
+不显示「自评」：`Unrated` 属于第二类还是第三类取决于该队员有无 USTA 比赛历史，
+总表不带这个信息，页面替它下结论就等于决定了谁占用「场上至多 2 名自评级」的名额。
+2025 全部 459 行里有 36 行是这个状态，等组委会澄清。
+
+**还没做**：UTR 同步（页面上的参赛 UTR 是赛前冻结值，不是实时评分）、阵容优化引擎与
+对比界面、移动端版式。侧栏里「分析」是禁用态，路线图见
+[openspec/specs/README.md](openspec/specs/README.md)。
 
 ## 本地跑起来
 
@@ -36,6 +49,13 @@ cd backend
 cp .env.example .env          # 本地默认值已填好
 uv sync
 uv run python -m app.seeds.load_rules    # 导入四套赛制规则
+
+# 名单需要组委会总表导出的 CSV，放到 backend/data/rosters/（该目录已 gitignore，
+# 内含真实姓名与 UTR，不进版本库；导出方法见该目录的 README）
+uv run python -m app.rosters 2025 gold data/rosters/2025-gold.csv
+uv run python -m app.rosters 2025 silver data/rosters/2025-silver.csv
+uv run python -m app.seeds.team_names    # 球队中文名（可选，不导则只显示 code）
+
 uv run python -m uvicorn app.main:app --port 8010
 
 # 3. 前端（另开一个终端）
@@ -54,16 +74,23 @@ cd backend && uv run pytest        # 需要本地 Supabase 栈在跑
 cd frontend && npm run test
 ```
 
-> **后端测试会 TRUNCATE 规则表。** 跑之前确认 `DATABASE_URL` 没有指向远程共享项目 ——
-> 详见 [CLAUDE.md](CLAUDE.md) 的 Pitfalls。
+> **后端测试会 TRUNCATE 规则表与名单表。** 跑之前确认 `DATABASE_URL` 没有指向远程
+> 共享项目 —— 详见 [CLAUDE.md](CLAUDE.md) 的 Pitfalls。
+>
+> 跑完本地库就空了，页面会全是 404。用 `bash backend/scripts/reseed-local.sh` 按依赖
+> 顺序补回三份 seed（该脚本拒绝对非本地库运行）。
 
 ## 结构
 
 ```
 backend/          FastAPI + SQLModel，唯一能访问数据库的一层
-  app/models/     规则表的 ORM 映射
+  app/models/     规则表与名单表的 ORM 映射
+  app/rosters/    总表 CSV 的解析与导入（只覆盖 CSV 拥有的字段）
   app/seeds/      TOML seed 导入命令（幂等，带 --check 漂移检测）
+  scripts/        reseed-local.sh —— 跑完测试后补回本地数据
   seeds/rules/    赛制规则的唯一事实来源，一个赛季组别一个文件
+  seeds/team_names/  球队中文名，同上；只列有自然叫法的队
+  data/rosters/   名单 CSV 落脚处（gitignore，含真实个人数据）
 frontend/         Next.js App Router；lib/api.ts 是调后端的唯一出口
 supabase/         migration，schema 变更的唯一来源
 design/           设计画板源文件（.dc.html）
