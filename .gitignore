@@ -16,3 +16,7 @@ supabase/.temp/
 
 # OS
 .DS_Store
+
+# 设计画板生成产物（由 design/*.dc.html + canvas.json 重新生成）
+design/*.html
+!design/*.dc.html

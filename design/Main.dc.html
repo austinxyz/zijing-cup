@@ -1,0 +1,515 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #9c3417; text-decoration: none; }
+    a:hover { color: #7d290f; }
+    .th {
+      height: 34px;
+      padding: 0 14px;
+      text-align: left;
+      white-space: nowrap;
+      border-bottom: 1px solid #e4e0d8;
+      background: #f2efe9;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.025em;
+      color: #79736a;
+    }
+    .td {
+      height: 40px;
+      padding: 0 14px;
+      vertical-align: middle;
+      border-bottom: 1px solid #eae7e0;
+      overflow: hidden;
+    }
+    .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+    .num { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; color: #1a1917; }
+  </style>
+</helmet>
+
+<div style="display: flex; width: 1440px; height: 980px; background: #f6f4f0; color: #1a1917; font-family: 'Noto Sans SC', 'Segoe UI', sans-serif; overflow: hidden;">
+
+  <!-- 侧栏 -->
+  <aside style="display: flex; flex-direction: column; width: 216px; flex: none; border-right: 1px solid #2a2823; background: #1c1b18; color: #b8b2a6;">
+    <div style="display: flex; flex-direction: column; gap: 3px; border-bottom: 1px solid #2a2823; padding: 18px 16px 16px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; height: 20px; width: 20px; flex: none; align-items: center; justify-content: center; border-radius: 5px; background: #9c3417; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; line-height: 1; color: #ffffff;">紫</div>
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.25; letter-spacing: 0.025em; color: #f2eee7;">紫荆杯</div>
+      </div>
+      <div style="padding-left: 28px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1.25; letter-spacing: 0.025em; color: #6f6a60;">TEAM ANALYSIS</div>
+    </div>
+
+    <nav style="display: flex; flex: 1; flex-direction: column; gap: 2px; padding: 8px;">
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; border-left: 2px solid #c9502f; border-radius: 8px; background: #2c2a25; padding: 0 10px 0 8px; font-size: 13px; font-weight: 500; color: #f2eee7;">
+        <span style="display: flex; min-width: 0; align-items: center; gap: 9px;">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;">
+            <path d="M2.6 2.6h4.2v4.2H2.6zM9.2 2.6h4.2v4.2H9.2zM2.6 9.2h4.2v4.2H2.6zM9.2 9.2h4.2v4.2H9.2z"></path>
+          </svg>
+          <span>队伍</span>
+        </span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1; color: #c9a99a;">22</span>
+      </div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #b8b2a6;">
+        <span style="display: flex; min-width: 0; align-items: center; gap: 9px;">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;">
+            <path d="M2.6 13.4h10.8M4.8 11V7.2M8 11V3.4M11.2 11V5.8"></path>
+          </svg>
+          <span>分析</span>
+        </span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1; color: #6f6a60;">—</span>
+      </div>
+    </nav>
+
+    <div style="display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #2a2823; padding: 10px 14px;">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; color: rgba(184, 178, 166, 0.8);">2026 赛季 · 银组</div>
+      <div style="display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1.6; color: #6f6a60;">
+        <span style="height: 5px; width: 5px; flex: none; border-radius: 9999px; background: #4c8a63;"></span>
+        <span>UTR 同步于 3 小时前</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 球队列表 -->
+  <div style="display: flex; width: 224px; flex: none; flex-direction: column; border-right: 1px solid #e4e0d8; background: #ffffff;">
+    <div style="display: flex; flex: none; flex-direction: column; gap: 9px; border-bottom: 1px solid #e4e0d8; padding: 11px 14px;">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.025em; color: #a09a90;">球队 · 22</div>
+      <div style="position: relative;">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#a09a90" stroke-width="1.3" stroke-linecap="round" style="position: absolute; left: 11px; top: 11px;">
+          <circle cx="7" cy="7" r="4.4"></circle>
+          <path d="M10.4 10.4L14 14"></path>
+        </svg>
+        <input type="text" placeholder="搜索球队" style="height: 36px; width: 100%; box-sizing: border-box; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 0 12px 0 32px; font-family: 'Noto Sans SC', sans-serif; font-size: 13px; color: #1a1917;">
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; padding: 6px;">
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-left: 2px solid #9c3417; border-radius: 8px; background: #faf5f3; padding: 0 10px 0 8px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; color: #1a1917;">ZJU · 浙大</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9c3417;">5.66</span>
+      </div>
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #1a1917;">THU · 清华</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">6.02</span>
+      </div>
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #1a1917;">UCSD-UCB</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">6.22</span>
+      </div>
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #1a1917;">SJTU · 交大</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">5.91</span>
+      </div>
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #1a1917;">PKU-BUAA</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">5.48</span>
+      </div>
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #1a1917;">FDU · 复旦</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">5.73</span>
+      </div>
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #1a1917;">USTC · 中科大</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">5.35</span>
+      </div>
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #1a1917;">NJU · 南大</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">5.20</span>
+      </div>
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #1a1917;">HUST · 华科</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">5.08</span>
+      </div>
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #1a1917;">XJTU · 西交</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">4.96</span>
+      </div>
+      <div style="display: flex; height: 38px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px;">
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #1a1917;">TJU · 同济</span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">4.81</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主区：球队名单 -->
+  <main style="display: flex; flex: 1; min-width: 0; flex-direction: column; background: #f6f4f0;">
+    <div style="display: flex; flex: none; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e4e0d8; background: #ffffff; padding: 11px 22px;">
+      <div style="display: flex; min-width: 0; flex-direction: column; gap: 2px;">
+        <div style="font-size: 16px; font-weight: 600; line-height: 1.375;">ZJU · 浙江大学</div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #79736a;">队伍 UTR 5.66</span>
+          <span style="height: 3px; width: 3px; border-radius: 9999px; background: #cfc9bc;"></span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #79736a;">16 人</span>
+        </div>
+      </div>
+      <div style="display: flex; flex: none; align-items: center; gap: 10px;">
+        <span style="font-size: 12.5px; color: #79736a;">计算口径</span>
+        <div style="display: flex; flex: none; align-items: center; border-radius: 8px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 2px;">
+          <span style="display: inline-flex; height: 30px; align-items: center; gap: 6px; border-radius: 6px; background: #ffffff; box-shadow: 0 1px 2px rgba(26, 25, 23, 0.08); padding: 0 11px; font-size: 12.5px; font-weight: 500; color: #1a1917;">指定 UTR</span>
+          <span style="display: inline-flex; height: 30px; align-items: center; gap: 6px; border-radius: 6px; padding: 0 11px; font-size: 12.5px; font-weight: 500; color: #79736a;">最新 UTR</span>
+        </div>
+      </div>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; table-layout: fixed; background: #ffffff;">
+      <colgroup>
+        <col style="width: 44px;">
+        <col style="width: 152px;">
+        <col style="width: 56px;">
+        <col style="width: 92px;">
+        <col style="width: 92px;">
+        <col>
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="th">#</th>
+          <th class="th">姓名</th>
+          <th class="th">性别</th>
+          <th class="th">指定 UTR</th>
+          <th class="th">最新 UTR</th>
+          <th class="th">UTR 状态</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">1</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">陈嘉禾</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">男</span></td>
+          <td class="td"><span class="num">6.84</span></td>
+          <td class="td"><span class="num">6.91</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">2</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">徐鹏远</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">男</span></td>
+          <td class="td"><span class="num">6.07</span></td>
+          <td class="td"><span class="num">6.11</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">3</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">孙靖凡</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">男</span></td>
+          <td class="td"><span class="num">5.75</span></td>
+          <td class="td"><span class="num">5.82</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">4</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">张冠宇</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">男</span></td>
+          <td class="td"><span class="num">6.25</span></td>
+          <td class="td"><span class="num">6.18</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr style="background: #fbf0ee;">
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">5</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #b3261e;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">李宁远</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">男</span></td>
+          <td class="td"><span class="num">5.25</span></td>
+          <td class="td"><span class="num" style="color: #a09a90;">—</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #b3261e; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #ffffff;">未关联 UTR</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">6</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">吴普强</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">男</span></td>
+          <td class="td"><span class="num">6.54</span></td>
+          <td class="td"><span class="num">6.44</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">7</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">邱阿岚</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">男</span></td>
+          <td class="td"><span class="num">4.28</span></td>
+          <td class="td"><span class="num">4.35</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">8</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">叶明轩</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">男</span></td>
+          <td class="td"><span class="num">6.35</span></td>
+          <td class="td"><span class="num">6.29</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">9</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">曹思远</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">男</span></td>
+          <td class="td"><span class="num">4.87</span></td>
+          <td class="td"><span class="num">4.90</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">10</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">郑一鸣</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">男</span></td>
+          <td class="td"><span class="num">5.59</span></td>
+          <td class="td"><span class="num">5.66</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">11</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">谢一文</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">女</span></td>
+          <td class="td"><span class="num">4.00</span></td>
+          <td class="td"><span class="num">4.12</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">12</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">沈佳怡</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">女</span></td>
+          <td class="td"><span class="num">5.17</span></td>
+          <td class="td"><span class="num">5.24</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">13</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">杨柏宁</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">女</span></td>
+          <td class="td"><span class="num">4.02</span></td>
+          <td class="td"><span class="num">4.08</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">14</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">何雪莉</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">女</span></td>
+          <td class="td"><span class="num">3.50</span></td>
+          <td class="td"><span class="num">3.61</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #b8860b; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #ffffff;">评分不足</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">15</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">林可欣</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">女</span></td>
+          <td class="td"><span class="num">4.43</span></td>
+          <td class="td"><span class="num">4.47</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+        <tr>
+          <td class="td mono" style="color: #a09a90; font-size: 12px;">16</td>
+          <td class="td">
+            <div style="display: flex; min-width: 0; align-items: center; gap: 8px;">
+              <span style="height: 6px; width: 6px; flex: none; border-radius: 9999px; background: #cfc9bc;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500;">韩雨萌</span>
+            </div>
+          </td>
+          <td class="td"><span style="font-size: 12.5px; color: #79736a;">女</span></td>
+          <td class="td"><span class="num">6.13</span></td>
+          <td class="td"><span class="num">6.05</span></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; border-radius: 8px; background: #f2efe9; border: 1px solid #e4e0d8; padding: 2px 8px; font-size: 12px; font-weight: 500; color: #79736a;">已认证</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <!-- 右栏：各线最优搭档 -->
+  <aside style="display: flex; width: 372px; flex: none; flex-direction: column; overflow: hidden; border-left: 1px solid #e4e0d8; background: #ffffff;">
+    <div style="display: flex; flex: none; flex-direction: column; gap: 3px; border-bottom: 1px solid #e4e0d8; padding: 14px 18px 12px;">
+      <div style="font-size: 16px; font-weight: 600; line-height: 1.375;">各线最优搭档</div>
+      <div style="font-size: 12.5px; line-height: 1.6; color: #79736a;">按「指定 UTR」计算，超出该线上限的搭档标红</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; padding: 14px 18px;">
+
+      <div style="display: flex; flex-direction: column; gap: 8px; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 12px 14px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D1</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">上限 11.00</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">陈嘉禾 + 徐鹏远</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #b3261e;">12.91</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">陈嘉禾 + 邱阿岚</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">11.12</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">吴普强 + 曹思远</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">11.41</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 12px 14px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D2</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">上限 11.00</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">孙靖凡 + 张冠宇</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">10.98</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">叶明轩 + 郑一鸣</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">10.86</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">张冠宇 + 曹思远</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">10.74</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 12px 14px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D3</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">上限 11.00</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">郑一鸣 + 曹思远</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">10.46</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">吴普强 + 邱阿岚</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">10.82</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">孙靖凡 + 邱阿岚</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">10.03</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 12px 14px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">MD · 混双</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">上限 10.00</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">叶明轩 + 谢一文</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">10.35</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">郑一鸣 + 林可欣</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">10.02</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">曹思远 + 沈佳怡</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">10.04</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 12px 14px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">WD · 女双</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">上限 9.00</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">沈佳怡 + 杨柏宁</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">9.19</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">韩雨萌 + 何雪莉</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">9.63</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+            <span style="font-size: 13px;">林可欣 + 谢一文</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1a1917;">8.43</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+</div>
+</x-dc>
+</body>
+</html>

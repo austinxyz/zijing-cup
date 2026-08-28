@@ -1,0 +1,473 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #9c3417; text-decoration: none; }
+    a:hover { color: #7d290f; }
+    .th {
+      height: 34px;
+      padding: 0 12px;
+      text-align: left;
+      white-space: nowrap;
+      border-bottom: 1px solid #e4e0d8;
+      background: #f2efe9;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.025em;
+      color: #79736a;
+    }
+    .td {
+      padding: 9px 12px;
+      vertical-align: top;
+      border-bottom: 1px solid #eae7e0;
+    }
+    .pair { font-size: 12px; line-height: 1.45; color: #1a1917; }
+    .sum { display: block; margin-top: 2px; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: #79736a; }
+    .sel {
+      display: flex;
+      height: 36px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid #e4e0d8;
+      background: #ffffff;
+      padding: 0 10px;
+      font-size: 12.5px;
+      color: #1a1917;
+    }
+    .selph { color: #a09a90; }
+    .lineTag {
+      width: 44px;
+      flex: none;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11.5px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: #9c3417;
+    }
+  </style>
+</helmet>
+
+<div style="display: flex; width: 1600px; height: 1120px; background: #f6f4f0; color: #1a1917; font-family: 'Noto Sans SC', 'Segoe UI', sans-serif; overflow: hidden;">
+
+  <!-- 侧栏 -->
+  <aside style="display: flex; width: 216px; flex: none; flex-direction: column; border-right: 1px solid #2a2823; background: #1c1b18; color: #b8b2a6;">
+    <div style="display: flex; flex-direction: column; gap: 3px; border-bottom: 1px solid #2a2823; padding: 18px 16px 16px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; height: 20px; width: 20px; flex: none; align-items: center; justify-content: center; border-radius: 5px; background: #9c3417; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; line-height: 1; color: #ffffff;">紫</div>
+        <div style="font-size: 14px; font-weight: 600; line-height: 1.25; letter-spacing: 0.025em; color: #f2eee7;">紫荆杯</div>
+      </div>
+      <div style="padding-left: 28px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1.25; letter-spacing: 0.025em; color: #6f6a60;">TEAM ANALYSIS</div>
+    </div>
+
+    <nav style="display: flex; flex: 1; flex-direction: column; gap: 2px; padding: 8px;">
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #b8b2a6;">
+        <span style="display: flex; min-width: 0; align-items: center; gap: 9px;">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;">
+            <path d="M2.6 2.6h4.2v4.2H2.6zM9.2 2.6h4.2v4.2H9.2zM2.6 9.2h4.2v4.2H2.6zM9.2 9.2h4.2v4.2H9.2z"></path>
+          </svg>
+          <span>队伍</span>
+        </span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1; color: #6f6a60;">22</span>
+      </div>
+      <div style="display: flex; height: 34px; align-items: center; justify-content: space-between; gap: 8px; border-left: 2px solid #c9502f; border-radius: 8px; background: #2c2a25; padding: 0 10px 0 8px; font-size: 13px; font-weight: 500; color: #f2eee7;">
+        <span style="display: flex; min-width: 0; align-items: center; gap: 9px;">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex: none; opacity: 0.85;">
+            <path d="M2.6 13.4h10.8M4.8 11V7.2M8 11V3.4M11.2 11V5.8"></path>
+          </svg>
+          <span>分析</span>
+        </span>
+        <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1; color: #c9a99a;">—</span>
+      </div>
+    </nav>
+
+    <div style="display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #2a2823; padding: 10px 14px;">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; color: rgba(184, 178, 166, 0.8);">2026 赛季 · 银组</div>
+      <div style="display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1.6; color: #6f6a60;">
+        <span style="height: 5px; width: 5px; flex: none; border-radius: 9999px; background: #4c8a63;"></span>
+        <span>UTR 同步于 3 小时前</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主区 -->
+  <main style="display: flex; flex: 1; min-width: 0; flex-direction: column;">
+
+    <div style="display: flex; flex: none; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e4e0d8; background: #ffffff; padding: 11px 22px;">
+      <div style="display: flex; min-width: 0; flex-direction: column; gap: 2px;">
+        <div style="font-size: 16px; font-weight: 600; line-height: 1.375;">阵容分析</div>
+        <div style="font-size: 12.5px; color: #79736a;">锁定已定的搭档，其余线由引擎在 UTR 上限内搜索候选阵容</div>
+      </div>
+      <div style="display: flex; flex: none; align-items: center; gap: 10px;">
+        <span style="font-size: 12.5px; color: #79736a;">计算口径</span>
+        <div style="display: flex; flex: none; align-items: center; border-radius: 8px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 2px;">
+          <span style="display: inline-flex; height: 30px; align-items: center; border-radius: 6px; background: #ffffff; box-shadow: 0 1px 2px rgba(26, 25, 23, 0.08); padding: 0 11px; font-size: 12.5px; font-weight: 500; color: #1a1917;">指定 UTR</span>
+          <span style="display: inline-flex; height: 30px; align-items: center; border-radius: 6px; padding: 0 11px; font-size: 12.5px; font-weight: 500; color: #79736a;">最新 UTR</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; padding: 18px 22px;">
+
+      <!-- 上排：两队配置 + 对比 -->
+      <div style="display: flex; align-items: flex-start; gap: 16px;">
+
+        <!-- A 队配置 -->
+        <div style="display: flex; width: 452px; flex: none; flex-direction: column; gap: 12px; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.025em; color: #a09a90;">主队</div>
+            <div class="sel" style="height: 40px; font-size: 13px; font-weight: 500;">
+              <span>ZJU · 浙江大学</span>
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.025em; color: #a09a90;">锁定搭档</div>
+            <div style="font-size: 11.5px; color: #a09a90;">留空 = 交给引擎</div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="lineTag">D1</span>
+              <div class="sel" style="flex: 1; min-width: 0;"><span>陈嘉禾 M · 6.84</span><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"></path></svg></div>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="lineTag">D2</span>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="lineTag">D3</span>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="lineTag">MD</span>
+              <div class="sel" style="flex: 1; min-width: 0;"><span>叶明轩 M · 6.35</span><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"></path></svg></div>
+              <div class="sel" style="flex: 1; min-width: 0;"><span>谢一文 F · 4.00</span><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"></path></svg></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="lineTag">WD</span>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="display: inline-flex; height: 40px; flex: none; align-items: center; justify-content: center; white-space: nowrap; border-radius: 8px; background: #9c3417; padding: 0 16px; font-size: 14px; font-weight: 500; color: #ffffff;">搜索阵容</span>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #79736a;">已锁 D1 · MD ／ 其余 3 线搜索</span>
+          </div>
+        </div>
+
+        <!-- 对比 -->
+        <div style="display: flex; width: 384px; flex: none; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+          <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e4e0d8; background: #f2efe9; padding: 12px 14px;">
+            <div style="flex: 1; min-width: 0; text-align: right; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">ZJU</div>
+            <div style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; color: #a09a90;">VS</div>
+            <div style="flex: 1; min-width: 0; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">UCSD-UCB</div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 10px 14px;">
+            <div style="flex: 1; min-width: 0; text-align: right;">
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: #1a1917;">5.66</span>
+            </div>
+            <div style="width: 62px; flex: none; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: #79736a;">队伍 UTR</div>
+            <div style="display: flex; flex: 1; min-width: 0; align-items: center; gap: 5px;">
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#9c3417" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><path d="M3 8.4l3.2 3.2L13 4.8"></path></svg>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: #9c3417;">6.22</span>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 10px 14px;">
+            <div style="flex: 1; min-width: 0; text-align: right;">
+              <div style="font-size: 12px; line-height: 1.45;">陈嘉禾 + 徐鹏远</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #79736a;">12.91</div>
+            </div>
+            <div style="width: 62px; flex: none; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D1</div>
+            <div style="display: flex; flex: 1; min-width: 0; align-items: flex-start; gap: 5px;">
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#9c3417" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px;"><path d="M3 8.4l3.2 3.2L13 4.8"></path></svg>
+              <div style="min-width: 0;">
+                <div style="font-size: 12px; line-height: 1.45;">石岚 + 凌承宇</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: #9c3417;">12.93</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 10px 14px;">
+            <div style="display: flex; flex: 1; min-width: 0; align-items: flex-start; justify-content: flex-end; gap: 5px;">
+              <div style="min-width: 0; text-align: right;">
+                <div style="font-size: 12px; line-height: 1.45;">孙靖凡 + 张冠宇</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: #9c3417;">10.98</div>
+              </div>
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#9c3417" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px;"><path d="M3 8.4l3.2 3.2L13 4.8"></path></svg>
+            </div>
+            <div style="width: 62px; flex: none; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D2</div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 12px; line-height: 1.45;">李斯远 + 于侃</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #79736a;">10.62</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 10px 14px;">
+            <div style="flex: 1; min-width: 0; text-align: right;">
+              <div style="font-size: 12px; line-height: 1.45;">郑一鸣 + 曹思远</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #79736a;">10.46</div>
+            </div>
+            <div style="width: 62px; flex: none; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">D3</div>
+            <div style="display: flex; flex: 1; min-width: 0; align-items: flex-start; gap: 5px;">
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#9c3417" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px;"><path d="M3 8.4l3.2 3.2L13 4.8"></path></svg>
+              <div style="min-width: 0;">
+                <div style="font-size: 12px; line-height: 1.45;">凌怡 + 陈杰</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: #9c3417;">10.90</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eae7e0; padding: 10px 14px;">
+            <div style="display: flex; flex: 1; min-width: 0; align-items: flex-start; justify-content: flex-end; gap: 5px;">
+              <div style="min-width: 0; text-align: right;">
+                <div style="font-size: 12px; line-height: 1.45;">叶明轩 + 谢一文</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: #9c3417;">10.35</div>
+              </div>
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#9c3417" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px;"><path d="M3 8.4l3.2 3.2L13 4.8"></path></svg>
+            </div>
+            <div style="width: 62px; flex: none; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">MD</div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 12px; line-height: 1.45;">李凌云 + 陈璐希</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #79736a;">10.41</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px;">
+            <div style="flex: 1; min-width: 0; text-align: right;">
+              <div style="font-size: 12px; line-height: 1.45;">沈佳怡 + 杨柏宁</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #79736a;">9.19</div>
+            </div>
+            <div style="width: 62px; flex: none; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.06em; color: #9c3417;">WD</div>
+            <div style="display: flex; flex: 1; min-width: 0; align-items: flex-start; gap: 5px;">
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#9c3417" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px;"><path d="M3 8.4l3.2 3.2L13 4.8"></path></svg>
+              <div style="min-width: 0;">
+                <div style="font-size: 12px; line-height: 1.45;">范雪珍 + 周乐仪</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: #9c3417;">9.38</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid #e4e0d8; background: #f2efe9; padding: 10px 14px; text-align: center; font-size: 12px; color: #79736a;">
+            当前选中阵容 <span style="font-family: 'JetBrains Mono', monospace; color: #1a1917;">1 : 4</span> 落后，D2 是唯一稳赢的线
+          </div>
+        </div>
+
+        <!-- B 队配置 -->
+        <div style="display: flex; width: 452px; flex: none; flex-direction: column; gap: 12px; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; padding: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.025em; color: #a09a90;">对手</div>
+            <div class="sel" style="height: 40px; font-size: 13px; font-weight: 500;">
+              <span>UCSD-UCB</span>
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.025em; color: #a09a90;">锁定搭档</div>
+            <div style="font-size: 11.5px; color: #a09a90;">留空 = 交给引擎</div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="lineTag">D1</span>
+              <div class="sel" style="flex: 1; min-width: 0;"><span>石岚 M · 7.81</span><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"></path></svg></div>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="lineTag">D2</span>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="lineTag">D3</span>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="lineTag">MD</span>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="lineTag">WD</span>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+              <div class="sel" style="flex: 1; min-width: 0;"><span class="selph">任意</span><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#79736a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5L8 10.5L12 6.5"></path></svg></div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="display: inline-flex; height: 40px; flex: none; align-items: center; justify-content: center; white-space: nowrap; border-radius: 8px; border: 1px solid #e4e0d8; background: #f2efe9; padding: 0 16px; font-size: 14px; font-weight: 500; color: #1a1917;">搜索阵容</span>
+            <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #79736a;">已锁 D1 ／ 其余 4 线搜索</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 下排：候选阵容 -->
+      <div style="display: flex; align-items: flex-start; gap: 16px;">
+
+        <div style="display: flex; width: 652px; flex: none; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid #e4e0d8; padding: 12px 14px;">
+            <div style="font-size: 14px; font-weight: 600;">ZJU 候选阵容</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">Top 5 · 按合计 UTR 降序</div>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+            <colgroup>
+              <col style="width: 40px;">
+              <col style="width: 122px;">
+              <col style="width: 122px;">
+              <col style="width: 122px;">
+              <col style="width: 122px;">
+              <col>
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="th"></th>
+                <th class="th">D1</th>
+                <th class="th">D2</th>
+                <th class="th">D3</th>
+                <th class="th">MD</th>
+                <th class="th">WD</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background: #faf5f3; box-shadow: inset 2px 0 0 #9c3417;">
+                <td class="td"><span style="display: block; height: 13px; width: 13px; border-radius: 9999px; border: 4px solid #9c3417; box-sizing: border-box; background: #ffffff;"></span></td>
+                <td class="td"><span class="pair">陈嘉禾 + 徐鹏远<span class="sum">12.91</span></span></td>
+                <td class="td"><span class="pair">孙靖凡 + 张冠宇<span class="sum">10.98</span></span></td>
+                <td class="td"><span class="pair">郑一鸣 + 曹思远<span class="sum">10.46</span></span></td>
+                <td class="td"><span class="pair">叶明轩 + 谢一文<span class="sum">10.35</span></span></td>
+                <td class="td"><span class="pair">沈佳怡 + 杨柏宁<span class="sum">9.19</span></span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="display: block; height: 13px; width: 13px; border-radius: 9999px; border: 1px solid #cfc9bc; box-sizing: border-box; background: #ffffff;"></span></td>
+                <td class="td"><span class="pair">陈嘉禾 + 徐鹏远<span class="sum">12.91</span></span></td>
+                <td class="td"><span class="pair">孙靖凡 + 张冠宇<span class="sum">10.98</span></span></td>
+                <td class="td"><span class="pair">吴普强 + 邱阿岚<span class="sum">10.82</span></span></td>
+                <td class="td"><span class="pair">叶明轩 + 杨柏宁<span class="sum">10.37</span></span></td>
+                <td class="td"><span class="pair">沈佳怡 + 谢一文<span class="sum">9.17</span></span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="display: block; height: 13px; width: 13px; border-radius: 9999px; border: 1px solid #cfc9bc; box-sizing: border-box; background: #ffffff;"></span></td>
+                <td class="td"><span class="pair">陈嘉禾 + 徐鹏远<span class="sum">12.91</span></span></td>
+                <td class="td"><span class="pair">孙靖凡 + 张冠宇<span class="sum">10.98</span></span></td>
+                <td class="td"><span class="pair">吴普强 + 邱阿岚<span class="sum">10.82</span></span></td>
+                <td class="td"><span class="pair">叶明轩 + 谢一文<span class="sum">10.35</span></span></td>
+                <td class="td"><span class="pair">林可欣 + 韩雨萌<span class="sum">10.56</span></span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="display: block; height: 13px; width: 13px; border-radius: 9999px; border: 1px solid #cfc9bc; box-sizing: border-box; background: #ffffff;"></span></td>
+                <td class="td"><span class="pair">陈嘉禾 + 孙靖凡<span class="sum">12.59</span></span></td>
+                <td class="td"><span class="pair">张冠宇 + 郑一鸣<span class="sum">11.84</span></span></td>
+                <td class="td"><span class="pair">徐鹏远 + 曹思远<span class="sum">10.94</span></span></td>
+                <td class="td"><span class="pair">叶明轩 + 谢一文<span class="sum">10.35</span></span></td>
+                <td class="td"><span class="pair">沈佳怡 + 杨柏宁<span class="sum">9.19</span></span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="display: block; height: 13px; width: 13px; border-radius: 9999px; border: 1px solid #cfc9bc; box-sizing: border-box; background: #ffffff;"></span></td>
+                <td class="td"><span class="pair">陈嘉禾 + 郑一鸣<span class="sum">12.43</span></span></td>
+                <td class="td"><span class="pair">吴普强 + 李宁远<span class="sum">11.79</span></span></td>
+                <td class="td"><span class="pair">徐鹏远 + 曹思远<span class="sum">10.94</span></span></td>
+                <td class="td"><span class="pair">杨柏宁 + 张冠宇<span class="sum">10.27</span></span></td>
+                <td class="td"><span class="pair">沈佳怡 + 何雪莉<span class="sum">8.67</span></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; width: 652px; flex: none; flex-direction: column; border-radius: 8px; border: 1px solid #e4e0d8; background: #ffffff; overflow: hidden;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid #e4e0d8; padding: 12px 14px;">
+            <div style="font-size: 14px; font-weight: 600;">UCSD-UCB 候选阵容</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a09a90;">Top 5 · 按合计 UTR 降序</div>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+            <colgroup>
+              <col style="width: 40px;">
+              <col style="width: 122px;">
+              <col style="width: 122px;">
+              <col style="width: 122px;">
+              <col style="width: 122px;">
+              <col>
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="th"></th>
+                <th class="th">D1</th>
+                <th class="th">D2</th>
+                <th class="th">D3</th>
+                <th class="th">MD</th>
+                <th class="th">WD</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background: #faf5f3; box-shadow: inset 2px 0 0 #9c3417;">
+                <td class="td"><span style="display: block; height: 13px; width: 13px; border-radius: 9999px; border: 4px solid #9c3417; box-sizing: border-box; background: #ffffff;"></span></td>
+                <td class="td"><span class="pair">石岚 + 凌承宇<span class="sum">12.93</span></span></td>
+                <td class="td"><span class="pair">李斯远 + 于侃<span class="sum">10.62</span></span></td>
+                <td class="td"><span class="pair">凌怡 + 陈杰<span class="sum">10.90</span></span></td>
+                <td class="td"><span class="pair">李凌云 + 陈璐希<span class="sum">10.41</span></span></td>
+                <td class="td"><span class="pair">范雪珍 + 周乐仪<span class="sum">9.38</span></span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="display: block; height: 13px; width: 13px; border-radius: 9999px; border: 1px solid #cfc9bc; box-sizing: border-box; background: #ffffff;"></span></td>
+                <td class="td"><span class="pair">石岚 + 凌承宇<span class="sum">12.93</span></span></td>
+                <td class="td"><span class="pair">李斯远 + 于侃<span class="sum">10.62</span></span></td>
+                <td class="td"><span class="pair">凌怡 + 陈杰<span class="sum">10.90</span></span></td>
+                <td class="td"><span class="pair">李凌云 + 陈璐希<span class="sum">10.41</span></span></td>
+                <td class="td"><span class="pair">周乐仪 + 曹希雅<span class="sum">9.38</span></span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="display: block; height: 13px; width: 13px; border-radius: 9999px; border: 1px solid #cfc9bc; box-sizing: border-box; background: #ffffff;"></span></td>
+                <td class="td"><span class="pair">石岚 + 凌承宇<span class="sum">12.93</span></span></td>
+                <td class="td"><span class="pair">李斯远 + 于侃<span class="sum">10.62</span></span></td>
+                <td class="td"><span class="pair">姚迈 + 魏博<span class="sum">10.87</span></span></td>
+                <td class="td"><span class="pair">李凌云 + 陈璐希<span class="sum">10.41</span></span></td>
+                <td class="td"><span class="pair">范雪珍 + 周乐仪<span class="sum">9.38</span></span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="display: block; height: 13px; width: 13px; border-radius: 9999px; border: 1px solid #cfc9bc; box-sizing: border-box; background: #ffffff;"></span></td>
+                <td class="td"><span class="pair">石岚 + 凌怡<span class="sum">12.24</span></span></td>
+                <td class="td"><span class="pair">李凌云 + 姚迈<span class="sum">11.98</span></span></td>
+                <td class="td"><span class="pair">王乔森 + 凌承宇<span class="sum">11.00</span></span></td>
+                <td class="td"><span class="pair">高奥 + 曹希雅<span class="sum">10.15</span></span></td>
+                <td class="td"><span class="pair">范雪珍 + 周乐仪<span class="sum">9.38</span></span></td>
+              </tr>
+              <tr>
+                <td class="td"><span style="display: block; height: 13px; width: 13px; border-radius: 9999px; border: 1px solid #cfc9bc; box-sizing: border-box; background: #ffffff;"></span></td>
+                <td class="td"><span class="pair">石岚 + 王思昌<span class="sum">12.12</span></span></td>
+                <td class="td"><span class="pair">周乐仪 + 王乔森<span class="sum">12.00</span></span></td>
+                <td class="td"><span class="pair">姚迈 + 魏博<span class="sum">10.87</span></span></td>
+                <td class="td"><span class="pair">高奥 + 范雪珍<span class="sum">10.15</span></span></td>
+                <td class="td"><span class="pair">陈璐希 + 凌怡<span class="sum">8.47</span></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+</div>
+</x-dc>
+</body>
+</html>

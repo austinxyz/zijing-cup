@@ -1,0 +1,23 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "队伍页", "x": 0, "y": 0, "w": 1440, "h": 980 },
+    { "file": "Analysis.dc.html", "title": "分析页", "x": 1560, "y": 0, "w": 1600, "h": 1120 }
+  ],
+  "annotations": [
+    {
+      "id": "note-tokens",
+      "x": 0,
+      "y": -190,
+      "w": 520,
+      "text": "设计系统直接取自 ai-course-management：\n底色 #f6f4f0 · 主色 #9c3417 · 边框 #e4e0d8 · 侧栏 #1c1b18\n圆角 8px · Noto Sans SC + JetBrains Mono\n侧栏 216px · 表头 34px · 表行 40px · 按钮 40/32px"
+    },
+    {
+      "id": "note-open-1",
+      "x": 1560,
+      "y": -190,
+      "w": 560,
+      "text": "待确认：\n1. 各线 UTR 上限（D1/D2/D3 11.00、MD 10.00、WD 9.00）取自 tennis-analysis-app 截图，2026 规则要按实际赛制核对。\n2. 「指定 UTR / 最新 UTR」两种口径沿用 MatchApp 的 grantUTR 开关，页面只按当前口径显示合计。\n3. 名单与球员名均为虚构测试数据。"
+    }
+  ],
+  "launch": { "view": "canvas" }
+}
