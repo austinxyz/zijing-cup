@@ -1,0 +1,92 @@
+# 2026 第十一届紫荆杯 · 金组
+#
+# 依据：2026 紫荆杯官方规则；领域模型见 docs/domain/rules.md。
+# 数值写成字符串按 Decimal 精确解析，理由见 2026-silver.toml 顶部。
+
+[season]
+year = 2026
+edition_name = "第十一届"
+
+[division]
+code = "gold"
+display_name = "金组"
+
+# 「new! 金组比赛采用记分制，减少超级队员对团体胜负的决定作用」
+# 「金组比赛以双方得分多少决定比赛胜负」——总分 8 分，4:4 平走三级抢先。
+scoring_mode = "points"
+
+# 「new! 为队长排阵需要，金组有UTR限制的三线具有0.3的UTR Buffer，即每线最多可以
+#   超过Cap 0.3，但三线超过Cap的总和也不得超过0.3。」
+#
+# 「只在有 UTR 限制的三线之间共享」不需要单独字段：开放线没有 Cap，
+# 本来就不可能产生超出量。
+buffer_per_line = "0.30"
+buffer_total = "0.30"
+
+partner_gap_max = "3.50"
+
+mens_doubles_must_be_ordered = true
+
+# 「金组的第一男双和混双没有水平限制，这两个开放线每线各记1分。
+#   第二男双的UTR Cap为15，第三男双的UTR Cap为13，女双的UTR Cap为11，
+#   有UTR限制的三线每线各记2分。」
+#
+# 开放线：不写 cap（缺省为无上限）。不要填一个很大的数 —— 开放线是另一种线，
+# 不是「上限很高的线」，而且它的分值也不同。
+
+[[lines]]
+code = "D1"
+kind = "mens_doubles"
+sort_order = 1
+# 开放线，无 UTR 上限
+points = 1
+
+[[lines]]
+code = "D2"
+kind = "mens_doubles"
+sort_order = 2
+cap = "15.00"
+points = 2
+
+[[lines]]
+code = "D3"
+kind = "mens_doubles"
+sort_order = 3
+cap = "13.00"
+points = 2
+
+[[lines]]
+code = "MD"
+kind = "mixed_doubles"
+sort_order = 4
+# 开放线，无 UTR 上限
+points = 1
+
+[[lines]]
+code = "WD"
+kind = "womens_doubles"
+sort_order = 5
+cap = "11.00"
+points = 2
+
+# 「金组上场限制：UTR>9.0的男队员不超过1名且只能打第一男双或混双，
+#   UTR>8.0的男队员不超过3名（含UTR>9.0的队员）。UTR>7.75的女队员不超过1名。」
+#
+# 第一条同时带人数上限和线位白名单，这正是资格限制不能压成几个列的原因。
+# 注意 >8.0 那条含 >9.0 的队员，是累计口径而非互斥区间。
+
+[[eligibility_limits]]
+gender = "M"
+utr_above = "9.00"
+max_players = 1
+restricted_to_lines = ["D1", "MD"]
+
+[[eligibility_limits]]
+gender = "M"
+utr_above = "8.00"
+max_players = 3
+
+[[eligibility_limits]]
+gender = "F"
+utr_above = "7.75"
+max_players = 1

@@ -1,0 +1,80 @@
+# 2025 第十届紫荆杯 · 金组
+#
+# 去年的规则，用于「较上一赛季」对比。依据：2025 紫荆杯官方规则。
+# 与 2026 的差异：当年**不是**记分制（记分制是 2026 的「new!」），且没有 Buffer。
+# 各线 Cap 两年未变。
+
+[season]
+year = 2025
+edition_name = "第十届"
+
+[division]
+code = "gold"
+display_name = "金组"
+
+# 2025 金组按胜场数定胜负；记分制 2026 才引入。
+scoring_mode = "match_count"
+
+buffer_per_line = "0"
+buffer_total = "0"
+
+partner_gap_max = "3.50"
+
+mens_doubles_must_be_ordered = true
+
+# 「金组的第一男双和混双没有水平限制，第二男双的UTR不超过15，
+#   第三男双的UTR不超过13，女双的UTR不超过11」
+#
+# 2025 无记分制，故五线 points 一律为 1（每线各算一场胜负）。
+
+[[lines]]
+code = "D1"
+kind = "mens_doubles"
+sort_order = 1
+points = 1
+
+[[lines]]
+code = "D2"
+kind = "mens_doubles"
+sort_order = 2
+cap = "15.00"
+points = 1
+
+[[lines]]
+code = "D3"
+kind = "mens_doubles"
+sort_order = 3
+cap = "13.00"
+points = 1
+
+[[lines]]
+code = "MD"
+kind = "mixed_doubles"
+sort_order = 4
+points = 1
+
+[[lines]]
+code = "WD"
+kind = "womens_doubles"
+sort_order = 5
+cap = "11.00"
+points = 1
+
+# 「金组上场限制：UTR>9.0的男队员不超过1名且只能打第一男双或混双，
+#   UTR>8.0的男队员不超过3名（含UTR>9.0的队员）。UTR>7.75的女队员不超过1名。」
+
+[[eligibility_limits]]
+gender = "M"
+utr_above = "9.00"
+max_players = 1
+restricted_to_lines = ["D1", "MD"]
+
+[[eligibility_limits]]
+gender = "M"
+utr_above = "8.00"
+max_players = 3
+
+[[eligibility_limits]]
+gender = "F"
+utr_above = "7.75"
+max_players = 1

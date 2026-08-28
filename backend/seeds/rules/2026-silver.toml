@@ -1,0 +1,88 @@
+# 2026 第十一届紫荆杯 · 银组
+#
+# 这个文件是规则的唯一事实来源。改规则改这里，然后跑：
+#   uv run python -m app.seeds.load_rules
+# CI 用 --check 检测「改了没导入」的漂移。
+#
+# 依据：2026 紫荆杯官方规则；领域模型见 docs/domain/rules.md。
+#
+# 数值一律写成字符串，按 Decimal 精确解析。写成 TOML 浮点会引入二进制误差
+# （0.30 存不下），而这些数字是判定阵容合法与否的依据，差 0.01 就是另一个答案。
+
+[season]
+year = 2026
+edition_name = "第十一届"
+
+[division]
+code = "silver"
+display_name = "银组"
+
+# 「银组五场比赛的UTR限制为……」——按五线胜场数定胜负，记分制是金组独有。
+scoring_mode = "match_count"
+
+# 「new! 为队长排阵需要，银组五线具有0.5的UTR Buffer，即每线最多可以超过Cap 0.5，
+#   但五线超过Cap的总和也不得超过0.5。」
+# 两条独立约束，所以两个字段。2026 新增，2025 没有这个制度。
+buffer_per_line = "0.50"
+buffer_total = "0.50"
+
+# 「比赛双打搭档之间的UTR差距不得超过3.50。」（两组通用）
+partner_gap_max = "3.50"
+
+# 「三线男双不能田忌赛马。」原文未给数值定义，这里只存开关，
+# 比较方式待组委会确认（docs/domain/rules.md「待澄清」）。
+mens_doubles_must_be_ordered = true
+
+# 「第一男双的UTR Cap为13，第二男双的UTR Cap为12，第三男双UTR Cap为11，
+#   混双的UTR Cap为10.25，女双的UTR Cap为9.25」
+#
+# points 在 match_count 组别下不参与判定，但每条线都要有值：
+# 银组每线各算一场胜负，所以一律为 1。
+
+[[lines]]
+code = "D1"
+kind = "mens_doubles"
+sort_order = 1
+cap = "13.00"
+points = 1
+
+[[lines]]
+code = "D2"
+kind = "mens_doubles"
+sort_order = 2
+cap = "12.00"
+points = 1
+
+[[lines]]
+code = "D3"
+kind = "mens_doubles"
+sort_order = 3
+cap = "11.00"
+points = 1
+
+[[lines]]
+code = "MD"
+kind = "mixed_doubles"
+sort_order = 4
+cap = "10.25"   # 2025 是 10.5
+points = 1
+
+[[lines]]
+code = "WD"
+kind = "womens_doubles"
+sort_order = 5
+cap = "9.25"    # 2025 是 9.5
+points = 1
+
+# 「银组上场限制：UTR>7.0的男队员不超过1名，UTR>5.5的女队员不超过1名。」
+# 银组两条限制都不限线位，所以不写 restricted_to_lines（缺省即不限）。
+
+[[eligibility_limits]]
+gender = "M"
+utr_above = "7.00"
+max_players = 1
+
+[[eligibility_limits]]
+gender = "F"
+utr_above = "5.50"
+max_players = 1

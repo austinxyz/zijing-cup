@@ -34,7 +34,7 @@
 - [x] 2.2 GREEN — 新增 `supabase/migrations/<timestamp>_create_competition_rules.sql`，建四张表、外键与唯一索引（`divisions(season_year, code)`、`division_lines(division_id, code)`），首行设置 search_path
 - [x] 2.3 RED — pytest：断言 `division_lines.cap` 可为 NULL、`division_eligibility_limits.restricted_to_lines` 可为 NULL 且能存多个线位代码
 - [x] 2.4 GREEN — 实现 `backend/app/models/rules.py` 的 SQLModel 定义，字段可空性与 migration 一致
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. TOML seed 与幂等导入命令
 
@@ -48,14 +48,14 @@
   - TOML 用标准库 `tomllib` 读取，不新增依赖
 - **Threshold**: 80
 
-- [ ] 3.0 CONTRACT — write openspec/changes/rules-and-design-system/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 编写 `backend/seeds/rules/{2025,2026}-{gold,silver}.toml` 四个文件，每条 Cap / Buffer / 阈值旁以注释标注规则原文出处（依据 `docs/domain/rules.md`）
-- [ ] 3.2 RED — pytest：空库导入后四套规则落库，且 2026 银组五线 cap 为 13/12/11/10.25/9.25、2026 金组 D1 与 MD 的 cap 为 NULL、2025 两组 buffer 为 0
-- [ ] 3.3 GREEN — 实现 `backend/app/seeds/load_rules.py`：解析 → 读 DB → 比对 → 写入
-- [ ] 3.4 RED — pytest：同一 seed 连续导入两次，第二次后数据与第一次完全一致且无重复行；改一条 cap 后重新导入，该条更新且其余不变
-- [ ] 3.5 GREEN — 补齐幂等与差异写入逻辑（含删除语义）
-- [ ] 3.6 RED — pytest：`--check` 在一致时退出码 0；改 seed 未导入时退出码非 0 且输出含赛季/组别/字段；`--check` 执行后 DB 数据未变
-- [ ] 3.7 GREEN — 实现 `--check` 模式，复用 3.3 的比对函数
+- [x] 3.0 CONTRACT — write openspec/changes/rules-and-design-system/contracts/group-3.md with the ### Contract block above
+- [x] 3.1 编写 `backend/seeds/rules/{2025,2026}-{gold,silver}.toml` 四个文件，每条 Cap / Buffer / 阈值旁以注释标注规则原文出处（依据 `docs/domain/rules.md`）
+- [x] 3.2 RED — pytest：空库导入后四套规则落库，且 2026 银组五线 cap 为 13/12/11/10.25/9.25、2026 金组 D1 与 MD 的 cap 为 NULL、2025 两组 buffer 为 0
+- [x] 3.3 GREEN — 实现 `backend/app/seeds/load_rules.py`：解析 → 读 DB → 比对 → 写入
+- [x] 3.4 RED — pytest：同一 seed 连续导入两次，第二次后数据与第一次完全一致且无重复行；改一条 cap 后重新导入，该条更新且其余不变
+- [x] 3.5 GREEN — 补齐幂等与差异写入逻辑（含删除语义）
+- [x] 3.6 RED — pytest：`--check` 在一致时退出码 0；改 seed 未导入时退出码非 0 且输出含赛季/组别/字段；`--check` 执行后 DB 数据未变
+- [x] 3.7 GREEN — 实现 `--check` 模式，复用 3.3 的比对函数
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 规则查询端点

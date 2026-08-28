@@ -1,0 +1,72 @@
+# 2025 第十届紫荆杯 · 银组
+#
+# 去年的规则，用于「较上一赛季」对比。依据：2025 紫荆杯官方规则。
+# 与 2026 的差异：混双 10.5 -> 10.25、女双 9.5 -> 9.25、且当年没有 Buffer 制度。
+
+[season]
+year = 2025
+edition_name = "第十届"
+
+[division]
+code = "silver"
+display_name = "银组"
+scoring_mode = "match_count"
+
+# 2025 没有 UTR Buffer 制度 —— Buffer 是 2026 的「new!」。0 表示不允许任何超出。
+buffer_per_line = "0"
+buffer_total = "0"
+
+# 「金组和银组双打搭档之间的UTR差距都不得超过3.50。」
+partner_gap_max = "3.50"
+
+mens_doubles_must_be_ordered = true
+
+# 「银组五场比赛的UTR限制为：第一男双UTR不超过13，第二男双UTR不超过12，
+#   第三男双UTR不超过11，混双UTR不超过10.5，女双UTR不超过9.5」
+
+[[lines]]
+code = "D1"
+kind = "mens_doubles"
+sort_order = 1
+cap = "13.00"
+points = 1
+
+[[lines]]
+code = "D2"
+kind = "mens_doubles"
+sort_order = 2
+cap = "12.00"
+points = 1
+
+[[lines]]
+code = "D3"
+kind = "mens_doubles"
+sort_order = 3
+cap = "11.00"
+points = 1
+
+[[lines]]
+code = "MD"
+kind = "mixed_doubles"
+sort_order = 4
+cap = "10.50"
+points = 1
+
+[[lines]]
+code = "WD"
+kind = "womens_doubles"
+sort_order = 5
+cap = "9.50"
+points = 1
+
+# 「银组上场限制：UTR>7.0的男队员不超过1名，UTR>5.5的女队员不超过1名。」
+
+[[eligibility_limits]]
+gender = "M"
+utr_above = "7.00"
+max_players = 1
+
+[[eligibility_limits]]
+gender = "F"
+utr_above = "5.50"
+max_players = 1
