@@ -68,3 +68,28 @@
   fix_tasks:
     - "4.F1 FIX — Separate sentinel year constants in test suite—use NON_EXISTENT_YEAR = 1900 for 'must never exist' assertions, reserve TEST_YEAR = 1999 only for roundtrip module's private scratch space; centralize in shared test-support module to prevent collision"
     - "4.F2 FIX — Verify whether Session.get(Season, year) lookup is necessary given Division query already filters by season_year; consider removing if redundant to reduce query count"
+
+- group: 5
+  attempt: 1
+  scores: {spec: 100, runtime: 100, code: 85}
+  total: 97
+  status: PASS
+  findings:
+    - "Spec: Shell placed in app/[season]/[division]/layout.tsx, not inside page; verified error.tsx replaces only content region, not full window"
+    - "Spec: Disabled nav items (队伍/分析) rendered as <div aria-disabled> not <Link>, confirmed by Sidebar.test.tsx:45-58"
+    - "Spec: URL path format /2026/silver/rules; season/division in URL params, not cookies/query/state"
+    - "Spec: Switcher is list of <Link> elements replacing season/division path segments; excludes currently open selection"
+    - "Spec: BACKEND_URL/BACKEND_SECRET read only in server-side lib/api.ts (no NEXT_PUBLIC_ prefix), verified no client component imports it"
+    - "Spec: Rules page (rules/page.tsx) is Server Component, fetches via getDivisionRules from lib/api"
+    - "Spec: Previous season comparison done frontend-side via second fetch; missing prior season returns null without error (graceful degradation)"
+    - "Spec: Open lines display as '开放线' not numbers (line.cap === null path)"
+    - "Spec: Buffer displayed with callout explaining shared team budget semantics"
+    - "Spec: Design system tokens in globals.css (colors, radius, fonts); four base components (Button, Card, Badge, Input) provided"
+    - "Spec: No new runtime dependencies in package.json (verified against prior commit)"
+    - "Runtime: 38 frontend tests pass; coverage includes shell resilience on fetch failure, disabled-vs-link nav items, switcher behavior, null cap serialization, auth requirements"
+    - "Runtime: Backend tests (pytest) all passing; api endpoints verified"
+    - "Code: No CRITICAL or HIGH severity issues from code review"
+    - "Code: Three critical verification items all confirmed—(1) shell survives failed data fetch with try/catch in layout, (2) credentials isolated server-side with no client imports, (3) disabled nav items are genuinely <div> not links"
+    - "Code (MEDIUM): Root landing page (app/page.tsx) lacks error boundary and can crash unstyled on backend failure (unlike season/division routes which have error.tsx); getSeasons() not wrapped in try/catch at root"
+    - "Code (LOW): No fetch timeout on backend calls in lib/api.ts; given cold-start can take ~1 minute, hung requests could delay error state"
+  fix_tasks:

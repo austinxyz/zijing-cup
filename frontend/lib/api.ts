@@ -5,10 +5,19 @@ function backendUrl(path: string): string {
   return `${base}${path}`;
 }
 
+// Render's free tier sleeps when idle and can take close to a minute to wake,
+// so a request has to be allowed to wait — but not forever. Without a
+// deadline the Server Component blocks until the hosting platform kills the
+// whole function, and the visitor gets a blank page instead of the error
+// state we render for exactly this case. 30s leaves room for a cold start
+// while staying inside a typical serverless function limit.
+const BACKEND_TIMEOUT_MS = 30_000;
+
 function backendRequestInit(): RequestInit {
   return {
     cache: "no-store",
     headers: { "X-Backend-Secret": process.env.BACKEND_SECRET ?? "" },
+    signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
   };
 }
 

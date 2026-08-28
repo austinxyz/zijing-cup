@@ -98,12 +98,12 @@
 - [x] 5.7 RED — vitest：后端不可达时规则页呈现错误态且壳仍渲染
 - [x] 5.8 GREEN — 实现 `app/[season]/[division]/rules/error.tsx`，并把 `app/page.tsx` 改为重定向到库中最新赛季的银组规则页
 - [x] 5.9 VISUAL DIFF — 再次对照 mock 检查规则页正文（各线表格、Buffer 卡片的共享预算说明、资格限制、参赛 UTR 三类来源徽章），修正漂移
-- [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 6. 验证与收尾
 
-- [ ] 6.1 Run backend test suite — `cd backend && uv run pytest`，确认无回归
-- [ ] 6.2 Run frontend test suite — `cd frontend && npm run test`，确认无回归
-- [ ] 6.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明
-- [ ] 6.4 先执行 `uv run python -m app.seeds.load_rules` 再执行 `--check`，确认退出码 0。顺序不能反：测试夹具在拆解时会清空规则表，紧接着跑 --check 必然报漂移
-- [ ] 6.5 Run superpowers:verification-before-completion —— 跑 `project.test_commands`；跑 `project.custom_verification_checks`（前端 console.log 扫描、敏感变量泄漏扫描、migration 的 `zijing_cup` 限定检查）
+- [x] 6.1 Run backend test suite — `cd backend && uv run pytest`，确认无回归
+- [x] 6.2 Run frontend test suite — `cd frontend && npm run test`，确认无回归
+- [x] 6.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明
+- [x] 6.4 先执行 `uv run python -m app.seeds.load_rules` 再执行 `--check`，确认退出码 0。顺序不能反：测试夹具在拆解时会清空规则表，紧接着跑 --check 必然报漂移
+- [x] 6.5 Run superpowers:verification-before-completion —— 跑 `project.test_commands`；跑 `project.custom_verification_checks`（前端 console.log 扫描、敏感变量泄漏扫描、migration 的 `zijing_cup` 限定检查）
