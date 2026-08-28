@@ -9,13 +9,13 @@
   - 组件 API 与 ai-course-management 保持一致：Button 有 primary/secondary/ghost/danger × sm/md
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/rules-and-design-system/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — vitest：断言 Button 各变体渲染出对应 token class（`wrapper.classes()` 匹配 `bg-primary` / `bg-surface-muted` / `bg-danger`），当前必然失败
-- [ ] 1.2 GREEN — 移植 `frontend/app/globals.css` 的 token 块（`:root` 变量 + `@theme inline` 映射）与 `frontend/lib/cn.ts`，实现 `components/ui/button.tsx`
-- [ ] 1.3 RED — vitest：断言 Card / CardHeader / CardTitle / CardDescription、Badge 五个变体、Input 的 token class 与结构
-- [ ] 1.4 GREEN — 实现 `components/ui/{card,badge,input}.tsx` 与 `components/ui/index.ts` 导出
-- [ ] 1.5 在 `app/layout.tsx` 接入 next/font 的 Noto Sans SC 与 JetBrains Mono，绑定到 `--font-sans` / `--font-mono`
-- [ ] 1.6 校验未新增运行时依赖：`git diff frontend/package.json` 的 dependencies 段无新增条目
+- [x] 1.0 CONTRACT — write openspec/changes/rules-and-design-system/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — vitest：断言 Button 各变体渲染出对应 token class（`wrapper.classes()` 匹配 `bg-primary` / `bg-surface-muted` / `bg-danger`），当前必然失败
+- [x] 1.2 GREEN — 移植 `frontend/app/globals.css` 的 token 块（`:root` 变量 + `@theme inline` 映射）与 `frontend/lib/cn.ts`，实现 `components/ui/button.tsx`
+- [x] 1.3 RED — vitest：断言 Card / CardHeader / CardTitle / CardDescription、Badge 五个变体、Input 的 token class 与结构
+- [x] 1.4 GREEN — 实现 `components/ui/{card,badge,input}.tsx` 与 `components/ui/index.ts` 导出
+- [x] 1.5 在 `app/layout.tsx` 接入 next/font 的 Noto Sans SC 与 JetBrains Mono，绑定到 `--font-sans` / `--font-mono`
+- [x] 1.6 校验未新增运行时依赖：`git diff frontend/package.json` 的 dependencies 段无新增条目
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 赛制规则数据模型与 migration

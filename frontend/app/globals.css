@@ -1,1 +1,102 @@
 @import "tailwindcss";
+
+/*
+ * Design tokens — ported value-for-value from the ai-course-management
+ * frontend (app/globals.css). Every number here was copied, not re-derived:
+ * the two apps are meant to look like one family, and a "close enough"
+ * palette is how that quietly stops being true.
+ *
+ * `--font-sans` / `--font-mono` are injected by next/font (see app/layout.tsx)
+ * as CSS custom properties on the <html> element — not redeclared here.
+ *
+ * The source app also ships a `.dark` block. It is deliberately not ported:
+ * nothing in this app toggles a dark class, and an unreachable palette is
+ * dead code that drifts silently. Re-derive it from the source when a dark
+ * mode actually ships.
+ */
+:root {
+  --radius: 0.5rem;
+
+  --color-bg: #f6f4f0;
+  --color-fg: #1a1917;
+
+  --color-surface: #ffffff;
+  --color-surface-muted: #f2efe9;
+
+  --color-border: #e4e0d8;
+
+  --color-primary: #9c3417;
+  --color-primary-fg: #ffffff;
+
+  --color-muted: #79736a;
+  --color-muted-fg: #a09a90;
+
+  --color-danger: #b3261e;
+  --color-danger-fg: #ffffff;
+  --color-danger-surface: #fbf0ee;
+  --color-danger-border: #f0cfc9;
+
+  --color-success: #4c8a63;
+  --color-success-fg: #ffffff;
+
+  /* Third tier between success and danger. In this app it carries "legal but
+     costly": a doubles pair that exceeds its line's UTR cap and therefore
+     eats into the team's shared buffer budget. Named for the range it means,
+     not for the one screen it currently appears on. */
+  --color-warning: #b8860b;
+  --color-warning-fg: #ffffff;
+
+  /* Sidebar is a dark page-chrome panel, not a reusable component token —
+     kept separate from the surface/bg tokens above. */
+  --color-sidebar: #1c1b18;
+  --color-sidebar-border: #2a2823;
+  --color-sidebar-fg: #b8b2a6;
+  --color-sidebar-fg-dim: #6f6a60;
+  --color-sidebar-fg-bright: #f2eee7;
+  --color-sidebar-active: #2c2a25;
+}
+
+@theme inline {
+  --radius-token: var(--radius);
+
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-fg);
+
+  --color-surface: var(--color-surface);
+  --color-surface-muted: var(--color-surface-muted);
+
+  --color-border: var(--color-border);
+
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-fg);
+
+  --color-muted: var(--color-muted);
+  --color-muted-foreground: var(--color-muted-fg);
+
+  --color-danger: var(--color-danger);
+  --color-danger-foreground: var(--color-danger-fg);
+  --color-danger-surface: var(--color-danger-surface);
+  --color-danger-border: var(--color-danger-border);
+
+  --color-success: var(--color-success);
+  --color-success-foreground: var(--color-success-fg);
+
+  --color-warning: var(--color-warning);
+  --color-warning-foreground: var(--color-warning-fg);
+
+  --color-sidebar: var(--color-sidebar);
+  --color-sidebar-border: var(--color-sidebar-border);
+  --color-sidebar-foreground: var(--color-sidebar-fg);
+  --color-sidebar-foreground-dim: var(--color-sidebar-fg-dim);
+  --color-sidebar-foreground-bright: var(--color-sidebar-fg-bright);
+  --color-sidebar-active: var(--color-sidebar-active);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans), "Segoe UI", sans-serif;
+}
