@@ -66,20 +66,21 @@ export function Sidebar({
   divisionName,
   seasons,
 }: SidebarProps) {
-  // Every (season, division) pair except the one already open. The switcher
-  // is a list of links, not client state: the URL is what decides which rules
-  // are in force, so a selection that lived in React would be a second,
-  // disagreeing source of truth.
+  // EVERY (season, division) pair, including the one already open — which is
+  // marked rather than omitted. Hiding the current pair made the option set
+  // change membership on every switch: you never saw all four at once, and
+  // the list appeared to rewrite itself under you.
+  //
+  // These are links, not client state. The URL decides which rules are in
+  // force, so a selection held in React would be a second source of truth
+  // that could disagree with the address bar.
   const options = seasons.flatMap((entry) =>
-    entry.divisions
-      .filter(
-        (item) => !(String(entry.year) === season && item.code === division),
-      )
-      .map((item) => ({
-        key: `${entry.year}-${item.code}`,
-        href: `/${entry.year}/${item.code}/rules`,
-        label: `${entry.year} · ${item.display_name}`,
-      })),
+    entry.divisions.map((item) => ({
+      key: `${entry.year}-${item.code}`,
+      href: `/${entry.year}/${item.code}/rules`,
+      label: `${entry.year} · ${item.display_name}`,
+      current: String(entry.year) === season && item.code === division,
+    })),
   );
 
   return (
@@ -99,19 +100,44 @@ export function Sidebar({
           </div>
         </div>
 
-        <div
-          role="group"
-          aria-label="赛季与组别"
-          className="flex flex-col gap-1"
-        >
-          <div className="flex h-[34px] items-center justify-between gap-2 rounded-token border border-[#33322c] bg-background px-2.5 text-[12.5px] font-medium text-sidebar-foreground-bright">
+        {/* A native <details>: collapsed it reads as one control naming the
+            current season and division, opened it shows the full list. No
+            client JS, and the closed state keeps the sidebar compact. */}
+        <details role="group" aria-label="赛季与组别" className="group">
+          <summary className="flex h-[34px] cursor-pointer list-none items-center justify-between gap-2 rounded-token border border-[#33322c] bg-background px-2.5 text-[12.5px] font-medium text-sidebar-foreground-bright [&::-webkit-details-marker]:hidden">
             <span>
               {season} · {divisionName}
             </span>
-          </div>
-          {options.length > 0 && (
-            <ul className="flex flex-col gap-px">
-              {options.map((option) => (
+            <svg
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="flex-none text-sidebar-foreground-dim transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            >
+              <path d="M4 6.5L8 10.5L12 6.5" />
+            </svg>
+          </summary>
+
+          <ul className="mt-1 flex flex-col gap-px">
+            {options.map((option) =>
+              option.current ? (
+                <li key={option.key}>
+                  {/* Present but not a link: a "switch to" entry pointing at
+                      the page you are already on is a dead click. */}
+                  <span
+                    aria-current="true"
+                    className="flex h-8 items-center rounded-token border-l-2 border-l-[#c9502f] bg-sidebar-active pl-2 pr-2.5 text-[12.5px] font-medium text-sidebar-foreground-bright"
+                  >
+                    {option.label}
+                  </span>
+                </li>
+              ) : (
                 <li key={option.key}>
                   <Link
                     href={option.href}
@@ -120,10 +146,10 @@ export function Sidebar({
                     {option.label}
                   </Link>
                 </li>
-              ))}
-            </ul>
-          )}
-        </div>
+              ),
+            )}
+          </ul>
+        </details>
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 p-2">

@@ -37,7 +37,9 @@ describe("Division layout", () => {
     render(await Layout(layoutProps(<p>页面内容</p>)));
 
     expect(screen.getByText("赛制规则")).toBeInTheDocument();
-    expect(screen.getByText("2026 · 银组")).toBeInTheDocument();
+    // Appears twice by design: the collapsed switcher label and the marked
+    // entry inside its option list.
+    expect(screen.getAllByText("2026 · 银组")).toHaveLength(2);
     expect(screen.getByText("页面内容")).toBeInTheDocument();
   });
 
@@ -51,6 +53,7 @@ describe("Division layout", () => {
     expect(screen.getByText("赛制规则")).toBeInTheDocument();
     // Falls back to the URL's own values rather than inventing a division
     // name it does not have.
+    // Only the summary: with no season list there are no options to list.
     expect(screen.getByText("2026 · silver")).toBeInTheDocument();
   });
 
