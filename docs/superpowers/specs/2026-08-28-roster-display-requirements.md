@@ -75,8 +75,11 @@ HAS_UI_SURFACE: yes
   不能清空整个窗口。
 - 新增的球队中文名字段是**人维护、CSV 不拥有**的，与 `is_borrowed_player`
   同类。名单导入器不得触碰它——`SOURCE_FIELDS` 那套字段归属纪律照旧。
-- Render 免费版闲置后休眠，冷启动接近 1 分钟。页面要有 loading 态，
-  取数超时不能是白屏。
+- Render 免费版闲置后休眠，冷启动接近 1 分钟。**但本次不加 loading 边界**：
+  实测 `loading.tsx` 会让 Next 提前 flush 响应头，`notFound()` 因此无法再返回
+  404（未知球队变成 200），且 fallback 未被替换、页面停在加载文案。仓库里
+  此前没有任何 `loading.tsx`，已上线的规则页同样没有——冷启动反馈是全应用
+  一致的问题，与移动端一并留给后续的壳层 change。
 - 球队中文名需要给 `zijing_cup.teams` 加一列，即一个新 migration。按 CLAUDE.md 的
   规则，**远程共享项目禁止跑 `supabase db push` / `migration repair`**，必须去
   Supabase Dashboard 的 SQL Editor 手工执行——上线步骤里要显式包含这一步，
@@ -100,6 +103,8 @@ HAS_UI_SURFACE: yes
   页面替它下结论就等于决定了谁占用「场上至多 2 名自评级」的名额。
 - 未知球队 code 返回 404，不是空名单——空名单读作「这支队没有球员」，是另一句话。
 - 后端不可达时侧栏与球队列仍在，只有内容区变错误态。
+- 未知球队 code 返回 404，且「没有这支球队」呈现在内容区内，侧栏与球队列仍在
+  （框架默认的未找到页会替换整个窗口，把换队的出路一并拿走）。
 - 客户端 bundle 中不含 `BACKEND_URL` / `BACKEND_SECRET`。
 - 桌面 1440px 下与 `design/Teams.dc.html` / `TeamsEmpty.dc.html` 的 token、
   配色与逐字文案一致，页面不横向溢出。

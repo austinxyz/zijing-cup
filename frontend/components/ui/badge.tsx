@@ -1,7 +1,13 @@
 import { type HTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "default" | "success" | "danger" | "muted" | "warning";
+type Variant =
+  | "default"
+  | "success"
+  | "danger"
+  | "muted"
+  | "warning"
+  | "warning-subtle";
 
 const variantClasses: Record<Variant, string> = {
   default: "bg-primary text-primary-foreground",
@@ -13,6 +19,11 @@ const variantClasses: Record<Variant, string> = {
   // is still valid — nor as normal, since the overage is spending a budget
   // the whole lineup shares.
   warning: "bg-warning text-warning-foreground",
+  // The same meaning at lower volume, for a state that repeats down a list.
+  // 「待定」 sits on every unclassified player; a column of solid amber would
+  // read as a page full of errors when nothing is wrong — nobody has
+  // classified them yet.
+  "warning-subtle": "border border-[#ecd9a4] bg-[#fbf5e6] text-warning",
 };
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {

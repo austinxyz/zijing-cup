@@ -128,7 +128,7 @@
 - [ ] 4.8 RED — 侧栏：「队伍」是指向 `/[season]/[division]/teams` 的链接且不再标注未开放；「分析」仍是禁用态且不是链接
 - [ ] 4.9 GREEN — 改 `Sidebar.tsx`：「队伍」由 `PendingNavItem` 改为 `Link`
 - [x] 4.10 VISUAL DIFF — `npm run dev --prefix frontend`，访问 `/2025/silver/teams`，对照 `design/TeamsEmpty.dc.html` 核对 token、配色与逐字文案（桌面 1440px）。移动端已于 2026-08-28 移出本 change 范围——应用壳从未实现窄屏版式，规则页在 375px 下同样被压缩，属后续 `mobile-shell`
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 名单页与 UTR 来源呈现
 
@@ -139,8 +139,8 @@
   - 名单的「UTR 来源」SHALL 同时呈现系统判定的评级类别与总表的原始状态文本。
     评级类别为空时 MUST 呈现为「待定」，MUST NOT 呈现为自评、委员会审定
     或任何其他具体类别。
-  - 名单页取数失败时 MUST 只把内容区换成错误态，侧栏与应用壳 MUST 仍然渲染。
-    页面 SHALL 提供加载态而不是白屏。
+  - 名单页取数失败或球队不存在时 MUST 只把内容区换成对应状态，侧栏与球队列
+    MUST 仍然渲染。未知球队的 HTTP 状态 MUST 是 404。
   （移动端版式已移出本 change，见 specs/team-roster-ui/spec.md 末尾说明。）
 - **Runtime**: `cd frontend && npm run test` → expected: 全部通过，含排序不被前端改写、三种 UTR 来源呈现、「自评」字样不出现、未知球队 404
 - **Code**:
@@ -148,22 +148,25 @@
     相同时会给出不同先后，而 UTR 打平在这份数据里很常见（多人压在同一个 cap）。
   - 「待定」用 `--color-warning`；女队员数偏少只加字重不上色 —— 同一屏两种
     「注意但不是错误」用同一颜色会分不清指什么。
-  - `teams/[code]/error.tsx` 替换的只是名单区，球队列与侧栏都还在。
+  - `teams/[code]/error.tsx` 与 `not-found.tsx` 替换的只是名单区，球队列与
+    侧栏都还在——换一支队正是这两种情况下的出路。
+  - **不放 `loading.tsx`**：那个 Suspense 边界让 Next 提前 flush 响应头，
+    `notFound()` 就再也返回不了 404（实测有它时未知球队返回 200）。
   - 移动端名单用行卡片而非表格的那条设计留给后续 `mobile-shell`；本组只做桌面。
 - **Threshold**: 70
 - **Note**: 含 VISUAL DIFF 任务，阈值取 70
 
-- [ ] 5.0 CONTRACT — write openspec/changes/roster-display/contracts/group-5.md with the ### Contract block above
-- [ ] 5.1 MOCK — 打开 mocks 中对应 `design/Teams.dc.html` 的一节；记下表格 token（表头 34px、表行 40px）与逐字文案「已认证」「委员会审定」「待定」「参赛 UTR · 赛前冻结」
-- [ ] 5.2 RED — 名单表按后端给出的顺序渲染：构造两条参赛 UTR 相同的记录，断言页面先后与取数返回的先后一致（前端不重排）
-- [ ] 5.3 GREEN — 实现 `teams/[code]/page.tsx` 的名单表
-- [ ] 5.4 RED — UTR 来源三种呈现：`Rated` → 「已认证」+ 原文；`Projected` → 「委员会审定」+ 原文；`rating_class` 为 null → 「待定」。并断言整页不出现「自评」字样
-- [ ] 5.5 GREEN — 实现 UTR 来源单元格
-- [ ] 5.6 RED — `Rated / Appeal` 显示「已认证」与完整原文（后缀不改变类别）
-- [ ] 5.7 GREEN — 最小实现使后缀不参与判定
-- [ ] 5.8 RED — 未知球队 code 呈现未找到而不是空名单；取数失败时侧栏与球队列仍渲染
-- [ ] 5.9 GREEN — 实现 `teams/[code]/error.tsx` 与 `loading.tsx`，未知 code 走 notFound
-- [ ] 5.10 VISUAL DIFF — 访问 `/2025/silver/teams/PKU`，对照 `design/Teams.dc.html` 核对 token、配色与逐字文案（桌面 1440px）。移动端不在本 change 范围
+- [x] 5.0 CONTRACT — write openspec/changes/roster-display/contracts/group-5.md with the ### Contract block above
+- [x] 5.1 MOCK — 打开 mocks 中对应 `design/Teams.dc.html` 的一节；记下表格 token（表头 34px、表行 40px）与逐字文案「已认证」「委员会审定」「待定」「参赛 UTR · 赛前冻结」
+- [x] 5.2 RED — 名单表按后端给出的顺序渲染：构造两条参赛 UTR 相同的记录，断言页面先后与取数返回的先后一致（前端不重排）
+- [x] 5.3 GREEN — 实现 `teams/[code]/page.tsx` 的名单表
+- [x] 5.4 RED — UTR 来源三种呈现：`Rated` → 「已认证」+ 原文；`Projected` → 「委员会审定」+ 原文；`rating_class` 为 null → 「待定」。并断言整页不出现「自评」字样
+- [x] 5.5 GREEN — 实现 UTR 来源单元格
+- [x] 5.6 RED — `Rated / Appeal` 显示「已认证」与完整原文（后缀不改变类别）
+- [x] 5.7 GREEN — 最小实现使后缀不参与判定
+- [x] 5.8 RED — 未知球队 code 呈现未找到而不是空名单；取数失败时侧栏与球队列仍渲染
+- [x] 5.9 GREEN — 实现 `teams/[code]/error.tsx` 与作用域内的 `not-found.tsx`，未知 code 走 notFound；不放 `loading.tsx`（见 Contract）
+- [x] 5.10 VISUAL DIFF — 访问 `/2025/silver/teams/PKU`，对照 `design/Teams.dc.html` 核对 token、配色与逐字文案（桌面 1440px）。移动端不在本 change 范围
 - [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 6. 验证与上线

@@ -83,3 +83,17 @@ describe("Input", () => {
     expect(input).toHaveAttribute("readonly");
   });
 });
+
+describe("Badge warning-subtle", () => {
+  it("uses warning as the text colour, not as a fill", () => {
+    // The solid warning badge is for a lineup overage — one or two per
+    // screen. 「待定」 appears on every unclassified player (36 of 459 in
+    // 2025), and a wall of solid amber would read as a page full of errors
+    // when nothing is wrong: nobody has classified those players yet.
+    render(<Badge variant="warning-subtle">待定</Badge>);
+
+    const badge = screen.getByText("待定");
+    expect(badge.className).toMatch(/text-warning/);
+    expect(badge.className).not.toMatch(/bg-warning\b/);
+  });
+});

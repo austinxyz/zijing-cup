@@ -53,3 +53,20 @@
     - "type safety: complete; immutability note flagged but non-blocking (local accumulator pattern acceptable for this use case)"
     - "security: no SQL injection (SQLModel select/func), no secrets, auth unaffected, display_name semantics (null not echoed code) correct"
   fix_tasks: []
+
+- group: 4
+  attempt: 1
+  scores: {spec: 95, runtime: 100, code: 95}
+  total: 97
+  status: PASS
+  findings:
+    - "url_source_of_truth: SelectedTeamList.tsx uses useSelectedLayoutSegment(), never useState; TeamList marks selection via aria-current not link"
+    - "empty_state: teams/page.tsx renders prompt 'from-left-select-team', no table, no redirect; test confirms queryByRole('table') is null"
+    - "gender_buckets: TeamSummary has men_count, women_count, unknown_gender_count; unknown only renders when > 0 (line 723-725)"
+    - "navigation: 队伍 is NavLink to /[season]/[division]/teams (no longer marked unavailable); 分析 remains PendingNavItem disabled"
+    - "secrets_security: grep confirms BACKEND_URL/BACKEND_SECRET only in lib/api.ts and lib/api.test.ts; getDivisionTeams/getTeamRoster server-side only"
+    - "architecture: TeamList in teams/layout.tsx (survives failed roster fetch under teams/[code]); empty state in page.tsx; error.tsx replaces only content"
+    - "tests: all 66 pass (13 test files); active sidebar tests mark 队伍 on teams segment; team list tests verify gender buckets, unknown-gender conditional, and url selection"
+    - "code_review: 0 CRITICAL, 0 HIGH, 0 MEDIUM; 1 LOW note (non-issue: players variable used for header summary); verdict APPROVE"
+    - "scope_note: mobile/375px layout removed per spec revision (verified running app has never had narrow shell); both specs and contract already updated"
+  fix_tasks: []
