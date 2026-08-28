@@ -1,31 +1,39 @@
 "use client";
 
+import { Button, Card, CardDescription, CardHeader, CardTitle } from "@/components/ui";
+
 /**
- * A roster that failed to load.
+ * Shown when a roster cannot be fetched — most often the backend being cold.
  *
  * Scoped to this route so it replaces the roster only: the sidebar and the
- * team list stay, and the list is how you reach another team — which is
+ * team list stay, and the list is how you reach another team, which is
  * exactly what you want after one fails to load.
+ *
+ * `error` is accepted and not displayed. Next passes it to every error
+ * boundary, and its message is a server-side detail; showing it to a captain
+ * would be noise at best. Named here so a logger has somewhere to attach when
+ * this app grows one — the sibling rules boundary takes it the same way.
  */
-export default function RosterError({ reset }: { reset: () => void }) {
+export default function RosterError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   return (
-    <div className="flex flex-1 items-center justify-center p-8">
-      <div className="flex max-w-[380px] flex-col items-center gap-3 text-center">
-        <div className="text-sm font-medium text-foreground">
-          名单没能加载出来
-        </div>
-        <div className="text-[12.5px] leading-relaxed text-muted">
-          后端可能正在从休眠中唤醒，第一次访问会慢上近一分钟。稍等片刻再试，
-          或从左侧选另一支球队。
-        </div>
-        <button
-          type="button"
-          onClick={reset}
-          className="h-8 rounded-token border border-border bg-surface px-3 text-[12.5px] text-foreground hover:bg-surface-muted"
-        >
+    <div className="flex flex-1 items-start justify-center px-6 py-14">
+      <Card className="w-[420px] max-w-full">
+        <CardHeader>
+          <CardTitle>无法加载名单</CardTitle>
+          <CardDescription>
+            后端没有响应。免费实例闲置后会休眠，冷启动可能要接近一分钟，稍候重试通常就好了。也可以从左侧换一支球队。
+          </CardDescription>
+        </CardHeader>
+        <Button variant="secondary" onClick={reset}>
           重试
-        </button>
-      </div>
+        </Button>
+      </Card>
     </div>
   );
 }

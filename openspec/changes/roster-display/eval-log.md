@@ -70,3 +70,25 @@
     - "code_review: 0 CRITICAL, 0 HIGH, 0 MEDIUM; 1 LOW note (non-issue: players variable used for header summary); verdict APPROVE"
     - "scope_note: mobile/375px layout removed per spec revision (verified running app has never had narrow shell); both specs and contract already updated"
   fix_tasks: []
+
+- group: 5
+  attempt: 1
+  scores: {spec: 100, runtime: 100, code: 88}
+  total: 98
+  status: PASS
+  findings:
+    - "contract_check_a: Unrated player renders 待定, never 自评 — CLASS_LABEL intentionally omits Unrated; SourceCell shows 待定 badge only for null class; test_never_labels_an_unclassified_player_自评 confirms absence"
+    - "contract_check_b: '/ Appeal' suffix doesn't change class label, survives verbatim — classLabel(status).split('/')[0].trim() for classification, full status string rendered unmodified; test_ignores_an_appeal_suffix_when_naming_the_class passes"
+    - "contract_check_c: table renders players in order received, no re-sorting — players.map() used directly with comment 'Rendered in the order received'; test_keeps_the_order_it_was_given asserts tie-order preservation with equal match_utr"
+    - "contract_check_d: not-found scoped to route, sidebar and team list survive — not-found.tsx and error.tsx are segment-level (not global), layout.tsx preserves TeamList; framework correctly keeps shell intact"
+    - "contract_check_e: match_utr rendered as decimal string, never parsed to float — RosterPlayer.match_utr typed string; no Number()/parseFloat() in render; test_shows_the_participation_utr_exactly_as_given asserts '10.25' rendered unchanged"
+    - "runtime_all_pass: 16 test files, 86 tests, 0 failures; contract's four specific assertions all covered (sort order, three UTR sources, no 自评, 404 for unknown team)"
+    - "404_status_verified: page.tsx calls notFound() on null roster; not-found.test.tsx includes regression test guarding against loading.tsx reintroduction"
+    - "no_loading_tsx: confirmed absent; commit message and spec update justify this tradeoff (Suspense boundary prevents notFound() from returning 404 when loading.tsx present)"
+    - "code_review_verdict: APPROVE — no CRITICAL or HIGH issues; all 8 contract SHALL requirements met and tested"
+    - "medium_findings_2: (1) warning-subtle badge hardcodes hex #ecd9a4/#fbf5e6 instead of design tokens like danger-surface/danger-border already in globals.css; (2) error.tsx drops error prop, no logging or error reporting on fetch failure"
+    - "low_findings_2: (1) no error.test.tsx covering retry button, message, error logging; (2) empty roster (0 players) path has no dedicated test, only the not-found path tested"
+    - "test_quality: tests are well-targeted at contract language (order stability, appeal suffix, 自评 absence, gender null, decimal string); page.test.tsx correctly mocks notFound() to throw"
+    - "architecture: clean separation—page.tsx (server, fetch+notFound) → RosterTable.tsx (pure render) → SourceCell (classification logic); no client/server violations"
+    - "all_scope_checks_pass: (a) Unrated→待定, no 自评 ✓ | (b) /Appeal survives ✓ | (c) no re-sort ✓ | (d) shell survives 404 ✓ | (e) string not float ✓"
+  fix_tasks: []

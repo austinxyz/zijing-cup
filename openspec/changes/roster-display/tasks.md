@@ -167,7 +167,7 @@
 - [x] 5.8 RED — 未知球队 code 呈现未找到而不是空名单；取数失败时侧栏与球队列仍渲染
 - [x] 5.9 GREEN — 实现 `teams/[code]/error.tsx` 与作用域内的 `not-found.tsx`，未知 code 走 notFound；不放 `loading.tsx`（见 Contract）
 - [x] 5.10 VISUAL DIFF — 访问 `/2025/silver/teams/PKU`，对照 `design/Teams.dc.html` 核对 token、配色与逐字文案（桌面 1440px）。移动端不在本 change 范围
-- [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 6. 验证与上线
 

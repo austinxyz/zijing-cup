@@ -45,6 +45,11 @@
      not for the one screen it currently appears on. */
   --color-warning: #b8860b;
   --color-warning-fg: #ffffff;
+  /* The same tier at low volume, for a state that repeats down a list —
+     「待定」 sits on every player nobody has classified yet. Paired like
+     danger's surface/border so the quiet form is a token, not a one-off. */
+  --color-warning-surface: #fbf5e6;
+  --color-warning-border: #ecd9a4;
 
   /* Sidebar is a dark page-chrome panel, not a reusable component token —
      kept separate from the surface/bg tokens above. */
@@ -83,6 +88,8 @@
 
   --color-warning: var(--color-warning);
   --color-warning-foreground: var(--color-warning-fg);
+  --color-warning-surface: var(--color-warning-surface);
+  --color-warning-border: var(--color-warning-border);
 
   --color-sidebar: var(--color-sidebar);
   --color-sidebar-border: var(--color-sidebar-border);

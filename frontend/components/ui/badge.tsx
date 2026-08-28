@@ -23,7 +23,7 @@ const variantClasses: Record<Variant, string> = {
   // 「待定」 sits on every unclassified player; a column of solid amber would
   // read as a page full of errors when nothing is wrong — nobody has
   // classified them yet.
-  "warning-subtle": "border border-[#ecd9a4] bg-[#fbf5e6] text-warning",
+  "warning-subtle": "border border-warning-border bg-warning-surface text-warning",
 };
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {

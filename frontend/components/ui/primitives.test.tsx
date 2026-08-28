@@ -94,6 +94,20 @@ describe("Badge warning-subtle", () => {
 
     const badge = screen.getByText("待定");
     expect(badge.className).toMatch(/text-warning/);
-    expect(badge.className).not.toMatch(/bg-warning\b/);
+    // The solid fill exactly — `bg-warning-surface` is the quiet one and is
+    // what this variant is supposed to use.
+    expect(badge.className).not.toMatch(/bg-warning(?![-\w])/);
+  });
+
+  it("takes its surface and border from tokens, not literal hex", () => {
+    // Mirrors danger's surface/border pair. A literal hex here would be a
+    // colour decision living outside globals.css, where the next person
+    // adjusting the palette would not find it.
+    render(<Badge variant="warning-subtle">待定</Badge>);
+
+    const badge = screen.getByText("待定");
+    expect(badge.className).not.toMatch(/#[0-9a-f]{6}/i);
+    expect(badge.className).toMatch(/warning-surface/);
+    expect(badge.className).toMatch(/warning-border/);
   });
 });
