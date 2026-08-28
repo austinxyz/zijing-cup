@@ -18,3 +18,18 @@
     - "No players table: Snapshot model with (team_id, last_name, first_name) uniqueness only; design D1 correctly implemented"
     - "Tests: 15/15 pass (8 schema + 7 roundtrip); all invented names, no real roster data in repository"
     - "Code review: Zero CRITICAL/HIGH issues; two LOW observations (missing gender test, contract prose clarification)"
+
+- group: 2
+  attempt: 1
+  scores: {spec: 100, runtime: 100, code: 85}
+  total: 97
+  status: PASS
+  findings:
+    - "spec: All SHALL statements from contract fully implemented and verified"
+    - "spec: Unrated → None with / Appeal suffix handled correctly"
+    - "spec: Daily columns matched by prefix with named scalars explicitly excluded"
+    - "spec: Blank daily samples dropped, not stored as 0"
+    - "spec: Pseudo-teams skipped and reported in result"
+    - "runtime: All 17 tests passing (rating classes, daily values, pseudo-teams, columns)"
+    - "code: Meets all Code section requirements (Unrated NULL, no Notes inference, / Appeal preserved, prefix matching, pure function)"
+    - "code: Two MEDIUM issues noted by reviewer: (1) Decimal('NaN'/'Infinity') not caught; (2) csv.DictReader can raise uncaught on malformed line. These are edge cases not in contract scope but should be addressed before production."

@@ -80,12 +80,26 @@ def _clean(value: Optional[str]) -> str:
     return (value or "").strip()
 
 
+def _finite_decimal(raw: str) -> Decimal:
+    """Parse a UTR value, rejecting the non-finite ones Decimal accepts.
+
+    `Decimal("NaN")` and `Decimal("Infinity")` construct happily. A NaN UTR
+    would reach the database and then poison every cap comparison it touches:
+    NaN compares false against everything, so a lineup containing one would
+    appear to satisfy every limit it was checked against.
+    """
+    value = Decimal(raw)
+    if not value.is_finite():
+        raise ValueError(f"UTR value is not finite: {raw!r}")
+    return value
+
+
 def _decimal_or_none(raw: str) -> Optional[Decimal]:
     """A blank sample is absent, not zero — 0.00 is a real value the sheet
     uses for unrated players."""
     if not raw:
         return None
-    return Decimal(raw)
+    return _finite_decimal(raw)
 
 
 def _rating_class_for(status: str) -> Optional[str]:
@@ -163,11 +177,14 @@ def parse_roster_csv(text: str) -> ParseResult:
             continue
 
         try:
-            match_utr = Decimal(_clean(row.get("Match UTR")))
-        except (InvalidOperation, ValueError):
-            result.unparsable_rows.append(
-                (raw, f"Match UTR is not a number: {_clean(row.get('Match UTR'))!r}")
+            match_utr = _finite_decimal(_clean(row.get("Match UTR")))
+        except (InvalidOperation, ValueError) as exc:
+            reason = (
+                str(exc)
+                if isinstance(exc, ValueError) and "finite" in str(exc)
+                else f"Match UTR is not a number: {_clean(row.get('Match UTR'))!r}"
             )
+            result.unparsable_rows.append((raw, reason))
             continue
 
         try:

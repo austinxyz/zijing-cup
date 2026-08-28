@@ -37,7 +37,7 @@
 - [x] 2.4 GREEN — 实现伪队名识别与不可解析行的收集
 - [x] 2.5 RED — pytest：取样窗口列名改为另一组日期（模拟 2026）时仍能解析出每日 UTR 值；出现未知列时该列进报告而不导致失败
 - [x] 2.6 GREEN — 按前缀匹配实现列定位与未知列上报
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 导入命令：幂等写入、--check 与对账报告
 
@@ -53,7 +53,7 @@
   - **比对与写入只覆盖 CSV 拥有的字段**。`is_borrowed_player`、`utr_profile_id`、以及 `Unrated` 行的 `rating_class` 由人工维护，导入器一次都不碰；`--check` 的比对同样忽略它们，否则人工设一个外援标记就会让漂移检测永远报红（design.md D1b）
 - **Threshold**: 80
 
-- [ ] 3.0 CONTRACT — write openspec/changes/roster-import/contracts/group-3.md with the ### Contract block above
+- [x] 3.0 CONTRACT — write openspec/changes/roster-import/contracts/group-3.md with the ### Contract block above
 - [ ] 3.1 建立 `backend/data/rosters/` 目录（`.gitkeep` + 说明 CSV 列格式的 `README.md`），并在 `.gitignore` 忽略该目录下的 `*.csv`
 - [ ] 3.2 RED — pytest：用虚构姓名的小 CSV，空库导入后球队与名单条目落库，参赛 UTR、原始状态、来源依据、每日 UTR 值都正确
 - [ ] 3.3 GREEN — 实现 `backend/app/rosters/load.py` 的读库、比对与写入

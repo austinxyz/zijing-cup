@@ -162,6 +162,28 @@ class TestNonRosterRows:
         assert "东" in row
         assert reason  # names what went wrong, not just "bad row"
 
+    @pytest.mark.parametrize("bogus", ["NaN", "Infinity", "-Infinity"])
+    def test_non_finite_utr_is_rejected(self, bogus):
+        # Decimal() accepts these happily. A UTR of NaN would sail into the
+        # database and then poison every cap comparison it touches — NaN
+        # compares false against everything, so a lineup containing it would
+        # look like it passed every limit.
+        result = parse_roster_csv(
+            csv_of(f"TEST-A,南,望舒,M,Rated,{bogus},,,,,,,,")
+        )
+
+        assert result.entries == []
+        assert len(result.unparsable_rows) == 1
+        assert "finite" in result.unparsable_rows[0][1].lower()
+
+    def test_non_finite_daily_value_is_rejected(self):
+        result = parse_roster_csv(
+            csv_of("TEST-A,南,望舒,M,Rated,6.50,6.4,NaN,6.5,,,,,")
+        )
+
+        assert result.entries == []
+        assert len(result.unparsable_rows) == 1
+
     def test_row_missing_a_required_field_is_reported(self):
         result = parse_roster_csv(csv_of("TEST-A,,望舒,M,Rated,6.50,,,,,,,,"))
 
