@@ -66,6 +66,24 @@ class EligibilityLimitOut(BaseModel):
     restricted_to_lines: Optional[list[str]] = None
 
 
+class DivisionSummaryOut(BaseModel):
+    code: str
+    display_name: str
+
+
+class SeasonIndexOut(BaseModel):
+    """One season and the divisions that ran in it.
+
+    The sidebar's season/division switcher is built from this. Without it the
+    frontend would have to hardcode which seasons exist — the same
+    code-constant this change exists to eliminate, just moved one layer out.
+    """
+
+    year: int
+    edition_name: Optional[str] = None
+    divisions: list[DivisionSummaryOut]
+
+
 class DivisionRulesOut(BaseModel):
     season: SeasonOut
     division: DivisionOut
@@ -139,3 +157,29 @@ def get_division_rules(
             for limit in limits
         ],
     )
+
+
+def list_seasons(session: Session) -> list[SeasonIndexOut]:
+    """Newest season first — the switcher opens on the current one."""
+    seasons = session.exec(select(Season).order_by(Season.year.desc())).all()
+    divisions = session.exec(
+        select(Division).order_by(Division.season_year.desc(), Division.code)
+    ).all()
+
+    by_year: dict[int, list[Division]] = {}
+    for division in divisions:
+        by_year.setdefault(division.season_year, []).append(division)
+
+    return [
+        SeasonIndexOut(
+            year=season.year,
+            edition_name=season.edition_name,
+            divisions=[
+                DivisionSummaryOut(
+                    code=division.code, display_name=division.display_name
+                )
+                for division in by_year.get(season.year, [])
+            ],
+        )
+        for season in seasons
+    ]

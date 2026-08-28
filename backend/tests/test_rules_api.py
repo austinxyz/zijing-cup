@@ -130,7 +130,10 @@ def test_a_past_season_serves_its_own_rules(client):
 
 
 def test_unknown_season_is_404(client):
-    assert get_rules(client, 1999, "silver").status_code == 404
+    # 1900, not 1999: the ORM round-trip module reserves 1999 for its own
+    # rows, and two modules sharing a sentinel is an order-dependent failure
+    # waiting to happen.
+    assert get_rules(client, 1900, "silver").status_code == 404
 
 
 def test_unknown_division_code_is_404(client):
@@ -182,3 +185,29 @@ def test_no_write_route_exists_for_rules():
     }
 
     assert offenders == {}
+
+
+# --------------------------------------------------------------------------
+# Season/division index
+#
+# Added during group 5: the sidebar switcher has to offer the seasons and
+# divisions that exist, and the only alternative — hardcoding them in the
+# frontend — is the code-constant this whole change exists to eliminate.
+# --------------------------------------------------------------------------
+
+
+def test_index_lists_every_season_with_its_divisions(client):
+    response = client.get("/api/seasons", headers=AUTH)
+    assert response.status_code == 200
+
+    body = response.json()
+    assert [season["year"] for season in body] == [2026, 2025]  # newest first
+
+    by_year = {season["year"]: season for season in body}
+    assert by_year[2026]["edition_name"] == "第十一届"
+    assert [d["code"] for d in by_year[2026]["divisions"]] == ["gold", "silver"]
+    assert [d["display_name"] for d in by_year[2026]["divisions"]] == ["金组", "银组"]
+
+
+def test_index_requires_the_shared_secret(client):
+    assert client.get("/api/seasons").status_code == 401

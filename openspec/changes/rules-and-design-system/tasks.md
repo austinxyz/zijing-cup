@@ -74,7 +74,7 @@
 - [x] 4.2 GREEN — 实现 `backend/app/rules.py` 的查询组装与 `backend/app/routers/rules.py` 的路由，并在 `main.py` 注册
 - [x] 4.3 RED — pytest：断言应用路由表中不存在任何指向规则资源的写方法（POST/PUT/PATCH/DELETE）
 - [x] 4.4 GREEN — 如有必要收紧路由定义，使 4.3 通过
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 应用壳与赛制规则页
 
@@ -88,16 +88,16 @@
   - 组别代码 URL 用 `gold`/`silver`，展示名取自数据库 `display_name`
 - **Threshold**: 70
 
-- [ ] 5.0 CONTRACT — write openspec/changes/rules-and-design-system/contracts/group-5.md with the ### Contract block above
-- [ ] 5.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-27-rules-and-design-system-mocks.html#desktop` 与 `#mobile`；记录 token（sidebar `#1c1b18`、primary `#9c3417`、border `#e4e0d8`、radius 0.5rem、侧栏 216px、表行 40px）与逐字文案（「赛制规则」「未开放」「2026 · 银组」「共享预算，不是每线容差」）
-- [ ] 5.2 RED — vitest：壳渲染时「队伍」「分析」为禁用态且不是链接、「赛制规则」为选中态；切换器目标链接为替换 season/division 段后的路径；断言 token class 出现在 `wrapper.classes()`
-- [ ] 5.3 GREEN — 实现 `app/[season]/[division]/layout.tsx` 与侧栏、切换器组件
-- [ ] 5.4 VISUAL DIFF — 起 dev stack（`npm run dev --prefix frontend`），访问 `/2026/silver/rules`，对照 mock 的 `#desktop` 逐项比对配色、间距与文案；再切到移动视口对照 `#mobile`；修正漂移
-- [ ] 5.5 RED — vitest：规则页展示五线 cap；金组页 D1/MD 显示为开放线而非数值且显示分值；2026 银组页 MD/WD 标注相对 2025 的变化、D1/D2/D3 标注未变；2025 页（无上一赛季数据）正常渲染且无对比标注
-- [ ] 5.6 GREEN — 在 `lib/api.ts` 新增规则查询函数（保持单一出口），实现 `app/[season]/[division]/rules/page.tsx`
-- [ ] 5.7 RED — vitest：后端不可达时规则页呈现错误态且壳仍渲染
-- [ ] 5.8 GREEN — 实现 `app/[season]/[division]/rules/error.tsx`，并把 `app/page.tsx` 改为重定向到库中最新赛季的银组规则页
-- [ ] 5.9 VISUAL DIFF — 再次对照 mock 检查规则页正文（各线表格、Buffer 卡片的共享预算说明、资格限制、参赛 UTR 三类来源徽章），修正漂移
+- [x] 5.0 CONTRACT — write openspec/changes/rules-and-design-system/contracts/group-5.md with the ### Contract block above
+- [x] 5.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-27-rules-and-design-system-mocks.html#desktop` 与 `#mobile`；记录 token（sidebar `#1c1b18`、primary `#9c3417`、border `#e4e0d8`、radius 0.5rem、侧栏 216px、表行 40px）与逐字文案（「赛制规则」「未开放」「2026 · 银组」「共享预算，不是每线容差」）
+- [x] 5.2 RED — vitest：壳渲染时「队伍」「分析」为禁用态且不是链接、「赛制规则」为选中态；切换器目标链接为替换 season/division 段后的路径；断言 token class 出现在 `wrapper.classes()`
+- [x] 5.3 GREEN — 实现 `app/[season]/[division]/layout.tsx` 与侧栏、切换器组件
+- [x] 5.4 VISUAL DIFF — 起 dev stack（`npm run dev --prefix frontend`），访问 `/2026/silver/rules`，对照 mock 的 `#desktop` 逐项比对配色、间距与文案；再切到移动视口对照 `#mobile`；修正漂移
+- [x] 5.5 RED — vitest：规则页展示五线 cap；金组页 D1/MD 显示为开放线而非数值且显示分值；2026 银组页 MD/WD 标注相对 2025 的变化、D1/D2/D3 标注未变；2025 页（无上一赛季数据）正常渲染且无对比标注
+- [x] 5.6 GREEN — 在 `lib/api.ts` 新增规则查询函数（保持单一出口），实现 `app/[season]/[division]/rules/page.tsx`
+- [x] 5.7 RED — vitest：后端不可达时规则页呈现错误态且壳仍渲染
+- [x] 5.8 GREEN — 实现 `app/[season]/[division]/rules/error.tsx`，并把 `app/page.tsx` 改为重定向到库中最新赛季的银组规则页
+- [x] 5.9 VISUAL DIFF — 再次对照 mock 检查规则页正文（各线表格、Buffer 卡片的共享预算说明、资格限制、参赛 UTR 三类来源徽章），修正漂移
 - [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 6. 验证与收尾

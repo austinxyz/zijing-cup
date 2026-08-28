@@ -9,9 +9,20 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 
 from app.db import get_session
-from app.rules import DivisionRulesOut, get_division_rules
+from app.rules import (
+    DivisionRulesOut,
+    SeasonIndexOut,
+    get_division_rules,
+    list_seasons,
+)
 
 router = APIRouter(prefix="/api", tags=["rules"])
+
+
+@router.get("/seasons", response_model=list[SeasonIndexOut])
+def read_seasons(session: Session = Depends(get_session)) -> list[SeasonIndexOut]:
+    """Which seasons and divisions exist. Drives the sidebar switcher."""
+    return list_seasons(session)
 
 
 @router.get(
