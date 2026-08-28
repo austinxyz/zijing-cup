@@ -42,19 +42,26 @@ describe("Sidebar navigation", () => {
     expect(rules).toHaveAttribute("aria-current", "page");
   });
 
-  it("renders 队伍 and 分析 as disabled, not as links", () => {
+  it("links 队伍 to the division's team list", () => {
     renderSidebar();
 
-    for (const label of ["队伍", "分析"]) {
-      const item = screen.getByText(label).closest("div");
-      expect(item).not.toBeNull();
-      // A dead link that navigates to a blank or erroring page is worse than
-      // an honestly disabled item — this app has been bitten by one before.
-      expect(item!.querySelector("a")).toBeNull();
-      expect(item).toHaveAttribute("aria-disabled", "true");
-    }
+    const link = screen.getByRole("link", { name: /队伍/ });
+    expect(link.getAttribute("href")).toBe("/2026/silver/teams");
+    // No longer carries the unavailable marker.
+    expect(link.textContent).not.toContain("未开放");
+  });
 
-    expect(screen.getAllByText("未开放")).toHaveLength(2);
+  it("renders 分析 as disabled, not as a link", () => {
+    renderSidebar();
+
+    const item = screen.getByText("分析").closest("div");
+    expect(item).not.toBeNull();
+    // A dead link that navigates to a blank or erroring page is worse than
+    // an honestly disabled item — this app has been bitten by one before.
+    expect(item!.querySelector("a")).toBeNull();
+    expect(item).toHaveAttribute("aria-disabled", "true");
+
+    expect(screen.getAllByText("未开放")).toHaveLength(1);
   });
 
   it("uses the sidebar design tokens", () => {
@@ -133,5 +140,65 @@ describe("Season and division switcher", () => {
     const switcher = screen.getByRole("group", { name: "赛季与组别" });
     expect(within(switcher).getAllByRole("listitem")).toHaveLength(1);
     expect(within(switcher).queryAllByRole("link")).toHaveLength(0);
+  });
+});
+
+describe("Sidebar active section", () => {
+  it("marks 赛制规则 as the current page on the rules route", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        section="rules"
+      />,
+    );
+
+    expect(screen.getByText("赛制规则").closest("[aria-current]")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: /队伍/ })).not.toHaveAttribute(
+      "aria-current",
+    );
+  });
+
+  it("marks 队伍 as the current page on the teams route", () => {
+    // Now that 队伍 is reachable, leaving 赛制规则 hardcoded as current would
+    // tell the reader they are on a page they are not on.
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        section="teams"
+      />,
+    );
+
+    expect(screen.getByText("队伍").closest("[aria-current]")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByText("赛制规则").closest("[aria-current]")).toBeNull();
+  });
+
+  it("still links 队伍 when it is the current section", () => {
+    // Unlike the season switcher, the nav item stays a link: it is how you
+    // get back from a team's roster to the list.
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        section="teams"
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /队伍/ }).getAttribute("href"),
+    ).toBe("/2026/silver/teams");
   });
 });

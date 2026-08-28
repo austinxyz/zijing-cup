@@ -3,12 +3,18 @@ import Link from "next/link";
 import { cn } from "@/lib/cn";
 import type { SeasonIndex } from "@/lib/api";
 
+/** Which nav destination the current URL is under. */
+export type NavSection = "teams" | "rules";
+
 interface SidebarProps {
   season: string;
   division: string;
   /** Display name from the database (金组 / 银组); the URL keeps the code. */
   divisionName: string;
   seasons: SeasonIndex[];
+  /** Derived from the route, never held as state. Defaults to the rules page
+   *  because that is the division's index route. */
+  section?: NavSection;
 }
 
 const GRID_ICON =
@@ -60,11 +66,48 @@ function PendingNavItem({ label, icon }: { label: string; icon: string }) {
   );
 }
 
+/**
+ * A destination that exists.
+ *
+ * It stays a link even when it is the current section, unlike the season
+ * switcher's current entry: from a team's roster, this is how you get back to
+ * the list, so it is not a dead click.
+ */
+function NavLink({
+  label,
+  icon,
+  href,
+  current,
+}: {
+  label: string;
+  icon: string;
+  href: string;
+  current: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={current ? "page" : undefined}
+      className={cn(
+        "flex h-[34px] items-center gap-[9px] rounded-token px-2.5 no-underline",
+        current
+          ? "border-l-2 border-l-[#c9502f] bg-sidebar-active pl-2 text-[13px] font-medium text-sidebar-foreground-bright"
+          : "text-[13px] text-sidebar-foreground hover:bg-sidebar-active",
+      )}
+    >
+      <NavIcon path={icon} />
+      <span>{label}</span>
+    </Link>
+  );
+}
+
+
 export function Sidebar({
   season,
   division,
   divisionName,
   seasons,
+  section = "rules",
 }: SidebarProps) {
   // EVERY (season, division) pair, including the one already open — which is
   // marked rather than omitted. Hiding the current pair made the option set
@@ -153,20 +196,19 @@ export function Sidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 p-2">
-        <PendingNavItem label="队伍" icon={GRID_ICON} />
+        <NavLink
+          label="队伍"
+          icon={GRID_ICON}
+          href={`/${season}/${division}/teams`}
+          current={section === "teams"}
+        />
         <PendingNavItem label="分析" icon={CHART_ICON} />
-        <div
-          aria-current="page"
-          className={cn(
-            "flex h-[34px] items-center justify-between gap-2 rounded-token border-l-2 border-l-[#c9502f] bg-sidebar-active pl-2 pr-2.5",
-            "text-[13px] font-medium text-sidebar-foreground-bright",
-          )}
-        >
-          <span className="flex min-w-0 items-center gap-[9px]">
-            <NavIcon path={DOC_ICON} />
-            <span>赛制规则</span>
-          </span>
-        </div>
+        <NavLink
+          label="赛制规则"
+          icon={DOC_ICON}
+          href={`/${season}/${division}/rules`}
+          current={section === "rules"}
+        />
       </nav>
 
       <div className="flex flex-col gap-0.5 border-t border-sidebar-border px-3.5 py-2.5">

@@ -118,16 +118,16 @@
 - **Note**: 含 VISUAL DIFF 任务，阈值取 70（视觉判断有固有主观性）
 
 - [x] 4.0 CONTRACT — write openspec/changes/roster-display/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-28-roster-display-mocks.html`（对应 `design/Teams.dc.html` 与 `design/TeamsEmpty.dc.html`）；记下 token 与逐字文案：「从左侧选一支球队」「球队 · 18」「未开放」
-- [ ] 4.2 RED — `lib/api.ts` 的两个取数函数：球队列表与球队名单，类型含 `display_name` 与三档性别人数；断言不带 `NEXT_PUBLIC_` 前缀的变量不进客户端
-- [ ] 4.3 GREEN — 在 `lib/api.ts` 实现两个取数函数
-- [ ] 4.4 RED — 球队列表渲染：每行显示 code、总人数、男/女人数；有显示名的补一行灰字，没有的只显示 code 且不生成名字；按 code 排序
-- [ ] 4.5 GREEN — 实现 `teams/layout.tsx` 的球队列
-- [ ] 4.6 RED — 空状态：`teams/page.tsx` 渲染提示文案，且不渲染名单表格的表头或行；不重定向
-- [ ] 4.7 GREEN — 实现空状态页
+- [x] 4.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-28-roster-display-mocks.html`（对应 `design/Teams.dc.html` 与 `design/TeamsEmpty.dc.html`）；记下 token 与逐字文案：「从左侧选一支球队」「球队 · 18」「未开放」
+- [x] 4.2 RED — `lib/api.ts` 的两个取数函数：球队列表与球队名单，类型含 `display_name` 与三档性别人数；断言不带 `NEXT_PUBLIC_` 前缀的变量不进客户端
+- [x] 4.3 GREEN — 在 `lib/api.ts` 实现两个取数函数
+- [x] 4.4 RED — 球队列表渲染：每行显示 code、总人数、男/女人数；有显示名的补一行灰字，没有的只显示 code 且不生成名字；按 code 排序
+- [x] 4.5 GREEN — 实现 `teams/layout.tsx` 的球队列
+- [x] 4.6 RED — 空状态：`teams/page.tsx` 渲染提示文案，且不渲染名单表格的表头或行；不重定向
+- [x] 4.7 GREEN — 实现空状态页
 - [ ] 4.8 RED — 侧栏：「队伍」是指向 `/[season]/[division]/teams` 的链接且不再标注未开放；「分析」仍是禁用态且不是链接
 - [ ] 4.9 GREEN — 改 `Sidebar.tsx`：「队伍」由 `PendingNavItem` 改为 `Link`
-- [ ] 4.10 VISUAL DIFF — `npm run dev --prefix frontend`，访问 `/2025/silver/teams`，对照 `design/TeamsEmpty.dc.html` 核对 token、配色与逐字文案；顺带在 375px 宽度下确认不横向溢出
+- [x] 4.10 VISUAL DIFF — `npm run dev --prefix frontend`，访问 `/2025/silver/teams`，对照 `design/TeamsEmpty.dc.html` 核对 token、配色与逐字文案（桌面 1440px）。移动端已于 2026-08-28 移出本 change 范围——应用壳从未实现窄屏版式，规则页在 375px 下同样被压缩，属后续 `mobile-shell`
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 名单页与 UTR 来源呈现
@@ -141,7 +141,7 @@
     或任何其他具体类别。
   - 名单页取数失败时 MUST 只把内容区换成错误态，侧栏与应用壳 MUST 仍然渲染。
     页面 SHALL 提供加载态而不是白屏。
-  - 名单浏览 SHALL 在 375px 宽度下可用，可点区域 SHALL 不小于 44px。
+  （移动端版式已移出本 change，见 specs/team-roster-ui/spec.md 末尾说明。）
 - **Runtime**: `cd frontend && npm run test` → expected: 全部通过，含排序不被前端改写、三种 UTR 来源呈现、「自评」字样不出现、未知球队 404
 - **Code**:
   - 排序只在后端做一次。前端直接渲染返回顺序 —— 两处各排一次在参赛 UTR
@@ -149,13 +149,12 @@
   - 「待定」用 `--color-warning`；女队员数偏少只加字重不上色 —— 同一屏两种
     「注意但不是错误」用同一颜色会分不清指什么。
   - `teams/[code]/error.tsx` 替换的只是名单区，球队列与侧栏都还在。
-  - 移动端名单用行卡片而非表格：390px 下五列表格要么横向溢出，要么把参赛 UTR
-    压到看不清，而 UTR 是整页存在的理由。
+  - 移动端名单用行卡片而非表格的那条设计留给后续 `mobile-shell`；本组只做桌面。
 - **Threshold**: 70
 - **Note**: 含 VISUAL DIFF 任务，阈值取 70
 
 - [ ] 5.0 CONTRACT — write openspec/changes/roster-display/contracts/group-5.md with the ### Contract block above
-- [ ] 5.1 MOCK — 打开 mocks 中对应 `design/Teams.dc.html` 与 `design/TeamsMobileRoster.dc.html` 的两节；记下表格 token（表头 34px、表行 40px、移动行 56px）与逐字文案「已认证」「委员会审定」「待定」「参赛 UTR · 赛前冻结」
+- [ ] 5.1 MOCK — 打开 mocks 中对应 `design/Teams.dc.html` 的一节；记下表格 token（表头 34px、表行 40px）与逐字文案「已认证」「委员会审定」「待定」「参赛 UTR · 赛前冻结」
 - [ ] 5.2 RED — 名单表按后端给出的顺序渲染：构造两条参赛 UTR 相同的记录，断言页面先后与取数返回的先后一致（前端不重排）
 - [ ] 5.3 GREEN — 实现 `teams/[code]/page.tsx` 的名单表
 - [ ] 5.4 RED — UTR 来源三种呈现：`Rated` → 「已认证」+ 原文；`Projected` → 「委员会审定」+ 原文；`rating_class` 为 null → 「待定」。并断言整页不出现「自评」字样
@@ -164,7 +163,7 @@
 - [ ] 5.7 GREEN — 最小实现使后缀不参与判定
 - [ ] 5.8 RED — 未知球队 code 呈现未找到而不是空名单；取数失败时侧栏与球队列仍渲染
 - [ ] 5.9 GREEN — 实现 `teams/[code]/error.tsx` 与 `loading.tsx`，未知 code 走 notFound
-- [ ] 5.10 VISUAL DIFF — 访问 `/2025/silver/teams/PKU`，对照 `design/Teams.dc.html` 核对；再在 375px 下对照 `design/TeamsMobileRoster.dc.html` 确认名单不使页面横向溢出、可点区域 ≥44px
+- [ ] 5.10 VISUAL DIFF — 访问 `/2025/silver/teams/PKU`，对照 `design/Teams.dc.html` 核对 token、配色与逐字文案（桌面 1440px）。移动端不在本 change 范围
 - [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 6. 验证与上线

@@ -111,17 +111,7 @@ UTR 来源。前端 MUST NOT 自行重新排序——后端已按该次序返回
 - **WHEN** 访问一个不存在的球队 code
 - **THEN** 呈现未找到，而不是一张空名单
 
-### Requirement: 名单页在移动端可用
-名单浏览 SHALL 在 375px 宽度下可用：球队列表与名单内容 MUST NOT 使页面
-横向溢出。可点区域 SHALL 不小于 44px。
-
-#### Scenario: 窄屏不横向溢出
-- **WHEN** 在 375px 宽度下浏览球队列表或某队名单
-- **THEN** 页面本身不出现横向滚动
-
-#### Scenario: 赛季组别切换器仍在首屏
-- **WHEN** 在移动端打开名单页
-- **THEN** 赛季与组别的切换控件在首屏可见，不被折叠进二级菜单
+<!-- 移动端版式不在本 change 内，见下方说明。 -->
 
 ### Requirement: 浏览器不接触后端凭据
 名单页 MUST 在服务端取数，取数 MUST 经 `frontend/lib/api.ts` 单一出口。
@@ -130,3 +120,16 @@ UTR 来源。前端 MUST NOT 自行重新排序——后端已按该次序返回
 #### Scenario: 客户端产物不含凭据
 - **WHEN** 检查构建产物中浏览器会下载的部分
 - **THEN** 其中不含后端共享密钥
+
+<!--
+移动端版式（375px）**不在本 change 内**。
+
+原因：窄屏版式的主体是应用壳——侧栏要收成顶栏、导航要变 tab 条——那是
+`app-shell` 的范围，而且改了会同时改变已上线的赛制规则页。核对时量过：
+`/2025/silver/rules` 在 375px 下同样保持 216px 侧栏、把内容压到 159px，
+也就是说应用壳从来没有实现过移动端，`RulesMobile.dc.html` 画了但没建。
+
+把这条要求塞进本 change，等于让「加一个页面」顺带承担整个壳的响应式改造。
+移动稿 `design/TeamsMobile.dc.html` 与 `design/TeamsMobileRoster.dc.html`
+保留，作为后续 `mobile-shell` change 的输入。
+-->

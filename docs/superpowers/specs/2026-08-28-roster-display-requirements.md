@@ -36,7 +36,8 @@ HAS_UI_SURFACE: yes
   其余留空——三校联队（`USTC-CMU-HQU`、`SCUT-HSFZ-GSU`）没有自然的中文叫法，
   强求每支队都有名字只会逼出难看的硬凑。单校队与 `THU-I` / `THU-II`
   （清华一队 / 二队）则都好起名。
-- 移动端有对应版式（`design/RulesMobile.dc.html` 是既有先例）。
+- 桌面版式对照 `design/Teams.dc.html` 与 `design/TeamsEmpty.dc.html`。
+  **移动端不在本次范围**，理由见 Non-Goals。
 
 ## Non-Goals
 
@@ -54,6 +55,13 @@ HAS_UI_SURFACE: yes
   `lineup-engine`，本次只取上半截。
 - **不展示五日取样明细。** `daily_utrs` 在库里，但银组 39 人的取样格是
   `Early Lock` 文字注记、值本身缺失，展开会是一片空洞的表格。
+- **不做移动端版式。** 2026-08-28 核对时量到：`/2025/silver/rules` 在 375px 下
+  仍保持 216px 侧栏、把内容压到 159px —— 应用壳从来没有实现过移动端，
+  `RulesMobile.dc.html` 画了但没建。窄屏版式的主体是壳（侧栏收成顶栏、导航变
+  tab 条），属于 `app-shell`，且会同时改变已上线的规则页。放进本次等于让
+  「加一个页面」顺带承担整个壳的响应式改造。手机稿
+  `design/TeamsMobile.dc.html` 与 `TeamsMobileRoster.dc.html` 保留，
+  作为后续 `mobile-shell` change 的输入。
 - 不做搜索、筛选、排序切换。18 支队、单队最多 26 人，一屏能看完。
 - 不做跨队比较视图。
 
@@ -93,7 +101,8 @@ HAS_UI_SURFACE: yes
 - 未知球队 code 返回 404，不是空名单——空名单读作「这支队没有球员」，是另一句话。
 - 后端不可达时侧栏与球队列仍在，只有内容区变错误态。
 - 客户端 bundle 中不含 `BACKEND_URL` / `BACKEND_SECRET`。
-- 移动端在 375px 宽下：球队列与名单表不横向溢出，名单表允许自身横向滚动。
+- 桌面 1440px 下与 `design/Teams.dc.html` / `TeamsEmpty.dc.html` 的 token、
+  配色与逐字文案一致，页面不横向溢出。
 
 ## User Stories
 

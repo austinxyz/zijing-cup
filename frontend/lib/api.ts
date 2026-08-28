@@ -100,3 +100,89 @@ export async function getDivisionRules(
   if (!res.ok) throw new Error(`getDivisionRules failed: ${res.status}`);
   return res.json();
 }
+
+export interface TeamSummary {
+  code: string;
+  /** null when nobody has named this team. Not a fallback for the code — the
+   *  UI decides how to present an unnamed team. */
+  display_name: string | null;
+  player_count: number;
+  /** Fielding a lineup needs one woman for mixed doubles and two for
+   *  women's, so at least three on court. Which teams sit near that floor is
+   *  what this breakdown is for. */
+  men_count: number;
+  women_count: number;
+  /** Its own bucket: gender is nullable, and folding an unknown into either
+   *  side would invent a player there. */
+  unknown_gender_count: number;
+}
+
+/**
+ * A division's teams, or null when that season/division pair does not exist.
+ *
+ * null and an empty array are different answers: the first means the URL
+ * names nothing, the second that the division exists and has no teams.
+ */
+export async function getDivisionTeams(
+  year: number | string,
+  code: string,
+): Promise<TeamSummary[] | null> {
+  const res = await fetch(
+    backendUrl(`/api/seasons/${year}/divisions/${code}/teams`),
+    backendRequestInit(),
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`getDivisionTeams failed: ${res.status}`);
+  return res.json();
+}
+
+export interface RosterPlayer {
+  last_name: string;
+  first_name: string;
+  gender: string | null;
+  /** The participation UTR: frozen before the event, and the only number a
+   *  lineup is checked against. */
+  match_utr: string;
+  /** The committee sheet's own status word, "/ Appeal" suffix included. */
+  dutr_status: string;
+  /** null when the status does not determine it (Unrated). Not a default:
+   *  whether such a player is committee-adjudicated or self-rated depends on
+   *  USTA match history the sheet does not carry. */
+  rating_class: string | null;
+  source_note: string | null;
+  daily_utrs: string[];
+  /** null means nobody has marked this player — not "confirmed not one". */
+  is_borrowed_player: boolean | null;
+  utr_profile_id: string | null;
+}
+
+export interface TeamRoster {
+  team: {
+    code: string;
+    display_name: string | null;
+    season_year: number;
+    division_code: string;
+  };
+  /** Already ordered by participation UTR, strongest first. Do not re-sort:
+   *  ties are common (players sit on the same cap) and a second sort would
+   *  disagree with this one. */
+  players: RosterPlayer[];
+}
+
+/** One team's roster, or null when the season, division or team is unknown. */
+export async function getTeamRoster(
+  year: number | string,
+  code: string,
+  teamCode: string,
+): Promise<TeamRoster | null> {
+  const res = await fetch(
+    backendUrl(
+      `/api/seasons/${year}/divisions/${code}/teams/` +
+        `${encodeURIComponent(teamCode)}/roster`,
+    ),
+    backendRequestInit(),
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`getTeamRoster failed: ${res.status}`);
+  return res.json();
+}

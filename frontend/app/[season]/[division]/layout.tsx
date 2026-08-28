@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getSeasons, type SeasonIndex } from "@/lib/api";
-import { Sidebar } from "./Sidebar";
+import { ActiveSidebar } from "./ActiveSidebar";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -40,7 +40,7 @@ export default async function DivisionLayout({ children, params }: LayoutProps) 
 
   return (
     <div className="flex h-screen min-h-[640px] overflow-hidden bg-background">
-      <Sidebar
+      <ActiveSidebar
         season={season}
         division={division}
         // Falls back to the URL's code rather than inventing a display name.
