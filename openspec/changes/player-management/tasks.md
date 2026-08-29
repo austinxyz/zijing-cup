@@ -179,17 +179,18 @@
   - 不用 JWT：只有一个管理员、一个服务端消费者，JWT 的可验证性没有用武之地。
 - **Threshold**: 80
 
-- [ ] 6.0 CONTRACT — write openspec/changes/player-management/contracts/group-6.md with the ### Contract block above
-- [ ] 6.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-29-player-management-mocks.html` 第 01 屏；记下 token 与逐字文案：「只有管理员可以修改队员数据」「口令」「登录」「口令不对」「还可以试 3 次」
-- [ ] 6.2 RED — `lib/session` 的纯逻辑：口令哈希比对、会话签发与过期判定；错误口令返回剩余次数
-- [ ] 6.3 GREEN — 实现会话签发与校验
-- [ ] 6.4 RED — 登录页：正确口令后 cookie 是 httpOnly；错误口令渲染失败原因与剩余次数
-- [ ] 6.5 GREEN — 实现登录页与 Server Action
-- [ ] 6.6 VISUAL DIFF — `npm run dev --prefix frontend`，访问登录页，对照 mocks 第 01 屏核对 token 与逐字文案（桌面 1440px）
-- [ ] 6.7 RED — 未登录触发一次写 Server Action 得到「需要登录」；会话过期后同样被拒
-- [ ] 6.8 GREEN — 实现写入口的会话校验
-- [ ] 6.9 RED — 断言客户端 bundle 不含 `BACKEND_SECRET` 与 `ADMIN_SECRET`
-- [ ] 6.10 GREEN — 使断言通过（密钥只在服务端读取）
+- [x] 6.0 CONTRACT — write openspec/changes/player-management/contracts/group-6.md with the ### Contract block above
+- [x] 6.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-29-player-management-mocks.html` 第 01 屏；记下 token 与逐字文案：「只有管理员可以修改队员数据」「口令」「登录」「口令不对」「还可以试 3 次」
+- [x] 6.2 RED — `lib/session` 的纯逻辑：口令哈希比对、会话签发与过期判定；错误口令返回剩余次数
+- [x] 6.3 GREEN — 实现会话签发与校验
+- [x] 6.4 RED — 登录页：正确口令后 cookie 是 httpOnly；错误口令渲染失败原因与剩余次数
+- [x] 6.5 GREEN — 实现登录页与 Server Action
+- [x] 6.6 VISUAL DIFF — `npm run dev --prefix frontend`，访问登录页，对照 mocks 第 01 屏核对 token 与逐字文案（桌面 1440px）
+- [x] 6.7 RED — 未登录触发一次写 Server Action 得到「需要登录」；会话过期后同样被拒
+- [x] 6.8 GREEN — 实现写入口的会话校验
+- [x] 6.9 RED — 断言客户端 bundle 不含 `BACKEND_SECRET` 与 `ADMIN_SECRET`（用 `npm run build` 产物扫描，
+      即 config.yaml 里已有的那条 custom_verification_check，不另造一份单测）
+- [x] 6.10 GREEN — 使断言通过（密钥只在服务端读取）
 - [ ] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 - **Note**: 含 VISUAL DIFF 任务，阈值取 70
 
