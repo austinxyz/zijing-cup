@@ -1,0 +1,231 @@
+"""Player endpoints — the project's first write surface.
+
+The admin credential is NOT checked here. It is enforced in
+`app/auth.py`'s middleware by HTTP method, so a route added to this file
+tomorrow is protected without remembering to ask for it. Anything this module
+did per-route would be additive, and additive protection is the kind someone
+eventually forgets.
+
+Routes read the database, call `command`/`query`, and translate exceptions into
+status codes. No rules live here.
+"""
+
+from decimal import Decimal
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from pydantic import BaseModel, Field
+from sqlmodel import Session
+
+from app.db import get_session
+from app.models import CURRENT_UTR_STATUSES, SEASON_UTR_SOURCES, SEASON_UTR_STATUSES
+from app.players import command
+from app.players.query import PlayerOut, get_player, list_players
+
+router = APIRouter(prefix="/api/players", tags=["players"])
+
+
+def _status_field(allowed: set[str], description: str):
+    return Field(default=None, description=f"{description}. One of: {sorted(allowed)}")
+
+
+class PlayerIn(BaseModel):
+    last_name: str = Field(min_length=1)
+    first_name: str = Field(min_length=1)
+    gender: Optional[str] = None
+
+    singles_utr: Optional[Decimal] = None
+    singles_status: Optional[str] = _status_field(
+        CURRENT_UTR_STATUSES, "UTR's own rating state for singles"
+    )
+    doubles_utr: Optional[Decimal] = None
+    doubles_status: Optional[str] = _status_field(
+        CURRENT_UTR_STATUSES, "UTR's own rating state for doubles"
+    )
+    utr_profile_id: Optional[str] = None
+
+
+class PlayerPatch(BaseModel):
+    last_name: Optional[str] = Field(default=None, min_length=1)
+    first_name: Optional[str] = Field(default=None, min_length=1)
+    gender: Optional[str] = None
+    singles_utr: Optional[Decimal] = None
+    singles_status: Optional[str] = None
+    doubles_utr: Optional[Decimal] = None
+    doubles_status: Optional[str] = None
+    utr_profile_id: Optional[str] = None
+
+
+class MembershipIn(BaseModel):
+    team_id: int
+    representing_school: Optional[str] = None
+    is_borrowed_player: Optional[bool] = None
+    is_wildcard: Optional[bool] = None
+
+
+class SeasonUtrIn(BaseModel):
+    value: Decimal
+    source: str
+    status: Optional[str] = None
+    under_appeal: bool = False
+
+
+def _validate_vocabularies(
+    gender: Optional[str] = None,
+    singles_status: Optional[str] = None,
+    doubles_status: Optional[str] = None,
+) -> None:
+    """Reject an unknown word before the database does.
+
+    The check constraints would catch these too, but as a 500: an IntegrityError
+    surfacing from a commit reads as "the server broke", not "you sent a status
+    that does not exist".
+    """
+    if gender is not None and gender not in {"M", "F"}:
+        raise HTTPException(status_code=422, detail=f"unknown gender: {gender}")
+    for name, value in (
+        ("singles_status", singles_status),
+        ("doubles_status", doubles_status),
+    ):
+        if value is not None and value not in CURRENT_UTR_STATUSES:
+            raise HTTPException(
+                status_code=422, detail=f"unknown {name}: {value}"
+            )
+
+
+@router.get("", response_model=list[PlayerOut])
+def read_players(
+    q: Optional[str] = Query(default=None, description="Name or UTR profile id"),
+    season: Optional[int] = None,
+    team_id: Optional[int] = None,
+    session: Session = Depends(get_session),
+) -> list[PlayerOut]:
+    return list_players(session, query=q, season_year=season, team_id=team_id)
+
+
+@router.get("/{player_id}", response_model=PlayerOut)
+def read_player(
+    player_id: int, session: Session = Depends(get_session)
+) -> PlayerOut:
+    player = get_player(session, player_id)
+    if player is None:
+        raise HTTPException(status_code=404, detail="player not found")
+    return player
+
+
+@router.post("", response_model=PlayerOut, status_code=201)
+def create_player(
+    payload: PlayerIn, session: Session = Depends(get_session)
+) -> PlayerOut:
+    _validate_vocabularies(
+        payload.gender, payload.singles_status, payload.doubles_status
+    )
+    player = command.create_player(session, **payload.model_dump())
+    return get_player(session, player.id)
+
+
+@router.patch("/{player_id}", response_model=PlayerOut)
+def update_player(
+    player_id: int, payload: PlayerPatch, session: Session = Depends(get_session)
+) -> PlayerOut:
+    fields = payload.model_dump(exclude_unset=True)
+    _validate_vocabularies(
+        fields.get("gender"),
+        fields.get("singles_status"),
+        fields.get("doubles_status"),
+    )
+    try:
+        command.update_player(session, player_id, **fields)
+    except command.NotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return get_player(session, player_id)
+
+
+@router.delete("/{player_id}", status_code=204)
+def delete_player(
+    player_id: int, session: Session = Depends(get_session)
+) -> Response:
+    try:
+        command.delete_player(session, player_id)
+    except command.NotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except command.SeasonLocked as error:
+        # 409, not 403: the caller is allowed to delete players in general —
+        # this particular one belongs to a season that has been frozen.
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return Response(status_code=204)
+
+
+@router.post("/{player_id}/memberships", status_code=201)
+def add_membership(
+    player_id: int, payload: MembershipIn, session: Session = Depends(get_session)
+):
+    try:
+        membership = command.add_membership(
+            session, player_id, **payload.model_dump()
+        )
+    except command.NotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except command.Conflict as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except command.SeasonLocked as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return {"id": membership.id}
+
+
+@router.delete("/{player_id}/memberships/{membership_id}", status_code=204)
+def remove_membership(
+    player_id: int, membership_id: int, session: Session = Depends(get_session)
+) -> Response:
+    try:
+        command.remove_membership(session, player_id, membership_id)
+    except command.NotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except command.SeasonLocked as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return Response(status_code=204)
+
+
+@router.put("/{player_id}/season-utrs/{season_year}")
+def set_season_utr(
+    player_id: int,
+    season_year: int,
+    payload: SeasonUtrIn,
+    session: Session = Depends(get_session),
+):
+    if payload.source not in SEASON_UTR_SOURCES:
+        raise HTTPException(
+            status_code=422, detail=f"unknown source: {payload.source}"
+        )
+    if payload.status is not None and payload.status not in SEASON_UTR_STATUSES:
+        raise HTTPException(
+            status_code=422, detail=f"unknown status: {payload.status}"
+        )
+
+    try:
+        row = command.set_season_utr(
+            session,
+            player_id,
+            season_year,
+            value=payload.value,
+            source=payload.source,
+            status=payload.status,
+            under_appeal=payload.under_appeal,
+        )
+    except command.NotFound as error:
+        # A season that never happened is the caller's mistake, not a missing
+        # page: 422 rather than 404 when the player exists but the year does not.
+        status = 404 if "player" in str(error) else 422
+        raise HTTPException(status_code=status, detail=str(error)) from error
+    except command.SeasonLocked as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+    return {
+        "season_year": row.season_year,
+        "value": str(row.value),
+        "alt_value": str(row.alt_value) if row.alt_value is not None else None,
+        "is_unresolved": row.is_unresolved,
+        "status": row.status,
+        "under_appeal": row.under_appeal,
+        "source": row.source,
+    }

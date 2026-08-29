@@ -92,7 +92,8 @@
 - [x] 3.6 GREEN — 使覆盖是减法式的
 - [x] 3.7 RED — 改写 `test_roster_api.py` 里「不存在写方法」那条断言：改成「所有写方法都在管理员保护之下」，并用一条临时未受保护的写路由验证守卫会红
 - [x] 3.8 GREEN — 使改写后的守卫通过
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - **STATUS: PASS** — attempt 1, scores: spec 100, runtime 100, code 95, total 99 ≥ 80
 
 ## 4. 队员与成员关系的读写端点
 
@@ -110,15 +111,15 @@
   - 全程 `Decimal`。
 - **Threshold**: 80
 
-- [ ] 4.0 CONTRACT — write openspec/changes/player-management/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 RED — `tests/test_players_api.py`：POST 建一名只有姓名性别的队员返回 201 且可读回；PATCH 改字段；DELETE 删掉一名没有任何记录的队员
-- [ ] 4.2 GREEN — `app/routers/players.py` 与 `app/players/command.py` 实现队员 CRUD
-- [ ] 4.3 RED — 把队员加入某队伍后可读回该成员关系（含代表学校/外援/外卡）；移出后队员仍在、赛季 UTR 仍在
-- [ ] 4.4 GREEN — 实现成员关系的加入与移出
-- [ ] 4.5 RED — 写入一条 `预填` 来源的赛季 UTR，再用总表值覆盖，来源变成 `组委会总表`
-- [ ] 4.6 GREEN — 实现赛季 UTR 的写入与来源流转
-- [ ] 4.7 RED — 未知队员/未知队伍返回 404；格式非法的载荷返回 4xx 而不是 500
-- [ ] 4.8 GREEN — 最小实现使两条断言通过
+- [x] 4.0 CONTRACT — write openspec/changes/player-management/contracts/group-4.md with the ### Contract block above
+- [x] 4.1 RED — `tests/test_players_api.py`：POST 建一名只有姓名性别的队员返回 201 且可读回；PATCH 改字段；DELETE 删掉一名没有任何记录的队员
+- [x] 4.2 GREEN — `app/routers/players.py` 与 `app/players/command.py` 实现队员 CRUD
+- [x] 4.3 RED — 把队员加入某队伍后可读回该成员关系（含代表学校/外援/外卡）；移出后队员仍在、赛季 UTR 仍在
+- [x] 4.4 GREEN — 实现成员关系的加入与移出
+- [x] 4.5 RED — 写入一条 `预填` 来源的赛季 UTR，再用总表值覆盖，来源变成 `组委会总表`
+- [x] 4.6 GREEN — 实现赛季 UTR 的写入与来源流转
+- [x] 4.7 RED — 未知队员/未知队伍返回 404；格式非法的载荷返回 4xx 而不是 500
+- [x] 4.8 GREEN — 最小实现使两条断言通过
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 合并、拆分、裁决与赛季锁
