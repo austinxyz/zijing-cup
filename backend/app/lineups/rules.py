@@ -147,6 +147,38 @@ def _check_budget(rules: RuleSet, spent: Decimal) -> list[Violation]:
     )]
 
 
+def slot_composition_error(rule: LineRule, pair: tuple[Candidate, Candidate]) -> Optional[str]:
+    """Why this pair may not stand on this line, or None if it may.
+
+    Women's doubles is two women and mixed doubles is one of each — that is
+    what those lines are. Men's doubles has no rule of its own because women
+    are explicitly allowed to fill men's slots.
+    """
+    a, b = pair
+    if rule.kind == "womens_doubles" and not (a.gender == "F" and b.gender == "F"):
+        return "女双必须是两名女队员"
+    if rule.kind == "mixed_doubles" and {a.gender, b.gender} != {"M", "F"}:
+        return "混双必须是一男一女"
+    return None
+
+
+def _check_slots(rules: RuleSet, lineup: Lineup) -> list[Violation]:
+    violations: list[Violation] = []
+    for rule in rules.lines:
+        pair = lineup.get(rule.code)
+        if pair is None:
+            continue
+        problem = slot_composition_error(rule, pair)
+        if problem is not None:
+            violations.append(Violation(
+                code="slot_composition",
+                line=rule.code,
+                amount=None,
+                message=f"{rule.code}：{problem}",
+            ))
+    return violations
+
+
 def _check_partner_gap(rules: RuleSet, lineup: Lineup) -> list[Violation]:
     violations: list[Violation] = []
     for rule in rules.lines:
@@ -275,6 +307,7 @@ def check_lineup(rules: RuleSet, lineup: Lineup) -> LegalityReport:
     cap_violations, spent = _check_caps(rules, lineup)
 
     violations = [
+        *_check_slots(rules, lineup),
         *cap_violations,
         *_check_budget(rules, spent),
         *_check_partner_gap(rules, lineup),

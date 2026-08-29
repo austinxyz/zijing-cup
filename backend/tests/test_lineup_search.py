@@ -8,7 +8,13 @@ from decimal import Decimal
 
 import pytest
 
-from app.lineups.rules import Candidate, EligibilityLimit, LineRule, RuleSet, check_lineup
+from app.lineups.rules import (
+    Candidate,
+    EligibilityLimit,
+    LineRule,
+    RuleSet,
+    check_lineup,
+)
 import app.lineups.search as search_module
 from app.lineups.search import search_lineups
 
@@ -265,3 +271,90 @@ class TestDedupeAndOrderUnderTies:
         assert [sorted(c.squad) for c in forward.candidates] == [
             sorted(c.squad) for c in backward.candidates
         ]
+
+
+class TestInvalidLocks:
+    """A lock the rules do not permit must be named as such.
+
+    Locked pairs bypass the per-line pair filter — that is what makes a lock a
+    lock — so nothing downstream re-checks the slot's gender or the partner
+    gap. Left unvalidated, locking two men onto women's doubles yields a
+    "legal" candidate that is not, and locking an over-cap pair yields an empty
+    list that reads as "your roster cannot do it" when the truth is "you asked
+    for something the rules forbid".
+    """
+
+    def pool(self):
+        return {p.key: p for p in roster()}
+
+    def test_two_men_locked_onto_womens_doubles_is_rejected(self):
+        # Deliberately weak enough to sit inside the women's doubles cap, so
+        # the only thing wrong with them is that they are men. A stronger pair
+        # would be caught by the cap and prove nothing about the slot rule.
+        light = [Candidate("q1", "q1", "M", D("4.60")),
+                 Candidate("q2", "q2", "M", D("4.40"))]
+        result = search_lineups(
+            SILVER, roster() + light, locks={"WD": (light[0], light[1])}
+        )
+
+        assert result.invalid_locks
+        assert result.invalid_locks[0].code == "slot_composition"
+        assert result.invalid_locks[0].line == "WD"
+        assert not result.candidates
+
+    def test_two_men_locked_onto_mixed_doubles_is_rejected(self):
+        p = self.pool()
+        result = search_lineups(SILVER, roster(), locks={"MD": (p["m7"], p["m8"])})
+
+        assert any(v.code == "slot_composition" for v in result.invalid_locks)
+
+    def test_a_player_locked_and_excluded_at_once_is_rejected(self):
+        # Contradictory input, and silently honouring one of the two would
+        # hide it: the lineup would come back without a player the captain
+        # believes he locked in.
+        p = self.pool()
+        result = search_lineups(
+            SILVER, roster(), locks={"D1": (p["m1"], p["m2"])}, excluded=["m1"]
+        )
+
+        assert any(v.code == "locked_but_excluded" for v in result.invalid_locks)
+        assert not result.candidates
+
+    def test_a_partner_gap_beyond_the_limit_is_rejected(self):
+        p = self.pool()
+        # 6.80 with 4.40 is 2.40 apart — fine. 6.80 with a 3.00 would not be,
+        # so build one explicitly.
+        far = Candidate("x1", "x1", "M", D("3.00"))
+        result = search_lineups(
+            SILVER, roster() + [far], locks={"D1": (p["m1"], far)}
+        )
+
+        assert result.invalid_locks
+        assert result.invalid_locks[0].code == "partner_gap"
+
+    def test_a_pair_beyond_cap_and_buffer_is_rejected(self):
+        strong = [Candidate("y1", "y1", "M", D("9.00")),
+                  Candidate("y2", "y2", "M", D("8.00"))]
+        result = search_lineups(
+            SILVER, roster() + strong, locks={"D3": (strong[0], strong[1])}
+        )
+
+        assert result.invalid_locks
+        assert not result.candidates
+
+    def test_locking_the_same_player_onto_two_lines_is_rejected(self):
+        p = self.pool()
+        result = search_lineups(SILVER, roster(), locks={
+            "D1": (p["m1"], p["m2"]),
+            "D2": (p["m1"], p["m3"]),
+        })
+
+        assert result.invalid_locks
+        assert not result.candidates
+
+    def test_a_legal_lock_reports_nothing(self):
+        p = self.pool()
+        result = search_lineups(SILVER, roster(), locks={"D2": (p["m3"], p["m6"])})
+
+        assert not result.invalid_locks
+        assert result.candidates

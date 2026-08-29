@@ -90,7 +90,7 @@
   - 外援免责是无条件的：任何搜索或校验结果都带它。
 - **Threshold**: 80
 
-- [ ] 3.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-3.md with the ### Contract block above
+- [x] 3.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-3.md with the ### Contract block above
 - [ ] 3.1 RED — 构造必然无解的锁定与排除（把女队员锁进别的线并排除其余，使 WD 无人可配），返回无解且指名 WD；返回值不是空候选列表
 - [ ] 3.2 GREEN — 实现无解状态与线位诊断
 - [ ] 3.3 RED — 节点预算设得极小时，结果标明不完整；预算充足时标明完整

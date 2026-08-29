@@ -30,6 +30,7 @@ from app.lineups.rules import (
     RuleSet,
     Violation,
     pair_total,
+    slot_composition_error,
 )
 
 Pair = tuple[Candidate, Candidate]
@@ -56,6 +57,12 @@ class SearchResult:
     #: How many distinct sets of ten reach that ceiling. One means the top has
     #: no choice in it; many means the choice is real.
     squads_at_ceiling: int = 0
+    #: Locks the rules do not permit. A lock bypasses the per-line filter —
+    #: that is what makes it a lock — so nothing downstream would catch it, and
+    #: an unchecked one either yields a "legal" lineup that is not or an empty
+    #: list that reads as "your roster cannot do it" when the truth is "you
+    #: asked for something the rules forbid".
+    invalid_locks: list[Violation] = field(default_factory=list)
     #: False when the search pruned a branch that could have tied the ceiling,
     #: which makes the count above a lower bound. Counting every tie exactly is
     #: cheap on most rosters and ruinous on a few: one real 26-player roster
@@ -66,11 +73,74 @@ class SearchResult:
 
 
 def _slot_ok(rule: LineRule, a: Candidate, b: Candidate) -> bool:
-    if rule.kind == "womens_doubles":
-        return a.gender == "F" and b.gender == "F"
-    if rule.kind == "mixed_doubles":
-        return {a.gender, b.gender} == {"M", "F"}
-    return True  # women may fill men's slots
+    return slot_composition_error(rule, (a, b)) is None
+
+
+def check_locks(
+    rules: RuleSet,
+    locks: dict[str, Pair],
+    blocked: set[str],
+) -> list[Violation]:
+    """Everything wrong with the locks themselves, before any searching.
+
+    A locked pair is used verbatim as the only option for its line, so these
+    are the rules nothing else will apply to it.
+    """
+    problems: list[Violation] = []
+    by_code = {rule.code: rule for rule in rules.lines}
+    placed: dict[str, str] = {}
+
+    for code, pair in locks.items():
+        rule = by_code.get(code)
+        if rule is None:
+            problems.append(Violation(
+                code="unknown_line", line=code, amount=None,
+                message=f"这个组别没有 {code} 这条线",
+            ))
+            continue
+
+        problem = slot_composition_error(rule, pair)
+        if problem is not None:
+            problems.append(Violation(
+                code="slot_composition", line=code, amount=None,
+                message=f"{code}：{problem}",
+            ))
+
+        gap = abs(pair[0].match_utr - pair[1].match_utr)
+        if gap > rules.partner_gap_max:
+            problems.append(Violation(
+                code="partner_gap", line=code, amount=gap - rules.partner_gap_max,
+                message=f"{code} 锁定的搭档差距 {gap} 超过上限 {rules.partner_gap_max}",
+            ))
+
+        if rule.cap is not None:
+            headroom = min(rules.buffer_per_line, rules.buffer_total)
+            total = pair_total(pair)
+            if total > rule.cap + headroom:
+                problems.append(Violation(
+                    code="line_cap", line=code, amount=total - rule.cap,
+                    message=(
+                        f"{code} 锁定的搭档 {total} 超出 cap {rule.cap}，"
+                        f"连 buffer 一起也放不下"
+                    ),
+                ))
+
+        for person in pair:
+            if person.key in blocked:
+                problems.append(Violation(
+                    code="locked_but_excluded", line=code, amount=None,
+                    message=f"{person.name} 既被锁进 {code}，又被排除在本场之外",
+                ))
+            first = placed.get(person.key)
+            if first is not None:
+                problems.append(Violation(
+                    code="duplicate_player", line=code, amount=None,
+                    message=f"{person.name} 同时被锁进 {first} 与 {code}",
+                ))
+            else:
+                placed[person.key] = code
+
+    return problems
 
 
 def legal_pairs(rules: RuleSet, rule: LineRule, pool: Sequence[Candidate]) -> list[Pair]:
@@ -164,6 +234,13 @@ def search_lineups(
     """
     locks = dict(locks or {})
     blocked = set(excluded)
+
+    # Before anything else: a lock the rules forbid is a different answer from
+    # "no lineup exists", and the caller has to be able to tell them apart.
+    lock_problems = check_locks(rules, locks, blocked)
+    if lock_problems:
+        return SearchResult(invalid_locks=lock_problems)
+
     # Sorted by key so the answer depends on the roster, not on the order it
     # arrived in. With more ties than we keep, which of them survive follows
     # the enumeration order — and a caller passing the same players in a

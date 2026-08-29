@@ -449,3 +449,46 @@ class TestViolationsAreNotDuplicated:
         ))
 
         assert "buffer_total" in codes(report)
+
+
+class TestSlotComposition:
+    """Who may stand on each line at all.
+
+    Women's doubles is two women and mixed doubles is one of each — that is
+    what the lines are. Without this the validator calls two men on women's
+    doubles legal, and anything that hands it a lineup it did not itself
+    build (a locked pair, a lineup typed in by hand) gets a false clearance.
+    """
+
+    def test_womens_doubles_must_be_two_women(self):
+        report = check_lineup(
+            SILVER, lineup(WD=(player("i", "4.50"), player("j", "4.50")))
+        )
+
+        assert not report.is_legal
+        assert "slot_composition" in codes(report)
+
+    def test_mixed_doubles_must_be_one_of_each(self):
+        report = check_lineup(
+            SILVER, lineup(MD=(player("g", "5.00"), player("h", "5.00")))
+        )
+
+        assert not report.is_legal
+        assert "slot_composition" in codes(report)
+
+    def test_a_woman_may_take_a_mens_doubles_slot(self):
+        # Explicitly allowed by the rules, and the reason men's lines have no
+        # composition rule of their own.
+        report = check_lineup(
+            SILVER, lineup(D3=(player("e", "5.50", "F"), player("f", "5.50", "F")))
+        )
+
+        assert report.is_legal, report.violations
+
+    def test_the_violation_names_the_line(self):
+        report = check_lineup(
+            SILVER, lineup(WD=(player("i", "4.50"), player("j", "4.50")))
+        )
+
+        violation = next(v for v in report.violations if v.code == "slot_composition")
+        assert violation.line == "WD"
