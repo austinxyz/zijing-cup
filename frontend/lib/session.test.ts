@@ -160,3 +160,41 @@ describe("login rate limiting", () => {
     expect(rateLimitState("9.9.9.9").remaining).toBe(5);
   });
 });
+
+describe("who the rate limit counts against", () => {
+  it("caps what address rotation can buy", () => {
+    // The per-address bucket is only as trustworthy as the address, and on a
+    // public endpoint the address arrives in a header the caller can write.
+    // Rotating it must not hand out fresh allowances forever — past the global
+    // ceiling, a brand new address inherits what little is left.
+    for (let i = 0; i < 18; i++) recordFailure(`10.0.0.${i}`);
+
+    expect(rateLimitState("10.0.0.99").remaining).toBe(2);
+  });
+
+  it("does not punish an unseen address while the pool is healthy", () => {
+    // Five failures from elsewhere should not cost a colleague on another
+    // connection their own five tries.
+    for (let i = 0; i < 5; i++) recordFailure(`10.3.0.${i}`);
+
+    expect(rateLimitState("10.3.0.99").remaining).toBe(5);
+  });
+
+  it("locks everyone out once the global allowance is gone", () => {
+    for (let i = 0; i < 20; i++) recordFailure(`10.1.0.${i}`);
+
+    const state = rateLimitState("10.1.0.250");
+    expect(state.remaining).toBe(0);
+    expect(state.lockedUntil).not.toBeNull();
+  });
+
+  it("still counts a single address down faster than the global pool", () => {
+    recordFailure("10.2.0.1");
+    recordFailure("10.2.0.1");
+
+    // Five per address against twenty overall: an ordinary typo hits the
+    // address bucket long before it touches the global one.
+    expect(rateLimitState("10.2.0.1").remaining).toBe(3);
+    expect(rateLimitState("10.2.0.2").remaining).toBe(5);
+  });
+});

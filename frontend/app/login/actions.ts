@@ -20,9 +20,25 @@ export interface LoginState {
 
 async function callerAddress(): Promise<string> {
   const store = await headers();
-  // Behind Vercel every request carries this; the fallback keeps one shared
-  // bucket rather than handing an unlabelled caller an unlimited one.
-  return store.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+
+  // Prefer the header the platform sets itself. `x-forwarded-for` is a list the
+  // CALLER can prepend to, so its first entry is whatever they typed — keying
+  // the rate limit on that lets an attacker rotate it and never meet the
+  // lockout. The last entry is the one the nearest trusted proxy appended.
+  //
+  // This only narrows the per-address bucket; the global ceiling in
+  // lib/session.ts is what actually makes rotation pointless, because no header
+  // can influence it at all.
+  const trusted = store.get("x-real-ip") ?? store.get("x-vercel-forwarded-for");
+  if (trusted) return trusted.trim();
+
+  const forwarded = store.get("x-forwarded-for");
+  if (forwarded) {
+    const hops = forwarded.split(",").map((hop) => hop.trim()).filter(Boolean);
+    if (hops.length > 0) return hops[hops.length - 1];
+  }
+
+  return "unknown";
 }
 
 /**

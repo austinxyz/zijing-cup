@@ -118,3 +118,19 @@ describe("isSignedIn", () => {
     await expect(isSignedIn()).resolves.toBe(true);
   });
 });
+
+describe("the shared secret is required too", () => {
+  it("refuses to write when BACKEND_SECRET is missing", async () => {
+    const { adminWrite } = await import("./admin");
+    await signedIn();
+    vi.stubEnv("BACKEND_SECRET", "");
+    vi.stubGlobal("fetch", vi.fn());
+
+    // Sending an empty header would let the request reach the backend and be
+    // refused there — indistinguishable, from the outside, from a bad login.
+    // A missing secret is a deployment fault and should say so here.
+    await expect(adminWrite("POST", "/api/players", {})).rejects.toThrow(
+      /BACKEND_SECRET/,
+    );
+  });
+});

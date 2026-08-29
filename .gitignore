@@ -33,3 +33,6 @@ backend/data/rosters/*.csv
 
 # 用户从组委会总表导出的名单 CSV 落点（真实个人数据）
 migration/
+
+# vitest 的输出重定向，不该进仓库
+frontend/test-output.log

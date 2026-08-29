@@ -48,9 +48,15 @@ export async function adminWrite(
   const base = process.env.BACKEND_URL;
   if (!base) throw new Error("BACKEND_URL is not configured");
 
+  // Both secrets fail closed, exactly as the backend does with the same
+  // variables: an unset one means nobody writes, not everybody. Sending an
+  // empty header instead would let the request reach the backend and come back
+  // refused, which from the outside is indistinguishable from a bad login —
+  // and it is not: it is a deployment fault.
+  const backendSecret = process.env.BACKEND_SECRET;
+  if (!backendSecret) throw new Error("BACKEND_SECRET is not configured");
+
   const adminSecret = process.env.ADMIN_SECRET;
-  // Fail closed, exactly as the backend does with the same variable: an unset
-  // secret means nobody writes, not everybody.
   if (!adminSecret) throw new Error("ADMIN_SECRET is not configured");
 
   const response = await fetch(`${base}${path}`, {
@@ -58,7 +64,7 @@ export async function adminWrite(
     cache: "no-store",
     headers: {
       "Content-Type": "application/json",
-      "X-Backend-Secret": process.env.BACKEND_SECRET ?? "",
+      "X-Backend-Secret": backendSecret,
       "X-Admin-Secret": adminSecret,
     },
     body: body === undefined ? undefined : JSON.stringify(body),
