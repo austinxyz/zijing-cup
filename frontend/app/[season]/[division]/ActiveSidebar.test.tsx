@@ -1,11 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { useSelectedLayoutSegment } from "next/navigation";
+import {
+  useSelectedLayoutSegment,
+  useSelectedLayoutSegments,
+} from "next/navigation";
 import { ActiveSidebar } from "./ActiveSidebar";
 
 vi.mock("next/navigation", () => ({
   useSelectedLayoutSegment: vi.fn(),
+  useSelectedLayoutSegments: vi.fn(() => []),
 }));
 
 const SEASONS = [
@@ -61,5 +65,44 @@ describe("ActiveSidebar", () => {
     expect(
       screen.getByText("赛制规则").closest("[aria-current]"),
     ).toHaveAttribute("aria-current", "page");
+  });
+});
+
+describe("ActiveSidebar on the lineup route", () => {
+  it("marks 阵容 and points it at the team the URL names", () => {
+    vi.mocked(useSelectedLayoutSegments).mockReturnValue(["lineup", "PKU"]);
+    vi.mocked(useSelectedLayoutSegment).mockReturnValue("lineup");
+
+    renderSidebar();
+
+    expect(screen.getByText("阵容").closest("[aria-current]")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
+      "/2026/silver/lineup/PKU",
+    );
+  });
+
+  it("carries the team over from its roster, so 阵容 opens that team", () => {
+    vi.mocked(useSelectedLayoutSegments).mockReturnValue(["teams", "THU-I"]);
+    vi.mocked(useSelectedLayoutSegment).mockReturnValue("teams");
+
+    renderSidebar();
+
+    expect(screen.getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
+      "/2026/silver/lineup/THU-I",
+    );
+  });
+
+  it("falls back to the picker when the URL names no team", () => {
+    vi.mocked(useSelectedLayoutSegments).mockReturnValue(["rules"]);
+    vi.mocked(useSelectedLayoutSegment).mockReturnValue("rules");
+
+    renderSidebar();
+
+    expect(screen.getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
+      "/2026/silver/lineup",
+    );
   });
 });

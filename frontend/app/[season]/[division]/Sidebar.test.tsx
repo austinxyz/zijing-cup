@@ -51,10 +51,11 @@ describe("Sidebar navigation", () => {
     expect(link.textContent).not.toContain("未开放");
   });
 
-  it("renders 分析 as disabled, not as a link", () => {
+  it("renders the unavailable destination as disabled, not as a link", () => {
     renderSidebar();
 
-    const item = screen.getByText("分析").closest("div");
+    // 分析 was replaced by 阵容 (which exists) and 对手对比 (which does not).
+    const item = screen.getByText("对手对比").closest("div");
     expect(item).not.toBeNull();
     // A dead link that navigates to a blank or erroring page is worse than
     // an honestly disabled item — this app has been bitten by one before.
@@ -200,5 +201,65 @@ describe("Sidebar active section", () => {
     expect(
       screen.getByRole("link", { name: /队伍/ }).getAttribute("href"),
     ).toBe("/2026/silver/teams");
+  });
+});
+
+describe("Sidebar 阵容 and 对手对比", () => {
+  it("links 阵容 to the division's lineup page", () => {
+    renderSidebar();
+
+    const link = screen.getByRole("link", { name: /阵容/ });
+    expect(link.getAttribute("href")).toBe("/2026/silver/lineup");
+    expect(link.textContent).not.toContain("未开放");
+  });
+
+  it("links 阵容 straight to the team in scope when there is one", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        section="teams"
+        teamCode="PKU"
+      />,
+    );
+
+    // From a team's roster, 阵容 means that team's lineup — going back
+    // through a picker to re-select the team already on screen is a step
+    // nobody wants.
+    expect(screen.getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
+      "/2026/silver/lineup/PKU",
+    );
+  });
+
+  it("renders 对手对比 as disabled, and no longer offers 分析", () => {
+    renderSidebar();
+
+    // 分析 was ambiguous: comparing opponents is exactly what this change
+    // does NOT do, and one item named for both would claim it does.
+    expect(screen.queryByText("分析")).toBeNull();
+
+    const item = screen.getByText("对手对比").closest("div");
+    expect(item).not.toBeNull();
+    expect(item!.querySelector("a")).toBeNull();
+    expect(item).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("marks 阵容 as the current page on the lineup section", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        section="lineup"
+      />,
+    );
+
+    expect(screen.getByText("阵容").closest("[aria-current]")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 });

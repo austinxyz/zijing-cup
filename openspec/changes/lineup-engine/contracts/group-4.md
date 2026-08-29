@@ -1,4 +1,5 @@
-### Contract
+# Contract — Group 4: 只读端点
+
 - **Spec**:
   - 后端 SHALL 提供一个只读端点返回搜索结果，锁定与排除通过 query 参数传入。
     系统 MUST NOT 因此新增任何写方法。

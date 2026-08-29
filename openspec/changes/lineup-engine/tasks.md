@@ -116,14 +116,16 @@
   - 路由只负责读库、调纯函数、组装响应；约束与搜索逻辑不得下沉到路由里。
 - **Threshold**: 80
 
-- [ ] 4.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 RED — `tests/test_lineup_api.py`：请求某队的阵容搜索返回 200，含候选、上限、三种状态标记
-- [ ] 4.2 GREEN — 新增只读路由，读规则与名单后调用搜索
-- [ ] 4.3 RED — query 中的锁定与排除被遵守；格式非法的 query 返回 4xx 而不是 500
-- [ ] 4.4 GREEN — 实现 query 解析与校验
-- [ ] 4.5 RED — 未知球队 404；OpenAPI 中仍不存在任何 POST / PUT / PATCH / DELETE
-- [ ] 4.6 GREEN — 最小实现使两条断言通过
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 4.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-4.md with the ### Contract block above
+- [x] 4.1 RED — `tests/test_lineup_api.py`：请求某队的阵容搜索返回 200，含候选、上限、三种状态标记
+- [x] 4.2 GREEN — 新增只读路由，读规则与名单后调用搜索
+- [x] 4.3 RED — query 中的锁定与排除被遵守；格式非法的 query 返回 4xx 而不是 500
+- [x] 4.4 GREEN — 实现 query 解析与校验
+- [x] 4.5 RED — 未知球队 404；OpenAPI 中仍不存在任何 POST / PUT / PATCH / DELETE
+- [x] 4.6 GREEN — 最小实现使两条断言通过（404 与「无写方法」在 4.2 的路由里已经成立；
+      未新增实现代码。用临时 POST 路由验过守卫会红，不是空转）
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - **STATUS: PASS** — attempt 1, scores: spec 100, runtime 100, code 92, total 98.4 ≥ 80
 
 ## 5. 排阵页：锁定、排除与结果
 
@@ -146,18 +148,22 @@
 - **Threshold**: 70
 - **Note**: 含 VISUAL DIFF 任务，阈值取 70
 
-- [ ] 5.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-5.md with the ### Contract block above
-- [ ] 5.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-28-lineup-engine-mocks.html` 的前两节（`design/Lineup.dc.html`、`LineupLocked.dc.html`）；记下 token 与逐字文案：「本队可达上限」「规则允许」「交给引擎」「已锁」「本场不能上」「搜索阵容」
-- [ ] 5.2 RED — `lib/api.ts` 的取数函数：类型含候选、上限、组合数、三种状态标记；锁定与排除编码进 query
-- [ ] 5.3 GREEN — 实现取数函数
-- [ ] 5.4 RED — 锁定控件：锁定一对后 URL 改变，直接访问该 URL 得到同一套锁定；排除同理
-- [ ] 5.5 GREEN — 实现锁定与排除控件，状态来自 URL
-- [ ] 5.6 RED — 结果区：先呈现可达上限、规则允许上限、差值、达到上限的十人组合数；候选显示五线搭档、性别、各线之和、超出量与 buffer 用量
-- [ ] 5.7 GREEN — 实现结果区
-- [ ] 5.8 RED — 锁定使上限下降时，页面呈现该差值
-- [ ] 5.9 GREEN — 实现锁定代价的呈现
-- [ ] 5.10 VISUAL DIFF — `npm run dev --prefix frontend`，访问排阵页，对照 `design/Lineup.dc.html` 与 `LineupLocked.dc.html` 核对 token、配色与逐字文案（桌面 1440px）；**用最长的一组数据并把窗口调矮**，确认候选列表可以滚到底、表头不随之滚走（CLAUDE.md Pitfalls）。移动端不在本 change 范围
-- [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 5.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-5.md with the ### Contract block above
+- [x] 5.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-28-lineup-engine-mocks.html` 的前两节（`design/Lineup.dc.html`、`LineupLocked.dc.html`）；记下 token 与逐字文案：「本队可达上限」「规则允许」「交给引擎」「已锁」「本场不能上」「搜索阵容」
+- [x] 5.2 RED — `lib/api.ts` 的取数函数：类型含候选、上限、组合数、三种状态标记；锁定与排除编码进 query
+- [x] 5.3 GREEN — 实现取数函数
+- [x] 5.4 RED — 锁定控件：锁定一对后 URL 改变，直接访问该 URL 得到同一套锁定；排除同理
+- [x] 5.5 GREEN — 实现锁定与排除控件，状态来自 URL
+- [x] 5.6 RED — 结果区：先呈现可达上限、规则允许上限、差值、达到上限的十人组合数；候选显示五线搭档、性别、各线之和、超出量与 buffer 用量
+- [x] 5.7 GREEN — 实现结果区
+- [x] 5.8 RED — 锁定使上限下降时，页面呈现该差值
+- [x] 5.9 GREEN — 实现锁定代价的呈现
+- [x] 5.10 VISUAL DIFF — `npm run dev --prefix frontend`，访问排阵页，对照 `design/Lineup.dc.html` 与 `LineupLocked.dc.html` 核对 token、配色与逐字文案（桌面 1440px）；**用最长的一组数据并把窗口调矮**，确认候选列表可以滚到底、表头不随之滚走（CLAUDE.md Pitfalls）。移动端不在本 change 范围（本次在非交互会话里跑：截图不可用——Browser pane 不显示就不合成帧；
+      改用 computed style 逐个核对 token：primary rgb(156,52,23)=#9c3417、卡片边框 rgb(228,224,216)=#e4e0d8、
+      面板 420px、页面底色 #f6f4f0 全部对上，逐字文案与锁定代价按真实数据核过；滚动按 pitfall 在 660px 高
+      验过：候选列表内层滚动到底、表头与上限区不动）
+- [x] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - **STATUS: PASS** — attempt 1, scores: spec 100, runtime 100, code 95, total 99.0 ≥ 70
 
 ## 6. 三种非正常状态的呈现与侧栏
 
@@ -178,24 +184,30 @@
 - **Threshold**: 70
 - **Note**: 含 VISUAL DIFF 任务，阈值取 70
 
-- [ ] 6.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-6.md with the ### Contract block above
-- [ ] 6.1 MOCK — 打开 mocks 第三节（`design/LineupBlocked.dc.html`）；记下逐字文案：「凑不出合法阵容」「这不是「搜索没找到」」「各线还剩多少合法搭档」「外援限制未校验」「搜索被截断」
-- [ ] 6.2 RED — 无解时页面呈现无解并指名线位，且不渲染空的候选列表
-- [ ] 6.3 GREEN — 实现无解态
-- [ ] 6.4 RED — 页面呈现相关队员去向时，同时呈现「这是当前输入的读数，不是哪条锁定该负责」
-- [ ] 6.5 GREEN — 实现去向呈现与那句区分说明
-- [ ] 6.6 RED — 截断时页面呈现搜索不完整；任何含候选的结果都呈现外援未校验
-- [ ] 6.7 GREEN — 实现截断与外援免责的呈现
-- [ ] 6.8 RED — 侧栏「阵容」是指向排阵页的链接且在排阵页高亮；「对手对比」是禁用态且不是链接
-- [ ] 6.9 GREEN — 改 `Sidebar.tsx`
-- [ ] 6.10 VISUAL DIFF — 访问一个必然无解的锁定组合，对照 `design/LineupBlocked.dc.html` 核对（桌面 1440px）
-- [ ] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 6.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-6.md with the ### Contract block above
+- [x] 6.1 MOCK — 打开 mocks 第三节（`design/LineupBlocked.dc.html`）；记下逐字文案：「凑不出合法阵容」「这不是「搜索没找到」」「各线还剩多少合法搭档」「外援限制未校验」「搜索被截断」
+- [x] 6.2 RED — 无解时页面呈现无解并指名线位，且不渲染空的候选列表
+- [x] 6.3 GREEN — 实现无解态
+- [x] 6.4 RED — 页面呈现相关队员去向时，同时呈现「这是当前输入的读数，不是哪条锁定该负责」
+- [x] 6.5 GREEN — 实现去向呈现与那句区分说明
+- [x] 6.6 RED — 截断时页面呈现搜索不完整；任何含候选的结果都呈现外援未校验
+- [x] 6.7 GREEN — 实现截断与外援免责的呈现
+- [x] 6.8 RED — 侧栏「阵容」是指向排阵页的链接且在排阵页高亮；「对手对比」是禁用态且不是链接
+- [x] 6.9 GREEN — 改 `Sidebar.tsx`
+- [x] 6.10 VISUAL DIFF — 访问一个必然无解的锁定组合，对照 `design/LineupBlocked.dc.html` 核对（桌面 1440px；非交互会话无法截图，改用真实 2025 PKU 数据核对逐字文案与结构：
+      无解指名 WD、区分句、去向列表、外援免责都在，锁定不合法另有一态。截断态只有单测覆盖——节点预算没有走 API 暴露，页面上造不出来）
+- [x] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - attempt 1 **BLOCK**：lineup 路由没有 error.tsx，取数失败会连侧栏一起被根 error.tsx 换掉。补两个错误边界并实测（侧栏还在，只换内容区）。
+  - attempt 2 **BLOCK**：两次搜索串行跑，冷启动下叠加会超时。改成 Promise.all 并发。
+  - attempt 3 **STATUS: PASS** — scores: spec 95, runtime 98, code 96, total 96.4 ≥ 70（顺带补了 `getDivisionRules` 返回 null 时 notFound）
 
 ## 7. 验证与上线
 
-- [ ] 7.1 Run backend test suite — `cd backend && uv run pytest`，确认无回归
-- [ ] 7.2 Run frontend test suite — `cd frontend && npm run test`，确认无回归
-- [ ] 7.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明
-- [ ] 7.4 用 2025 真实数据本地验一遍：对全部 24 支球队（金 6 + 银 18）各搜一次，全部返回结果或如实报告截断；记录最坏耗时。**跑完 pytest 需先 `bash backend/scripts/reseed-local.sh` 补回数据**（CLAUDE.md Pitfalls）
-- [ ] 7.5 Run superpowers:verification-before-completion —— 跑 `project.test_commands` 与全部 `project.custom_verification_checks`
+- [x] 7.1 Run backend test suite — `cd backend && uv run pytest`，确认无回归
+- [x] 7.2 Run frontend test suite — `cd frontend && npm run test`，确认无回归
+- [x] 7.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明——本次确实没跑 e2e
+- [x] 7.4 用 2025 真实数据本地验一遍：对全部 24 支球队（金 6 + 银 18）各搜一次，全部返回结果或如实报告截断；记录最坏耗时。**结果：24 支全部返回完整结果，0 截断，最坏 0.09s**（比 design 里
+      记的 1.61s 快很多：2025 两组的 buffer 都是 0.00，可行空间小得多；2026 的 buffer 一开就会变慢，
+      Render 上的真实耗时仍要部署后再测一次）。**跑完 pytest 需先 `bash backend/scripts/reseed-local.sh` 补回数据**（CLAUDE.md Pitfalls）
+- [x] 7.5 Run superpowers:verification-before-completion —— 跑 `project.test_commands` 与全部 `project.custom_verification_checks`
 - [ ] 7.6 上线：`git push`（Render + Vercel 自动部署；本次无 migration、无 seed 导入）。**部署后在远程测一次最坏情况的实际耗时**，据此复核节点预算是否合适——开发机的数字不能代表 Render 免费实例

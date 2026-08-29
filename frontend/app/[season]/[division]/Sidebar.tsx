@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import type { SeasonIndex } from "@/lib/api";
 
 /** Which nav destination the current URL is under. */
-export type NavSection = "teams" | "rules";
+export type NavSection = "teams" | "lineup" | "rules";
 
 interface SidebarProps {
   season: string;
@@ -15,11 +15,17 @@ interface SidebarProps {
   /** Derived from the route, never held as state. Defaults to the rules page
    *  because that is the division's index route. */
   section?: NavSection;
+  /** The team the URL is on, when it is on one. 阵容 then opens that team's
+   *  lineup directly instead of sending you through a picker to choose the
+   *  team already on screen. */
+  teamCode?: string;
 }
 
 const GRID_ICON =
   "M2.6 2.6h4.2v4.2H2.6zM9.2 2.6h4.2v4.2H9.2zM2.6 9.2h4.2v4.2H2.6zM9.2 9.2h4.2v4.2H9.2z";
 const CHART_ICON = "M2.6 13.4h10.8M4.8 11V7.2M8 11V3.4M11.2 11V5.8";
+const SWAP_ICON =
+  "M2.6 5.2h9.4M9.4 2.6L12 5.2 9.4 7.8M13.4 10.8H4M6.6 8.2L4 10.8l2.6 2.6";
 const DOC_ICON = "M4 2.4h8v11.2H4zM6.4 5.4h3.2M6.4 8h3.2M6.4 10.6h2";
 
 function NavIcon({ path }: { path: string }) {
@@ -108,6 +114,7 @@ export function Sidebar({
   divisionName,
   seasons,
   section = "rules",
+  teamCode,
 }: SidebarProps) {
   // EVERY (season, division) pair, including the one already open — which is
   // marked rather than omitted. Hiding the current pair made the option set
@@ -202,7 +209,19 @@ export function Sidebar({
           href={`/${season}/${division}/teams`}
           current={section === "teams"}
         />
-        <PendingNavItem label="分析" icon={CHART_ICON} />
+        <NavLink
+          label="阵容"
+          icon={CHART_ICON}
+          href={
+            teamCode
+              ? `/${season}/${division}/lineup/${encodeURIComponent(teamCode)}`
+              : `/${season}/${division}/lineup`
+          }
+          current={section === "lineup"}
+        />
+        {/* Its own row, and still closed. Folding it into 阵容 under the old
+            name 分析 would claim this app can already compare opponents. */}
+        <PendingNavItem label="对手对比" icon={SWAP_ICON} />
         <NavLink
           label="赛制规则"
           icon={DOC_ICON}

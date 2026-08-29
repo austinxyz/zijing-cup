@@ -49,6 +49,35 @@
     - "code: pure function, no database access; all input from parameters (rules, roster, locks, excluded)"
   fix_tasks: []
 
+- group: 4
+  attempt: 1
+  scores: {spec: 100, runtime: 100, code: 92}
+  total: 98.4
+  status: PASS
+  findings:
+    - "spec: read-only endpoint with GET only, locks/exclusions via query params (code-reviewer verified @router.get only, no POST/PUT/PATCH/DELETE)"
+    - "spec: unknown team returns 404, unknown division returns 404 (via search_team_lineups returning None)"
+    - "spec: route layer reads DB (load_ruleset, load_roster), calls pure search_lineups(), assembles response (clean separation)"
+    - "spec: no constraint/search logic in router; eligibility checks in search.py check_locks(), not in lineups.py"
+    - "spec: invalid references raise UnknownReference (422), converted to HTTPException by router"
+    - "spec: invalid locks reported in response with violations via result.invalid_locks, not as empty results"
+    - "spec: response includes all required fields: candidates, ceiling, squads_at_ceiling, infeasible_line, truncated, borrowed_players_checked"
+    - "runtime: all 14 tests pass in 1.43s, no flakes"
+    - "runtime: TestSearchResponse validates response structure with ceiling and state flags"
+    - "runtime: TestLocksAndExclusionsFromTheQuery verifies locks enforced, exclusions enforced, malformed params rejected with 4xx"
+    - "runtime: TestUnknownTargetsAndTheAbsenceOfWrites validates 404s and no POST/PUT/PATCH/DELETE via app.openapi()[\"paths\"] (not app.routes)"
+    - "code: comprehensive input validation - locks validated for line code existence, player key existence, no self-pairing, no duplicate line locks"
+    - "code: error codes correct - 404 for not found, 422 for client input errors (FastAPI convention, code-reviewer verified)"
+    - "code: decimal arithmetic throughout (Decimal type on all UTR values), Pydantic v2 serializes as JSON strings not floats (code-reviewer verified)"
+    - "code: proper separation of concerns - query.py coordinates DB reads + pure function calls + response assembly"
+    - "code: query parameter format validated strictly (LINE:key,key format), rejects malformed with clear error messages"
+    - "code: response models properly typed with Pydantic BaseModel, Optional for nullable fields (cap on open lines)"
+    - "code: test correctly uses app.openapi()[\"paths\"] instead of app.routes (FastAPI include_router limitation documented)"
+    - "code: function sizes reasonable (to_output 41 lines, search_team_lineups 39 lines)"
+    - "code: module docstrings explain design rationale and constraints"
+    - "code: code-reviewer found no CRITICAL or HIGH issues; minor notes: (1) no API-level test for eligibility-limit violation or duplicate-player lock (covered at pure-engine layer), (2) 'keep' parameter hardcoded to 20 (intentional scope decision), (3) 422 for malformed input (correct FastAPI convention)"
+  fix_tasks: []
+
 # 2026-08-28: group 2 的第一次 PASS 被撤回。
 # 评审内部的 code review 同时返回了 CRITICAL/BLOCK —— 锁定的搭档完全绕过
 # 每线的合法性过滤，既可能输出「已校验」但实为非法的阵容，也可能退化成
@@ -99,5 +128,73 @@
     - "code: placements computed via _placements(locks, blocked) before recursion"
     - "code: truncated flag set when nodes exceed budget during recursion"
     - "code: borrowed_players_checked is constant False (design-correct per spec)"
+  fix_tasks: []
+
+- group: 5
+  attempt: 1
+  scores: {spec: 100, runtime: 100, code: 95}
+  total: 99
+  status: PASS
+  findings:
+    - "spec: locks and exclusions express via URL query params (D1a=X&D1b=Y&ex=P), not React state"
+    - "spec: LineupControls is plain GET form (method='get'), no useState for URL-critical data"
+    - "spec: constraintsFromQuery() reads URL params and validates both seats filled before locking"
+    - "spec: results section shows ceiling, rules_ceiling, gap, squads_at_ceiling_exact before candidates"
+    - "spec: ceiling section displays all four required values with proper labels"
+    - "spec: candidates list untouched by frontend (no re-sorting, no re-deduplication)"
+    - "spec: each candidate displays both players with gender, line total, buffer spent, and overage amount"
+    - "spec: PlayerName component defensively displays gender with fallback to '—' for missing/unknown"
+    - "spec: lock cost shown when constrained (conditional block with baseline ceiling)"
+    - "spec: lock cost message explicitly states 'the drop' from unconstrained to constrained"
+    - "spec: all fetches via getTeamLineups() and getDivisionRules() in api.ts (no direct fetch in components)"
+    - "spec: unknown team returns 404 (notFound() called when getTeamLineups returns null)"
+    - "runtime: all 109 tests pass across 19 files in 3.26s (includes lineup page tests)"
+    - "runtime: tests verify URL parameter parsing (D1a, D1b, ex format)"
+    - "runtime: tests verify lock representation in controls and in API calls"
+    - "runtime: tests verify ceiling display with gap and squad count"
+    - "runtime: tests verify gender display in candidate lines"
+    - "runtime: tests verify lock cost calculation and display"
+    - "runtime: tests verify determinism (candidates ordered by backend, not re-sorted)"
+    - "runtime: tests verify 404 handling for unknown teams"
+    - "code: clean separation of concerns (page orchestration, LineupControls sidebar, LineupResults main area)"
+    - "code: no client state for locks/exclusions; URL is source of truth for shareability"
+    - "code: TypeScript interfaces properly typed with correct nullability (rules_ceiling nullable for open lines)"
+    - "code: decimal formatting uses money() helper to ensure consistent display precision"
+    - "code: difference() function handles null ceiling values safely"
+    - "code: baseline search only fetched when constrained (optimization reducing unnecessary work)"
+    - "code: constraintsFromQuery() validates both seats filled before treating line as locked (prevents partial-form submission)"
+    - "code: CandidateCard iterates lineOrder (not Object.keys) to preserve rule-defined line order"
+  fix_tasks: []
+
+- group: 6
+  attempt: 3
+  scores: {spec: 95, runtime: 98, code: 96}
+  total: 96.4
+  status: PASS
+  findings:
+    - "spec: three abnormal states (InvalidLocks, NoSolution, Truncated) each rendered as dedicated <section> panels, never as empty list"
+    - "spec: NoSolution specifies infeasible_line with LINE_LABEL lookup and distinguishes from 'search found nothing'"
+    - "spec: InvalidLocks reports all violations via search.invalid_locks array"
+    - "spec: Truncated displayed only when search.truncated=true"
+    - "spec: BorrowedPlayersNotice rendered on every result (with or without candidates)"
+    - "spec: Sidebar nav split: 阵容 is NavLink (current when section==='lineup'), 对手对比 is PendingNavItem (disabled)"
+    - "spec: ActiveSidebar extracts teamCode from useSelectedLayoutSegments() and passes to Sidebar"
+    - "spec: 阵容 links to /lineup (no team) or /lineup/{teamCode} (from teams or lineup routes)"
+    - "spec: error boundaries (lineup/error.tsx and lineup/[code]/error.tsx) render only error message, never raw error.message"
+    - "spec: error boundaries explain cold start but never claim 'no solution' (distinct from abnormal states)"
+    - "spec: error boundaries keep sidebar rendered via scoped boundaries"
+    - "runtime: all 129 tests pass across 21 files (includes new page.test.tsx, error.test.tsx for both routes)"
+    - "runtime: tests verify three states each visible and not as empty lists"
+    - "runtime: tests verify sidebar 阵容 is link, 对手对比 is disabled"
+    - "runtime: tests verify URL state round-trips (D1a, D1b, ex params via GET form)"
+    - "runtime: tests verify error boundaries don't expose raw errors"
+    - "code: LineupControls is plain GET form (method='get'), state via defaultValue/defaultChecked from URL"
+    - "code: LineupResults mutually-exclusive short-circuits (invalid_locks → NoSolution → candidates)"
+    - "code: getTeamLineups uses cache:'no-store' to avoid stale results with varying query params"
+    - "code: constraintsFromQuery validates both seats filled before locking a line"
+    - "code: decode/encode URIComponent for teamCode handling from/to URL"
+    - "code: clean separation: Controls form, Results panels, States error/notice components"
+    - "code: no client state held; URL is only record of locks/exclusions for shareability"
+    - "low: malformed query params rejected with generic 422 error; error copy mentions 'backend no response' but 422 is 'client input invalid' (not blocking, rare edge case, user cannot create via UI)"
   fix_tasks: []
 
