@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from app.auth import require_shared_secret
 from app.db import check_db_connection
-from app.routers import rosters, rules
+from app.routers import lineups, rosters, rules
 
 # Opt in to interactive docs rather than switching them off when the
 # environment looks like production — a misread environment leaves docs
@@ -20,6 +20,7 @@ app = FastAPI(
 app.middleware("http")(require_shared_secret)
 app.include_router(rules.router)
 app.include_router(rosters.router)
+app.include_router(lineups.router)
 
 
 @app.get("/health")
