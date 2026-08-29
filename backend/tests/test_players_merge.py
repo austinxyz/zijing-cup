@@ -539,3 +539,33 @@ class TestSeasonLock:
         # which is a change to a frozen year however it is spelled.
         with pytest.raises(SeasonLocked):
             merge_players(db, keep_id=keep.id, merge_id=drop.id)
+
+    def test_a_locked_season_only_the_survivor_touches_does_not_block_a_merge(
+        self, db
+    ):
+        from app.players.command import merge_players
+
+        # The survivor played in 2025, which is frozen. The duplicate exists
+        # only in the open season. Merging moves nothing into 2025 and changes
+        # nothing there — refusing would block the exact case this feature is
+        # for: a duplicate discovered after an old season was locked.
+        keep = make(db, "一", team_code=f"G{TEST_YEAR}", utr="6.00")
+        drop = make(db, "二", team_code=f"G{OTHER_YEAR}", season=OTHER_YEAR, utr="6.10")
+        self._lock(db, TEST_YEAR)
+
+        report = merge_players(db, keep_id=keep.id, merge_id=drop.id)
+
+        assert report.memberships_moved == 1
+        assert report.season_utrs_moved == 1
+
+    def test_a_locked_season_the_merge_would_change_still_blocks_it(self, db):
+        from app.players.command import SeasonLocked, merge_players
+
+        # Here the duplicate DOES carry a row in the frozen season, so the
+        # merge would move it — that is a change to a locked year.
+        keep = make(db, "一", utr="6.25")
+        drop = make(db, "二", team_code=f"G{TEST_YEAR}")
+        self._lock(db, TEST_YEAR)
+
+        with pytest.raises(SeasonLocked):
+            merge_players(db, keep_id=keep.id, merge_id=drop.id)

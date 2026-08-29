@@ -232,7 +232,9 @@ def set_season_utr(
 
 
 class MergeIn(BaseModel):
-    #: The record that survives. The other one is deleted.
+    #: The record being absorbed and DELETED. The survivor is the player_id in
+    #: the path. Getting these two backwards deletes the wrong person, and this
+    #: operation has no undo.
     merge_id: int
 
 
@@ -343,7 +345,7 @@ def rule_on_season(
     return {
         "season_year": row.season_year,
         "value": str(row.value),
-        "alt_value": None,
+        "alt_value": str(row.alt_value) if row.alt_value is not None else None,
         "is_unresolved": row.is_unresolved,
         "status": row.status,
         "under_appeal": row.under_appeal,

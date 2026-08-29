@@ -282,9 +282,14 @@ def merge_players(session: Session, keep_id: int, merge_id: int) -> MergeReport:
     keep = _require_player(session, keep_id)
     merge = _require_player(session, merge_id)
 
-    for year in sorted(_seasons_touched_by(session, [keep.id, merge.id])):
-        # A merge can turn a settled season into a contested one, which is a
-        # change to that season however it is spelled.
+    # Only the seasons this merge actually changes — which is exactly the
+    # seasons the absorbed record has rows in, since those are the rows that
+    # move and the only ones that can create a conflict. The survivor's own
+    # history is left untouched, so a frozen season they happen to have played
+    # in is none of this merge's business: locking on the union of both
+    # histories would refuse the very case this feature exists for, a duplicate
+    # discovered after an old season was closed.
+    for year in sorted(_seasons_touched_by(session, [merge.id])):
         _assert_season_open(session, year)
 
     report = MergeReport()

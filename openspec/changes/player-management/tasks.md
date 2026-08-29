@@ -157,7 +157,8 @@
 - [x] 5.8 GREEN — 实现裁决与取值规则
 - [x] 5.9 RED — 锁定 2025 后改该赛季 UTR/成员关系/删人都被拒且理由指名赛季锁；2026 不受影响；有已锁赛季记录的队员不能删
 - [x] 5.10 GREEN — 实现赛季锁（判定集中在一处）
-- [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - **STATUS: PASS** — attempt 1, scores: spec 100, runtime 100, code 100, total 100 ≥ 80
 
 ## 6. 登录、会话与写入口
 
