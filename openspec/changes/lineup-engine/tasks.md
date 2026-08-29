@@ -60,16 +60,16 @@
 - **Threshold**: 80
 
 - [x] 2.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — 无锁定无排除时，返回的每一套都通过 group 1 的全部约束
-- [ ] 2.2 GREEN — `app/lineups/search.py` 实现分支限界搜索
-- [ ] 2.3 RED — 候选按十人之和降序；两套十人相同仅换线的阵容只出现一套
-- [ ] 2.4 GREEN — 实现排序与按十人集合去重
-- [ ] 2.5 RED — 锁定某线后每套都含该对；排除某人后每套都不含该人；锁定一对本身超 cap 的搭档时报告该锁定不合法而非空结果
-- [ ] 2.6 GREEN — 实现锁定与排除
-- [ ] 2.7 RED — 报告的上限确为上限：在一份小名单上穷举全部合法阵容，最大值等于报告值
-- [ ] 2.8 GREEN — 实现上限与「达到上限的十人组合数」
-- [ ] 2.9 RED — 同一输入连续搜索两次，候选次序完全一致
-- [ ] 2.10 GREEN — 使次序可复现（并列时有确定的次级比较）
+- [x] 2.1 RED — 无锁定无排除时，返回的每一套都通过 group 1 的全部约束
+- [x] 2.2 GREEN — `app/lineups/search.py` 实现分支限界搜索
+- [x] 2.3 RED — 候选按十人之和降序；两套十人相同仅换线的阵容只出现一套
+- [x] 2.4 GREEN — 实现排序与按十人集合去重
+- [x] 2.5 RED — 锁定某线后每套都含该对；排除某人后每套都不含该人；锁定一对本身超 cap 的搭档时报告该锁定不合法而非空结果
+- [x] 2.6 GREEN — 实现锁定与排除
+- [x] 2.7 RED — 报告的上限确为上限：在一份小名单上穷举全部合法阵容，最大值等于报告值
+- [x] 2.8 GREEN — 实现上限与「达到上限的十人组合数」
+- [x] 2.9 RED — 同一输入连续搜索两次，候选次序完全一致
+- [x] 2.10 GREEN — 使次序可复现（并列时有确定的次级比较）
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 无解、截断与外援免责
