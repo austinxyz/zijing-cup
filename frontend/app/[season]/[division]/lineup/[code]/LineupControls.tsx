@@ -50,6 +50,21 @@ function PlayerSelect({
  * it. Nothing is kept in client state: a second copy would disagree with the
  * address bar as soon as the link was shared or the page reloaded, and the
  * link is the point — a captain sends the search, not a screenshot.
+ *
+ * 520px wide, not the mock's 420. There is one exclusion chip per player, and
+ * the largest roster on record (26) wrapped them to ten rows, which pushed
+ * the panel past a 640px-tall window and left it scrolling on its own — the
+ * scrollbar being the only sign the search button was still below the fold.
+ *
+ * The width is paid for out of the candidate cards, and the bill comes due
+ * early: in gold, whose names are the longest, anything past ~460 makes a
+ * card wrap to a third line (97px -> 110px), and no width between 460 and 520
+ * avoids it. So 520 rather than 480 — the cost is the same and it leaves the
+ * most headroom (593px of content against a 640px floor).
+ *
+ * The panel keeps its own scroller regardless: width buys headroom, it does
+ * not bound the roster, and inside an h-screen overflow-hidden shell an
+ * overflow with no scroller is cut off with nothing to say so.
  */
 export function LineupControls({
   lines,
@@ -64,7 +79,7 @@ export function LineupControls({
       method="get"
       role="search"
       aria-label="锁定与排除"
-      className="flex w-[420px] flex-none flex-col gap-3.5 overflow-y-auto border-r border-border bg-surface px-[18px] py-4"
+      className="flex w-[520px] flex-none flex-col gap-3.5 overflow-y-auto border-r border-border bg-surface px-[18px] py-4"
     >
       <div className="flex flex-col gap-[3px]">
         <span className="text-[13px] font-semibold text-foreground">锁定搭档</span>
