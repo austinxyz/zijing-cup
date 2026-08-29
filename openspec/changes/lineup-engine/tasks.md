@@ -22,19 +22,19 @@
   - `restricted_to_lines` 可空：「不限线位」与「限定某几条线」两条路径都要走通。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — `tests/test_lineup_rules.py`：一对搭档超出该线 cap 时被判违规；恰好等于 cap 不违规
-- [ ] 1.2 GREEN — `app/lineups/rules.py` 实现逐线 cap 判定，全程 Decimal
-- [ ] 1.3 RED — 五线各超 0.2、全队额度 0.5 时判为违规，且违规指向全队 buffer 而非任何单线；单线超 0.3 而额度 0.5 时合法
-- [ ] 1.4 GREEN — 实现全队 buffer 预算判定
-- [ ] 1.5 RED — 搭档差距超限判违规；三条男双线非递增合法、相等合法、倒挂违规
-- [ ] 1.6 GREEN — 实现差距与男双次序判定
-- [ ] 1.7 RED — 开放线（cap 为 None）上任意强度的搭档都不产生 cap 违规、不占 buffer；但差距超限仍违规
-- [ ] 1.8 GREEN — 实现开放线
-- [ ] 1.9 RED — 高 UTR：人数超标违规；人数没超但线位不允许也违规；女队员打男双按男队员阈值判定；`restricted_to_lines` 为空时不限线位
-- [ ] 1.10 GREEN — 实现高 UTR 的人数与线位判定
-- [ ] 1.11 RED — 同一名队员出现在两条线时违规；每条违规都带线位与差额
-- [ ] 1.12 GREEN — 实现重复用人判定与违规报告结构
+- [x] 1.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — `tests/test_lineup_rules.py`：一对搭档超出该线 cap 时被判违规；恰好等于 cap 不违规
+- [x] 1.2 GREEN — `app/lineups/rules.py` 实现逐线 cap 判定，全程 Decimal
+- [x] 1.3 RED — 五线各超 0.2、全队额度 0.5 时判为违规，且违规指向全队 buffer 而非任何单线；单线超 0.3 而额度 0.5 时合法
+- [x] 1.4 GREEN — 实现全队 buffer 预算判定
+- [x] 1.5 RED — 搭档差距超限判违规；三条男双线非递增合法、相等合法、倒挂违规
+- [x] 1.6 GREEN — 实现差距与男双次序判定
+- [x] 1.7 RED — 开放线（cap 为 None）上任意强度的搭档都不产生 cap 违规、不占 buffer；但差距超限仍违规
+- [x] 1.8 GREEN — 实现开放线
+- [x] 1.9 RED — 高 UTR：人数超标违规；人数没超但线位不允许也违规；女队员打男双按男队员阈值判定；`restricted_to_lines` 为空时不限线位
+- [x] 1.10 GREEN — 实现高 UTR 的人数与线位判定
+- [x] 1.11 RED — 同一名队员出现在两条线时违规；每条违规都带线位与差额
+- [x] 1.12 GREEN — 实现重复用人判定与违规报告结构
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 搜索、去重与上限
