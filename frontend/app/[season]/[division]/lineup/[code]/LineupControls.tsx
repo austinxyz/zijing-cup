@@ -1,4 +1,5 @@
 import type { LineupPlayer, RuleLine } from "@/lib/api";
+import { playerName } from "@/lib/name";
 
 interface LineupControlsProps {
   lines: RuleLine[];
@@ -7,10 +8,6 @@ interface LineupControlsProps {
    *  only record of what was locked, so a link reproduces the same search. */
   locks: Record<string, [string, string]>;
   excluded: string[];
-}
-
-function fullName(player: LineupPlayer): string {
-  return `${player.last_name}${player.first_name}`;
 }
 
 function PlayerSelect({
@@ -36,7 +33,7 @@ function PlayerSelect({
       <option value="">交给引擎</option>
       {roster.map((player) => (
         <option key={player.key} value={player.key}>
-          {fullName(player)} · {player.match_utr}
+          {playerName(player)} · {player.match_utr}
         </option>
       ))}
     </select>
@@ -137,7 +134,7 @@ export function LineupControls({
                 value={player.key}
                 defaultChecked={excludedSet.has(player.key)}
               />
-              <span>{fullName(player)}</span>
+              <span>{playerName(player)}</span>
             </label>
           ))}
         </div>

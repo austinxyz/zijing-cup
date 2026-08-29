@@ -10,6 +10,7 @@ import {
   NoSolution,
   Truncated,
 } from "./LineupStates";
+import { playerName } from "@/lib/name";
 
 interface LineupResultsProps {
   search: LineupSearch;
@@ -30,10 +31,6 @@ interface LineupResultsProps {
 
 const GENDER_LABEL: Record<string, string> = { M: "男", F: "女" };
 
-function name(player: LineupPlayer): string {
-  return `${player.last_name}${player.first_name}`;
-}
-
 /** Two decimal places for display. Never used for a comparison — those all
  *  happen on the server, against exact decimals. */
 function money(value: string): string {
@@ -51,7 +48,7 @@ function difference(a: string | null, b: string | null): string | null {
 function PlayerName({ player }: { player: LineupPlayer }) {
   return (
     <>
-      {name(player)}
+      {playerName(player)}
       {/* Gender is not decoration: the high-UTR limits are written per
           gender, so a lineup shown without it cannot be checked by eye. */}
       <span className="text-muted-foreground">

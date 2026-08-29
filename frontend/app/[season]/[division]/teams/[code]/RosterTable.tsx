@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui";
 import type { RosterPlayer } from "@/lib/api";
+import { playerName } from "@/lib/name";
 
 /** The sheet's status word -> the class we are willing to state.
  *
@@ -51,8 +52,7 @@ export function RosterTable({ players }: { players: RosterPlayer[] }) {
               {index + 1}
             </Td>
             <Td className="text-[13px] text-foreground">
-              {player.last_name}
-              {player.first_name}
+              {playerName(player)}
             </Td>
             <Td className="text-[12.5px] text-muted">
               {player.gender ? GENDER_LABEL[player.gender] ?? player.gender : ""}

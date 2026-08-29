@@ -97,8 +97,8 @@ describe("team roster page", () => {
 
     render(await Page({ params: params() }));
 
-    expect(screen.getByText("南望舒")).toBeTruthy();
-    expect(screen.getByText("西门吹雪")).toBeTruthy();
+    expect(screen.getByText("南 望舒")).toBeTruthy();
+    expect(screen.getByText("西 门吹雪")).toBeTruthy();
   });
 
   it("is a not-found for an unknown team, not an empty roster", async () => {

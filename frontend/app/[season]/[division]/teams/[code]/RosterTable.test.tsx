@@ -48,7 +48,9 @@ describe("RosterTable", () => {
     );
 
     const names = rows().map((row) => within(row).getAllByRole("cell")[1].textContent);
-    expect(names).toEqual(["南望舒", "东方朔", "西门吹雪"]);
+    // Family name, space, given name — the two halves come from separate
+    // columns of the committee sheet and are not one word.
+    expect(names).toEqual(["南 望舒", "东 方朔", "西 门吹雪"]);
   });
 
   it("numbers the rows in the order shown", () => {

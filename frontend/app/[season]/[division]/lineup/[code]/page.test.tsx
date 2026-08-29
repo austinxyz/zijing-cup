@@ -205,7 +205,7 @@ describe("the result area leads with the ceilings, then the candidates", () => {
     for (const line of ["D1", "D2", "D3", "MD", "WD"]) {
       expect(within(first).getByText(line)).toBeTruthy();
     }
-    expect(within(first).getByText(/南嘉禾/)).toBeTruthy();
+    expect(within(first).getByText(/南 嘉禾/)).toBeTruthy();
     // Gender is a required column: the high-UTR limits are written per
     // gender, so a lineup shown without it cannot be checked by eye.
     expect(within(first).getAllByText("男").length).toBeGreaterThan(0);
@@ -311,7 +311,7 @@ describe("the three states that must never be read off an empty list", () => {
     render(await renderPage({ ex: ["9"] }));
 
     const blocked = screen.getByRole("region", { name: "无解" });
-    expect(within(blocked).getByText(/南雨萌/)).toBeTruthy();
+    expect(within(blocked).getByText(/南 雨萌/)).toBeTruthy();
     expect(within(blocked).getByText("已锁 MD")).toBeTruthy();
     expect(within(blocked).getByText("排除")).toBeTruthy();
     // Without this sentence the list reads as "this lock caused it", which

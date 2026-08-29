@@ -1,4 +1,5 @@
 import type { LineupPlayer, LineupSearch, RuleLine } from "@/lib/api";
+import { playerName } from "@/lib/name";
 
 const LINE_LABEL: Record<string, string> = {
   mens_doubles: "男双",
@@ -10,10 +11,6 @@ function lineName(lines: RuleLine[], code: string): string {
   const line = lines.find((item) => item.code === code);
   const kind = line ? LINE_LABEL[line.kind] : undefined;
   return kind ? `${kind}（${code}）` : code;
-}
-
-function fullName(player: LineupPlayer): string {
-  return `${player.last_name}${player.first_name}`;
 }
 
 /**
@@ -68,7 +65,7 @@ export function NoSolution({
                   key={key}
                   className="flex items-center gap-1.5 rounded-token border border-border px-2 py-1 text-[12px] text-foreground"
                 >
-                  <span>{player ? fullName(player) : key}</span>
+                  <span>{player ? playerName(player) : key}</span>
                   <span className="font-mono text-[10.5px] text-muted-foreground">
                     {where === "excluded" ? "排除" : `已锁 ${where}`}
                   </span>
