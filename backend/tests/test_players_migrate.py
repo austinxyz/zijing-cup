@@ -277,11 +277,11 @@ class TestMigrationCommand:
         first = migrate_rosters(snapshot.session, seasons=[snapshot.year])
         second = migrate_rosters(snapshot.session, seasons=[snapshot.year])
 
-        assert first.players_created > 0
+        assert first.players_created == snapshot.expected_players
         assert second.players_created == 0
         assert second.memberships_created == 0
         assert second.season_utrs_created == 0
-        assert snapshot.count_players() == first.players_created
+        assert snapshot.count_players() == snapshot.expected_players
 
     def test_check_mode_writes_nothing(self, snapshot):
         from app.players.migrate import migrate_rosters

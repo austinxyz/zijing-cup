@@ -20,7 +20,7 @@ from sqlmodel import Session
 from app.db import get_session
 from app.models import CURRENT_UTR_STATUSES, SEASON_UTR_SOURCES, SEASON_UTR_STATUSES
 from app.players import command
-from app.players.query import PlayerOut, get_player, list_players
+from app.players.query import PlayerOut, count_players, get_player, list_players
 
 router = APIRouter(prefix="/api/players", tags=["players"])
 
@@ -95,12 +95,36 @@ def _validate_vocabularies(
 
 @router.get("", response_model=list[PlayerOut])
 def read_players(
+    response: Response,
     q: Optional[str] = Query(default=None, description="Name or UTR profile id"),
     season: Optional[int] = None,
     team_id: Optional[int] = None,
+    unresolved: bool = Query(
+        default=False, description="Only players with a contested season value"
+    ),
+    limit: int = Query(default=200, ge=1, le=1000),
     session: Session = Depends(get_session),
 ) -> list[PlayerOut]:
-    return list_players(session, query=q, season_year=season, team_id=team_id)
+    # The total goes in a header rather than wrapping the body in an envelope:
+    # every other read route here returns a bare list, and a caller showing a
+    # page of 200 out of 375 needs the real number to say so honestly.
+    response.headers["X-Total-Count"] = str(
+        count_players(
+            session,
+            query=q,
+            season_year=season,
+            team_id=team_id,
+            unresolved_only=unresolved,
+        )
+    )
+    return list_players(
+        session,
+        query=q,
+        season_year=season,
+        team_id=team_id,
+        unresolved_only=unresolved,
+        limit=limit,
+    )
 
 
 @router.get("/{player_id}", response_model=PlayerOut)

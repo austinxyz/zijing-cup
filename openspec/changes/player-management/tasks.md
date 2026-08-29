@@ -191,7 +191,9 @@
 - [x] 6.9 RED — 断言客户端 bundle 不含 `BACKEND_SECRET` 与 `ADMIN_SECRET`（用 `npm run build` 产物扫描，
       即 config.yaml 里已有的那条 custom_verification_check，不另造一份单测）
 - [x] 6.10 GREEN — 使断言通过（密钥只在服务端读取）
-- [ ] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - attempt 1 **BLOCK**：限速按 `x-forwarded-for` 第一段计数，那是调用方能写的，轮换即绕过；另外 `BACKEND_SECRET` 缺失时发空 header（失败开放）。补测试后改成可信 header + 全局配额，两个密钥都改成失败关闭。
+  - attempt 2 **STATUS: PASS** — scores: spec 100, runtime 100, code 90, total 98 ≥ 70
 - **Note**: 含 VISUAL DIFF 任务，阈值取 70
 
 ## 7. 队员列表与详情
@@ -215,16 +217,16 @@
 - **Threshold**: 70
 - **Note**: 含 VISUAL DIFF 任务，阈值取 70
 
-- [ ] 7.0 CONTRACT — write openspec/changes/player-management/contracts/group-7.md with the ### Contract block above
-- [ ] 7.1 MOCK — 打开 mocks 第 02、03 屏；记下 token 与逐字文案：「未裁决」「预填」「已认证」「所在队伍」「各赛季参赛 UTR」「队伍成员关系」「外援限制未校验」
-- [ ] 7.2 RED — `lib/api.ts` 的取数函数：类型含队员、赛季 UTR（值/备选值/未裁决/来源）、成员关系
-- [ ] 7.3 GREEN — 实现取数函数
-- [ ] 7.4 RED — 列表页：一人多队时两支队都出现；未裁决与预填带同一档警示样式；无 UTR 链接可见但不是错误态
-- [ ] 7.5 GREEN — 实现列表页
-- [ ] 7.6 VISUAL DIFF — 对照 mocks 第 02 屏核对（桌面 1440px），用最长的一组数据并把窗口调矮，确认列表可滚到底、表头不跟着滚
-- [ ] 7.7 RED — 详情页：基本信息、各赛季参赛 UTR、成员关系三块同屏；外援与外卡的说明存在；未裁决横幅写明「按 6.38 计算」并给出两个候选值
-- [ ] 7.8 GREEN — 实现详情页
-- [ ] 7.9 VISUAL DIFF — 对照 mocks 第 03 屏核对（桌面 1440px）
+- [x] 7.0 CONTRACT — write openspec/changes/player-management/contracts/group-7.md with the ### Contract block above
+- [x] 7.1 MOCK — 打开 mocks 第 02、03 屏；记下 token 与逐字文案：「未裁决」「预填」「已认证」「所在队伍」「各赛季参赛 UTR」「队伍成员关系」「外援限制未校验」
+- [x] 7.2 RED — `lib/api.ts` 的取数函数：类型含队员、赛季 UTR（值/备选值/未裁决/来源）、成员关系
+- [x] 7.3 GREEN — 实现取数函数
+- [x] 7.4 RED — 列表页：一人多队时两支队都出现；未裁决与预填带同一档警示样式；无 UTR 链接可见但不是错误态
+- [x] 7.5 GREEN — 实现列表页
+- [x] 7.6 VISUAL DIFF — 对照 mocks 第 02 屏核对（桌面 1440px），用最长的一组数据并把窗口调矮，确认列表可滚到底、表头不跟着滚
+- [x] 7.7 RED — 详情页：基本信息、各赛季参赛 UTR、成员关系三块同屏；外援与外卡的说明存在；未裁决横幅写明「按 6.38 计算」并给出两个候选值
+- [x] 7.8 GREEN — 实现详情页
+- [x] 7.9 VISUAL DIFF — 对照 mocks 第 03 屏核对（桌面 1440px）
 - [ ] 7.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-7.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 8. 合并拆分界面、未裁决队列与侧栏

@@ -284,3 +284,131 @@ export async function getTeamLineups(
   if (!res.ok) throw new Error(`getTeamLineups failed: ${res.status}`);
   return res.json();
 }
+
+export interface PlayerSeasonUtr {
+  season_year: number;
+  /** What gets read. While a conflict is unresolved this is the LARGER of the
+   *  two candidates — participation UTR is an upper bound, so reading low
+   *  would call an illegal lineup legal. */
+  value: string;
+  /** The other candidate, kept rather than dropped. null when there is none. */
+  alt_value: string | null;
+  is_unresolved: boolean;
+  /** null means nobody has decided yet — an Unrated sheet row could be
+   *  committee-adjudicated or captain-rated depending on match history the
+   *  sheet does not carry. */
+  status: string | null;
+  under_appeal: boolean;
+  /** 'prefilled' is a guess copied from the current UTR; without this it and a
+   *  frozen official value look identical. */
+  source: string;
+}
+
+export interface PlayerMembership {
+  id: number;
+  team_id: number;
+  team_code: string;
+  season_year: number;
+  division_code: string;
+  /** Free text; there is no school table to resolve it against. */
+  representing_school: string | null;
+  /** null means unmarked — NOT "confirmed not a borrowed player". The rules cap
+   *  borrowed players per match and this system never checks that, so the
+   *  distinction is the difference between vetted and merely looked at. */
+  is_borrowed_player: boolean | null;
+  /** A different thing from borrowed: not from the current school, needs
+   *  committee approval, does not affect eligibility. */
+  is_wildcard: boolean | null;
+}
+
+export interface Player {
+  id: number;
+  last_name: string;
+  first_name: string;
+  gender: string | null;
+  singles_utr: string | null;
+  singles_status: string | null;
+  doubles_utr: string | null;
+  doubles_status: string | null;
+  /** The only evidence two records are the same human. Empty asserts nothing. */
+  utr_profile_id: string | null;
+  season_utrs: PlayerSeasonUtr[];
+  memberships: PlayerMembership[];
+}
+
+export interface PlayerFilters {
+  query?: string;
+  season?: number | string;
+  teamId?: number | string;
+}
+
+/** Players, with their season values and every team they belong to. */
+export async function getPlayers(filters: PlayerFilters = {}): Promise<Player[]> {
+  const params = new URLSearchParams();
+  if (filters.query) params.set("q", filters.query);
+  if (filters.season !== undefined) params.set("season", String(filters.season));
+  if (filters.teamId !== undefined) params.set("team_id", String(filters.teamId));
+  const query = params.toString();
+
+  const res = await fetch(
+    backendUrl(`/api/players${query ? `?${query}` : ""}`),
+    backendRequestInit(),
+  );
+  // No empty-list fallback: that would say "there are no players", which is a
+  // claim about the roster rather than about the request.
+  if (!res.ok) throw new Error(`getPlayers failed: ${res.status}`);
+  return res.json();
+}
+
+/** One player, or null when there is no such id. */
+export async function getPlayer(id: number | string): Promise<Player | null> {
+  const res = await fetch(
+    backendUrl(`/api/players/${encodeURIComponent(String(id))}`),
+    backendRequestInit(),
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`getPlayer failed: ${res.status}`);
+  return res.json();
+}
+
+export interface PlayerPage {
+  players: Player[];
+  /** How many match in total, regardless of how many this page holds. */
+  total: number;
+  /** True when the server had more than it returned. Shown rather than
+   *  swallowed: a list that quietly stops at 200 of 375 reads as "there are
+   *  200", which is a different and false statement. */
+  truncated: boolean;
+}
+
+export interface PlayerPageFilters extends PlayerFilters {
+  /** Only players whose participation UTR is contested for some season. */
+  unresolved?: boolean;
+  limit?: number;
+}
+
+/** Players plus the honest total, for anywhere that shows a count. */
+export async function getPlayersPage(
+  filters: PlayerPageFilters = {},
+): Promise<PlayerPage> {
+  const params = new URLSearchParams();
+  if (filters.query) params.set("q", filters.query);
+  if (filters.season !== undefined) params.set("season", String(filters.season));
+  if (filters.teamId !== undefined) params.set("team_id", String(filters.teamId));
+  if (filters.unresolved) params.set("unresolved", "true");
+  if (filters.limit !== undefined) params.set("limit", String(filters.limit));
+  const query = params.toString();
+
+  const res = await fetch(
+    backendUrl(`/api/players${query ? `?${query}` : ""}`),
+    backendRequestInit(),
+  );
+  if (!res.ok) throw new Error(`getPlayers failed: ${res.status}`);
+
+  const players: Player[] = await res.json();
+  // Falls back to the page size only when the header is absent — then the two
+  // are equal and nothing claims to know better than it does.
+  const total = Number(res.headers?.get("X-Total-Count") ?? players.length);
+
+  return { players, total, truncated: total > players.length };
+}

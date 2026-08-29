@@ -165,21 +165,32 @@ def get_player(session: Session, player_id: int) -> Optional[PlayerOut]:
     )[0]
 
 
-def list_players(
+def count_players(
     session: Session,
     query: Optional[str] = None,
     season_year: Optional[int] = None,
     team_id: Optional[int] = None,
-    limit: int = 200,
-) -> list[PlayerOut]:
-    """Players, newest constraint first, with their teams and season values.
+    unresolved_only: bool = False,
+) -> int:
+    """How many players match, ignoring the page limit.
 
-    Three queries rather than one per player: a roster of a few hundred with a
-    membership lookup each would be a few hundred round trips for something a
-    single IN clause answers.
+    Separate from the list because a caller showing 200 of 375 needs the real
+    total; a badge that counts only what one page happened to contain is a
+    wrong number presented as a fact.
     """
-    statement = select(Player)
+    ids = session.exec(
+        _filtered(select(Player.id), query, season_year, team_id, unresolved_only)
+    ).all()
+    return len(set(ids))
 
+
+def _filtered(
+    statement,
+    query: Optional[str],
+    season_year: Optional[int],
+    team_id: Optional[int],
+    unresolved_only: bool,
+):
     if query:
         needle = f"%{query.strip().lower()}%"
         statement = statement.where(
@@ -196,6 +207,36 @@ def list_players(
             statement = statement.where(Team.season_year == season_year)
         if team_id is not None:
             statement = statement.where(Team.id == team_id)
+
+    if unresolved_only:
+        statement = statement.where(
+            Player.id.in_(
+                select(PlayerSeasonUtr.player_id).where(
+                    PlayerSeasonUtr.is_unresolved.is_(True)
+                )
+            )
+        )
+
+    return statement
+
+
+def list_players(
+    session: Session,
+    query: Optional[str] = None,
+    season_year: Optional[int] = None,
+    team_id: Optional[int] = None,
+    unresolved_only: bool = False,
+    limit: int = 200,
+) -> list[PlayerOut]:
+    """Players, newest constraint first, with their teams and season values.
+
+    Three queries rather than one per player: a roster of a few hundred with a
+    membership lookup each would be a few hundred round trips for something a
+    single IN clause answers.
+    """
+    statement = _filtered(
+        select(Player), query, season_year, team_id, unresolved_only
+    )
 
     players = session.exec(
         statement.order_by(Player.last_name, Player.first_name, Player.id).limit(limit)

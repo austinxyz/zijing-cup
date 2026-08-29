@@ -72,3 +72,15 @@
 # 功能的主要用例（老赛季关掉之后才发现重复）。已按 TDD 补两条测试再改成只锁「被合并方
 # 有行的赛季」。同批修掉：MergeIn.merge_id 的注释把存活方写反了（不可撤销操作上的反向
 # 文档），以及裁决响应里 alt_value 写死成 None 而不是读 row。
+
+- group: 6
+  attempt: 2
+  scores: {spec: 100, runtime: 100, code: 90}
+  total: 98
+  status: PASS
+  findings:
+    - "spec: All 6 SHALL requirements met — httpOnly session cookie on login (test asserts httpOnly=true), secrets never in browser (admin.ts server-only module verified), password hashed (ADMIN_PASSWORD_HASH), session expiry enforced (readSession checks expiresAt), failed attempts display remaining count and unlock time (LoginForm.Message), unlogged writes return '需要登录' (NotLoggedIn class)"
+    - "runtime: 34/34 tests pass across 3 files — session.test.ts covers rate limiting (per-address + global ceiling preventing rotation), admin.test.ts covers session validation and secret validation (throws if empty), login/page.test.tsx covers form rendering, cookie setting, attempt counting"
+    - "code-review: No CRITICAL/HIGH issues. Both previously-flagged defects correctly fixed: (a) HIGH — rate limit now uses x-real-ip/x-vercel-forwarded-for (trusted) or last hop of x-forwarded-for (not first/attacker-controlled), plus unbypassable global cap (LOGIN_ATTEMPTS_GLOBAL=20) with regression test 'caps what address rotation can buy'; (b) MEDIUM — BACKEND_SECRET now throws if unset instead of sending empty string, with test 'refuses to write when BACKEND_SECRET is missing'"
+    - "code: MEDIUM — unused searchParams parameter on LoginForm page.tsx (dead code suggesting abandoned URL-based error path in favor of useActionState; not a security risk but indicates incomplete cleanup)"
+  fix_tasks: []

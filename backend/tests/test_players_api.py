@@ -532,3 +532,50 @@ class TestMergeSplitAndRulingOverHttp:
         )
 
         assert 400 <= response.status_code < 500
+
+
+class TestUnresolvedFilterAndTruncation:
+    def test_only_the_contested_players_come_back(self, client):
+        keep = make_player(client, last_name="测", first_name="有争议")
+        drop = make_player(client, last_name="测", first_name="被并入")
+        make_player(client, last_name="测", first_name="无争议")
+        for player, value in ((keep, "6.25"), (drop, "6.38")):
+            client.put(
+                f"/api/players/{player['id']}/season-utrs/{TEST_YEAR}",
+                json={"value": value, "status": "verified", "source": "committee_sheet"},
+                headers=WRITE,
+            )
+        client.post(
+            f"/api/players/{keep['id']}/merge",
+            json={"merge_id": drop["id"]},
+            headers=WRITE,
+        )
+
+        body = client.get("/api/players?unresolved=true", headers=READ).json()
+        names = {p["first_name"] for p in body}
+
+        # Scoped to this module's own players: the local database may also hold
+        # migrated rows, and asserting the exact list would make this test fail
+        # for reasons that have nothing to do with the filter.
+        assert "有争议" in names
+        assert "无争议" not in names
+        assert "被并入" not in names  # absorbed by the merge
+
+    def test_the_response_says_how_many_there_are_in_total(self, client):
+        for i in range(3):
+            make_player(client, last_name="测", first_name=f"计数{i}")
+
+        response = client.get("/api/players?limit=2", headers=READ)
+
+        # A page that shows two of three while a badge elsewhere says "3" is
+        # fine; a badge that says "2" because that is all it fetched is a wrong
+        # number presented as a fact.
+        assert len(response.json()) == 2
+        assert int(response.headers["X-Total-Count"]) >= 3
+
+    def test_the_default_limit_is_reported_too(self, client):
+        make_player(client, last_name="测", first_name="甲")
+
+        response = client.get("/api/players", headers=READ)
+
+        assert "X-Total-Count" in response.headers

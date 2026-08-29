@@ -55,7 +55,19 @@ class Snapshot:
     expected_players: int
 
     def count_players(self) -> int:
-        return self.session.exec(select(func.count()).select_from(Player)).one()
+        """Only the people this snapshot is about.
+
+        A global count would also see whatever a real migration left in the
+        local database, and this test would then fail for reasons that have
+        nothing to do with the code under test.
+        """
+        names = {(last, first) for _, _, last, first, *_ in ROWS}
+        rows = self.session.exec(
+            select(Player).where(
+                Player.last_name.in_({last for last, _ in names})
+            )
+        ).all()
+        return len([p for p in rows if (p.last_name, p.first_name) in names])
 
 
 def _purge(session: Session) -> None:
