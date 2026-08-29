@@ -227,7 +227,8 @@
 - [x] 7.7 RED — 详情页：基本信息、各赛季参赛 UTR、成员关系三块同屏；外援与外卡的说明存在；未裁决横幅写明「按 6.38 计算」并给出两个候选值
 - [x] 7.8 GREEN — 实现详情页
 - [x] 7.9 VISUAL DIFF — 对照 mocks 第 03 屏核对（桌面 1440px）
-- [ ] 7.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-7.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 7.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-7.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - **STATUS: PASS** — attempt 1, scores: spec 95, runtime 100, code 95, total 97 ≥ 70
 
 ## 8. 合并拆分界面、未裁决队列与侧栏
 
