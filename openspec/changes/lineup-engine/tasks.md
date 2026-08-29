@@ -210,4 +210,4 @@
       记的 1.61s 快很多：2025 两组的 buffer 都是 0.00，可行空间小得多；2026 的 buffer 一开就会变慢，
       Render 上的真实耗时仍要部署后再测一次）。**跑完 pytest 需先 `bash backend/scripts/reseed-local.sh` 补回数据**（CLAUDE.md Pitfalls）
 - [x] 7.5 Run superpowers:verification-before-completion —— 跑 `project.test_commands` 与全部 `project.custom_verification_checks`
-- [ ] 7.6 上线：`git push`（Render + Vercel 自动部署；本次无 migration、无 seed 导入）。**部署后在远程测一次最坏情况的实际耗时**，据此复核节点预算是否合适——开发机的数字不能代表 Render 免费实例
+- [x] 7.6 上线：`git push`（Render + Vercel 自动部署；本次无 migration、无 seed 导入）。**部署后在远程测一次最坏情况的实际耗时**，据此复核节点预算是否合适——开发机的数字不能代表 Render 免费实例
