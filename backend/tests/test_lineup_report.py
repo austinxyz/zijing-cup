@@ -48,7 +48,7 @@ class TestNoSolution:
         """Four women: two locked onto other lines, one excluded. Women's
         doubles needs two and has one left."""
         return dict(
-            locks={"MD": (find("m1"), find("w1")), "D3": (find("m5"), find("w2"))},
+            locks={"MD": (find("m8"), find("w1")), "D3": (find("m5"), find("w2"))},
             excluded=["w3"],
         )
 
@@ -117,7 +117,7 @@ class TestBorrowedPlayers:
     def test_it_says_so_even_when_there_is_no_solution(self):
         result = search_lineups(
             SILVER, roster(),
-            locks={"MD": (find("m1"), find("w1")), "D3": (find("m5"), find("w2"))},
+            locks={"MD": (find("m8"), find("w1")), "D3": (find("m5"), find("w2"))},
             excluded=["w3"],
         )
 

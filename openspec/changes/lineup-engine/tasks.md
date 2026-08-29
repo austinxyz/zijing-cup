@@ -91,12 +91,12 @@
 - **Threshold**: 80
 
 - [x] 3.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 RED — 构造必然无解的锁定与排除（把女队员锁进别的线并排除其余，使 WD 无人可配），返回无解且指名 WD；返回值不是空候选列表
-- [ ] 3.2 GREEN — 实现无解状态与线位诊断
-- [ ] 3.3 RED — 节点预算设得极小时，结果标明不完整；预算充足时标明完整
-- [ ] 3.4 GREEN — 实现节点预算与截断标记
-- [ ] 3.5 RED — 任何搜索或校验结果都带外援未校验的标记
-- [ ] 3.6 GREEN — 实现外援免责标记
+- [x] 3.1 RED — 构造必然无解的锁定与排除（把女队员锁进别的线并排除其余，使 WD 无人可配），返回无解且指名 WD；返回值不是空候选列表
+- [x] 3.2 GREEN — 实现无解状态与线位诊断
+- [x] 3.3 RED — 节点预算设得极小时，结果标明不完整；预算充足时标明完整
+- [x] 3.4 GREEN — 实现节点预算与截断标记
+- [x] 3.5 RED — 任何搜索或校验结果都带外援未校验的标记
+- [x] 3.6 GREEN — 实现外援免责标记
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 只读端点

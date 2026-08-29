@@ -57,6 +57,24 @@ class SearchResult:
     #: How many distinct sets of ten reach that ceiling. One means the top has
     #: no choice in it; many means the choice is real.
     squads_at_ceiling: int = 0
+    #: The line whose candidate pairs are empty under the current locks and
+    #: exclusions. Set only when the constraints admit no lineup at all —
+    #: distinct from "the search found nothing worth keeping", which an empty
+    #: list alone cannot say apart.
+    infeasible_line: Optional[str] = None
+    #: Where each unavailable player currently is: the line they are locked
+    #: onto, or "excluded". Read straight off the input, so it costs nothing.
+    #: Deliberately NOT an attribution of blame — naming the lock responsible
+    #: would need a full search per lock and would still be wrong when several
+    #: combine.
+    placements: dict[str, str] = field(default_factory=dict)
+    #: True when the search stopped at its node budget, so the results are a
+    #: sample rather than the whole answer.
+    truncated: bool = False
+    #: Always False. The per-match ceiling on borrowed players depends on how
+    #: many schools a team combines, which is not in the system — so this is
+    #: stated rather than left silent, because silence reads as "checked".
+    borrowed_players_checked: bool = False
     #: Locks the rules do not permit. A lock bypasses the per-line filter —
     #: that is what makes it a lock — so nothing downstream would catch it, and
     #: an unchecked one either yields a "legal" lineup that is not or an empty
@@ -225,6 +243,7 @@ def search_lineups(
     locks: Optional[dict[str, Pair]] = None,
     excluded: Iterable[str] = (),
     keep: int = 20,
+    node_budget: int = 5_000_000,
 ) -> SearchResult:
     """Every legal lineup worth keeping, strongest first.
 
@@ -239,7 +258,8 @@ def search_lineups(
     # "no lineup exists", and the caller has to be able to tell them apart.
     lock_problems = check_locks(rules, locks, blocked)
     if lock_problems:
-        return SearchResult(invalid_locks=lock_problems)
+        return SearchResult(invalid_locks=lock_problems,
+                            placements=_placements(locks, blocked))
 
     # Sorted by key so the answer depends on the roster, not on the order it
     # arrived in. With more ties than we keep, which of them survive follows
@@ -247,17 +267,32 @@ def search_lineups(
     # different order would otherwise get a different set of recommendations.
     pool = sorted((p for p in roster if p.key not in blocked), key=lambda p: p.key)
 
-    by_code = {rule.code: rule for rule in rules.lines}
+    # A locked player is spoken for, so the other lines never had them to
+    # begin with. Taking them out here is both faster and more truthful: a
+    # line whose pairs all needed a locked player is empty, and that is the
+    # thing worth reporting.
+    committed = {p.key for pair in locks.values() for p in pair}
+    available = [p for p in pool if p.key not in committed]
+
     options: dict[str, list[Pair]] = {}
     for rule in rules.lines:
         if rule.code in locks:
             options[rule.code] = [locks[rule.code]]
             continue
-        pairs = legal_pairs(rules, rule, pool)
+        pairs = legal_pairs(rules, rule, available)
         # Strongest first: the objective is a maximum, so a good branch early
         # raises the incumbent and prunes everything weaker.
         pairs.sort(key=lambda pair: -pair_total(pair))
         options[rule.code] = pairs
+
+    # A line with nowhere to stand is why nothing can be built, and saying
+    # which line turns "no lineup exists" into something to act on.
+    for rule in rules.lines:
+        if not options[rule.code]:
+            return SearchResult(
+                infeasible_line=rule.code,
+                placements=_placements(locks, blocked),
+            )
 
     mens_codes = [rule.code for rule in rules.lines if rule.kind == "mens_doubles"]
     elig_index = _eligibility_index(rules)
@@ -273,8 +308,10 @@ def search_lineups(
         pairs = options[rule.code]
         running += pair_total(pairs[0]) if pairs else Decimal(0)
 
-    result = SearchResult()
+    result = SearchResult(placements=_placements(locks, blocked))
     kept: list[LineupCandidate] = []
+    nodes = 0
+    truncated = False
     incumbent: Optional[Decimal] = None
     # Tracked outside `kept` because the count answers "is there a choice at
     # the top", so it has to be the real number. Counting inside the kept list
@@ -288,7 +325,7 @@ def search_lineups(
 
     def recurse(depth: int, used: frozenset[str], chosen: dict[str, Pair],
                 total: Decimal, spent: Decimal) -> None:
-        nonlocal incumbent, best_total, count_exact
+        nonlocal incumbent, best_total, count_exact, nodes, truncated
         if depth == len(order):
             candidate = LineupCandidate(total=total, buffer_spent=spent,
                                         lines=dict(chosen))
@@ -311,6 +348,14 @@ def search_lineups(
 
         rule = order[depth]
         for pair in options[rule.code]:
+            nodes += 1
+            if nodes > node_budget:
+                # Out of budget, not out of answers. Saying so is the whole
+                # point: presenting a sample as the complete search would let
+                # a captain conclude a lineup does not exist when it was
+                # simply never reached.
+                truncated = True
+                return
             if pair[0].key in used or pair[1].key in used:
                 continue
             over = _over(rule, pair)
@@ -347,6 +392,7 @@ def search_lineups(
 
     recurse(0, frozenset(), {}, Decimal(0), Decimal(0))
     kept.sort(key=_ranking)
+    result.truncated = truncated
 
     # Same ten players in different slots is one lineup, not several.
     seen: set[frozenset[str]] = set()
@@ -388,3 +434,19 @@ def _mens_order_ok(mens_codes: Sequence[str], chosen: dict[str, Pair]) -> bool:
         if pair_total(below) > pair_total(above):
             return False
     return True
+
+
+def _placements(locks: dict[str, Pair], blocked: set[str]) -> dict[str, str]:
+    """Where every unavailable player currently is.
+
+    A restatement of the input, not a diagnosis: it says a player is locked
+    onto MD or sitting the match out, and stops there. Which lock caused a
+    line to run dry is a question this deliberately does not answer.
+    """
+    placements: dict[str, str] = {}
+    for code, pair in locks.items():
+        for person in pair:
+            placements[person.key] = code
+    for key in blocked:
+        placements[key] = "excluded"
+    return placements
