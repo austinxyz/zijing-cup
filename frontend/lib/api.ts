@@ -186,3 +186,101 @@ export async function getTeamRoster(
   if (!res.ok) throw new Error(`getTeamRoster failed: ${res.status}`);
   return res.json();
 }
+
+export interface LineupPlayer {
+  /** The key a lock or exclusion sends back. Names repeat on a real roster,
+   *  so they cannot identify a player. */
+  key: string;
+  last_name: string;
+  first_name: string;
+  /** Shown on every candidate: the high-UTR limits are written per gender,
+   *  so a lineup without it cannot be checked against that rule by eye. */
+  gender: string | null;
+  match_utr: string;
+}
+
+export interface LineTotal {
+  total: string;
+  /** null on an open line: no ceiling at all, so nothing to exceed. */
+  cap: string | null;
+  over: string;
+}
+
+export interface LineupCandidate {
+  total: string;
+  buffer_spent: string;
+  lines: Record<string, [LineupPlayer, LineupPlayer]>;
+  line_totals: Record<string, LineTotal>;
+}
+
+export interface LineupViolation {
+  code: string;
+  line: string | null;
+  amount: string | null;
+  message: string;
+}
+
+export interface LineupSearch {
+  /** Already deduplicated by the ten on court and ordered strongest first.
+   *  Do not re-sort: ties are the common case and a second sort would pick a
+   *  different winner every render. */
+  candidates: LineupCandidate[];
+  /** The best total reachable under these locks and exclusions. */
+  ceiling: string | null;
+  squads_at_ceiling: number;
+  /** False when ties were pruned, which makes the count a lower bound. */
+  squads_at_ceiling_exact: boolean;
+  /** Every line at its cap plus the team buffer; null when a line is open,
+   *  because then no such maximum exists. */
+  rules_ceiling: string | null;
+  /** Set when a line has no legal pair at all — a different answer from an
+   *  empty candidate list, which reads as "searched, found nothing". */
+  infeasible_line: string | null;
+  /** Where each unavailable player is: a line code, or "excluded". Read off
+   *  the request — never a claim about which lock caused the dead end. */
+  placements: Record<string, string>;
+  truncated: boolean;
+  /** Always false. The per-match borrowed-player ceiling depends on how many
+   *  schools a team combines, which the system does not know. */
+  borrowed_players_checked: boolean;
+  invalid_locks: LineupViolation[];
+  roster: LineupPlayer[];
+}
+
+export interface LineupConstraints {
+  /** Line code to the two player keys standing on it. */
+  locks?: Record<string, [string, string]>;
+  excluded?: string[];
+}
+
+/**
+ * One team's lineup search, or null when the season, division or team is
+ * unknown.
+ *
+ * null and a result with no candidates are different answers: the first means
+ * the URL names nothing, the second that nothing legal could be built.
+ */
+export async function getTeamLineups(
+  year: number | string,
+  code: string,
+  teamCode: string,
+  constraints: LineupConstraints = {},
+): Promise<LineupSearch | null> {
+  const params = new URLSearchParams();
+  for (const [line, pair] of Object.entries(constraints.locks ?? {})) {
+    params.append("lock", `${line}:${pair[0]},${pair[1]}`);
+  }
+  for (const key of constraints.excluded ?? []) params.append("exclude", key);
+  const query = params.toString();
+
+  const res = await fetch(
+    backendUrl(
+      `/api/seasons/${year}/divisions/${code}/teams/` +
+        `${encodeURIComponent(teamCode)}/lineups${query ? `?${query}` : ""}`,
+    ),
+    backendRequestInit(),
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`getTeamLineups failed: ${res.status}`);
+  return res.json();
+}
