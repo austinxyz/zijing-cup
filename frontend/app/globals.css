@@ -59,6 +59,10 @@
   --color-sidebar-fg-dim: #6f6a60;
   --color-sidebar-fg-bright: #f2eee7;
   --color-sidebar-active: #2c2a25;
+  /* Recessed well INSIDE the dark panel — the season switcher sits in it.
+     Its own token, not `background`: that one is the light page colour, and
+     borrowing it here put a near-white label on a near-white pill. */
+  --color-sidebar-well: #14130f;
 }
 
 @theme inline {
@@ -97,6 +101,7 @@
   --color-sidebar-foreground-dim: var(--color-sidebar-fg-dim);
   --color-sidebar-foreground-bright: var(--color-sidebar-fg-bright);
   --color-sidebar-active: var(--color-sidebar-active);
+  --color-sidebar-well: var(--color-sidebar-well);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);

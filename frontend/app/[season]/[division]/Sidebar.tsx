@@ -154,7 +154,7 @@ export function Sidebar({
             current season and division, opened it shows the full list. No
             client JS, and the closed state keeps the sidebar compact. */}
         <details role="group" aria-label="赛季与组别" className="group">
-          <summary className="flex h-[34px] cursor-pointer list-none items-center justify-between gap-2 rounded-token border border-[#33322c] bg-background px-2.5 text-[12.5px] font-medium text-sidebar-foreground-bright [&::-webkit-details-marker]:hidden">
+          <summary className="flex h-[34px] cursor-pointer list-none items-center justify-between gap-2 rounded-token border border-[#33322c] bg-sidebar-well px-2.5 text-[12.5px] font-medium text-sidebar-foreground-bright [&::-webkit-details-marker]:hidden">
             <span>
               {season} · {divisionName}
             </span>

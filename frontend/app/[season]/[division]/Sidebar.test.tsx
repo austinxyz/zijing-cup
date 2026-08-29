@@ -65,6 +65,18 @@ describe("Sidebar navigation", () => {
     expect(screen.getAllByText("未开放")).toHaveLength(1);
   });
 
+  it("does not paint the season switcher with the light page background", () => {
+    const { container } = renderSidebar();
+
+    const summary = container.querySelector("summary")!;
+    // The control sits inside the dark sidebar and its label is near-white
+    // (#f2eee7). bg-background is the LIGHT page colour (#f6f4f0), so the two
+    // together left "2026 · 银组" barely legible — the mock puts a near-black
+    // well behind it instead.
+    expect(summary.className).not.toMatch(/bg-background/);
+    expect(summary.className).toMatch(/bg-sidebar-well/);
+  });
+
   it("uses the sidebar design tokens", () => {
     const { container } = renderSidebar();
 
