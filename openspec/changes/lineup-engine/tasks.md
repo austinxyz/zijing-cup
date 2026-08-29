@@ -70,7 +70,8 @@
 - [x] 2.8 GREEN — 实现上限与「达到上限的十人组合数」
 - [x] 2.9 RED — 同一输入连续搜索两次，候选次序完全一致
 - [x] 2.10 GREEN — 使次序可复现（并列时有确定的次级比较）
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - **STATUS: PASS** — attempt 2, scores: spec 100, runtime 100, code 95, total 99.0 ≥ 80
 
 ## 3. 无解、截断与外援免责
 
@@ -97,7 +98,8 @@
 - [x] 3.4 GREEN — 实现节点预算与截断标记
 - [x] 3.5 RED — 任何搜索或校验结果都带外援未校验的标记
 - [x] 3.6 GREEN — 实现外援免责标记
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - **STATUS: PASS** — attempt 1, scores: spec 100, runtime 100, code 95, total 99.0 ≥ 80
 
 ## 4. 只读端点
 

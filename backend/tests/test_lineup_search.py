@@ -358,3 +358,54 @@ class TestInvalidLocks:
 
         assert not result.invalid_locks
         assert result.candidates
+
+
+class TestLockedOntoAForbiddenLine:
+    """Gold allows one man over 9.0, but only on D1 or MD.
+
+    Locking him onto D2 is a lock the rules forbid, so it belongs with the
+    other invalid locks. Left to the search, the eligibility check rejects
+    every branch and the caller gets an empty list with no explanation — the
+    same silence the lock validation exists to prevent, just narrower.
+    """
+
+    GOLD = RuleSet(
+        lines=[
+            LineRule("D1", "mens_doubles", None),
+            LineRule("D2", "mens_doubles", D("15.00")),
+            LineRule("D3", "mens_doubles", D("13.00")),
+            LineRule("MD", "mixed_doubles", None),
+            LineRule("WD", "womens_doubles", D("11.00")),
+        ],
+        buffer_per_line=D("0.3"),
+        buffer_total=D("0.3"),
+        partner_gap_max=D("3.50"),
+        limits=[EligibilityLimit("M", D("9.0"), 1, ("D1", "MD"))],
+    )
+
+    def gold_roster(self) -> list[Candidate]:
+        men = [("g1", "9.50"), ("g2", "8.00"), ("g3", "7.60"), ("g4", "7.40"),
+               ("g5", "7.20"), ("g6", "7.00"), ("g7", "6.80"), ("g8", "6.60")]
+        women = [("h1", "6.00"), ("h2", "5.80"), ("h3", "5.60"), ("h4", "5.40")]
+        return ([Candidate(k, k, "M", D(v)) for k, v in men]
+                + [Candidate(k, k, "F", D(v)) for k, v in women])
+
+    def test_locking_him_onto_a_line_he_may_not_play_is_an_invalid_lock(self):
+        pool = {p.key: p for p in self.gold_roster()}
+        result = search_lineups(
+            self.GOLD, self.gold_roster(),
+            locks={"D2": (pool["g1"], pool["g2"])},
+        )
+
+        assert any(v.code == "eligibility_line" for v in result.invalid_locks)
+        assert not result.candidates
+
+    def test_locking_him_onto_a_line_he_may_play_is_fine(self):
+        pool = {p.key: p for p in self.gold_roster()}
+        result = search_lineups(
+            self.GOLD, self.gold_roster(),
+            locks={"D1": (pool["g1"], pool["g2"])},
+        )
+
+        assert not result.invalid_locks
+        assert result.candidates

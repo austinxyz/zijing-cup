@@ -32,6 +32,7 @@ from app.lineups.rules import (
     pair_total,
     slot_composition_error,
 )
+from app.lineups.rules import _limit_gender_for
 
 Pair = tuple[Candidate, Candidate]
 
@@ -142,6 +143,27 @@ def check_locks(
                         f"连 buffer 一起也放不下"
                     ),
                 ))
+
+        # A line restriction is a property of the pair and the line, so it is
+        # knowable here. Leaving it to the search means every branch is
+        # rejected and the caller gets an empty list with nothing said.
+        for limit in rules.limits:
+            if limit.restricted_to_lines is None:
+                continue
+            if code in set(limit.restricted_to_lines):
+                continue
+            for person in pair:
+                if _limit_gender_for(rule, person) != limit.gender:
+                    continue
+                if person.match_utr > limit.utr_above:
+                    problems.append(Violation(
+                        code="eligibility_line", line=code, amount=None,
+                        message=(
+                            f"{person.name} 的参赛 UTR 高于 {limit.utr_above}，"
+                            f"只能打 {'/'.join(limit.restricted_to_lines)}，"
+                            f"不能锁进 {code}"
+                        ),
+                    ))
 
         for person in pair:
             if person.key in blocked:

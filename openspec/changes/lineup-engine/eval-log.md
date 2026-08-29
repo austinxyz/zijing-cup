@@ -55,3 +55,49 @@
 # 契约明令禁止的空结果。任务 2.5 的描述里本就写着这一条，我却在没有实现、
 # 没有测试的情况下打了勾。已补实现与六条测试，重新送评。
 
+- group: 2
+  attempt: 2
+  scores: {spec: 100, runtime: 100, code: 95}
+  total: 99
+  status: PASS
+  findings:
+    - "spec: invalid locks now validated before search via check_locks()"
+    - "spec: slot composition enforced at lock-time (WD=2F, MD=1M+1F) matching validator"
+    - "spec: invalid locks report with full details (code, line, amount, message)"
+    - "spec: all 6 invalid lock cases tested: slot mismatch, gap over limit, cap+buffer overflow, locked+excluded, duplicate player, legal lock passes"
+    - "spec: locks enforced and exclusions enforced as before"
+    - "spec: candidates sorted by total descending with stable sort for determinism"
+    - "spec: deduplication by squad (frozenset of 10 players), not by line assignment"
+    - "spec: ceiling tracked correctly with exact/inexact count"
+    - "runtime: all 25 tests pass in 0.17s (includes new TestInvalidLocks with 6 cases)"
+    - "runtime: determinism verified with roster reordering"
+    - "code: check_locks() runs before recursion, returns early if invalid_locks found"
+    - "code: no code path allows invalid locked pair to reach results"
+    - "code: slot_composition_error() shared between lock validation and legal_pairs filter"
+    - "code: frozen dataclass, immutable, complete type annotations"
+    - "code: decimal throughout, no float leakage"
+  fix_tasks: []
+
+- group: 3
+  attempt: 1
+  scores: {spec: 100, runtime: 100, code: 95}
+  total: 99
+  status: PASS
+  findings:
+    - "spec: no-solution reports infeasible_line (not empty list)"
+    - "spec: placements dict populated with current player locations (read from input)"
+    - "spec: does not claim to know which lock caused infeasibility (no blamed_lock attribute)"
+    - "spec: truncation detected when nodes exceed budget"
+    - "spec: complete search reports truncated=False"
+    - "spec: truncation does not invent infeasibility (truncated and infeasible_line are independent)"
+    - "spec: borrowed_players_checked always False (unconditional marker)"
+    - "spec: marker present even when infeasible_line is set (no-solution case)"
+    - "runtime: all 9 tests pass in 0.05s"
+    - "runtime: tests verify no-solution distinct from empty results, truncation declaration, and borrowed-player unchecked on all results"
+    - "code: SearchResult dataclass fields properly populated by search_lineups()"
+    - "code: infeasible_line computed when pool_options[rule.code] is empty"
+    - "code: placements computed via _placements(locks, blocked) before recursion"
+    - "code: truncated flag set when nodes exceed budget during recursion"
+    - "code: borrowed_players_checked is constant False (design-correct per spec)"
+  fix_tasks: []
+
