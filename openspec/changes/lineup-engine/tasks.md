@@ -35,7 +35,7 @@
 - [x] 1.10 GREEN — 实现高 UTR 的人数与线位判定
 - [x] 1.11 RED — 同一名队员出现在两条线时违规；每条违规都带线位与差额
 - [x] 1.12 GREEN — 实现重复用人判定与违规报告结构
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 搜索、去重与上限
 
@@ -59,7 +59,7 @@
     不得在任何输出里暗示「顶满 cap 总是占优」。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-2.md with the ### Contract block above
+- [x] 2.0 CONTRACT — write openspec/changes/lineup-engine/contracts/group-2.md with the ### Contract block above
 - [ ] 2.1 RED — 无锁定无排除时，返回的每一套都通过 group 1 的全部约束
 - [ ] 2.2 GREEN — `app/lineups/search.py` 实现分支限界搜索
 - [ ] 2.3 RED — 候选按十人之和降序；两套十人相同仅换线的阵容只出现一套

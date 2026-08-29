@@ -421,3 +421,31 @@ class TestEveryViolationIsActionable:
             assert violation.message
             # Lineup-wide rules carry no line; every other one must say where.
             assert violation.line is not None or violation.code == "buffer_total"
+
+
+class TestViolationsAreNotDuplicated:
+    def test_a_no_buffer_division_reports_one_violation_per_over_line(self):
+        """One broken rule, one violation.
+
+        With no buffer system the allowance is zero, so an over-cap line trips
+        both the per-line check and the "team overspent" check. Both statements
+        are true, but a reader looking at the list sees one problem reported
+        twice and starts wondering which is the real one.
+        """
+        report = check_lineup(
+            SILVER_2025, lineup(D2=(player("c", "6.30"), player("d", "6.00")))
+        )
+
+        assert codes(report) == {"line_cap"}
+
+    def test_a_buffered_division_still_reports_the_overspend(self):
+        # Where a budget exists, busting it is its own finding.
+        report = check_lineup(SILVER, lineup(
+            D1=(player("a", "6.60"), player("b", "6.60")),
+            D2=(player("c", "6.10"), player("d", "6.10")),
+            D3=(player("e", "5.60"), player("f", "5.60")),
+            MD=(player("g", "5.30"), player("h", "5.15", "F")),
+            WD=(player("i", "4.80", "F"), player("j", "4.65", "F")),
+        ))
+
+        assert "buffer_total" in codes(report)
