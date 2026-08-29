@@ -170,18 +170,23 @@ def test_the_read_route_is_registered_under_api():
     assert "/api/seasons/{year}/divisions/{code}/rules" in _api_surface()
 
 
-def test_no_write_route_exists_for_rules():
-    """Rules are read-only over HTTP.
+def test_rules_have_no_write_route_of_their_own():
+    """Rules stay read-only over HTTP.
 
-    They change once a year through a reviewed seed file and the importer.
-    A write endpoint would be a second path to the same data that nobody
-    reviews — and this app has no per-user auth to gate one with.
+    They change once a year through a reviewed seed file and the importer. A
+    write endpoint would be a second path to the same data that nobody
+    reviews.
+
+    Scoped to the rules paths now that the app has write routes elsewhere:
+    the blanket "nothing anywhere is writable" version of this assertion
+    stopped being true when player management arrived, and widening it to the
+    whole app here would just duplicate test_admin_auth.py's guard.
     """
     write_methods = {"POST", "PUT", "PATCH", "DELETE"}
     offenders = {
         path: sorted(methods & write_methods)
         for path, methods in _api_surface().items()
-        if methods & write_methods
+        if methods & write_methods and "/rules" in path
     }
 
     assert offenders == {}

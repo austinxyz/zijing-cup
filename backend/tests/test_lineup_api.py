@@ -265,17 +265,25 @@ class TestUnknownTargetsAndTheAbsenceOfWrites:
         assert body["infeasible_line"] is not None
         assert not body["candidates"]
 
-    def test_the_app_still_exposes_no_write_method(self):
+    def test_the_lineup_surface_exposes_no_write_method(self):
         # Read app.openapi(), never app.routes: this FastAPI version stores an
         # include_router() call as one opaque entry and does not flatten the
         # child routes, so walking app.routes sees no /api path at all and the
         # assertion passes while checking nothing.
+        #
+        # Scoped to the lineup paths. The app-wide version of this assertion
+        # was true until player management added write routes; the app-wide
+        # invariant now lives in test_admin_auth.py as "every write route
+        # refuses a request without the admin credential". Lineups themselves
+        # are still recomputed on demand and never stored, so there is nothing
+        # here for a write method to write.
         paths = app.openapi()["paths"]
-        assert any(path.endswith("/lineups") for path in paths), (
+        lineup_paths = [path for path in paths if path.endswith("/lineups")]
+        assert lineup_paths, (
             "the guard is only meaningful if the lineup route is registered"
         )
-        for path, operations in paths.items():
-            for method in operations:
+        for path in lineup_paths:
+            for method in paths[path]:
                 assert method.lower() in {"get", "head", "options"}, (
                     f"{method.upper()} {path} is a write method"
                 )

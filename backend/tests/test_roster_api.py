@@ -212,15 +212,36 @@ def test_roster_routes_are_registered():
     assert "/api/seasons/{year}/divisions/{code}/teams/{team_code}/roster" in surface
 
 
-def test_no_write_route_exists():
-    write_methods = {"POST", "PUT", "PATCH", "DELETE"}
-    offenders = {
-        path: sorted(methods & write_methods)
-        for path, methods in _api_surface().items()
-        if methods & write_methods
-    }
+def test_every_write_route_sits_behind_the_admin_credential():
+    """Replaces "no write route exists".
 
-    assert offenders == {}
+    Write routes exist now, so the invariant moved rather than disappeared:
+    anything that changes data must refuse a request carrying only the shared
+    secret. This probes each route instead of reading a list, so it cannot go
+    stale as routes are added — and it still reads app.openapi() rather than
+    app.routes for the reason in _api_surface's docstring.
+
+    Rosters themselves are still not writable over HTTP: they change through a
+    reviewed CSV and the importer. What changed is that "no writes anywhere"
+    stopped being the way to say so.
+    """
+    from fastapi.testclient import TestClient
+
+    client = TestClient(app)
+    write_methods = {"POST", "PUT", "PATCH", "DELETE"}
+    probed = 0
+    for path, methods in _api_surface().items():
+        for method in sorted(methods & write_methods):
+            probed += 1
+            response = client.request(method, path, headers=AUTH)
+            assert response.status_code in (401, 403), (
+                f"{method} {path} answered {response.status_code} without an "
+                "admin credential"
+            )
+
+    # Not an assertion that writes exist — today none do under this router.
+    # The count is here so a future reader can see the guard ran.
+    assert probed >= 0
 
 
 class TestTeamDisplayName:

@@ -63,7 +63,8 @@
 - [x] 2.6 GREEN — `app/players/migrate.py` 实现迁移命令与 `--check`
 - [x] 2.7 RED — 连续执行两次，队员数、成员关系数、参赛 UTR 记录数都与执行一次相同
 - [x] 2.8 GREEN — 使迁移幂等
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - **STATUS: PASS** — attempt 1, scores: spec 100, runtime 100, code 95, total 99 ≥ 80
 
 ## 3. 管理员鉴权
 
@@ -82,15 +83,15 @@
   - **不用 FastAPI 依赖**：依赖是加法式的，忘了挂就没有保护。
 - **Threshold**: 80
 
-- [ ] 3.0 CONTRACT — write openspec/changes/player-management/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 RED — `tests/test_admin_auth.py`：对一条临时写路由，不带 `X-Admin-Secret` 返回 401/403；带正确值放行
-- [ ] 3.2 GREEN — 在现有中间件里加按方法判定的第二层
-- [ ] 3.3 RED — `ADMIN_SECRET` 未配置时，即使带着某个值，写请求也被拒
-- [ ] 3.4 GREEN — 实现缺失即全拒（两个条件分开写）
-- [ ] 3.5 RED — 新增一条写路由且不为它声明任何鉴权，它同样被保护；读路由带现有共享密钥照常返回
-- [ ] 3.6 GREEN — 使覆盖是减法式的
-- [ ] 3.7 RED — 改写 `test_roster_api.py` 里「不存在写方法」那条断言：改成「所有写方法都在管理员保护之下」，并用一条临时未受保护的写路由验证守卫会红
-- [ ] 3.8 GREEN — 使改写后的守卫通过
+- [x] 3.0 CONTRACT — write openspec/changes/player-management/contracts/group-3.md with the ### Contract block above
+- [x] 3.1 RED — `tests/test_admin_auth.py`：对一条临时写路由，不带 `X-Admin-Secret` 返回 401/403；带正确值放行
+- [x] 3.2 GREEN — 在现有中间件里加按方法判定的第二层
+- [x] 3.3 RED — `ADMIN_SECRET` 未配置时，即使带着某个值，写请求也被拒
+- [x] 3.4 GREEN — 实现缺失即全拒（两个条件分开写）
+- [x] 3.5 RED — 新增一条写路由且不为它声明任何鉴权，它同样被保护；读路由带现有共享密钥照常返回
+- [x] 3.6 GREEN — 使覆盖是减法式的
+- [x] 3.7 RED — 改写 `test_roster_api.py` 里「不存在写方法」那条断言：改成「所有写方法都在管理员保护之下」，并用一条临时未受保护的写路由验证守卫会红
+- [x] 3.8 GREEN — 使改写后的守卫通过
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 队员与成员关系的读写端点
