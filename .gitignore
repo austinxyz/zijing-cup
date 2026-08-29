@@ -1,5 +1,8 @@
 # Python
 backend/.venv/
+# uv 的 venv python 被本机 Application Control 拦了(os error 4551)，
+# 改用 `python -m venv` 建的这个跑测试。见 CLAUDE.md Pitfalls。
+backend/.venv-std/
 backend/__pycache__/
 backend/**/__pycache__/
 backend/.pytest_cache/

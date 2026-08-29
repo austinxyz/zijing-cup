@@ -20,15 +20,15 @@
   - 全程 `Decimal`；UTR 是精确小数，float 只在边界上出错。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/player-management/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — `tests/test_players_model.py`：建一名不属于任何队伍的队员并读回；两个当前 UTR 各有各的状态
-- [ ] 1.2 GREEN — 新增 migration 与 `app/models/players.py` 的 `Player` 映射
-- [ ] 1.3 RED — 同一 `(人, 赛季)` 插入两条参赛 UTR 被唯一约束拒绝；一条记录可同时带状态与 Appeal 标记；来源字段三种取值都能存
-- [ ] 1.4 GREEN — 实现 `player_season_utrs`（含 `value` / `alt_value` / `is_unresolved` / 来源）
-- [ ] 1.5 RED — 一名队员在同赛季金银两组各有一条成员关系可并存；同一 `(人, 队伍)` 重复插入被拒绝；代表学校是自由文本
-- [ ] 1.6 GREEN — 实现 `player_team_memberships`（含代表学校、外援、外卡）
-- [ ] 1.7 RED — 断言当前 UTR 的状态枚举与参赛 UTR 的状态枚举是两个不同的取值集合
-- [ ] 1.8 GREEN — 两个枚举各自定义，互不引用
+- [x] 1.0 CONTRACT — write openspec/changes/player-management/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — `tests/test_players_model.py`：建一名不属于任何队伍的队员并读回；两个当前 UTR 各有各的状态
+- [x] 1.2 GREEN — 新增 migration 与 `app/models/players.py` 的 `Player` 映射
+- [x] 1.3 RED — 同一 `(人, 赛季)` 插入两条参赛 UTR 被唯一约束拒绝；一条记录可同时带状态与 Appeal 标记；来源字段三种取值都能存
+- [x] 1.4 GREEN — 实现 `player_season_utrs`（含 `value` / `alt_value` / `is_unresolved` / 来源）
+- [x] 1.5 RED — 一名队员在同赛季金银两组各有一条成员关系可并存；同一 `(人, 队伍)` 重复插入被拒绝；代表学校是自由文本
+- [x] 1.6 GREEN — 实现 `player_team_memberships`（含代表学校、外援、外卡）
+- [x] 1.7 RED — 断言当前 UTR 的状态枚举与参赛 UTR 的状态枚举是两个不同的取值集合
+- [x] 1.8 GREEN — 两个枚举各自定义，互不引用
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 迁移命令
