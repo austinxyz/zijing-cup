@@ -11,6 +11,8 @@ a request in sight.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 from decimal import Decimal
 from typing import Optional
 
@@ -227,6 +229,235 @@ def set_season_utr(
         row.alt_value = None
         row.is_unresolved = False
 
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+@dataclass
+class MergeReport:
+    """What a merge actually did.
+
+    Returned rather than logged because merging is irreversible here — this
+    change ships no undo and no history — so the caller needs enough to tell a
+    human what just happened.
+    """
+
+    memberships_moved: int = 0
+    season_utrs_moved: int = 0
+    #: Seasons that now hold two candidate values and need a ruling.
+    conflicts: list[int] = field(default_factory=list)
+
+
+def _seasons_touched_by(session: Session, player_ids: list[int]) -> set[int]:
+    years = {
+        row.season_year
+        for row in session.exec(
+            select(PlayerSeasonUtr).where(
+                PlayerSeasonUtr.player_id.in_(player_ids)
+            )
+        ).all()
+    }
+    for team in session.exec(
+        select(Team)
+        .join(PlayerTeamMembership, PlayerTeamMembership.team_id == Team.id)
+        .where(PlayerTeamMembership.player_id.in_(player_ids))
+    ).all():
+        years.add(team.season_year)
+    return years
+
+
+def merge_players(session: Session, keep_id: int, merge_id: int) -> MergeReport:
+    """Fold one player into another. The absorbed record is deleted.
+
+    A season that ends up with two DIFFERENT values is marked unresolved and
+    keeps both, larger in `value`. That does not block the merge: refusing
+    would leave two records for one person, which is the very thing the merge
+    exists to fix. Two identical values are not a conflict at all.
+    """
+    if keep_id == merge_id:
+        raise Conflict("a player cannot be merged into themselves")
+
+    keep = _require_player(session, keep_id)
+    merge = _require_player(session, merge_id)
+
+    for year in sorted(_seasons_touched_by(session, [keep.id, merge.id])):
+        # A merge can turn a settled season into a contested one, which is a
+        # change to that season however it is spelled.
+        _assert_season_open(session, year)
+
+    report = MergeReport()
+
+    kept_teams = {
+        row.team_id
+        for row in session.exec(
+            select(PlayerTeamMembership).where(
+                PlayerTeamMembership.player_id == keep.id
+            )
+        ).all()
+    }
+    for membership in session.exec(
+        select(PlayerTeamMembership).where(
+            PlayerTeamMembership.player_id == merge.id
+        )
+    ).all():
+        if membership.team_id in kept_teams:
+            # Both records were already on this team; one row is the answer.
+            session.delete(membership)
+            continue
+        membership.player_id = keep.id
+        session.add(membership)
+        report.memberships_moved += 1
+
+    kept_utrs = {
+        row.season_year: row
+        for row in session.exec(
+            select(PlayerSeasonUtr).where(PlayerSeasonUtr.player_id == keep.id)
+        ).all()
+    }
+    for incoming in session.exec(
+        select(PlayerSeasonUtr).where(PlayerSeasonUtr.player_id == merge.id)
+    ).all():
+        existing = kept_utrs.get(incoming.season_year)
+        if existing is None:
+            incoming.player_id = keep.id
+            session.add(incoming)
+            report.season_utrs_moved += 1
+            continue
+
+        if existing.value == incoming.value:
+            session.delete(incoming)
+            continue
+
+        # Two different numbers for one season: keep both. The larger goes in
+        # `value` because participation UTR is read as an upper bound —
+        # reading low would call an illegal lineup legal, and that only
+        # surfaces on match day.
+        high, low = sorted([existing.value, incoming.value], reverse=True)
+        year = incoming.season_year
+        existing.value = high
+        existing.alt_value = low
+        existing.is_unresolved = True
+        session.add(existing)
+        session.delete(incoming)
+        report.conflicts.append(year)
+
+    # Flush the child rows first. The foreign keys cascade on delete, so
+    # removing the absorbed player and its rows in one flush has the database
+    # delete rows SQLAlchemy is still holding — harmless, but it warns, and a
+    # suite that prints warnings trains people to ignore them.
+    session.flush()
+    session.delete(merge)
+    session.commit()
+    report.conflicts.sort()
+    return report
+
+
+def split_player(
+    session: Session,
+    player_id: int,
+    last_name: str,
+    first_name: str,
+    membership_ids: list[int],
+    season_years: list[int],
+    gender: Optional[str] = None,
+    utr_profile_id: Optional[str] = None,
+) -> Player:
+    """Split one record into two, moving exactly the rows named.
+
+    Row by row rather than by a rule: the reason a split is needed at all is
+    that the name-based guess put two humans together, and no rule can tell
+    which rows belong to which of them. Anything not named stays put.
+    """
+    original = _require_player(session, player_id)
+
+    memberships = []
+    for membership_id in membership_ids:
+        membership = session.get(PlayerTeamMembership, membership_id)
+        if membership is None or membership.player_id != player_id:
+            raise NotFound(
+                f"membership {membership_id} does not belong to player {player_id}"
+            )
+        memberships.append(membership)
+
+    utrs = []
+    for year in season_years:
+        row = session.exec(
+            select(PlayerSeasonUtr).where(
+                PlayerSeasonUtr.player_id == player_id,
+                PlayerSeasonUtr.season_year == year,
+            )
+        ).one_or_none()
+        if row is None:
+            raise NotFound(f"player {player_id} has no season UTR for {year}")
+        utrs.append(row)
+
+    for membership in memberships:
+        team = session.get(Team, membership.team_id)
+        if team is not None:
+            _assert_season_open(session, team.season_year)
+    for row in utrs:
+        _assert_season_open(session, row.season_year)
+
+    new_player = Player(
+        last_name=last_name,
+        first_name=first_name,
+        gender=gender if gender is not None else original.gender,
+        utr_profile_id=utr_profile_id,
+    )
+    session.add(new_player)
+    session.flush()
+
+    for membership in memberships:
+        membership.player_id = new_player.id
+        session.add(membership)
+    for row in utrs:
+        row.player_id = new_player.id
+        session.add(row)
+
+    session.commit()
+    session.refresh(new_player)
+    return new_player
+
+
+def rule_on_season_utr(
+    session: Session,
+    player_id: int,
+    season_year: int,
+    value: Decimal,
+    status: Optional[str] = None,
+) -> PlayerSeasonUtr:
+    """Settle a contested season.
+
+    The value may be neither candidate: the committee can issue a correction
+    after both sheets were frozen, and forcing a choice between two wrong
+    numbers would only launder the error. Provenance becomes `admin_ruling`,
+    because after this the number is not what either sheet said — it is what a
+    human decided.
+    """
+    _require_player(session, player_id)
+    _assert_season_open(session, season_year)
+
+    row = session.exec(
+        select(PlayerSeasonUtr).where(
+            PlayerSeasonUtr.player_id == player_id,
+            PlayerSeasonUtr.season_year == season_year,
+        )
+    ).one_or_none()
+    if row is None:
+        raise NotFound(f"player {player_id} has no season UTR for {season_year}")
+    if not row.is_unresolved:
+        raise Conflict(
+            f"season {season_year} is not contested; edit it instead of ruling on it"
+        )
+
+    row.value = value
+    row.alt_value = None
+    row.is_unresolved = False
+    row.source = "admin_ruling"
+    if status is not None:
+        row.status = status
     session.add(row)
     session.commit()
     session.refresh(row)

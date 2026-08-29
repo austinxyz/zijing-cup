@@ -120,7 +120,8 @@
 - [x] 4.6 GREEN — 实现赛季 UTR 的写入与来源流转
 - [x] 4.7 RED — 未知队员/未知队伍返回 404；格式非法的载荷返回 4xx 而不是 500
 - [x] 4.8 GREEN — 最小实现使两条断言通过
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - **STATUS: PASS** — attempt 1, scores: spec 100, runtime 100, code 98, total 99.6 ≥ 80
 
 ## 5. 合并、拆分、裁决与赛季锁
 
@@ -145,17 +146,17 @@
   - 赛季锁的判定集中在一处，不得在每个写路径里各写一遍。
 - **Threshold**: 80
 
-- [ ] 5.0 CONTRACT — write openspec/changes/player-management/contracts/group-5.md with the ### Contract block above
-- [ ] 5.1 RED — `tests/test_players_merge.py`：合并两名各有一条成员关系与一条赛季 UTR 的队员，合并后四条记录都在
-- [ ] 5.2 GREEN — 实现合并
-- [ ] 5.3 RED — 合并后同赛季 6.25 与 6.38 → 未裁决且两个值都可读、`value` 是 6.38；两边都是 6.38 → 不产生未裁决
-- [ ] 5.4 GREEN — 实现合并时的冲突标记
-- [ ] 5.5 RED — 拆分时勾选的记录跟新队员走、没勾的留下；拆分产生一名新队员
-- [ ] 5.6 GREEN — 实现拆分
-- [ ] 5.7 RED — 未裁决时读到较大值且带未裁决状态；裁决为 6.25 后读到 6.25、来源变 `admin裁决`；裁决可填 6.30
-- [ ] 5.8 GREEN — 实现裁决与取值规则
-- [ ] 5.9 RED — 锁定 2025 后改该赛季 UTR/成员关系/删人都被拒且理由指名赛季锁；2026 不受影响；有已锁赛季记录的队员不能删
-- [ ] 5.10 GREEN — 实现赛季锁（判定集中在一处）
+- [x] 5.0 CONTRACT — write openspec/changes/player-management/contracts/group-5.md with the ### Contract block above
+- [x] 5.1 RED — `tests/test_players_merge.py`：合并两名各有一条成员关系与一条赛季 UTR 的队员，合并后四条记录都在
+- [x] 5.2 GREEN — 实现合并
+- [x] 5.3 RED — 合并后同赛季 6.25 与 6.38 → 未裁决且两个值都可读、`value` 是 6.38；两边都是 6.38 → 不产生未裁决
+- [x] 5.4 GREEN — 实现合并时的冲突标记
+- [x] 5.5 RED — 拆分时勾选的记录跟新队员走、没勾的留下；拆分产生一名新队员
+- [x] 5.6 GREEN — 实现拆分
+- [x] 5.7 RED — 未裁决时读到较大值且带未裁决状态；裁决为 6.25 后读到 6.25、来源变 `admin裁决`；裁决可填 6.30
+- [x] 5.8 GREEN — 实现裁决与取值规则
+- [x] 5.9 RED — 锁定 2025 后改该赛季 UTR/成员关系/删人都被拒且理由指名赛季锁；2026 不受影响；有已锁赛季记录的队员不能删
+- [x] 5.10 GREEN — 实现赛季锁（判定集中在一处）
 - [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 6. 登录、会话与写入口

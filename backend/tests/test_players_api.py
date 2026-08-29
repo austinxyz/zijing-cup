@@ -380,3 +380,155 @@ class TestUnknownAndMalformed:
         )
 
         assert 400 <= response.status_code < 500
+
+
+class TestMergeSplitAndRulingOverHttp:
+    def _player(self, client, first: str) -> dict:
+        return make_player(client, last_name="测", first_name=first)
+
+    def _season_utr(self, client, player_id: int, value: str) -> None:
+        assert client.put(
+            f"/api/players/{player_id}/season-utrs/{TEST_YEAR}",
+            json={"value": value, "status": "verified", "source": "committee_sheet"},
+            headers=WRITE,
+        ).status_code == 200
+
+    def test_merging_reports_what_it_did(self, client):
+        keep = self._player(client, "留下")
+        drop = self._player(client, "并入")
+        client.post(
+            f"/api/players/{keep['id']}/memberships",
+            json={"team_id": team_id("API-GOLD")},
+            headers=WRITE,
+        )
+        client.post(
+            f"/api/players/{drop['id']}/memberships",
+            json={"team_id": team_id("API-SILVER")},
+            headers=WRITE,
+        )
+        self._season_utr(client, keep["id"], "6.25")
+        self._season_utr(client, drop["id"], "6.38")
+
+        response = client.post(
+            f"/api/players/{keep['id']}/merge",
+            json={"merge_id": drop["id"]},
+            headers=WRITE,
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["memberships_moved"] == 1
+        # The merge succeeded AND left work behind; saying nothing here would
+        # read as "all done".
+        assert body["unresolved_seasons"] == [TEST_YEAR]
+
+        merged = client.get(f"/api/players/{keep['id']}", headers=READ).json()
+        assert len(merged["memberships"]) == 2
+        assert merged["season_utrs"][0]["is_unresolved"] is True
+        assert merged["season_utrs"][0]["value"] == "6.38"
+        assert client.get(
+            f"/api/players/{drop['id']}", headers=READ
+        ).status_code == 404
+
+    def test_merging_a_player_into_themselves_is_a_client_error(self, client):
+        player = self._player(client, "自己")
+
+        response = client.post(
+            f"/api/players/{player['id']}/merge",
+            json={"merge_id": player["id"]},
+            headers=WRITE,
+        )
+
+        assert 400 <= response.status_code < 500
+
+    def test_splitting_moves_only_the_rows_named(self, client):
+        player = self._player(client, "一分为二")
+        for code in ("API-GOLD", "API-SILVER"):
+            client.post(
+                f"/api/players/{player['id']}/memberships",
+                json={"team_id": team_id(code)},
+                headers=WRITE,
+            )
+        body = client.get(f"/api/players/{player['id']}", headers=READ).json()
+        moving = next(
+            m for m in body["memberships"] if m["team_code"] == "API-GOLD"
+        )
+
+        response = client.post(
+            f"/api/players/{player['id']}/split",
+            json={
+                "last_name": "试",
+                "first_name": "新人",
+                "membership_ids": [moving["id"]],
+                "season_years": [],
+            },
+            headers=WRITE,
+        )
+
+        assert response.status_code == 201
+        new_player = response.json()
+        assert [m["team_code"] for m in new_player["memberships"]] == ["API-GOLD"]
+
+        original = client.get(f"/api/players/{player['id']}", headers=READ).json()
+        assert [m["team_code"] for m in original["memberships"]] == ["API-SILVER"]
+
+    def test_splitting_a_row_that_is_not_theirs_is_404(self, client):
+        player = self._player(client, "甲方")
+        other = self._player(client, "乙方")
+        client.post(
+            f"/api/players/{other['id']}/memberships",
+            json={"team_id": team_id("API-GOLD")},
+            headers=WRITE,
+        )
+        foreign = client.get(f"/api/players/{other['id']}", headers=READ).json()[
+            "memberships"
+        ][0]
+
+        response = client.post(
+            f"/api/players/{player['id']}/split",
+            json={
+                "last_name": "试",
+                "first_name": "新人",
+                "membership_ids": [foreign["id"]],
+                "season_years": [],
+            },
+            headers=WRITE,
+        )
+
+        assert response.status_code == 404
+
+    def test_ruling_settles_a_contested_season(self, client):
+        keep = self._player(client, "甲")
+        drop = self._player(client, "乙")
+        self._season_utr(client, keep["id"], "6.25")
+        self._season_utr(client, drop["id"], "6.38")
+        client.post(
+            f"/api/players/{keep['id']}/merge",
+            json={"merge_id": drop["id"]},
+            headers=WRITE,
+        )
+
+        response = client.post(
+            f"/api/players/{keep['id']}/season-utrs/{TEST_YEAR}/ruling",
+            json={"value": "6.30"},
+            headers=WRITE,
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        # Neither candidate: the committee can correct both sheets afterwards.
+        assert body["value"] == "6.30"
+        assert body["is_unresolved"] is False
+        assert body["source"] == "admin_ruling"
+
+    def test_ruling_on_an_uncontested_season_is_refused(self, client):
+        player = self._player(client, "无争议")
+        self._season_utr(client, player["id"], "6.00")
+
+        response = client.post(
+            f"/api/players/{player['id']}/season-utrs/{TEST_YEAR}/ruling",
+            json={"value": "6.10"},
+            headers=WRITE,
+        )
+
+        assert 400 <= response.status_code < 500

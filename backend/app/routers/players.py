@@ -229,3 +229,123 @@ def set_season_utr(
         "under_appeal": row.under_appeal,
         "source": row.source,
     }
+
+
+class MergeIn(BaseModel):
+    #: The record that survives. The other one is deleted.
+    merge_id: int
+
+
+class SplitIn(BaseModel):
+    last_name: str = Field(min_length=1)
+    first_name: str = Field(min_length=1)
+    gender: Optional[str] = None
+    utr_profile_id: Optional[str] = None
+
+    #: Exactly which rows move. Empty means nothing moves — a split with no
+    #: selection creates a second person and leaves every record where it is,
+    #: rather than guessing a division.
+    membership_ids: list[int] = []
+    season_years: list[int] = []
+
+
+class RulingIn(BaseModel):
+    value: Decimal
+    status: Optional[str] = None
+
+
+@router.post("/{player_id}/merge")
+def merge_player(
+    player_id: int, payload: MergeIn, session: Session = Depends(get_session)
+):
+    """Fold another record into this one.
+
+    Irreversible: this change ships no undo and no history, so the response
+    says what happened rather than leaving the caller to diff the database.
+    """
+    try:
+        report = command.merge_players(
+            session, keep_id=player_id, merge_id=payload.merge_id
+        )
+    except command.NotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except command.Conflict as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except command.SeasonLocked as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+    return {
+        "memberships_moved": report.memberships_moved,
+        "season_utrs_moved": report.season_utrs_moved,
+        # Seasons that now hold two candidates and need a ruling. Reported
+        # because the merge succeeded *and* left work behind — silence here
+        # would read as "nothing to do".
+        "unresolved_seasons": report.conflicts,
+    }
+
+
+@router.post("/{player_id}/split", status_code=201)
+def split_player(
+    player_id: int, payload: SplitIn, session: Session = Depends(get_session)
+):
+    """Split this record into two, moving exactly the rows named. Irreversible."""
+    try:
+        new_player = command.split_player(
+            session,
+            player_id=player_id,
+            last_name=payload.last_name,
+            first_name=payload.first_name,
+            membership_ids=payload.membership_ids,
+            season_years=payload.season_years,
+            gender=payload.gender,
+            utr_profile_id=payload.utr_profile_id,
+        )
+    except command.NotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except command.SeasonLocked as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+    return get_player(session, new_player.id)
+
+
+@router.post("/{player_id}/season-utrs/{season_year}/ruling")
+def rule_on_season(
+    player_id: int,
+    season_year: int,
+    payload: RulingIn,
+    session: Session = Depends(get_session),
+):
+    """Settle a contested season.
+
+    Separate from the plain PUT because the two say different things: PUT is
+    "this is the number", a ruling is "these two sheets disagreed and I choose".
+    Only the second one is allowed to clear the unresolved flag by decision.
+    """
+    if payload.status is not None and payload.status not in SEASON_UTR_STATUSES:
+        raise HTTPException(
+            status_code=422, detail=f"unknown status: {payload.status}"
+        )
+    try:
+        row = command.rule_on_season_utr(
+            session,
+            player_id,
+            season_year,
+            value=payload.value,
+            status=payload.status,
+        )
+    except command.NotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except command.Conflict as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except command.SeasonLocked as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+    return {
+        "season_year": row.season_year,
+        "value": str(row.value),
+        "alt_value": None,
+        "is_unresolved": row.is_unresolved,
+        "status": row.status,
+        "under_appeal": row.under_appeal,
+        "source": row.source,
+    }

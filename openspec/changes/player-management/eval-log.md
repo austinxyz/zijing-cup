@@ -39,3 +39,16 @@
     - "code-review: No CRITICAL/HIGH issues (code-reviewer approved with MEDIUM and LOW findings)"
     - "code-minor: test_roster_api.py:284 assert tautology (assert probed >= 0) does not detect regressions, but real guard exists in test_admin_auth.py; test_rules_api.py:318 uses substring match instead of segment match for '/rules'"
   fix_tasks: []
+
+- group: 4
+  attempt: 1
+  scores: {spec: 100, runtime: 100, code: 98}
+  total: 99.6
+  status: PASS
+  findings:
+    - "spec: All 4 SHALL requirements verified — player independence (created without team, deletable when empty), membership add/remove (endpoints exist and work), remove doesn't delete player (test_leaving_a_team_keeps_the_player_and_their_season_utrs passes), prefill→override with source change (test_a_season_utr_can_be_prefilled_then_overwritten passes)"
+    - "runtime: All 16/16 tests pass — 5 CRUD tests (create, read, edit, delete, search), 4 membership tests (join, dual-division, leave, duplicate refused), 3 season UTR tests (prefill/override, isolation, undecided), 4 error tests (404, malformed 4xx)"
+    - "code: Query/command/router separation matches D6; routes read DB + call pure functions + assemble responses; conflict/uniqueness logic in command layer; season_lock guard prepared for group 5; all Decimal throughout"
+    - "code-review: No CRITICAL/HIGH issues; routes delegate business logic correctly; error handling is explicit; input validation via Pydantic vocabularies (gender M/F, UTR statuses)"
+    - "code-minor: add_membership endpoint returns minimal {id} response rather than full MembershipOut; consistent with REST sub-resource creation conventions but slightly less uniform than other endpoints"
+  fix_tasks: []
