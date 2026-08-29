@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>player-management mocks · 紫荆杯</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* Tokens copied value-for-value from frontend/app/globals.css. Not
+     re-derived: the mock has to be checkable against the running app, and a
+     "close enough" palette is how that quietly stops being true. */
+  :root {
+    --radius: 0.5rem;
+    --bg: #f6f4f0; --fg: #1a1917;
+    --surface: #ffffff; --surface-muted: #f2efe9;
+    --border: #e4e0d8;
+    --primary: #9c3417; --primary-fg: #ffffff;
+    --muted: #79736a; --muted-fg: #a09a90;
+    --danger: #b3261e; --danger-surface: #fbf0ee; --danger-border: #f0cfc9;
+    --success: #4c8a63;
+    --warning: #b8860b; --warning-surface: #fbf5e6; --warning-border: #ecd9a4;
+    --sidebar: #1c1b18; --sidebar-border: #2a2823;
+    --sidebar-fg: #b8b2a6; --sidebar-fg-dim: #6f6a60; --sidebar-fg-bright: #f2eee7;
+    --sidebar-active: #2c2a25; --sidebar-well: #14130f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #e8e4dc; color: var(--fg);
+    font-family: 'Noto Sans SC', 'Segoe UI', sans-serif; font-size: 13px;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .page { max-width: 1560px; margin: 0 auto; padding: 28px 20px 60px; }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  .lede { color: var(--muted); font-size: 12.5px; line-height: 1.7; margin: 0 0 24px; max-width: 900px; }
+  .screen { margin: 0 0 34px; }
+  .screen > header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .screen > header .n { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted-fg); }
+  .screen > header h2 { font-size: 14.5px; margin: 0; }
+  .screen > header .note { font-size: 12px; color: var(--muted); }
+  .frame { border: 1px solid #d6d1c7; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .app { display: flex; width: 1440px; height: 720px; background: var(--bg); }
+
+  /* ---- sidebar ------------------------------------------------------- */
+  aside { display: flex; flex-direction: column; width: 216px; flex: none;
+          border-right: 1px solid var(--sidebar-border); background: var(--sidebar); color: var(--sidebar-fg); }
+  .brand { display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--sidebar-border); padding: 18px 16px 16px; }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo i { display: flex; height: 20px; width: 20px; align-items: center; justify-content: center;
+            border-radius: 5px; background: var(--primary); font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; font-weight: 600; font-style: normal; color: #fff; }
+  .logo b { font-size: 14px; font-weight: 600; letter-spacing: .025em; color: var(--sidebar-fg-bright); }
+  .kicker { padding-left: 28px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: .025em; color: var(--sidebar-fg-dim); }
+  .switcher { display: flex; height: 34px; align-items: center; justify-content: space-between;
+              border-radius: 8px; border: 1px solid #33322c; background: var(--sidebar-well);
+              padding: 0 10px; font-size: 12.5px; font-weight: 500; color: var(--sidebar-fg-bright); }
+  nav { display: flex; flex: 1; flex-direction: column; gap: 2px; padding: 8px; }
+  .nav-item { display: flex; height: 34px; align-items: center; gap: 9px; border-radius: 8px; padding: 0 10px; font-size: 13px; color: var(--sidebar-fg); }
+  .nav-item.current { border-left: 2px solid #c9502f; background: var(--sidebar-active); padding-left: 8px; font-weight: 500; color: var(--sidebar-fg-bright); }
+  .nav-item.off { color: var(--sidebar-fg-dim); justify-content: space-between; }
+  .nav-item.off .pill { border: 1px solid var(--sidebar-border); border-radius: 8px; padding: 0 6px;
+                        font-family: 'JetBrains Mono', monospace; font-size: 9.5px; line-height: 1.6; }
+  .whoami { border-top: 1px solid var(--sidebar-border); padding: 10px 14px; display: flex; flex-direction: column; gap: 3px; }
+  .whoami .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .whoami .name { font-size: 12px; color: var(--sidebar-fg-bright); }
+  .whoami .out { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--sidebar-fg-dim); text-decoration: underline; }
+
+  /* ---- main ---------------------------------------------------------- */
+  main { display: flex; flex: 1; min-width: 0; flex-direction: column; }
+  .topbar { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 10px;
+            border-bottom: 1px solid var(--border); background: var(--surface); padding: 11px 20px; }
+  .topbar h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .topbar .sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted-fg); }
+  .body { display: flex; flex: 1; min-height: 0; }
+  .col { display: flex; flex-direction: column; min-height: 0; }
+  .pad { padding: 16px 20px; }
+
+  .btn { display: inline-flex; height: 32px; align-items: center; justify-content: center; gap: 6px;
+         border-radius: 8px; padding: 0 12px; font-size: 12.5px; font-weight: 500; border: 1px solid transparent; }
+  .btn.primary { background: var(--primary); color: #fff; }
+  .btn.ghost { background: var(--surface); border-color: var(--border); color: var(--fg); }
+  .btn.danger { background: var(--surface); border-color: var(--danger-border); color: var(--danger); }
+  .btn.sm { height: 26px; padding: 0 9px; font-size: 11.5px; }
+
+  .input { display: flex; height: 32px; align-items: center; border-radius: 8px; border: 1px solid var(--border);
+           background: var(--surface); padding: 0 10px; font-size: 12.5px; color: var(--muted-fg); }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 11.5px; color: var(--muted); }
+  .field .val { display: flex; height: 32px; align-items: center; border-radius: 8px; border: 1px solid var(--border);
+                background: var(--surface); padding: 0 10px; font-size: 12.5px; color: var(--fg); }
+
+  .card { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+  .card > .head { display: flex; align-items: center; justify-content: space-between;
+                  border-bottom: 1px solid var(--border); padding: 10px 14px; font-size: 12.5px; font-weight: 600; }
+  .card > .in { padding: 12px 14px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 500;
+       letter-spacing: .03em; color: var(--muted-fg); padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  tr.sel td { background: var(--surface-muted); }
+
+  .tag { display: inline-flex; align-items: center; border-radius: 999px; padding: 1px 8px; font-size: 11px; line-height: 1.6; border: 1px solid var(--border); color: var(--muted); background: var(--surface); }
+  .tag.warn { background: var(--warning-surface); border-color: var(--warning-border); color: #8a6508; }
+  .tag.ok { background: #eef4f0; border-color: #cfe1d6; color: var(--success); }
+  .tag.dim { color: var(--muted-fg); }
+  .tag.danger { background: var(--danger-surface); border-color: var(--danger-border); color: var(--danger); }
+
+  .banner { display: flex; gap: 10px; border-radius: 8px; padding: 11px 13px; font-size: 12.5px; line-height: 1.65; }
+  .banner.warn { background: var(--warning-surface); border: 1px solid var(--warning-border); color: #6f5206; }
+  .banner.danger { background: var(--danger-surface); border: 1px solid var(--danger-border); color: #8a231c; }
+  .banner b { color: inherit; }
+
+  .caption { font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .why { margin: 8px 0 0; font-size: 12px; line-height: 1.75; color: var(--muted); border-left: 2px solid var(--border); padding-left: 11px; }
+  .why b { color: var(--fg); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>player-management · 核心五屏</h1>
+<p class="lede">
+  Token 逐值取自 <code>frontend/app/globals.css</code>，与已上线页面同一套。桌面 1440×720。
+  移动端不在本 change 范围（管理界面是桌面场景），见需求文档 Non-Goals。
+  每屏下方的说明写的是<b>为什么这么画</b>，不是画了什么——实现时要照着核对的是那些理由。
+</p>
+
+<!-- ============================================================ 1. 登录 -->
+<section class="screen">
+  <header><span class="n">01</span><h2>登录</h2><span class="note">未登录时唯一能到达的写入口</span></header>
+  <div class="frame">
+    <div class="app" style="align-items: center; justify-content: center;">
+      <div style="width: 380px;">
+        <div class="card">
+          <div class="in" style="display: flex; flex-direction: column; gap: 14px; padding: 20px;">
+            <div class="logo" style="gap: 9px;">
+              <i>紫</i><b style="color: var(--fg); font-size: 15px;">紫荆杯 · 管理员</b>
+            </div>
+            <div class="caption">只有管理员可以修改队员数据。读取页面不需要登录，也不受影响。</div>
+            <div class="field">
+              <label>口令</label>
+              <div class="val mono" style="color: var(--muted-fg);">••••••••••••</div>
+            </div>
+            <div class="btn primary" style="width: 100%;">登录</div>
+            <div class="banner danger">
+              <span>口令不对。<b>还可以试 3 次</b>，之后需要等 15 分钟。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="why">
+    <b>失败态默认画出来</b>：口令输入框只有一种正常态，实现时很容易忘了错误怎么显示，等真输错了才发现页面没反应。
+    <b>剩余次数写在界面上</b>——限速如果只在后端存在、前端不说，用户会以为是自己手滑，反复重试直到被锁。
+    这一屏不显示侧栏：未登录时没有任何管理功能可用，画出侧栏等于给出一堆点不动的入口。
+  </p>
+</section>
+
+<!-- ============================================================ 2. 队员列表 -->
+<section class="screen">
+  <header><span class="n">02</span><h2>队员列表</h2><span class="note">跨赛季的人，不是某一份名单</span></header>
+  <div class="frame">
+    <div class="app">
+      <aside>
+        <div class="brand">
+          <div class="logo"><i>紫</i><b>紫荆杯</b></div>
+          <div class="kicker">TEAM ANALYSIS</div>
+          <div class="switcher"><span>2026 · 银组</span><span class="mono" style="color: var(--sidebar-fg-dim);">▾</span></div>
+        </div>
+        <nav>
+          <div class="nav-item">队伍</div>
+          <div class="nav-item">阵容</div>
+          <div class="nav-item off"><span>对手对比</span><span class="pill">未开放</span></div>
+          <div class="nav-item">赛制规则</div>
+          <div class="nav-item current">队员管理</div>
+        </nav>
+        <div class="whoami">
+          <div class="row"><span class="name">管理员</span><span class="out">登出</span></div>
+          <div class="mono" style="font-size: 10.5px; color: var(--sidebar-fg-dim);">会话 2 小时后过期</div>
+        </div>
+      </aside>
+      <main>
+        <div class="topbar">
+          <div>
+            <h3>队员</h3>
+            <div class="sub">共 392 人 · 跨 2025 / 2026 两个赛季</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <div class="btn ghost">未裁决 <span class="tag warn" style="margin-left: 6px;">17</span></div>
+            <div class="btn primary">+ 新建队员</div>
+          </div>
+        </div>
+        <div class="pad col" style="flex: 1; min-height: 0; gap: 12px;">
+          <div style="display: flex; gap: 8px;">
+            <div class="input" style="flex: 1;">搜索姓名或 UTR 链接…</div>
+            <div class="input" style="width: 150px;">赛季：全部</div>
+            <div class="input" style="width: 170px;">队伍：全部</div>
+            <div class="input" style="width: 150px;">性别：全部</div>
+          </div>
+          <div class="card col" style="flex: 1; min-height: 0;">
+            <div style="flex: 1; min-height: 0; overflow: auto;">
+              <table>
+                <thead><tr>
+                  <th style="width: 34px;">#</th><th>姓名</th><th style="width: 52px;">性别</th>
+                  <th style="width: 96px;">当前单打</th><th style="width: 96px;">当前双打</th>
+                  <th style="width: 150px;">参赛 UTR</th><th>所在队伍</th><th style="width: 78px;">UTR 链接</th>
+                </tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="mono" style="color: var(--muted-fg);">1</td>
+                    <td>Zong Qingqing</td><td>女</td>
+                    <td class="mono">6.41 <span class="tag dim">rated</span></td>
+                    <td class="mono">6.38 <span class="tag dim">rated</span></td>
+                    <td class="mono">2025 · 6.38 <span class="tag warn">未裁决</span></td>
+                    <td>THU-UOC<span style="color: var(--muted-fg);"> · </span>THU-I</td>
+                    <td><span class="tag ok">有</span></td>
+                  </tr>
+                  <tr class="sel">
+                    <td class="mono" style="color: var(--muted-fg);">2</td>
+                    <td>Ye Ming</td><td>男</td>
+                    <td class="mono">6.90 <span class="tag dim">rated</span></td>
+                    <td class="mono">6.72 <span class="tag dim">rated</span></td>
+                    <td class="mono">2026 · 6.72 <span class="tag ok">已认证</span></td>
+                    <td>ZJU-USC</td>
+                    <td><span class="tag ok">有</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono" style="color: var(--muted-fg);">3</td>
+                    <td>Zhang Qingyang</td><td>女</td>
+                    <td class="mono" style="color: var(--muted-fg);">— <span class="tag dim">unrated</span></td>
+                    <td class="mono" style="color: var(--muted-fg);">— <span class="tag dim">unrated</span></td>
+                    <td class="mono">2026 · 4.25 <span class="tag warn">预填</span></td>
+                    <td>ZJU-USC</td>
+                    <td><span class="tag ok">有</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono" style="color: var(--muted-fg);">4</td>
+                    <td>Wang Tom</td><td>男</td>
+                    <td class="mono">7.23 <span class="tag dim">projected</span></td>
+                    <td class="mono">7.23 <span class="tag dim">projected</span></td>
+                    <td class="mono" style="color: var(--muted-fg);">2026 · 未录入</td>
+                    <td>ZJU-USC</td>
+                    <td><span class="tag ok">有</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono" style="color: var(--muted-fg);">5</td>
+                    <td>Liu Rayne</td><td>男</td>
+                    <td class="mono">7.90 <span class="tag dim">rated</span></td>
+                    <td class="mono">7.84 <span class="tag dim">rated</span></td>
+                    <td class="mono">2025 · 7.84 <span class="tag warn">未裁决</span></td>
+                    <td>THU-UOC<span style="color: var(--muted-fg);"> · </span>THU-II</td>
+                    <td><span class="tag ok">有</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono" style="color: var(--muted-fg);">6</td>
+                    <td>Chen Gary</td><td>男</td>
+                    <td class="mono">6.20 <span class="tag dim">rated</span></td>
+                    <td class="mono">6.06 <span class="tag dim">rated</span></td>
+                    <td class="mono">2026 · 6.06 <span class="tag ok">已认证</span></td>
+                    <td>ZJU-USC</td>
+                    <td><span class="tag dim">无</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <p class="why">
+    <b>「所在队伍」可以是多条</b>（Zong Qingqing 同时在金组 THU-UOC 与银组 THU-I）——规则允许一人两组都打，
+    列成一格是为了让「这个人今年在哪」一眼看完，而不用点进去。
+    <b>参赛 UTR 一列同时给值、赛季与状态</b>：<span class="tag warn">未裁决</span> 与
+    <span class="tag warn">预填</span> 用同一档警示色，因为它们是同一类事——这个数字还没被组委会确认。
+    <span class="tag dim">无</span> 的 UTR 链接不是错误，只是还没人填；但没有链接的人将来合并时无法验证，
+    所以它要看得见。<b>「未裁决 17」放在标题栏而不是侧栏</b>：它是这一页的工作队列，不是全站导航。
+  </p>
+</section>
+
+<!-- ============================================================ 3. 队员详情 -->
+<section class="screen">
+  <header><span class="n">03</span><h2>队员详情</h2><span class="note">基本信息 + 各赛季参赛 UTR + 队伍成员关系，一屏</span></header>
+  <div class="frame">
+    <div class="app">
+      <aside>
+        <div class="brand">
+          <div class="logo"><i>紫</i><b>紫荆杯</b></div>
+          <div class="kicker">TEAM ANALYSIS</div>
+          <div class="switcher"><span>2026 · 银组</span><span class="mono" style="color: var(--sidebar-fg-dim);">▾</span></div>
+        </div>
+        <nav>
+          <div class="nav-item">队伍</div><div class="nav-item">阵容</div>
+          <div class="nav-item off"><span>对手对比</span><span class="pill">未开放</span></div>
+          <div class="nav-item">赛制规则</div><div class="nav-item current">队员管理</div>
+        </nav>
+        <div class="whoami"><div class="row"><span class="name">管理员</span><span class="out">登出</span></div></div>
+      </aside>
+      <main>
+        <div class="topbar">
+          <div>
+            <h3>Zong Qingqing</h3>
+            <div class="sub">player #42 · 2025 与 2026 均有记录</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <div class="btn ghost">合并…</div>
+            <div class="btn ghost">拆分…</div>
+            <div class="btn danger">删除</div>
+            <div class="btn primary">保存</div>
+          </div>
+        </div>
+        <div class="pad col" style="flex: 1; min-height: 0; gap: 12px; overflow: auto;">
+
+          <div class="banner warn">
+            <span><b>2025 的参赛 UTR 尚未裁决</b>：金组总表记 6.25，银组总表记 6.38，两份表分别冻结。
+              裁决之前，排阵一律按 <b>6.38</b>（较大值）计算——取小会把一套其实违规的阵容显示成合法。</span>
+          </div>
+
+          <div class="card">
+            <div class="head"><span>基本信息</span><span class="tag dim">跨赛季，与队伍无关</span></div>
+            <div class="in" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+              <div class="field"><label>姓</label><div class="val">Zong</div></div>
+              <div class="field"><label>名</label><div class="val">Qingqing</div></div>
+              <div class="field"><label>性别</label><div class="val">女</div></div>
+              <div class="field"><label>UTR 链接</label><div class="val mono" style="font-size: 11.5px;">…/profiles/3872011</div></div>
+              <div class="field"><label>当前单打 UTR</label><div class="val mono">6.41</div></div>
+              <div class="field"><label>单打状态</label><div class="val">rated</div></div>
+              <div class="field"><label>当前双打 UTR</label><div class="val mono">6.38</div></div>
+              <div class="field"><label>双打状态</label><div class="val">rated</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="head"><span>各赛季参赛 UTR</span><div class="btn ghost sm">+ 添加赛季</div></div>
+            <table>
+              <thead><tr>
+                <th style="width: 80px;">赛季</th><th style="width: 110px;">参赛 UTR</th>
+                <th style="width: 150px;">状态</th><th style="width: 130px;">来源</th><th>说明</th><th style="width: 90px;"></th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td class="mono">2026</td><td class="mono">6.38</td>
+                  <td><span class="tag ok">已认证</span></td>
+                  <td><span class="tag">组委会总表</span></td>
+                  <td class="caption">2026 银组总表</td>
+                  <td><span class="btn ghost sm">编辑</span></td>
+                </tr>
+                <tr>
+                  <td class="mono">2025</td>
+                  <td class="mono">6.38 <span style="color: var(--muted-fg);">/ 6.25</span></td>
+                  <td><span class="tag ok">已认证</span> <span class="tag warn">Appeal</span></td>
+                  <td><span class="tag warn">未裁决</span></td>
+                  <td class="caption">金组 6.25 · 银组 6.38，需选定一个</td>
+                  <td><span class="btn primary sm">裁决</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="head"><span>队伍成员关系</span><div class="btn ghost sm">+ 加入队伍</div></div>
+            <table>
+              <thead><tr>
+                <th style="width: 80px;">赛季</th><th style="width: 80px;">组别</th><th style="width: 150px;">队伍</th>
+                <th style="width: 150px;">代表学校</th><th style="width: 90px;">外援</th><th style="width: 90px;">外卡</th><th></th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td class="mono">2025</td><td>金组</td><td>THU-UOC</td>
+                  <td>清华</td><td><span class="tag dim">否</span></td><td><span class="tag dim">否</span></td>
+                  <td style="text-align: right;"><span class="btn ghost sm">移出</span></td>
+                </tr>
+                <tr>
+                  <td class="mono">2025</td><td>银组</td><td>THU-I</td>
+                  <td>清华</td><td><span class="tag dim">否</span></td><td><span class="tag dim">否</span></td>
+                  <td style="text-align: right;"><span class="btn ghost sm">移出</span></td>
+                </tr>
+                <tr>
+                  <td class="mono">2026</td><td>银组</td><td>ZJU-USC</td>
+                  <td>浙大</td><td><span class="tag">是</span></td><td><span class="tag">是</span></td>
+                  <td style="text-align: right;"><span class="btn ghost sm">移出</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="in caption" style="border-top: 1px solid var(--border);">
+              <b>外援</b>受规则名额与每场上场人数限制，但系统<b>不校验</b>这一条（每场上限取决于该队由几所学校组成，
+              这个信息不在系统里），排阵结果始终标注「外援限制未校验」。<b>外卡</b>表示不属于当前学校、需组委会同意，
+              <b>不影响上场资格</b>。两者不要混。
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <p class="why">
+    <b>三块在一屏</b>：打开一个人就是要同时看到他是谁、今年多少、在哪几支队——分成三页会逼人来回跳。
+    <b>未裁决的横幅写明「按 6.38 算」</b>，不只说「有冲突」：保守取大是个会影响排阵结论的规则，
+    藏在文档里等于没有。<b>赛季 UTR 那行同时显示两个值</b>（6.38 / 6.25），因为裁决要在两个具体数字之间选，
+    只显示一个就没法判断。<b>Appeal 与状态并列成两个标记</b>，不是第四种状态——真实数据里
+    <code>Rated / Appeal</code>、<code>Projected / Appeal</code>、<code>Unrated / Appeal</code> 三种组合都存在。
+  </p>
+</section>
+
+<!-- ============================================================ 4. 合并 / 拆分 -->
+<section class="screen">
+  <header><span class="n">04</span><h2>合并与拆分</h2><span class="note">不可撤销，本次不做操作历史</span></header>
+  <div class="frame">
+    <div class="app">
+      <aside>
+        <div class="brand">
+          <div class="logo"><i>紫</i><b>紫荆杯</b></div>
+          <div class="kicker">TEAM ANALYSIS</div>
+          <div class="switcher"><span>2026 · 银组</span><span class="mono" style="color: var(--sidebar-fg-dim);">▾</span></div>
+        </div>
+        <nav>
+          <div class="nav-item">队伍</div><div class="nav-item">阵容</div>
+          <div class="nav-item off"><span>对手对比</span><span class="pill">未开放</span></div>
+          <div class="nav-item">赛制规则</div><div class="nav-item current">队员管理</div>
+        </nav>
+        <div class="whoami"><div class="row"><span class="name">管理员</span><span class="out">登出</span></div></div>
+      </aside>
+      <main>
+        <div class="topbar"><div><h3>拆分 · Huang Andrew</h3><div class="sub">player #118 · 逐行决定每条记录跟谁走</div></div></div>
+        <div class="pad col" style="flex: 1; min-height: 0; gap: 12px; overflow: auto;">
+
+          <div class="banner danger">
+            <span><b>拆分不可撤销。</b>本次没有操作历史，拆错了只能手工把记录搬回去。执行前请确认下面每一行的归属。</span>
+          </div>
+
+          <div class="card">
+            <div class="head"><span>把哪些记录分出去</span><span class="caption">未勾选的留在 #118</span></div>
+            <table>
+              <thead><tr>
+                <th style="width: 46px;"></th><th style="width: 130px;">记录</th><th style="width: 90px;">赛季</th>
+                <th>内容</th><th style="width: 180px;">证据</th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td><span class="tag">✓</span></td><td>成员关系</td><td class="mono">2025</td>
+                  <td>金组 · HUST-NTU · 代表 华中科大</td>
+                  <td class="caption">UTR 链接 …/2841902</td>
+                </tr>
+                <tr>
+                  <td><span class="tag">✓</span></td><td>赛季 UTR</td><td class="mono">2025</td>
+                  <td class="mono">6.73 · 已认证 · 组委会总表</td>
+                  <td class="caption">随上面那条成员关系</td>
+                </tr>
+                <tr>
+                  <td><span class="tag dim">□</span></td><td>成员关系</td><td class="mono">2025</td>
+                  <td>银组 · NTU-NCTU · 代表 台大</td>
+                  <td class="caption">UTR 链接 …/4471120</td>
+                </tr>
+                <tr>
+                  <td><span class="tag dim">□</span></td><td>赛季 UTR</td><td class="mono">2026</td>
+                  <td class="mono">6.80 · 已认证 · 组委会总表</td>
+                  <td class="caption">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display: flex; gap: 12px;">
+            <div class="card" style="flex: 1;">
+              <div class="head"><span>留在原记录</span><span class="tag dim">#118</span></div>
+              <div class="in" style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="font-size: 12.5px;">Huang Andrew · 男</div>
+                <div class="caption">1 条成员关系（2025 银组 NTU-NCTU）· 1 条赛季 UTR（2026）</div>
+                <div class="caption">UTR 链接 …/4471120</div>
+              </div>
+            </div>
+            <div class="card" style="flex: 1;">
+              <div class="head"><span>分出为新队员</span><span class="tag">待建</span></div>
+              <div class="in" style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="field"><label>姓名（可改）</label><div class="val">Huang Andrew</div></div>
+                <div class="caption">1 条成员关系（2025 金组 HUST-NTU）· 1 条赛季 UTR（2025）</div>
+                <div class="field"><label>UTR 链接</label><div class="val mono" style="font-size: 11.5px;">…/2841902</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <div class="btn ghost">取消</div>
+            <div class="btn primary">拆分为两名队员</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <p class="why">
+    <b>两侧同时显示结果，而不是只勾一列</b>：拆分的错误几乎都是「这条到底跟谁走」，让两边各自把最终内容摆出来，
+    执行前就能看出不对。<b>「证据」一列放 UTR 链接</b>——这是唯一能证明两条记录是不是同一个人的东西，
+    而库里现在一条都没有（459 行全空），所以它既是拆分的依据，也是提醒该把链接补上。
+    <b>不可撤销的警告用 danger 而不是 warning</b>：合并/拆分与「未裁决」不是同一类事，
+    同色会让人以为都是「注意一下」。合并屏是同一套骨架，方向相反：选两个人 → 显示合并后的并集与冲突项。
+  </p>
+</section>
+
+<!-- ============================================================ 5. 未裁决队列 -->
+<section class="screen">
+  <header><span class="n">05</span><h2>未裁决冲突队列</h2><span class="note">迁移后这里正好 17 条</span></header>
+  <div class="frame">
+    <div class="app">
+      <aside>
+        <div class="brand">
+          <div class="logo"><i>紫</i><b>紫荆杯</b></div>
+          <div class="kicker">TEAM ANALYSIS</div>
+          <div class="switcher"><span>2026 · 银组</span><span class="mono" style="color: var(--sidebar-fg-dim);">▾</span></div>
+        </div>
+        <nav>
+          <div class="nav-item">队伍</div><div class="nav-item">阵容</div>
+          <div class="nav-item off"><span>对手对比</span><span class="pill">未开放</span></div>
+          <div class="nav-item">赛制规则</div><div class="nav-item current">队员管理</div>
+        </nav>
+        <div class="whoami"><div class="row"><span class="name">管理员</span><span class="out">登出</span></div></div>
+      </aside>
+      <main>
+        <div class="topbar">
+          <div><h3>未裁决的参赛 UTR</h3><div class="sub">17 条 · 全部来自 2025 金银两组的两份总表</div></div>
+          <div class="btn ghost">全部按较大值确认…</div>
+        </div>
+        <div class="pad col" style="flex: 1; min-height: 0; gap: 12px;">
+          <div class="banner warn">
+            <span>这些队员在两个组别的总表里被记了不同的参赛 UTR（两份表分别冻结，取样时点差几天）。
+              裁决之前一律<b>按较大值</b>参与排阵计算，因此现在的结果是<b>保守</b>的：可能少给几套本来合法的阵容，
+              但不会把违规的显示成合法。</span>
+          </div>
+          <div class="card col" style="flex: 1; min-height: 0;">
+            <div style="flex: 1; min-height: 0; overflow: auto;">
+              <table>
+                <thead><tr>
+                  <th style="width: 34px;">#</th><th style="width: 170px;">队员</th><th style="width: 70px;">赛季</th>
+                  <th style="width: 190px;">金组总表</th><th style="width: 190px;">银组总表</th>
+                  <th style="width: 90px;">当前采用</th><th>裁决</th>
+                </tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="mono" style="color: var(--muted-fg);">1</td><td>Zong Qingqing</td><td class="mono">2025</td>
+                    <td class="mono">6.25 <span class="caption">THU-UOC</span></td>
+                    <td class="mono">6.38 <span class="caption">THU-I</span></td>
+                    <td class="mono">6.38</td>
+                    <td style="display: flex; gap: 6px;"><span class="btn ghost sm">取 6.25</span><span class="btn ghost sm">取 6.38</span><span class="btn ghost sm">填别的</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono" style="color: var(--muted-fg);">2</td><td>Liu Rayne</td><td class="mono">2025</td>
+                    <td class="mono">7.82 <span class="caption">THU-UOC</span></td>
+                    <td class="mono">7.84 <span class="caption">THU-II</span></td>
+                    <td class="mono">7.84</td>
+                    <td style="display: flex; gap: 6px;"><span class="btn ghost sm">取 7.82</span><span class="btn ghost sm">取 7.84</span><span class="btn ghost sm">填别的</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono" style="color: var(--muted-fg);">3</td><td>Yang Alex</td><td class="mono">2025</td>
+                    <td class="mono">7.65 <span class="caption">THU-UOC</span></td>
+                    <td class="mono">7.70 <span class="caption">THU-I</span></td>
+                    <td class="mono">7.70</td>
+                    <td style="display: flex; gap: 6px;"><span class="btn ghost sm">取 7.65</span><span class="btn ghost sm">取 7.70</span><span class="btn ghost sm">填别的</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono" style="color: var(--muted-fg);">4</td><td>Li Fred</td><td class="mono">2025</td>
+                    <td class="mono">6.69 <span class="caption">THU-UOC</span></td>
+                    <td class="mono">6.74 <span class="caption">THU-I</span></td>
+                    <td class="mono">6.74</td>
+                    <td style="display: flex; gap: 6px;"><span class="btn ghost sm">取 6.69</span><span class="btn ghost sm">取 6.74</span><span class="btn ghost sm">填别的</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono" style="color: var(--muted-fg);">5</td><td>Chen Yilun</td><td class="mono">2025</td>
+                    <td class="mono">6.98 <span class="caption">THU-UOC</span></td>
+                    <td class="mono">6.96 <span class="caption">THU-II</span></td>
+                    <td class="mono">6.98</td>
+                    <td style="display: flex; gap: 6px;"><span class="btn ghost sm">取 6.98</span><span class="btn ghost sm">取 6.96</span><span class="btn ghost sm">填别的</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <p class="why">
+    <b>两个值各自带来源队伍</b>（THU-UOC / THU-I）：裁决的依据是「哪份表更可信」，不写清来自哪支队就没法判断。
+    <b>「当前采用」单独一列</b>，让保守取大这条规则在每一行上都可见，而不是只写在顶部横幅里。
+    <b>「填别的」是第三个选项</b>——真值可能两个都不是（比如组委会后来另发了更正），只给二选一会逼人选一个错的。
+    <b>「全部按较大值确认」放在标题栏且不是主按钮</b>：17 条一次性确认很省事，但它把「保守估计」变成「已确认的事实」，
+    那是两件事，不该长得像默认动作。
+  </p>
+</section>
+
+</div>
+</body>
+</html>
