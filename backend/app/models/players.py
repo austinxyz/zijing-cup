@@ -78,7 +78,11 @@ class PlayerSeasonUtr(SQLModel, table=True):
 
     is_unresolved: bool = False
 
-    status: str
+    #: None means "nobody has decided", not missing data: an Unrated sheet row
+    #: could be committee-adjudicated or captain-rated depending on USTA match
+    #: history the sheet does not carry. Same reasoning as
+    #: roster_entries.rating_class, which the roster page shows as 待定.
+    status: Optional[str] = None
     #: Rides on top of `status` instead of replacing it: the real sheet has
     #: Rated / Appeal, Projected / Appeal and Unrated / Appeal.
     under_appeal: bool = False

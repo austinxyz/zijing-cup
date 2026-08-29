@@ -29,7 +29,9 @@
 - [x] 1.6 GREEN — 实现 `player_team_memberships`（含代表学校、外援、外卡）
 - [x] 1.7 RED — 断言当前 UTR 的状态枚举与参赛 UTR 的状态枚举是两个不同的取值集合
 - [x] 1.8 GREEN — 两个枚举各自定义，互不引用
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+  - attempt 1 **BLOCK**：`SeasonLock.locked_at` 对着 NOT NULL 列发显式 NULL，锁赛季必抛 NotNullViolation。补回归测试后改成由数据库盖时间戳。
+  - attempt 2 **STATUS: PASS** — scores: spec 100, runtime 100, code 95, total 99 ≥ 80
 
 ## 2. 迁移命令
 
@@ -52,15 +54,15 @@
     在一部分行上猜错且不留痕迹。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/player-management/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — `tests/test_players_migrate.py`：规范化姓名的纯函数——大小写与前后空格不同的两行归并成一人；带引号别名不被拆开
-- [ ] 2.2 GREEN — `app/players/merge_rules.py` 实现规范化与归并（纯函数）
-- [ ] 2.3 RED — 同一人同赛季两个不同值 → 未裁决且两个值都保留，`value` 是较大者；两个值相同 → 不产生未裁决
-- [ ] 2.4 GREEN — 实现冲突判定（纯函数）
-- [ ] 2.5 RED — 在一份虚构的 `roster_entries` 快照上跑迁移：每行都有对应成员关系，两季互不干扰
-- [ ] 2.6 GREEN — `app/players/migrate.py` 实现迁移命令与 `--check`
-- [ ] 2.7 RED — 连续执行两次，队员数、成员关系数、参赛 UTR 记录数都与执行一次相同
-- [ ] 2.8 GREEN — 使迁移幂等
+- [x] 2.0 CONTRACT — write openspec/changes/player-management/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 RED — `tests/test_players_migrate.py`：规范化姓名的纯函数——大小写与前后空格不同的两行归并成一人；带引号别名不被拆开
+- [x] 2.2 GREEN — `app/players/merge_rules.py` 实现规范化与归并（纯函数）
+- [x] 2.3 RED — 同一人同赛季两个不同值 → 未裁决且两个值都保留，`value` 是较大者；两个值相同 → 不产生未裁决
+- [x] 2.4 GREEN — 实现冲突判定（纯函数）
+- [x] 2.5 RED — 在一份虚构的 `roster_entries` 快照上跑迁移：每行都有对应成员关系，两季互不干扰
+- [x] 2.6 GREEN — `app/players/migrate.py` 实现迁移命令与 `--check`
+- [x] 2.7 RED — 连续执行两次，队员数、成员关系数、参赛 UTR 记录数都与执行一次相同
+- [x] 2.8 GREEN — 使迁移幂等
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 管理员鉴权

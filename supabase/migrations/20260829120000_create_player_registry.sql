@@ -85,7 +85,17 @@ create table player_season_utrs (
 
     -- How the committee decided this value. NOT the same vocabulary as the
     -- current-UTR statuses on players.
-    status text not null check (status in ('verified', 'committee', 'captain')),
+    --
+    -- Nullable, and that null is a state rather than missing data: 33 of the
+    -- 459 rows in the 2025 sheet are Unrated with no rating class, and whether
+    -- such a player is committee-adjudicated or captain-rated depends on USTA
+    -- match history the sheet does not carry. The same reasoning already keeps
+    -- roster_entries.rating_class nullable and makes the roster page say 待定
+    -- instead of 自评 — deciding here would settle who counts against the
+    -- "at most two captain-rated on court" cap on a human's behalf.
+    status text check (
+        status is null or status in ('verified', 'committee', 'captain')
+    ),
 
     -- Appeal rides on top of a status instead of replacing it: the 2025 sheet
     -- contains Rated / Appeal, Projected / Appeal AND Unrated / Appeal, so a
