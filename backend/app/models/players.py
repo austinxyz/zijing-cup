@@ -16,6 +16,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
+from sqlalchemy import Column, func
+from sqlalchemy.types import TIMESTAMP
 from sqlmodel import Field, SQLModel
 
 from app.db import SCHEMA
@@ -116,5 +118,17 @@ class SeasonLock(SQLModel, table=True):
     season_year: int = Field(
         primary_key=True, foreign_key=f"{SCHEMA}.seasons.year"
     )
-    locked_at: Optional[datetime] = None
+
+    #: Stamped by the database, not by Python. The column is NOT NULL with a
+    #: `now()` default, and `server_default` is what tells SQLAlchemy to leave
+    #: it out of the INSERT rather than send an explicit NULL — without it,
+    #: locking a season raises NotNullViolation and the freeze is unreachable.
+    #: The clock stays on one side: two clocks would disagree about which of
+    #: two edits happened before the lock.
+    locked_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(
+            TIMESTAMP(timezone=True), server_default=func.now(), nullable=False
+        ),
+    )
     note: Optional[str] = None

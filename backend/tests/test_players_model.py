@@ -463,3 +463,22 @@ class TestTheTwoStatusVocabulariesAreSeparate:
         with pytest.raises(IntegrityError):
             session.commit()
         session.rollback()
+
+
+class TestSeasonLock:
+    def test_locking_a_season_without_naming_a_time_records_one(self, session):
+        from app.models import SeasonLock
+
+        # The migration declares `locked_at timestamptz not null default now()`,
+        # so the row is meant to timestamp itself. A model that sends an
+        # explicit NULL instead turns "lock this season" into an
+        # IntegrityError — the whole freeze mechanism would be unreachable.
+        lock = SeasonLock(season_year=TEST_YEAR)
+        session.add(lock)
+        session.commit()
+        session.refresh(lock)
+
+        assert lock.locked_at is not None
+
+        session.delete(lock)
+        session.commit()
