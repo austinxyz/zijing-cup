@@ -83,6 +83,19 @@ create table player_season_utrs (
 
     is_unresolved boolean not null default false,
 
+    -- Which sheet each candidate came from. Nullable because only the roster
+    -- migration knows it: a conflict created by merging two hand-made records
+    -- has no division behind either number, and inventing one would be worse
+    -- than leaving it blank.
+    --
+    -- Not derivable from the values themselves. The larger number is NOT
+    -- reliably the silver one — in 2025 it is gold for Chen Yilun (6.98 v
+    -- 6.96) and silver for Zong Qingqing (6.38 v 6.25) — so a queue that
+    -- labelled the columns by size would tell whoever is ruling the opposite
+    -- of the truth about which sheet said what.
+    value_division text,
+    alt_value_division text,
+
     -- How the committee decided this value. NOT the same vocabulary as the
     -- current-UTR statuses on players.
     --

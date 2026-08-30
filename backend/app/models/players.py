@@ -78,6 +78,13 @@ class PlayerSeasonUtr(SQLModel, table=True):
 
     is_unresolved: bool = False
 
+    #: Which sheet each candidate came from, when that is known (the roster
+    #: migration knows; a merge of two hand-made records does not). Never
+    #: inferred from the numbers: the larger candidate is gold for some 2025
+    #: players and silver for others.
+    value_division: Optional[str] = None
+    alt_value_division: Optional[str] = None
+
     #: None means "nobody has decided", not missing data: an Unrated sheet row
     #: could be committee-adjudicated or captain-rated depending on USTA match
     #: history the sheet does not carry. Same reasoning as

@@ -292,3 +292,43 @@ class TestMigrationCommand:
 
         assert report.players_created > 0  # what it WOULD create
         assert snapshot.count_players() == 0
+
+
+class TestCandidateProvenance:
+    def test_each_candidate_remembers_which_division_it_came_from(self):
+        from app.players.merge_rules import group_rows
+
+        people = group_rows([
+            row("Chen", "Yilun", division="gold", team="THU-UOC", utr="6.98"),
+            row("Chen", "Yilun", division="silver", team="THU-II", utr="6.96"),
+        ])
+        utr = people[0].season_utrs[0]
+
+        # The larger value is not always the silver one — this real 2025 pair
+        # has it in gold. A queue that labels the columns by size would tell a
+        # ruling admin the opposite of the truth about which sheet said what.
+        assert utr.value == D("6.98")
+        assert utr.value_division == "gold"
+        assert utr.alt_value_division == "silver"
+
+    def test_the_other_direction_too(self):
+        from app.players.merge_rules import group_rows
+
+        people = group_rows([
+            row("Zong", "Qingqing", division="gold", team="THU-UOC", utr="6.25"),
+            row("Zong", "Qingqing", division="silver", team="THU-I", utr="6.38"),
+        ])
+        utr = people[0].season_utrs[0]
+
+        assert utr.value == D("6.38")
+        assert utr.value_division == "silver"
+        assert utr.alt_value_division == "gold"
+
+    def test_an_uncontested_season_records_its_single_source(self):
+        from app.players.merge_rules import group_rows
+
+        people = group_rows([row("A", "B", division="silver", utr="6.00")])
+        utr = people[0].season_utrs[0]
+
+        assert utr.value_division == "silver"
+        assert utr.alt_value_division is None

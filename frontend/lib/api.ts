@@ -294,6 +294,13 @@ export interface PlayerSeasonUtr {
   /** The other candidate, kept rather than dropped. null when there is none. */
   alt_value: string | null;
   is_unresolved: boolean;
+  /** Which sheet each candidate came from, where that is known. null for a
+   *  conflict produced by merging two hand-made records. Never inferred from
+   *  size — the larger candidate is gold for some players and silver for
+   *  others, so labelling the columns by value would state the opposite of the
+   *  truth for half of them. */
+  value_division: string | null;
+  alt_value_division: string | null;
   /** null means nobody has decided yet — an Unrated sheet row could be
    *  committee-adjudicated or captain-rated depending on match history the
    *  sheet does not carry. */

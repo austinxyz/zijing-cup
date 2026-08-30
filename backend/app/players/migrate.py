@@ -192,6 +192,8 @@ def _apply_season_utrs(
                 status=utr.status,
                 under_appeal=utr.under_appeal,
                 source=utr.source,
+                value_division=utr.value_division,
+                alt_value_division=utr.alt_value_division,
             )
         )
 

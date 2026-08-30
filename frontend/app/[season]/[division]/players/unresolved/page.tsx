@@ -48,13 +48,31 @@ function Row({
   season: string;
   division: string;
 }) {
-  const teams = player.memberships
-    .filter((m) => m.season_year === utr.season_year)
-    .sort((a, b) => a.division_code.localeCompare(b.division_code));
-  const [goldTeam, silverTeam] = [
-    teams.find((m) => m.division_code === "gold"),
-    teams.find((m) => m.division_code === "silver"),
-  ];
+  const teamFor = (division: string | null) =>
+    division === null
+      ? null
+      : (player.memberships.find(
+          (m) => m.season_year === utr.season_year && m.division_code === division,
+        )?.team_code ?? null);
+
+  // Each candidate is placed by ITS OWN recorded origin. Sorting by size would
+  // be wrong for half the real cases: in 2025 the larger number is gold for
+  // Chen Yilun and silver for Zong Qingqing, so a size-based layout would tell
+  // whoever is ruling the opposite of the truth about which sheet said what.
+  const candidates: Record<string, { value: string; team: string | null }> = {};
+  if (utr.value_division) {
+    candidates[utr.value_division] = {
+      value: utr.value,
+      team: teamFor(utr.value_division),
+    };
+  }
+  if (utr.alt_value && utr.alt_value_division) {
+    candidates[utr.alt_value_division] = {
+      value: utr.alt_value,
+      team: teamFor(utr.alt_value_division),
+    };
+  }
+  const known = utr.value_division !== null || utr.alt_value_division !== null;
 
   const hidden = (
     <>
@@ -76,18 +94,27 @@ function Row({
         </Link>
       </Td>
       <Td className="font-mono text-muted-foreground">{utr.season_year}</Td>
-      <Td className="font-mono">
-        {utr.alt_value}{" "}
-        <span className="text-[11px] text-muted-foreground">
-          {goldTeam?.team_code ?? "金组"}
-        </span>
-      </Td>
-      <Td className="font-mono">
-        {utr.value}{" "}
-        <span className="text-[11px] text-muted-foreground">
-          {silverTeam?.team_code ?? "银组"}
-        </span>
-      </Td>
+      {["gold", "silver"].map((division) => (
+        <Td key={division} className="font-mono">
+          <span aria-label={division === "gold" ? "金组总表" : "银组总表"}>
+            {candidates[division] ? (
+              <>
+                {candidates[division].value}{" "}
+                <span className="text-[11px] text-muted-foreground">
+                  {candidates[division].team ?? ""}
+                </span>
+              </>
+            ) : known ? (
+              <span className="text-muted-foreground">—</span>
+            ) : (
+              // Nothing recorded either candidate's sheet: this conflict came
+              // from merging two hand-made records. Printing a division here
+              // would be inventing evidence for a decision.
+              <span className="text-[11px] text-muted-foreground">来源未知</span>
+            )}
+          </span>
+        </Td>
+      ))}
       <Td>
         <span aria-label="当前采用" className="font-mono">
           {utr.value}

@@ -54,6 +54,11 @@ class SeasonUtrPlan:
     status: Optional[str] = None
     under_appeal: bool = False
     source: str = "committee_sheet"
+    #: Which division's sheet each candidate came from. Carried rather than
+    #: inferred: the larger number is gold for some players and silver for
+    #: others, so size says nothing about origin.
+    value_division: Optional[str] = None
+    alt_value_division: Optional[str] = None
 
 
 @dataclass
@@ -120,15 +125,21 @@ def _resolve_season(rows: Sequence[SourceRow], season_year: int) -> SeasonUtrPla
             value=top,
             status=status,
             under_appeal=under_appeal,
+            value_division=winning.division_code,
         )
+
+    runner_up = values[1]
+    second = next(r for r in rows if r.match_utr == runner_up)
 
     return SeasonUtrPlan(
         season_year=season_year,
         value=top,
-        alt_value=values[1],
+        alt_value=runner_up,
         is_unresolved=True,
         status=status,
         under_appeal=under_appeal,
+        value_division=winning.division_code,
+        alt_value_division=second.division_code,
     )
 
 

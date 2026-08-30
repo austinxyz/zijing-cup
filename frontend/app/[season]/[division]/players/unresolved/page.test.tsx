@@ -28,6 +28,8 @@ function contested(id: number, first: string, high: string, low: string): Player
         value: high,
         alt_value: low,
         is_unresolved: true,
+        value_division: "gold",
+        alt_value_division: "silver",
         status: "verified",
         under_appeal: false,
         source: "committee_sheet",
@@ -90,6 +92,41 @@ describe("the unresolved queue", () => {
     // The rule has to be visible per row, not only in the banner: this column
     // is what says the current answer is a conservative stand-in.
     expect(within(row).getByLabelText("当前采用").textContent).toMatch(/6\.38/);
+  });
+
+  it("labels each candidate by where it came from, not by which is bigger", async () => {
+    vi.mocked(getPlayersPage).mockResolvedValue({
+      players: [QUEUE[0]],
+      total: 1,
+      truncated: false,
+    });
+
+    render(await renderPage());
+
+    const row = screen.getByRole("row", { name: /Qingqing/ });
+    // QUEUE[0] has the LARGER value in gold. A table that assumed "larger =
+    // silver" would print the two sheets the wrong way round, and the whole
+    // point of the row is deciding which sheet to believe.
+    expect(within(row).getByLabelText("金组总表").textContent).toMatch(/6\.38/);
+    expect(within(row).getByLabelText("银组总表").textContent).toMatch(/6\.25/);
+  });
+
+  it("says a candidate's origin is unknown rather than guessing one", async () => {
+    const merged = structuredClone(QUEUE[0]);
+    merged.season_utrs[0].value_division = null;
+    merged.season_utrs[0].alt_value_division = null;
+    vi.mocked(getPlayersPage).mockResolvedValue({
+      players: [merged],
+      total: 1,
+      truncated: false,
+    });
+
+    render(await renderPage());
+
+    const row = screen.getByRole("row", { name: /Qingqing/ });
+    // A conflict created by merging two hand-made records has no sheet behind
+    // either number.
+    expect(row.textContent).toMatch(/来源未知/);
   });
 
   it("names the teams each candidate came from", async () => {

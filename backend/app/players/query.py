@@ -50,6 +50,13 @@ class SeasonUtrOut(BaseModel):
     alt_value: Optional[Decimal] = None
     is_unresolved: bool = False
 
+    #: Which sheet each candidate came from, where that is known. Null for a
+    #: conflict created by merging two hand-made records — nothing behind those
+    #: numbers is a division. Never inferred from size: the larger candidate is
+    #: gold for some players and silver for others.
+    value_division: Optional[str] = None
+    alt_value_division: Optional[str] = None
+
     #: null means nobody has decided — an Unrated sheet row could be committee
     #: adjudicated or captain rated depending on match history the sheet does
     #: not carry.
@@ -123,6 +130,8 @@ def _season_utrs_for(session: Session, player_ids: list[int]) -> dict[int, list[
                 value=row.value,
                 alt_value=row.alt_value,
                 is_unresolved=row.is_unresolved,
+                value_division=row.value_division,
+                alt_value_division=row.alt_value_division,
                 status=row.status,
                 under_appeal=row.under_appeal,
                 source=row.source,
