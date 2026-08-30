@@ -2,9 +2,10 @@ import Link from "next/link";
 
 import { cn } from "@/lib/cn";
 import type { SeasonIndex } from "@/lib/api";
+import { logout } from "@/app/login/actions";
 
 /** Which nav destination the current URL is under. */
-export type NavSection = "teams" | "lineup" | "rules";
+export type NavSection = "teams" | "lineup" | "rules" | "players";
 
 interface SidebarProps {
   season: string;
@@ -19,6 +20,10 @@ interface SidebarProps {
    *  lineup directly instead of sending you through a picker to choose the
    *  team already on screen. */
   teamCode?: string;
+  /** Whether an admin session is active. Read on the server; the sidebar shows
+   *  an identity only when there really is one — a logged-out reader seeing
+   *  one would misread who can change things. */
+  signedIn?: boolean;
 }
 
 const GRID_ICON =
@@ -27,6 +32,8 @@ const CHART_ICON = "M2.6 13.4h10.8M4.8 11V7.2M8 11V3.4M11.2 11V5.8";
 const SWAP_ICON =
   "M2.6 5.2h9.4M9.4 2.6L12 5.2 9.4 7.8M13.4 10.8H4M6.6 8.2L4 10.8l2.6 2.6";
 const DOC_ICON = "M4 2.4h8v11.2H4zM6.4 5.4h3.2M6.4 8h3.2M6.4 10.6h2";
+const PEOPLE_ICON =
+  "M6 7.2a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM2.6 13.4c0-2 1.5-3.4 3.4-3.4s3.4 1.4 3.4 3.4M10.6 6.4a1.7 1.7 0 1 0 0-3.4M11.2 9.6c1.3.3 2.2 1.5 2.2 3";
 
 function NavIcon({ path }: { path: string }) {
   return (
@@ -115,6 +122,7 @@ export function Sidebar({
   seasons,
   section = "rules",
   teamCode,
+  signedIn = false,
 }: SidebarProps) {
   // EVERY (season, division) pair, including the one already open — which is
   // marked rather than omitted. Hiding the current pair made the option set
@@ -228,7 +236,30 @@ export function Sidebar({
           href={`/${season}/${division}/rules`}
           current={section === "rules"}
         />
+        {/* A real destination, so a real link. Visiting it without a session
+            lands on the login page rather than an empty admin screen. */}
+        <NavLink
+          label="队员管理"
+          icon={PEOPLE_ICON}
+          href={`/${season}/${division}/players`}
+          current={section === "players"}
+        />
       </nav>
+
+      {signedIn ? (
+        <form
+          action={logout}
+          className="flex items-center justify-between gap-2 border-t border-sidebar-border px-3.5 py-2.5"
+        >
+          <span className="text-[12px] text-sidebar-foreground-bright">管理员</span>
+          <button
+            type="submit"
+            className="font-mono text-[10.5px] text-sidebar-foreground-dim underline"
+          >
+            登出
+          </button>
+        </form>
+      ) : null}
 
       <div className="flex flex-col gap-0.5 border-t border-sidebar-border px-3.5 py-2.5">
         <div className="font-mono text-[11px] leading-relaxed text-sidebar-foreground/80">

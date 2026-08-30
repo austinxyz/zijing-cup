@@ -106,3 +106,47 @@ describe("ActiveSidebar on the lineup route", () => {
     );
   });
 });
+
+describe("ActiveSidebar on the admin routes", () => {
+  it("marks 队员管理 when the URL is under it", () => {
+    vi.mocked(useSelectedLayoutSegments).mockReturnValue(["players", "42"]);
+    vi.mocked(useSelectedLayoutSegment).mockReturnValue("players");
+
+    renderSidebar();
+
+    expect(screen.getByText("队员管理").closest("[aria-current]")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("does not mistake a player id for a team", () => {
+    vi.mocked(useSelectedLayoutSegments).mockReturnValue(["players", "42"]);
+    vi.mocked(useSelectedLayoutSegment).mockReturnValue("players");
+
+    renderSidebar();
+
+    // 阵容 takes the team in scope when there is one; a player id is not a
+    // team code, and following it would 404.
+    expect(screen.getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
+      "/2026/silver/lineup",
+    );
+  });
+
+  it("passes the session through to the sidebar", () => {
+    vi.mocked(useSelectedLayoutSegments).mockReturnValue(["rules"]);
+    vi.mocked(useSelectedLayoutSegment).mockReturnValue("rules");
+
+    render(
+      <ActiveSidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        signedIn
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "登出" })).toBeTruthy();
+  });
+});

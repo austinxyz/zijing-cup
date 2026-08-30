@@ -275,3 +275,55 @@ describe("Sidebar 阵容 and 对手对比", () => {
     );
   });
 });
+
+describe("Sidebar 队员管理 and the signed-in state", () => {
+  it("links 队员管理 to the admin pages", () => {
+    renderSidebar();
+
+    const link = screen.getByRole("link", { name: /队员管理/ });
+    expect(link.getAttribute("href")).toBe("/2026/silver/players");
+    // It exists, so it is a link — not a disabled row with 未开放.
+    expect(link.textContent).not.toContain("未开放");
+  });
+
+  it("marks 队员管理 as current on its own pages", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        section="players"
+      />,
+    );
+
+    expect(screen.getByText("队员管理").closest("[aria-current]")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("shows who is signed in, with a way out", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        signedIn
+      />,
+    );
+
+    expect(screen.getByText("管理员")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "登出" })).toBeTruthy();
+  });
+
+  it("shows nothing that looks signed in when nobody is", () => {
+    renderSidebar();
+
+    // A logged-out reader seeing an identity would misread who can change
+    // things — reading pages needs no login at all.
+    expect(screen.queryByText("管理员")).toBeNull();
+    expect(screen.queryByRole("button", { name: "登出" })).toBeNull();
+  });
+});

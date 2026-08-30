@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getSeasons, type SeasonIndex } from "@/lib/api";
+import { isSignedIn } from "@/lib/admin";
 import { ActiveSidebar } from "./ActiveSidebar";
 
 interface LayoutProps {
@@ -43,6 +44,7 @@ export default async function DivisionLayout({ children, params }: LayoutProps) 
       <ActiveSidebar
         season={season}
         division={division}
+        signedIn={await isSignedIn()}
         // Falls back to the URL's code rather than inventing a display name.
         divisionName={match?.display_name ?? division}
         seasons={seasons}

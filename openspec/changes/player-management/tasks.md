@@ -250,18 +250,18 @@
 - **Threshold**: 70
 - **Note**: 含 VISUAL DIFF 任务，阈值取 70
 
-- [ ] 8.0 CONTRACT — write openspec/changes/player-management/contracts/group-8.md with the ### Contract block above
-- [ ] 8.1 MOCK — 打开 mocks 第 04、05 屏；记下逐字文案：「拆分不可撤销」「把哪些记录分出去」「留在原记录」「分出为新队员」「未裁决的参赛 UTR」「当前采用」「填别的」「全部按较大值确认」
-- [ ] 8.2 RED — 拆分页：勾选后两侧各自显示最终拥有的记录；不可撤销警告的样式与未裁决提示不同；每行显示 UTR 链接作为证据
-- [ ] 8.3 GREEN — 实现拆分页
-- [ ] 8.4 RED — 合并页：执行前显示并集与将产生的冲突
-- [ ] 8.5 GREEN — 实现合并页
-- [ ] 8.6 VISUAL DIFF — 对照 mocks 第 04 屏核对（桌面 1440px）
-- [ ] 8.7 RED — 未裁决队列：每行两个候选值与各自来源队伍、当前采用值；可填第三个值；批量确认不是主按钮
-- [ ] 8.8 GREEN — 实现未裁决队列
-- [ ] 8.9 VISUAL DIFF — 对照 mocks 第 05 屏核对（桌面 1440px）
-- [ ] 8.10 RED — 侧栏：「队员管理」是链接、在管理界面时高亮；未登录时点击导向登录页；已登录时显示身份与登出，未登录时不显示
-- [ ] 8.11 GREEN — 改 `Sidebar.tsx` 与 `ActiveSidebar.tsx`
+- [x] 8.0 CONTRACT — write openspec/changes/player-management/contracts/group-8.md with the ### Contract block above
+- [x] 8.1 MOCK — 打开 mocks 第 04、05 屏；记下逐字文案：「拆分不可撤销」「把哪些记录分出去」「留在原记录」「分出为新队员」「未裁决的参赛 UTR」「当前采用」「填别的」「全部按较大值确认」
+- [x] 8.2 RED — 拆分页：勾选后两侧各自显示最终拥有的记录；不可撤销警告的样式与未裁决提示不同；每行显示 UTR 链接作为证据
+- [x] 8.3 GREEN — 实现拆分页
+- [x] 8.4 RED — 合并页：执行前显示并集与将产生的冲突
+- [x] 8.5 GREEN — 实现合并页
+- [x] 8.6 VISUAL DIFF — 对照 mocks 第 04 屏核对（桌面 1440px）
+- [x] 8.7 RED — 未裁决队列：每行两个候选值与各自来源队伍、当前采用值；可填第三个值；批量确认不是主按钮
+- [x] 8.8 GREEN — 实现未裁决队列
+- [x] 8.9 VISUAL DIFF — 对照 mocks 第 05 屏核对（桌面 1440px）
+- [x] 8.10 RED — 侧栏：「队员管理」是链接、在管理界面时高亮；未登录时点击导向登录页；已登录时显示身份与登出，未登录时不显示
+- [x] 8.11 GREEN — 改 `Sidebar.tsx` 与 `ActiveSidebar.tsx`
 - [ ] 8.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-8.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 9. 验证与上线
