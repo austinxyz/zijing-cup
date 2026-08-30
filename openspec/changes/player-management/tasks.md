@@ -262,13 +262,13 @@
 - [x] 8.9 VISUAL DIFF — 对照 mocks 第 05 屏核对（桌面 1440px）
 - [x] 8.10 RED — 侧栏：「队员管理」是链接、在管理界面时高亮；未登录时点击导向登录页；已登录时显示身份与登出，未登录时不显示
 - [x] 8.11 GREEN — 改 `Sidebar.tsx` 与 `ActiveSidebar.tsx`
-- [ ] 8.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-8.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 8.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-8.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 9. 验证与上线
 
-- [ ] 9.1 Run backend test suite — `cd backend && uv run pytest`，确认无回归
-- [ ] 9.2 Run frontend test suite — `cd frontend && npm run test`，确认无回归
-- [ ] 9.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明
+- [x] 9.1 Run backend test suite — `cd backend && uv run pytest`，确认无回归
+- [x] 9.2 Run frontend test suite — `cd frontend && npm run test`，确认无回归
+- [x] 9.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明——本次确实没跑 e2e
 - [ ] 9.4 本地全流程演练：跑完 pytest 先 `bash backend/scripts/reseed-local.sh` 补回数据，再 `python -m app.players.migrate --check` 核对——队员数等于规范化姓名去重后的人数、未裁决数正好 17（CLAUDE.md Pitfalls）
 - [ ] 9.5 远程迁移：Dashboard 手工执行 migration SQL；`DATABASE_URL` 指远程跑 `--check` 再执行；**跑完立刻 unset**——同窗口接着跑 pytest 会清空线上数据（CLAUDE.md Pitfalls）
 - [ ] 9.6 Render 与 Vercel 各加环境变量（`ADMIN_SECRET`、管理员口令哈希），再部署

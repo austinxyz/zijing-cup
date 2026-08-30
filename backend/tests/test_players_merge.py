@@ -569,3 +569,69 @@ class TestSeasonLock:
 
         with pytest.raises(SeasonLocked):
             merge_players(db, keep_id=keep.id, merge_id=drop.id)
+
+
+class TestMergeKeepsProvenanceHonest:
+    def _with_division(self, db, first: str, value: str, division: str) -> Player:
+        player = make(db, first)
+        db.add(
+            PlayerSeasonUtr(
+                player_id=player.id,
+                season_year=TEST_YEAR,
+                value=D(value),
+                status="verified",
+                source="committee_sheet",
+                value_division=division,
+            )
+        )
+        db.commit()
+        return player
+
+    def test_the_surviving_row_describes_the_value_it_now_holds(self, db):
+        from app.players.command import merge_players
+
+        keep = self._with_division(db, "一", "6.25", "gold")
+        drop = self._with_division(db, "二", "6.38", "silver")
+
+        merge_players(db, keep_id=keep.id, merge_id=drop.id)
+
+        utr = db.exec(
+            select(PlayerSeasonUtr).where(PlayerSeasonUtr.player_id == keep.id)
+        ).one()
+        # The larger value came from the merged-in record, so the provenance on
+        # `value` has to follow it. Leaving the survivor's old division there
+        # would label 6.38 as gold — a wrong label, which is worse than none:
+        # whoever rules on this cannot tell it from a correct one.
+        assert utr.value == D("6.38")
+        assert utr.value_division == "silver"
+        assert utr.alt_value == D("6.25")
+        assert utr.alt_value_division == "gold"
+
+    def test_provenance_is_dropped_when_one_side_never_had_any(self, db):
+        from app.players.command import merge_players
+
+        keep = self._with_division(db, "一", "6.25", "gold")
+        drop = make(db, "二", utr="6.38")  # hand-made, no division recorded
+
+        merge_players(db, keep_id=keep.id, merge_id=drop.id)
+
+        utr = db.exec(
+            select(PlayerSeasonUtr).where(PlayerSeasonUtr.player_id == keep.id)
+        ).one()
+        # Half-known provenance would still print a division for one column and
+        # invite the reader to assume the other. Better to say nothing.
+        assert utr.value_division is None
+        assert utr.alt_value_division is None
+
+    def test_a_ruling_clears_the_provenance_it_no_longer_describes(self, db):
+        from app.players.command import merge_players, rule_on_season_utr
+
+        keep = self._with_division(db, "一", "6.25", "gold")
+        drop = self._with_division(db, "二", "6.38", "silver")
+        merge_players(db, keep_id=keep.id, merge_id=drop.id)
+
+        row = rule_on_season_utr(db, keep.id, TEST_YEAR, value=D("6.30"))
+
+        # 6.30 came from neither sheet.
+        assert row.value_division is None
+        assert row.alt_value_division is None

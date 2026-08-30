@@ -35,6 +35,8 @@ function make(id: number, first: string, value: string, team: string): Player {
         value,
         alt_value: null,
         is_unresolved: false,
+        value_division: null,
+        alt_value_division: null,
         status: "verified",
         under_appeal: false,
         source: "committee_sheet",

@@ -228,6 +228,10 @@ def set_season_utr(
         row.under_appeal = under_appeal
         row.alt_value = None
         row.is_unresolved = False
+        # Same invariant as a ruling: this is a new number, and the old
+        # division no longer describes it.
+        row.value_division = None
+        row.alt_value_division = None
 
     session.add(row)
     session.commit()
@@ -339,11 +343,34 @@ def merge_players(session: Session, keep_id: int, merge_id: int) -> MergeReport:
         # `value` because participation UTR is read as an upper bound —
         # reading low would call an illegal lineup legal, and that only
         # surfaces on match day.
-        high, low = sorted([existing.value, incoming.value], reverse=True)
         year = incoming.season_year
+        pairs = sorted(
+            [
+                (existing.value, existing.value_division),
+                (incoming.value, incoming.value_division),
+            ],
+            key=lambda pair: pair[0],
+            reverse=True,
+        )
+        (high, high_division), (low, low_division) = pairs
+
         existing.value = high
         existing.alt_value = low
         existing.is_unresolved = True
+        # Provenance follows the value it describes. Leaving the survivor's old
+        # division in place would label the incoming number with the wrong
+        # sheet — and a wrong label is worse than none, because whoever rules on
+        # the conflict cannot tell it from a correct one.
+        #
+        # If either side never recorded a division, both are dropped: a half
+        # known provenance still prints one column and invites the reader to
+        # assume the other.
+        if high_division is None or low_division is None:
+            existing.value_division = None
+            existing.alt_value_division = None
+        else:
+            existing.value_division = high_division
+            existing.alt_value_division = low_division
         session.add(existing)
         session.delete(incoming)
         report.conflicts.append(year)
@@ -461,6 +488,10 @@ def rule_on_season_utr(
     row.alt_value = None
     row.is_unresolved = False
     row.source = "admin_ruling"
+    # The ruled value may be neither candidate, so no sheet stands behind it.
+    # Provenance describes the current value or it describes nothing.
+    row.value_division = None
+    row.alt_value_division = None
     if status is not None:
         row.status = status
     session.add(row)
