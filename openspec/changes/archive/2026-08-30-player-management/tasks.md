@@ -270,6 +270,6 @@
 - [x] 9.2 Run frontend test suite — `cd frontend && npm run test`，确认无回归
 - [x] 9.3 e2e 不适用（`project.e2e_command` 为空），跳过并在此注明——本次确实没跑 e2e
 - [x] 9.4 本地全流程演练：跑完 pytest 先 `bash backend/scripts/reseed-local.sh` 补回数据，再 `python -m app.players.migrate --check` 核对——队员数等于规范化姓名去重后的人数、未裁决数正好 17（CLAUDE.md Pitfalls）。**结果**：source rows 459 → 规范化姓名去重 375，`--check` 报 375 players / 459 memberships / 375 season UTRs / 17 unresolved，三个数字互相对上；重复执行 0 变更
-- [ ] 9.5 远程迁移：Dashboard 手工执行 migration SQL；`DATABASE_URL` 指远程跑 `--check` 再执行；**跑完立刻 unset**——同窗口接着跑 pytest 会清空线上数据（CLAUDE.md Pitfalls）
-- [ ] 9.6 Render 与 Vercel 各加环境变量（`ADMIN_SECRET`、管理员口令哈希），再部署
+- [x] 9.5 远程迁移：Dashboard 手工执行 migration SQL；`DATABASE_URL` 指远程跑 `--check` 再执行；**跑完立刻 unset**——同窗口接着跑 pytest 会清空线上数据（CLAUDE.md Pitfalls）。**结果**：远程两季一次跑完，387 players / 489 memberships / 405 season UTRs / 17 unresolved，与 `--check` 完全一致
+- [x] 9.6 Render 与 Vercel 各加环境变量（`ADMIN_SECRET`、管理员口令哈希），再部署。**已验证**：线上 `/login` 200、`/players` 307 跳登录、读页面不受影响；登录冒烟测试由项目负责人自行完成
 - [x] 9.7 Run superpowers:verification-before-completion —— 跑 `project.test_commands` 与全部 `project.custom_verification_checks`。**结果**：后端 358、前端 224 全过，`tsc --noEmit` 0 错，`next build` 成功，无 console.log，源码与浏览器 bundle 均无凭据，名单 CSV 未入库，migration 全部 schema-qualified
