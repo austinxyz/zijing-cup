@@ -105,7 +105,10 @@ export function RosterTable({
             second opinion on the same question, and ties are common — several
             players sit on the same cap. */}
         {players.map((player, index) => (
-          <tr key={`${player.last_name}${player.first_name}-${index}`}>
+          // Keyed by id, not by name: names repeat on a real roster, and a
+          // key that collides makes React reuse the wrong row's state — which
+          // here is which row is being edited.
+          <tr key={player.player_id}>
             <Td className="font-mono text-xs text-muted-foreground">
               {index + 1}
             </Td>

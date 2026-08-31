@@ -431,3 +431,17 @@ class TestPreviewAndApply:
         assert response.status_code == 422
         after = {r["first_name"]: r for r in client.get(sheet_url(), headers=READ).json()}
         assert after["望舒"]["singles_utr"] is None
+
+    def test_preview_publishes_its_shape_in_the_schema(self, client):
+        # A raw dict tells OpenAPI nothing, which leaves the frontend's type
+        # for this payload an assertion rather than a checked contract.
+        from app.main import app
+
+        path = (
+            "/api/seasons/{year}/divisions/{code}/teams/{team_code}"
+            "/utr-sheet/preview"
+        )
+        schema = app.openapi()["paths"][path]["post"]["responses"]["200"]
+        ref = schema["content"]["application/json"]["schema"]
+
+        assert "$ref" in ref or ref.get("type") != "object" or "properties" in ref

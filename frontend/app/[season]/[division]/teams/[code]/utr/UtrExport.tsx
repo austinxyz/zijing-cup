@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import type { UtrSheetRow } from "@/lib/api";
 
 /** The columns, in the order the import expects them back. */
@@ -44,9 +46,19 @@ function asText(rows: UtrSheetRow[], delimiter: string): string {
  * retyping a column they only meant to touch three cells of.
  */
 export function UtrExport({ rows }: { rows: UtrSheetRow[] }) {
+  const [copied, setCopied] = useState<"ok" | "failed" | null>(null);
+
   async function copyAll() {
-    // Tabs, because that is what a spreadsheet reads off the clipboard.
-    await navigator.clipboard.writeText(asText(rows, "\t"));
+    try {
+      // Tabs, because that is what a spreadsheet reads off the clipboard.
+      await navigator.clipboard.writeText(asText(rows, "\t"));
+      setCopied("ok");
+    } catch {
+      // Said out loud, not swallowed. A silent failure here is the exact
+      // shape of mistake this feature exists to prevent: the person walks
+      // away believing they have the sheet.
+      setCopied("failed");
+    }
   }
 
   function downloadCsv() {
@@ -123,7 +135,11 @@ export function UtrExport({ rows }: { rows: UtrSheetRow[] }) {
           下载 CSV
         </button>
         <span className="text-[11.5px] text-muted">
-          已有的值也带出去，方便你看着改
+          {copied === "ok"
+            ? "已复制，可以直接粘进 Google Sheets"
+            : copied === "failed"
+              ? "复制没有成功——浏览器挡住了剪贴板，改用「下载 CSV」。"
+              : "已有的值也带出去，方便你看着改"}
         </span>
       </div>
     </div>

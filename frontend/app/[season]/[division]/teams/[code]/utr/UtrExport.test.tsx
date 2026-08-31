@@ -1,5 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import type { UtrSheetRow } from "@/lib/api";
 import { UtrExport } from "./UtrExport";
@@ -71,5 +71,29 @@ describe("UtrExport", () => {
     render(<UtrExport rows={[row()]} />);
 
     expect(screen.getByText(/别改/)).toBeTruthy();
+  });
+});
+
+describe("when the clipboard refuses", () => {
+  it("says so instead of leaving the person thinking it copied", async () => {
+    // A silent failure here is the exact shape of mistake this whole feature
+    // is built to avoid: the person walks away believing they have the sheet.
+    const writeText = vi.fn().mockRejectedValue(new Error("denied"));
+    Object.assign(navigator, { clipboard: { writeText } });
+
+    render(<UtrExport rows={[row()]} />);
+    fireEvent.click(screen.getByRole("button", { name: "复制整张表" }));
+
+    expect(await screen.findByText(/复制没有成功/)).toBeTruthy();
+  });
+
+  it("confirms when it did copy", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+
+    render(<UtrExport rows={[row()]} />);
+    fireEvent.click(screen.getByRole("button", { name: "复制整张表" }));
+
+    expect(await screen.findByText(/已复制/)).toBeTruthy();
   });
 });

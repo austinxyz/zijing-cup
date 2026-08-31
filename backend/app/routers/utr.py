@@ -97,8 +97,56 @@ class SheetText(BaseModel):
     text: str
 
 
+class FieldChangeOut(BaseModel):
+    field: str
+    #: null means the field had no value. A field that produced no
+    #: FieldChange at all is a different claim, and is rendered as 「不变」.
+    old: Optional[str] = None
+    new: Optional[str] = None
+
+
+class PlayerChangeOut(BaseModel):
+    player_id: int
+    last_name: str
+    first_name: str
+    fields: list[FieldChangeOut]
+
+
+class SheetErrorOut(BaseModel):
+    line_number: int
+    message: str
+
+
+class SheetDiffOut(BaseModel):
+    """What a sheet would change, and everything wrong with it.
+
+    Declared rather than returned as a bare dict so the shape reaches the
+    OpenAPI schema: the frontend's type for this payload should be a checked
+    contract, not an assertion it makes about a dict it hopes matches.
+    """
+
+    changes: list[PlayerChangeOut]
+    errors: list[SheetErrorOut]
+    counts: dict[str, int]
+    covered: int
+    not_covered: int
+
+    #: False when anything is wrong. All or nothing — a column pasted one
+    #: place over makes nearly every row wrong, and writing the rest would
+    #: leave the database half new and half old.
+    applicable: bool
+
+    #: Player id -> the other teams that player also sits on.
+    elsewhere: dict[str, list[str]]
+
+
+class AppliedOut(BaseModel):
+    updated: int
+
+
 @router.post(
-    "/seasons/{year}/divisions/{code}/teams/{team_code}/utr-sheet/preview"
+    "/seasons/{year}/divisions/{code}/teams/{team_code}/utr-sheet/preview",
+    response_model=SheetDiffOut,
 )
 def preview_sheet(
     year: int,
@@ -106,7 +154,7 @@ def preview_sheet(
     team_code: str,
     payload: SheetText,
     session: Session = Depends(get_session),
-) -> dict:
+) -> SheetDiffOut:
     """What this sheet would change. Writes nothing.
 
     A POST because the sheet arrives in the body — it can run to thousands of
@@ -117,7 +165,8 @@ def preview_sheet(
 
 
 @router.post(
-    "/seasons/{year}/divisions/{code}/teams/{team_code}/utr-sheet/apply"
+    "/seasons/{year}/divisions/{code}/teams/{team_code}/utr-sheet/apply",
+    response_model=AppliedOut,
 )
 def apply_sheet(
     year: int,
@@ -125,7 +174,7 @@ def apply_sheet(
     team_code: str,
     payload: SheetText,
     session: Session = Depends(get_session),
-) -> dict[str, int]:
+) -> AppliedOut:
     """Write what preview showed, or nothing.
 
     Re-derives the diff from the sheet text rather than accepting a diff from
@@ -150,7 +199,7 @@ def apply_sheet(
             setattr(person, field.field, _typed(field.field, field.new))
         session.add(person)
     session.commit()
-    return {"updated": len(result.changes)}
+    return AppliedOut(updated=len(result.changes))
 
 
 def _typed(field: str, value: Optional[str]):
@@ -199,30 +248,30 @@ def _diff_payload(
     year: int,
     code: str,
     team_code: str,
-) -> dict:
-    return {
-        "changes": [
-            {
-                "player_id": change.player_id,
-                "last_name": change.last_name,
-                "first_name": change.first_name,
-                "fields": [
-                    {"field": f.field, "old": f.old, "new": f.new}
+) -> SheetDiffOut:
+    return SheetDiffOut(
+        changes=[
+            PlayerChangeOut(
+                player_id=change.player_id,
+                last_name=change.last_name,
+                first_name=change.first_name,
+                fields=[
+                    FieldChangeOut(field=f.field, old=f.old, new=f.new)
                     for f in change.fields
                 ],
-            }
+            )
             for change in result.changes
         ],
-        "errors": [
-            {"line_number": e.line_number, "message": e.message}
+        errors=[
+            SheetErrorOut(line_number=e.line_number, message=e.message)
             for e in result.errors
         ],
-        "counts": result.counts,
-        "covered": result.covered,
-        "not_covered": result.not_covered,
-        "applicable": result.applicable,
-        "elsewhere": read_other_memberships(year, code, team_code, session),
-    }
+        counts=result.counts,
+        covered=result.covered,
+        not_covered=result.not_covered,
+        applicable=result.applicable,
+        elsewhere=read_other_memberships(year, code, team_code, session),
+    )
 
 
 class CurrentUtrUpdate(BaseModel):
