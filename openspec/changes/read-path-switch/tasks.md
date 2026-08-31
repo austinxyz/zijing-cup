@@ -137,12 +137,12 @@
 - [x] 6.8 RED — 旧格式链接：页面呈现旧链接文案、命中中性档、不呈现候选列表，且提供清空锁定重新选择的入口
 - [x] 6.9 GREEN — LineupControls / 页面加旧链接状态与清空入口
 - [x] 6.10 VISUAL DIFF — bring up dev stack；打开 2026 银组一支真实球队的排阵页，构造未裁决与缺值两种情形；对照 mocks 第 3 节核对；**重点看顶部是否变成提示墙**，若是则在此收拢并记录理由
-- [ ] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 7. 验证与 ship
 
-- [ ] 7.1 Run backend test suite — `cd backend && ./.venv-std/Scripts/python.exe -m pytest`（本机 `uv run` 被 Application Control 拦，见 CLAUDE.md）；跑完本地库会被 TRUNCATE，需要时用 `bash backend/scripts/reseed-local.sh` 补种
-- [ ] 7.2 Run frontend test suite — `cd frontend && npm run test`
-- [ ] 7.3 Run `cd frontend && npx tsc --noEmit` — vitest 只转译不校验类型，这条必须单独跑
-- [ ] 7.4 手工核对部署顺序：后端先上、前端后上（反序会让前端读到不存在的字段）
-- [ ] 7.5 Run superpowers:verification-before-completion（跑 project.test_commands、console.log 扫描、以及 openspec/config.yaml 里的全部 custom_verification_checks）
+- [x] 7.1 Run backend test suite — `cd backend && ./.venv-std/Scripts/python.exe -m pytest`（本机 `uv run` 被 Application Control 拦，见 CLAUDE.md）；跑完本地库会被 TRUNCATE，需要时用 `bash backend/scripts/reseed-local.sh` 补种
+- [x] 7.2 Run frontend test suite — `cd frontend && npm run test`
+- [x] 7.3 Run `cd frontend && npx tsc --noEmit` — vitest 只转译不校验类型，这条必须单独跑
+- [x] 7.4 手工核对部署顺序：后端先上、前端后上（反序会让前端读到不存在的字段）
+- [x] 7.5 Run superpowers:verification-before-completion（跑 project.test_commands、console.log 扫描、以及 openspec/config.yaml 里的全部 custom_verification_checks）
