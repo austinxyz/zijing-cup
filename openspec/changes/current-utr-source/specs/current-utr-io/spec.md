@@ -155,3 +155,41 @@
 #### Scenario: 取不出 ID
 - **WHEN** 该列写的内容里没有可识别的档案 ID
 - **THEN** 该行被判为错误
+
+### Requirement: 赛季未锁时，当前双打 UTR 同时成为该赛季的参赛 UTR
+写入一名队员的当前双打 UTR 时，若该赛季**未锁定**，系统 SHALL 同时把该赛季的参赛 UTR
+设成同一个值。已存在的参赛 UTR SHALL 被覆盖，**不论其来源**。
+
+取样窗口之前参赛 UTR 根本不存在，手填的当前值是唯一能排阵的数；只留在「当前 UTR」
+那一栏，等于让人填了一个数却看不到它影响任何结论。
+
+赛季**已锁定**时 SHALL NOT 触碰参赛 UTR —— 锁冻的正是它。当前 UTR 本身照旧不受锁限制，
+受约束的只有这一步顺带的写入。
+
+写入的记录 SHALL 标为 `source = prefilled` 且 `status` 为空：它是一个替代值，不是任何
+人的裁决，因此名单页显示「待定」。
+
+清空当前双打 UTR 时 SHALL NOT 连带删除参赛 UTR —— 那是两件事，一次操作不应替人做第二个
+决定。
+
+#### Scenario: 赛季未锁时同步
+- **WHEN** 赛季未锁定，写入某名队员的当前双打 UTR
+- **THEN** 该赛季该队员的参赛 UTR 等于同一个值
+- **AND** 该记录的 source 为 `prefilled`、status 为空
+
+#### Scenario: 覆盖已有的值
+- **WHEN** 赛季未锁定，某名队员已有一条来源为 `committee_sheet` 的参赛 UTR
+- **THEN** 写入当前双打 UTR 后，参赛 UTR 变为新值
+
+#### Scenario: 赛季已锁时不动
+- **WHEN** 赛季已锁定，写入某名队员的当前双打 UTR
+- **THEN** 当前双打 UTR 被写入
+- **AND** 该赛季的参赛 UTR 不变
+
+#### Scenario: 只写单打不影响参赛 UTR
+- **WHEN** 只写入当前单打 UTR
+- **THEN** 参赛 UTR 不变
+
+#### Scenario: 清空不连带删除
+- **WHEN** 把当前双打 UTR 清空
+- **THEN** 该赛季的参赛 UTR 仍在

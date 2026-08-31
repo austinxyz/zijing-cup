@@ -84,8 +84,12 @@ export function RosterTable({
         <col className="w-16" />
         <col className="w-[104px]" />
         <col />
-        <col className="w-[112px]" />
-        <col className="w-[112px]" />
+        {/* Wide enough for the number field and its status together: the
+            cells clip their overflow, so a column that is merely close makes
+            the controls look cut off. */}
+        <col className="w-[184px]" />
+        <col className="w-[184px]" />
+        {canEdit ? <col className="w-[64px]" /> : null}
       </colgroup>
       <thead>
         <tr>
@@ -174,6 +178,8 @@ export function RosterTable({
 
 const STATUSES = ["", "unrated", "projected", "rated"] as const;
 
+const DEFAULT_STATUS = "rated";
+
 /**
  * One row, mid-edit.
  *
@@ -187,13 +193,17 @@ function EditableCells({
   player: RosterPlayer;
   onSave: (edit: CurrentUtrEdit) => void;
 }) {
+  // Empty rows start at `rated`: a number checked by hand against the UTR
+  // site is almost always a rated one, and asking for it every time is a
+  // second field for a decision the person already made. An existing status
+  // is kept — that one somebody chose.
   const [singles, setSingles] = useState(player.singles_utr ?? "");
   const [singlesStatus, setSinglesStatus] = useState(
-    player.singles_status ?? "",
+    player.singles_status ?? DEFAULT_STATUS,
   );
   const [doubles, setDoubles] = useState(player.doubles_utr ?? "");
   const [doublesStatus, setDoublesStatus] = useState(
-    player.doubles_status ?? "",
+    player.doubles_status ?? DEFAULT_STATUS,
   );
 
   return (

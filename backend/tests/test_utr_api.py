@@ -445,3 +445,166 @@ class TestPreviewAndApply:
         ref = schema["content"]["application/json"]["schema"]
 
         assert "$ref" in ref or ref.get("type") != "object" or "properties" in ref
+
+
+class TestParticipationMirror:
+    """Before the sampling window there is no committee number, so the hand
+    entered current doubles UTR is the only figure a lineup can use. Leaving it
+    only in the 「当前 UTR」 column would mean typing a number that changes no
+    conclusion anywhere."""
+
+    def _season_utr(self, player_id: int):
+        with Session(engine) as session:
+            return session.exec(
+                select(PlayerSeasonUtr).where(
+                    PlayerSeasonUtr.player_id == player_id,
+                    PlayerSeasonUtr.season_year == TEST_YEAR,
+                )
+            ).one_or_none()
+
+    def test_an_unlocked_season_takes_the_new_doubles_value(self, client):
+        ids = ids_by_name(client)
+        client.put(
+            "/api/players/current-utr",
+            headers=WRITE,
+            json={
+                "season_year": TEST_YEAR,
+                "updates": [
+                    {
+                        "player_id": ids["望舒"],
+                        "doubles_utr": "6.40",
+                        "doubles_status": "rated",
+                    }
+                ],
+            },
+        )
+
+        row = self._season_utr(ids["望舒"])
+        assert row is not None
+        assert row.value == Decimal("6.40")
+        # A stand-in, not anybody's adjudication — so the roster reads 待定.
+        assert row.source == "prefilled"
+        assert row.status is None
+
+    def test_it_overwrites_whatever_was_there(self, client):
+        # Deliberate: the lock is the only guard. Committee data is imported
+        # and the season locked in the same sitting, so "has committee data"
+        # and "still unlocked" do not overlap in practice.
+        ids = ids_by_name(client)
+        before = self._season_utr(ids["望舒"])
+        assert before is not None and before.source == "committee_sheet"
+
+        client.put(
+            "/api/players/current-utr",
+            headers=WRITE,
+            json={
+                "season_year": TEST_YEAR,
+                "updates": [
+                    {
+                        "player_id": ids["望舒"],
+                        "doubles_utr": "6.40",
+                        "doubles_status": "rated",
+                    }
+                ],
+            },
+        )
+
+        assert self._season_utr(ids["望舒"]).value == Decimal("6.40")
+
+    def test_a_locked_season_keeps_its_frozen_value(self, client):
+        from app.models import SeasonLock
+
+        with Session(engine) as session:
+            session.add(SeasonLock(season_year=TEST_YEAR))
+            session.commit()
+
+        ids = ids_by_name(client)
+        response = client.put(
+            "/api/players/current-utr",
+            headers=WRITE,
+            json={
+                "season_year": TEST_YEAR,
+                "updates": [
+                    {
+                        "player_id": ids["望舒"],
+                        "doubles_utr": "6.40",
+                        "doubles_status": "rated",
+                    }
+                ],
+            },
+        )
+
+        assert response.status_code == 200
+        # The current UTR still lands — the lock freezes participation values.
+        rows = {r["first_name"]: r for r in client.get(sheet_url(), headers=READ).json()}
+        assert rows["望舒"]["doubles_utr"] == "6.40"
+        assert self._season_utr(ids["望舒"]).value == Decimal("7.24")
+
+    def test_singles_alone_leaves_the_participation_utr_alone(self, client):
+        ids = ids_by_name(client)
+        client.put(
+            "/api/players/current-utr",
+            headers=WRITE,
+            json={
+                "season_year": TEST_YEAR,
+                "updates": [
+                    {
+                        "player_id": ids["望舒"],
+                        "singles_utr": "7.50",
+                        "singles_status": "rated",
+                    }
+                ],
+            },
+        )
+
+        assert self._season_utr(ids["望舒"]).value == Decimal("7.24")
+
+    def test_clearing_the_doubles_value_does_not_delete_the_season_row(self, client):
+        # Two different decisions. One operation should not make the second
+        # one on the person's behalf.
+        ids = ids_by_name(client)
+        client.put(
+            "/api/players/current-utr",
+            headers=WRITE,
+            json={
+                "season_year": TEST_YEAR,
+                "updates": [
+                    {
+                        "player_id": ids["望舒"],
+                        "doubles_utr": None,
+                        "doubles_status": None,
+                    }
+                ],
+            },
+        )
+
+        assert self._season_utr(ids["望舒"]) is not None
+
+    def test_the_sheet_route_mirrors_the_same_way(self, client):
+        # Two ways in, one rule. A sheet import that skipped this would leave
+        # the batch path and the inline edit disagreeing about what filling in
+        # a doubles UTR means.
+        rows = client.get(sheet_url(), headers=READ).json()
+        gao = next(r for r in rows if r["first_name"] == "冥子")
+        header = "id\t姓\t名\t当前单打\t单打状态\t当前双打\t双打状态\tUTR链接"
+        text = "\n".join(
+            [
+                header,
+                "\t".join(
+                    [
+                        str(gao["player_id"]),
+                        gao["last_name"],
+                        gao["first_name"],
+                        "",
+                        "",
+                        "6.05",
+                        "rated",
+                        "",
+                    ]
+                ),
+            ]
+        )
+
+        client.post(f"{sheet_url()}/apply", headers=WRITE, json={"text": text})
+
+        assert self._season_utr(gao["player_id"]).value == Decimal("6.05")

@@ -19,6 +19,10 @@ export async function saveCurrentUtr(
   edit: CurrentUtrEdit,
 ): Promise<void> {
   await adminWrite("PUT", "/api/players/current-utr", {
+    // The season travels with the write: while it is unlocked, a new current
+    // doubles UTR becomes that season's participation UTR too, which is the
+    // only number a lineup can be built from before the committee's arrives.
+    season_year: Number(season),
     updates: [edit],
   });
   revalidatePath(`/${season}/${division}/teams/${teamCode}`);

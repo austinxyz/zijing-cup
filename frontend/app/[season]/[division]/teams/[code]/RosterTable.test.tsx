@@ -368,3 +368,42 @@ describe("editing one player's current UTR in place", () => {
     expect(screen.getByText("南 望舒")).toBeTruthy();
   });
 });
+
+describe("filling in a UTR should take one field, not two", () => {
+  it("starts the status at rated so only the number needs typing", () => {
+    // 已认证 is what a hand-checked number almost always is. Making the person
+    // pick it every time is a second field for a decision they already made.
+    render(<RosterTable players={[player()]} canEdit />);
+    fireEvent.click(screen.getByRole("button", { name: "改" }));
+
+    const status = screen.getByLabelText("当前双打状态") as HTMLSelectElement;
+    expect(status.value).toBe("rated");
+  });
+
+  it("keeps a status the player already has", () => {
+    render(
+      <RosterTable
+        players={[player({ doubles_utr: "6.10", doubles_status: "projected" })]}
+        canEdit
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "改" }));
+
+    const status = screen.getByLabelText("当前双打状态") as HTMLSelectElement;
+    expect(status.value).toBe("projected");
+  });
+
+  it("sends rated along with a number typed into an empty row", () => {
+    const onSave = vi.fn();
+    render(<RosterTable players={[player({ player_id: 7 })]} canEdit onSave={onSave} />);
+    fireEvent.click(screen.getByRole("button", { name: "改" }));
+    fireEvent.change(screen.getByLabelText("当前双打"), {
+      target: { value: "6.40" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "存" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ doubles_utr: "6.40", doubles_status: "rated" }),
+    );
+  });
+});

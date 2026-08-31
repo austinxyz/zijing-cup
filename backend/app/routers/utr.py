@@ -17,7 +17,13 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from app.db import get_session
-from app.models import Player, PlayerTeamMembership, Team
+from app.models import (
+    Player,
+    PlayerSeasonUtr,
+    PlayerTeamMembership,
+    SeasonLock,
+    Team,
+)
 from app.players.utr_sheet import (
     DiffResult,
     PlayerView,
@@ -198,6 +204,17 @@ def apply_sheet(
         for field in change.fields:
             setattr(person, field.field, _typed(field.field, field.new))
         session.add(person)
+
+        # Same rule as the inline edit reaches through the batch endpoint:
+        # two ways in, one meaning for "I filled in a doubles UTR".
+        doubles = next(
+            (f for f in change.fields if f.field == "doubles_utr"), None
+        )
+        if doubles is not None and doubles.new is not None:
+            _mirror_participation(
+                session, person.id, year, Decimal(doubles.new)
+            )
+
     session.commit()
     return AppliedOut(updated=len(result.changes))
 
@@ -294,6 +311,11 @@ class CurrentUtrUpdate(BaseModel):
 class CurrentUtrBatch(BaseModel):
     updates: list[CurrentUtrUpdate]
 
+    #: Which season the caller was looking at. When given and that season is
+    #: open, a new current doubles UTR also becomes that season's
+    #: participation UTR — see `_mirror_participation`.
+    season_year: Optional[int] = None
+
 
 @router.put("/players/current-utr")
 def write_current_utrs(
@@ -333,8 +355,64 @@ def write_current_utrs(
             setattr(person, field, value)
         session.add(person)
 
+        if batch.season_year is not None and named.get("doubles_utr") is not None:
+            _mirror_participation(
+                session, person.id, batch.season_year, named["doubles_utr"]
+            )
+
     session.commit()
     return {"updated": len(batch.updates)}
+
+
+def _mirror_participation(
+    session: Session, player_id: int, season_year: int, value: Decimal
+) -> None:
+    """Make the new current doubles UTR this season's participation UTR too.
+
+    Before the sampling window there is no committee figure, so the number
+    somebody types by hand is the only one a lineup can be built from. Leaving
+    it in the 「当前 UTR」 column alone would mean filling in a value that
+    changes no conclusion anywhere.
+
+    Overwrites whatever is there, committee values included. That is the
+    owner's call and it rests on the process: the committee's data is imported
+    and the season locked in the same sitting, so "has committee data" and
+    "still unlocked" do not overlap in practice. **The lock is the only
+    guard** — `source` no longer doubles as one. Forget to lock and one hand
+    typed number will silently replace a frozen one.
+
+    Written as `prefilled` with no status: a stand-in, not anybody's
+    adjudication, which is why the roster shows it as 待定.
+    """
+    if session.get(SeasonLock, season_year) is not None:
+        return
+
+    row = session.exec(
+        select(PlayerSeasonUtr).where(
+            PlayerSeasonUtr.player_id == player_id,
+            PlayerSeasonUtr.season_year == season_year,
+        )
+    ).one_or_none()
+
+    if row is None:
+        session.add(
+            PlayerSeasonUtr(
+                player_id=player_id,
+                season_year=season_year,
+                value=value,
+                source="prefilled",
+            )
+        )
+        return
+
+    row.value = value
+    row.source = "prefilled"
+    row.status = None
+    # A hand-typed stand-in settles nothing, so any conflict it used to carry
+    # is no longer a conflict — but it is not adjudicated either.
+    row.is_unresolved = False
+    row.alt_value = None
+    session.add(row)
 
 
 @router.get(
