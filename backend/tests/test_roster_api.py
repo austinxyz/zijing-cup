@@ -23,7 +23,15 @@ from sqlmodel import Session, delete, select
 
 from app.db import engine
 from app.main import app
-from app.models import Division, RosterEntry, Season, Team
+from app.models import (
+    Division,
+    Player,
+    PlayerSeasonUtr,
+    PlayerTeamMembership,
+    RosterEntry,
+    Season,
+    Team,
+)
 from app.rosters.load import load_rosters
 
 AUTH = {"X-Backend-Secret": "test-secret"}
@@ -43,11 +51,53 @@ ROWS = [
 ]
 
 
+#: (team, last, first, gender, season utr, committee status, appeal)
+REGISTRY = [
+    ("API-ALPHA", "南", "望舒", "M", "6.50", "verified", False),
+    ("API-ALPHA", "西", "门吹雪", "F", "4.00", None, False),
+    # On the team but never in the CSV snapshot: the whole point of the switch
+    # is that a player added through the admin UI shows up here.
+    ("API-ALPHA", "顾", "青阳", "M", "6.00", "captain", True),
+    # No value for this season at all: what he has is an older one, and the
+    # roster has to derive from it rather than drop him.
+    ("API-ALPHA", "柳", "如是", "F", None, None, False),
+    ("API-BETA", "北", "冥子", "M", "7.10", "committee", False),
+    ("API-BETA", "东", "方朔", None, "5.00", "verified", False),
+]
+
+
+def _build_registry(session: Session, teams: dict[str, Team]) -> None:
+    for code, last, first, gender, utr, status, appeal in REGISTRY:
+        player = Player(last_name=last, first_name=first, gender=gender)
+        session.add(player)
+        session.commit()
+        session.refresh(player)
+        session.add(
+            PlayerTeamMembership(player_id=player.id, team_id=teams[code].id)
+        )
+        if utr is None:
+            continue
+        session.add(
+            PlayerSeasonUtr(
+                player_id=player.id,
+                season_year=TEST_YEAR,
+                value=Decimal(utr),
+                status=status,
+                under_appeal=appeal,
+                source="committee_sheet",
+            )
+        )
+    session.commit()
+
+
 @pytest.fixture(scope="module")
 def client():
     with Session(engine) as session:
         _cleanup(session)
         session.add(Season(year=TEST_YEAR, edition_name="接口测试赛季"))
+        # The season before it exists too, so the derivation chain has
+        # somewhere to fall back to.
+        session.add(Season(year=TEST_YEAR - 1, edition_name="接口测试上届"))
         session.commit()
         session.add(
             Division(
@@ -84,6 +134,49 @@ def client():
         session.add(entry)
         session.commit()
 
+        _build_registry(
+            session,
+            {
+                team.code: team
+                for team in session.exec(
+                    select(Team).where(Team.season_year == TEST_YEAR)
+                ).all()
+            },
+        )
+
+        # Hand-set state the importer never produces, so the endpoint is
+        # exercised with it. It lives on the membership and the player now —
+        # that is where the roster reads it from.
+        # Her only participation value is last season's; this season has
+        # none.
+        earlier = session.exec(
+            select(Player).where(Player.first_name == "如是")
+        ).one()
+        session.add(
+            PlayerSeasonUtr(
+                player_id=earlier.id,
+                season_year=TEST_YEAR - 1,
+                value=Decimal("5.60"),
+                status="verified",
+                source="committee_sheet",
+            )
+        )
+        session.commit()
+
+        borrowed = session.exec(
+            select(Player).where(Player.first_name == "望舒")
+        ).one()
+        borrowed.utr_profile_id = "880077"
+        session.add(borrowed)
+        membership = session.exec(
+            select(PlayerTeamMembership).where(
+                PlayerTeamMembership.player_id == borrowed.id
+            )
+        ).one()
+        membership.is_borrowed_player = True
+        session.add(membership)
+        session.commit()
+
     yield TestClient(app)
 
     with Session(engine) as session:
@@ -96,10 +189,38 @@ def _cleanup(session: Session) -> None:
         for t in session.exec(select(Team).where(Team.season_year == TEST_YEAR)).all()
     ]
     if team_ids:
+        player_ids = [
+            m.player_id
+            for m in session.exec(
+                select(PlayerTeamMembership).where(
+                    PlayerTeamMembership.team_id.in_(team_ids)
+                )
+            ).all()
+        ]
+        session.execute(
+            delete(PlayerTeamMembership).where(
+                PlayerTeamMembership.team_id.in_(team_ids)
+            )
+        )
+        if player_ids:
+            session.execute(
+                delete(PlayerSeasonUtr).where(
+                    PlayerSeasonUtr.player_id.in_(player_ids)
+                )
+            )
         session.execute(delete(RosterEntry).where(RosterEntry.team_id.in_(team_ids)))
         session.execute(delete(Team).where(Team.id.in_(team_ids)))
+        if player_ids:
+            session.execute(delete(Player).where(Player.id.in_(player_ids)))
+    session.execute(
+        delete(PlayerSeasonUtr).where(
+            PlayerSeasonUtr.season_year.in_([TEST_YEAR, TEST_YEAR - 1])
+        )
+    )
     session.execute(delete(Division).where(Division.season_year == TEST_YEAR))
-    session.execute(delete(Season).where(Season.year == TEST_YEAR))
+    session.execute(
+        delete(Season).where(Season.year.in_([TEST_YEAR, TEST_YEAR - 1]))
+    )
     session.commit()
 
 
@@ -125,7 +246,9 @@ class TestTeamList:
         body = client.get(teams_url(), headers=AUTH).json()
         by_code = {t["code"]: t for t in body}
 
-        assert by_code["API-ALPHA"]["player_count"] == 2
+        # Three, not two: one of them was added through the admin UI and has
+        # no row in the CSV snapshot at all.
+        assert by_code["API-ALPHA"]["player_count"] == 4
         assert by_code["API-BETA"]["player_count"] == 2
 
     def test_unknown_season_is_404(self, client):
@@ -145,9 +268,43 @@ class TestRoster:
         by_name = {p["first_name"]: p for p in body["players"]}
 
         assert by_name["望舒"]["match_utr"] == "6.50"
-        assert by_name["望舒"]["dutr_status"] == "Rated"
         assert by_name["望舒"]["rating_class"] == "verified"
-        assert by_name["门吹雪"]["source_note"] == "Captain Provided UTR"
+        # The registry-only player is in the roster too — he is on the team.
+        assert by_name["青阳"]["rating_class"] == "captain"
+        assert by_name["青阳"]["under_appeal"] is True
+
+    def test_a_player_without_this_seasons_value_is_still_on_the_roster(
+        self, client
+    ):
+        # He is on the team; leaving him out would misreport the squad. The
+        # number is derived from the last season that had one, and the
+        # response has to say so — with the year, since deriving from 2024 and
+        # from last year are different degrees of confidence.
+        body = client.get(roster_url(), headers=AUTH).json()
+        by_name = {p["first_name"]: p for p in body["players"]}
+
+        assert by_name["如是"]["match_utr"] == "5.60"
+        assert by_name["如是"]["origin"] == "prior_season"
+        assert by_name["如是"]["origin_year"] == TEST_YEAR - 1
+
+    def test_a_frozen_value_is_not_marked_as_derived(self, client):
+        body = client.get(roster_url(), headers=AUTH).json()
+        by_name = {p["first_name"]: p for p in body["players"]}
+
+        assert by_name["望舒"]["origin"] == "frozen"
+        assert by_name["望舒"]["origin_year"] == TEST_YEAR
+
+    def test_the_sheet_only_fields_are_always_null(self, client):
+        # They have no counterpart in the registry. Kept in the response so
+        # its shape does not change, but a consumer must not read a fact out
+        # of them: null here means "not stored any more", not "the sheet was
+        # silent".
+        body = client.get(roster_url(), headers=AUTH).json()
+
+        for player in body["players"]:
+            assert player["dutr_status"] is None
+            assert player["source_note"] is None
+            assert player["daily_utrs"] == []
 
     def test_undetermined_rating_class_is_null_not_guessed(self, client):
         body = client.get(roster_url(), headers=AUTH).json()
@@ -270,8 +427,13 @@ class TestGenderBreakdown:
         body = client.get(teams_url(), headers=AUTH).json()
         by_code = {t["code"]: t for t in body}
 
-        assert by_code["API-ALPHA"]["men_count"] == 1
-        assert by_code["API-ALPHA"]["women_count"] == 1
+        # Two men and one woman: the third is the registry-only player, and
+        # gender comes off the player record, not the snapshot row.
+        assert by_code["API-ALPHA"]["men_count"] == 2
+        assert by_code["API-ALPHA"]["women_count"] == 2
+        # Zero, not one: the registry-only player has a gender on his player
+        # record. Reading gender off the snapshot would drop him in here.
+        assert by_code["API-ALPHA"]["unknown_gender_count"] == 0
 
     def test_players_without_a_gender_are_counted_separately(self, client):
         # Not folded into either side: gender is nullable, and adding an

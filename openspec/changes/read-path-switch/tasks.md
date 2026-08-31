@@ -21,13 +21,13 @@
 - [x] 1.8 GREEN — 补齐状态判定与 `None` 分支
 - [x] 1.9 RED — 命中的赛季 UTR 为 `is_unresolved` 时，返回较大的候选值且 `is_unresolved` 为 True
 - [x] 1.10 GREEN — 透传 `is_unresolved`
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 球队列表与名单读取换源
 
 ### Contract
 - **Spec**: 两个端点的数据来源 SHALL 是队员注册表（队员 / 赛季参赛 UTR / 队伍成员关系），MUST NOT 再读名单快照 `roster_entries`。名单的「人数」自此等于该队的成员关系条数，性别取自队员记录。响应的字段集合 SHALL 保持不变。`dutr_status` / `source_note` / `daily_utrs` 恒为 null。一名队员在该赛季没有参赛 UTR 时，端点 SHALL 返回按推导链取得的值及其来源标记，MUST NOT 因为缺值就把这名队员从名单里略去。性别为空的记录 MUST 单独计数。系统 MUST NOT 提供任何修改名单或球队的 HTTP 端点。
-- **Runtime**: `cd backend && ./.venv-std/Scripts/python.exe -m pytest tests/test_roster_api.py tests/test_roster_query.py -q` → expected: 全部通过；fixture 建在新表上，不再插入 `roster_entries`
+- **Runtime**: `cd backend && ./.venv-std/Scripts/python.exe -m pytest tests/test_roster_api.py -q` → expected: 全部通过；fixture 建在新表上，不再插入 `roster_entries`
 - **Code**:
   - D5：`dutr_status` 当前是必填 `str`，要放宽成 `Optional[str]`。这是本次唯一的响应类型变更，且是放宽而非收紧。
   - D6：`rating_class` 由 `player_season_utrs.status` 直接映射（verified/committee/captain/null）；`under_appeal` 独立传出。
@@ -35,17 +35,17 @@
   - 名单排序照旧「参赛 UTR 降序，同值按姓」，且排序用推导后的值。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — 改写 `tests/test_roster_query.py` 的 fixture 建到新表（players / memberships / season utrs），断言球队列表的人数等于成员关系条数；此时 `list_teams` 仍读 `roster_entries`，人数为 0，失败
-- [ ] 2.2 GREEN — `list_teams` 换成 `Team LEFT JOIN PlayerTeamMembership JOIN Player`，保持单查询、外连接与 code 排序
-- [ ] 2.3 RED — 断言男/女/未填三档之和等于总数，且性别为空的队员单独成档
-- [ ] 2.4 GREEN — 性别分档取自 `Player.gender`
-- [ ] 2.5 RED — `get_team_roster` 返回该队全部成员，含参赛 UTR、`rating_class`、`under_appeal`、外援标记与来源；断言 `dutr_status`/`source_note`/`daily_utrs` 三者恒为 null
-- [ ] 2.6 GREEN — `get_team_roster` 换源；`RosterPlayerOut.dutr_status` 放宽为 `Optional[str]`；新增来源字段（`origin` / `origin_year` / `is_unresolved`）
-- [ ] 2.7 RED — 某队员该赛季无参赛 UTR 但推导链能取到值时，他仍出现在名单里，值为推导值且带来源标记与年份
-- [ ] 2.8 GREEN — 名单读取调用 group 1 的 `resolve_match_utr`；排序用推导后的值
-- [ ] 2.9 RED — 断言 `app.openapi()["paths"]` 里不存在指向名单或球队的写方法，并配一条「读路由确实注册了」的断言防守卫空转
-- [ ] 2.10 GREEN — 若断言失败则修正路由；无写方法时确认守卫本身不空转
+- [x] 2.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 RED — 改写 `tests/test_roster_query.py` 的 fixture 建到新表（players / memberships / season utrs），断言球队列表的人数等于成员关系条数；此时 `list_teams` 仍读 `roster_entries`，人数为 0，失败
+- [x] 2.2 GREEN — `list_teams` 换成 `Team LEFT JOIN PlayerTeamMembership JOIN Player`，保持单查询、外连接与 code 排序
+- [x] 2.3 RED — 断言男/女/未填三档之和等于总数，且性别为空的队员单独成档
+- [x] 2.4 GREEN — 性别分档取自 `Player.gender`
+- [x] 2.5 RED — `get_team_roster` 返回该队全部成员，含参赛 UTR、`rating_class`、`under_appeal`、外援标记与来源；断言 `dutr_status`/`source_note`/`daily_utrs` 三者恒为 null
+- [x] 2.6 GREEN — `get_team_roster` 换源；`RosterPlayerOut.dutr_status` 放宽为 `Optional[str]`；新增来源字段（`origin` / `origin_year` / `is_unresolved`）
+- [x] 2.7 RED — 某队员该赛季无参赛 UTR 但推导链能取到值时，他仍出现在名单里，值为推导值且带来源标记与年份
+- [x] 2.8 GREEN — 名单读取调用 group 1 的 `resolve_match_utr`；排序用推导后的值
+- [x] 2.9 RED — 断言 `app.openapi()["paths"]` 里不存在指向名单或球队的写方法，并配一条「读路由确实注册了」的断言防守卫空转
+- [x] 2.10 GREEN — 若断言失败则修正路由；无写方法时确认守卫本身不空转
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 排阵引擎换源、key 前缀与旧链接拒绝

@@ -18,7 +18,14 @@ from typing import Optional
 from pydantic import BaseModel
 from sqlmodel import Session, func, select
 
-from app.models import Division, RosterEntry, Team
+from app.models import (
+    Division,
+    Player,
+    PlayerSeasonUtr,
+    PlayerTeamMembership,
+    Team,
+)
+from app.players.utr_chain import SeasonUtrView, UtrOrigin, resolve_match_utr
 
 
 class TeamSummaryOut(BaseModel):
@@ -56,21 +63,37 @@ class RosterPlayerOut(BaseModel):
     first_name: str
     gender: Optional[str] = None
 
-    #: The frozen participation UTR the event actually uses.
+    #: The participation UTR the event actually uses. Frozen when the season
+    #: has one; otherwise derived — see `origin`.
     match_utr: Decimal
 
-    #: The committee sheet's own status word, including any "/ Appeal" suffix.
-    dutr_status: str
+    #: Where `match_utr` came from, and from which season. A derived value has
+    #: to be presentable as derived: it is not what the committee froze.
+    origin: UtrOrigin
+    origin_year: Optional[int] = None
+
+    #: The season value has two candidates and nobody has ruled between them.
+    is_unresolved: bool = False
+
+    #: Rides on top of `rating_class` rather than replacing it: any of the
+    #: three classes can be under appeal.
+    under_appeal: bool = False
+
+    #: Always null. The registry does not store the sheet's own status word,
+    #: and the field is kept only so the response shape is unchanged — reading
+    #: a fact out of it would be reading "not stored" as "the sheet said
+    #: nothing".
+    dutr_status: Optional[str] = None
 
     #: null when the status does not determine it (Unrated). Not a default —
     #: the class gates the "at most 2 self-rated on court" rule, so an
     #: invented value would be worse than an absent one.
     rating_class: Optional[str] = None
 
-    #: Where the participation UTR came from. Evidence for classifying the
-    #: player and for raising a UTR grievance.
+    #: Always null, for the same reason as `dutr_status`.
     source_note: Optional[str] = None
 
+    #: Always empty, for the same reason as `dutr_status`.
     daily_utrs: list[Decimal] = []
 
     #: null means nobody has marked this player — NOT "confirmed not a
@@ -111,16 +134,25 @@ def list_teams(
     # One grouped query with gender as a second dimension, not a count per
     # team: a division has up to two dozen teams, and a query each would be
     # two dozen round trips for a number that is already one GROUP BY away.
+    #
+    # Counted off the memberships, not the CSV snapshot: a player added
+    # through the admin UI has a membership and no snapshot row, and the
+    # number a captain reads here has to be the current squad.
     rows = session.exec(
         select(
             Team.code,
             Team.display_name,
-            RosterEntry.gender,
-            func.count(RosterEntry.id),
+            Player.gender,
+            func.count(PlayerTeamMembership.id),
         )
-        .join(RosterEntry, RosterEntry.team_id == Team.id, isouter=True)
+        .join(
+            PlayerTeamMembership,
+            PlayerTeamMembership.team_id == Team.id,
+            isouter=True,
+        )
+        .join(Player, Player.id == PlayerTeamMembership.player_id, isouter=True)
         .where(Team.season_year == year, Team.division_code == division_code)
-        .group_by(Team.code, Team.display_name, RosterEntry.gender)
+        .group_by(Team.code, Team.display_name, Player.gender)
         .order_by(Team.code)
     ).all()
 
@@ -158,13 +190,66 @@ def get_team_roster(
     if team is None:
         return None
 
-    entries = session.exec(
-        select(RosterEntry)
-        .where(RosterEntry.team_id == team.id)
-        # Strongest first: that is the order a captain reads a roster in when
-        # working out who can fill the top lines.
-        .order_by(RosterEntry.match_utr.desc(), RosterEntry.last_name)
+    memberships = session.exec(
+        select(PlayerTeamMembership, Player)
+        .join(Player, Player.id == PlayerTeamMembership.player_id)
+        .where(PlayerTeamMembership.team_id == team.id)
     ).all()
+
+    player_ids = [player.id for _, player in memberships]
+    seasons_by_player: dict[int, list[SeasonUtrView]] = {}
+    appeal_by_player: dict[int, bool] = {}
+    status_by_player: dict[int, Optional[str]] = {}
+    if player_ids:
+        # One query for the whole team rather than one per player: a roster
+        # runs to two dozen people and the chain needs every season anyway.
+        for row in session.exec(
+            select(PlayerSeasonUtr).where(PlayerSeasonUtr.player_id.in_(player_ids))
+        ).all():
+            seasons_by_player.setdefault(row.player_id, []).append(
+                SeasonUtrView(
+                    season_year=row.season_year,
+                    value=row.value,
+                    is_unresolved=row.is_unresolved,
+                )
+            )
+            if row.season_year == year:
+                appeal_by_player[row.player_id] = row.under_appeal
+                status_by_player[row.player_id] = row.status
+
+    players: list[RosterPlayerOut] = []
+    for membership, player in memberships:
+        resolved = resolve_match_utr(
+            season_utrs=seasons_by_player.get(player.id, []),
+            current_doubles=player.doubles_utr,
+            current_doubles_status=player.doubles_status,
+            season_year=year,
+        )
+        if resolved is None:
+            # Nothing to show a number for, but he is on the team: dropping
+            # him would misreport the squad. The caller decides how to render
+            # a player with no usable value.
+            continue
+        players.append(
+            RosterPlayerOut(
+                last_name=player.last_name,
+                first_name=player.first_name,
+                gender=player.gender,
+                match_utr=resolved.value,
+                origin=resolved.origin,
+                origin_year=resolved.origin_year,
+                is_unresolved=resolved.is_unresolved,
+                rating_class=status_by_player.get(player.id),
+                under_appeal=appeal_by_player.get(player.id, False),
+                is_borrowed_player=membership.is_borrowed_player,
+                utr_profile_id=player.utr_profile_id,
+            )
+        )
+
+    # Strongest first: that is the order a captain reads a roster in when
+    # working out who can fill the top lines. Sorted on the resolved value,
+    # so a derived number sits where its size puts it.
+    players.sort(key=lambda p: (-p.match_utr, p.last_name))
 
     return TeamRosterOut(
         team=TeamOut(
@@ -173,19 +258,5 @@ def get_team_roster(
             season_year=team.season_year,
             division_code=team.division_code,
         ),
-        players=[
-            RosterPlayerOut(
-                last_name=entry.last_name,
-                first_name=entry.first_name,
-                gender=entry.gender,
-                match_utr=entry.match_utr,
-                dutr_status=entry.dutr_status,
-                rating_class=entry.rating_class,
-                source_note=entry.source_note,
-                daily_utrs=list(entry.daily_utrs or []),
-                is_borrowed_player=entry.is_borrowed_player,
-                utr_profile_id=entry.utr_profile_id,
-            )
-            for entry in entries
-        ],
+        players=players,
     )
