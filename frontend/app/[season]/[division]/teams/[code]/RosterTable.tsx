@@ -2,35 +2,56 @@ import { Badge } from "@/components/ui";
 import type { RosterPlayer } from "@/lib/api";
 import { playerName } from "@/lib/name";
 
-/** The sheet's status word -> the class we are willing to state.
+/** The committee's own class for a participation value.
  *
- *  `Unrated` is deliberately absent. Whether such a player is
- *  committee-adjudicated or self-rated depends on USTA match history the
- *  committee sheet does not carry, and naming a class here would settle who
- *  counts against the "at most two self-rated on court, never partnered"
- *  cap — a decision this page is in no position to make. */
+ *  null maps to nothing on purpose. Whether an unclassified player is
+ *  committee-adjudicated or captain-rated depends on USTA match history
+ *  nobody has recorded, and naming a class here would settle who counts
+ *  against the "at most two self-rated on court, never partnered" cap — a
+ *  decision this page is in no position to make. */
 const CLASS_LABEL: Record<string, string> = {
-  Rated: "已认证",
-  Projected: "委员会审定",
+  verified: "已认证",
+  committee: "委员会审定",
+  captain: "队长评定",
 };
 
 const GENDER_LABEL: Record<string, string> = { M: "男", F: "女" };
 
-/** Classify by the status word, ignoring any "/ Appeal" suffix: the suffix
- *  records a manual adjustment, not a different class. */
-function classLabel(status: string): string | null {
-  return CLASS_LABEL[status.split("/")[0].trim()] ?? null;
+/** What to say about a value that is not this season's frozen one.
+ *
+ *  The year is part of the label, not decoration: deriving 2026 from 2025 and
+ *  from 2023 are two different degrees of confidence, and a bare 「估算」
+ *  would present them as the same claim. */
+function estimateLabel(
+  origin: string | null,
+  originYear: number | null,
+): string | null {
+  if (origin === "current_doubles") return "估算 · 当前已认证值";
+  if (origin === "prior_season" && originYear !== null) {
+    return `估算 · ${originYear} 参赛值`;
+  }
+  return null;
 }
 
 export function RosterTable({ players }: { players: RosterPlayer[] }) {
   return (
-    <table className="w-full table-fixed border-collapse bg-surface">
+    <div>
+      {/* Beside the columns, not in a footer: a number that looks official
+          gets used as official, and these are typed in by hand in the admin
+          screens with nothing syncing them. Today the two columns are
+          entirely 「—」, which without this line reads as a broken page. */}
+      <p className="border-b border-border bg-surface-muted px-3.5 py-1.5 text-[11px] text-foreground">
+        当前 UTR 由人工维护，未与 UTR 官网同步
+      </p>
+      <table className="w-full table-fixed border-collapse bg-surface">
       <colgroup>
         <col className="w-12" />
         <col className="w-[168px]" />
         <col className="w-16" />
         <col className="w-[104px]" />
         <col />
+        <col className="w-[112px]" />
+        <col className="w-[112px]" />
       </colgroup>
       <thead>
         <tr>
@@ -39,6 +60,8 @@ export function RosterTable({ players }: { players: RosterPlayer[] }) {
           <Th>性别</Th>
           <Th>参赛 UTR</Th>
           <Th>UTR 来源</Th>
+          <Th>当前单打</Th>
+          <Th>当前双打</Th>
         </tr>
       </thead>
       <tbody>
@@ -60,27 +83,121 @@ export function RosterTable({ players }: { players: RosterPlayer[] }) {
             {/* A decimal string all the way through: 10.25 and 10.2 are
                 different answers against a cap. */}
             <Td className="font-mono text-[12.5px] text-foreground">
-              {player.match_utr}
+              <UtrCell player={player} />
             </Td>
             <Td>
-              <SourceCell status={player.dutr_status} />
+              <SourceCell
+                ratingClass={player.rating_class}
+                underAppeal={player.under_appeal}
+              />
+            </Td>
+            <Td className="font-mono text-[12.5px] text-muted">
+              <CurrentUtrCell
+                value={player.singles_utr}
+                status={player.singles_status}
+              />
+            </Td>
+            <Td className="font-mono text-[12.5px] text-muted">
+              <CurrentUtrCell
+                value={player.doubles_utr}
+                status={player.doubles_status}
+              />
             </Td>
           </tr>
         ))}
       </tbody>
-    </table>
+      </table>
+    </div>
   );
 }
 
 /**
- * What we concluded, next to what the sheet actually said.
+ * A live UTR, in UTR's own vocabulary.
  *
- * Both, because the conclusion is the useful part and the original is the
- * evidence for it — and because when the conclusion is 「待定」 the original
- * is the only thing on the row with any information in it.
+ * The status is shown rather than translated: `rated` / `projected` /
+ * `unrated` are the words the site itself uses, and step two of the
+ * derivation chain turns on exactly which one it is.
  */
-function SourceCell({ status }: { status: string }) {
-  const label = classLabel(status);
+function CurrentUtrCell({
+  value,
+  status,
+}: {
+  value: string | null;
+  status: string | null;
+}) {
+  if (value === null) {
+    // An em dash, not an empty cell: today every row is like this, and a
+    // column of blanks reads as a page that failed to load.
+    // `text-muted`, not `text-muted-foreground`: the lighter one measures
+    // 2.5:1 on white, and this dash is the cell's whole content.
+    return <span className="text-muted">—</span>;
+  }
+
+  return (
+    <div className="flex min-w-0 items-center gap-1.5">
+      <span className="flex-none text-foreground">{value}</span>
+      {status !== null ? (
+        <span className="truncate text-[10.5px] text-muted-foreground">
+          {status}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * The number, and whether it is really this season's.
+ *
+ * A derived value sits where its size puts it in the ordering, so without a
+ * mark it is indistinguishable from a frozen one — and the whole lineup's
+ * legality is computed from these numbers.
+ */
+function UtrCell({ player }: { player: RosterPlayer }) {
+  if (player.match_utr === null) {
+    // He is on the team, so he is here. A blank cell reads as a broken page
+    // and a 0 reads as a real, very low rating.
+    return (
+      <Badge variant="neutral" className="h-5 px-[7px] font-sans text-[11px]">
+        无参赛 UTR
+      </Badge>
+    );
+  }
+
+  const estimate = estimateLabel(player.origin, player.origin_year);
+
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      {/* A decimal string all the way through: 10.25 and 10.2 are different
+          answers against a cap. */}
+      <span className="flex-none">{player.match_utr}</span>
+      {estimate !== null ? (
+        <Badge
+          variant="warning-subtle"
+          className="h-5 flex-none px-[7px] text-[11px] font-sans"
+        >
+          {estimate}
+        </Badge>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * The class the committee settled on, if it settled on one.
+ *
+ * The sheet's own status word used to sit beside this as evidence. The
+ * registry does not store it, so there is nothing to show next to 「待定」
+ * any more — which makes it all the more important that 「待定」 is never
+ * quietly upgraded to a concrete class.
+ */
+function SourceCell({
+  ratingClass,
+  underAppeal,
+}: {
+  ratingClass: string | null;
+  underAppeal: boolean;
+}) {
+  const label = ratingClass === null ? null : CLASS_LABEL[ratingClass] ?? null;
 
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -94,9 +211,14 @@ function SourceCell({ status }: { status: string }) {
       ) : (
         <span className="flex-none text-[12.5px] text-foreground">{label}</span>
       )}
-      <span className="truncate font-mono text-[11px] text-muted-foreground">
-        {status}
-      </span>
+      {/* Appeal rides on top of the class rather than replacing it: the real
+          sheet had Rated / Appeal, Projected / Appeal and Unrated / Appeal. */}
+      {underAppeal ? (
+        // `text-muted`, not `text-muted-foreground`: at 11px the lighter one
+        // measures 2.79:1 on this background, and Appeal is a claim about the
+        // value, not decoration.
+        <span className="flex-none text-[11px] text-muted">· Appeal</span>
+      ) : null}
     </div>
   );
 }

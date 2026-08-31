@@ -99,6 +99,16 @@ class RosterPlayerOut(BaseModel):
     #: Always empty, for the same reason as `dutr_status`.
     daily_utrs: list[Decimal] = []
 
+    #: The player's live UTRs, each with the word UTR itself uses for it.
+    #: These are the input to step two of the derivation chain, so a reader
+    #: who wants to know why an estimate landed where it did — or to work one
+    #: out before the season's value exists — needs them on the same row.
+    #: Null when nobody has filled them in, which today is everybody.
+    singles_utr: Optional[Decimal] = None
+    singles_status: Optional[str] = None
+    doubles_utr: Optional[Decimal] = None
+    doubles_status: Optional[str] = None
+
     #: null means nobody has marked this player — NOT "confirmed not a
     #: borrowed player". The rules cap borrowed players per team and per
     #: match, so the distinction decides whether a lineup was really checked.
@@ -242,6 +252,10 @@ def get_team_roster(
                 is_unresolved=resolved.is_unresolved if resolved else False,
                 rating_class=status_by_player.get(player.id),
                 under_appeal=appeal_by_player.get(player.id, False),
+                singles_utr=player.singles_utr,
+                singles_status=player.singles_status,
+                doubles_utr=player.doubles_utr,
+                doubles_status=player.doubles_status,
                 is_borrowed_player=membership.is_borrowed_player,
                 utr_profile_id=player.utr_profile_id,
             )

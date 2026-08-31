@@ -7,7 +7,7 @@ const GENDER_LABEL: Record<string, string> = { M: "男", F: "女" };
 
 /** Warning tier: "the committee has not confirmed this number." */
 const UNCONFIRMED =
-  "inline-flex items-center rounded-full border border-warning-border bg-warning-surface px-2 py-px text-[11px] leading-relaxed text-[#8a6508]";
+  "inline-flex items-center rounded-full border border-warning-border bg-warning-surface px-2 py-px text-[11px] leading-relaxed text-warning";
 const QUIET =
   "inline-flex items-center rounded-full border border-border bg-surface px-2 py-px text-[11px] leading-relaxed text-muted-foreground";
 const SETTLED =

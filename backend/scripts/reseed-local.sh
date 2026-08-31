@@ -21,7 +21,10 @@ assert "127.0.0.1" in url or "localhost" in url, (
 PY
 
 uv run python -m app.seeds.load_rules
-uv run python -m app.rosters 2025 gold data/rosters/2025-gold.csv > /dev/null
-uv run python -m app.rosters 2025 silver data/rosters/2025-silver.csv > /dev/null
+# The importer refuses by default now: nothing reads `roster_entries` any
+# more. It is still seeded here because `app.players.migrate` reads it as its
+# source, which is exactly the case the override flag exists for.
+uv run python -m app.rosters 2025 gold data/rosters/2025-gold.csv   --i-know-it-is-not-read > /dev/null
+uv run python -m app.rosters 2025 silver data/rosters/2025-silver.csv   --i-know-it-is-not-read > /dev/null
 uv run python -m app.seeds.team_names
 echo "local database restored"

@@ -7,7 +7,8 @@ type Variant =
   | "danger"
   | "muted"
   | "warning"
-  | "warning-subtle";
+  | "warning-subtle"
+  | "neutral";
 
 const variantClasses: Record<Variant, string> = {
   default: "bg-primary text-primary-foreground",
@@ -24,6 +25,11 @@ const variantClasses: Record<Variant, string> = {
   // read as a page full of errors when nothing is wrong — nobody has
   // classified them yet.
   "warning-subtle": "border border-warning-border bg-warning-surface text-warning",
+  // Same quiet surface as `muted`, but with foreground text. `muted`'s grey
+  // measures 4.09:1 here — under the 4.5:1 small text needs — and `cn` is a
+  // plain join, so passing a darker colour through className would be two
+  // classes of equal specificity settled by stylesheet order.
+  neutral: "border border-border bg-surface-muted text-foreground",
 };
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {

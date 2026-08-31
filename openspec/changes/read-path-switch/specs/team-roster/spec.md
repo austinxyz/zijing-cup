@@ -11,7 +11,11 @@ MUST NOT 提供任何修改名单或球队的 HTTP 端点 —— 名单的写入
 MUST NOT 再读名单快照 `roster_entries`。名单的「人数」自此等于该队的成员关系条数，
 性别取自队员记录。
 
-响应的字段集合 SHALL 保持不变。`dutr_status` / `source_note` / `daily_utrs` 在新来源里
+名单端点 SHALL 带出每名队员的**当前**单打 / 双打 UTR 及其各自状态。这四个值是推导链
+第二步的输入：没有它们，看的人无从判断某个估算为什么落在那里，也无从在本赛季参赛 UTR
+出来之前自己先估一个。四者未填时为 null。
+
+其余字段集合 SHALL 保持不变。`dutr_status` / `source_note` / `daily_utrs` 在新来源里
 没有对应物，因此恒为 null —— 保留字段是为了不改变响应形状，**消费方 MUST NOT 从它们
 身上推断任何事实**：一个恒为 null 的字段读起来是「总表没说」，而事实是「系统不再存它」。
 
@@ -54,6 +58,11 @@ MUST NOT 用 0 或任何哨兵值代替 —— 0 是一个合法 UTR，看的人
 - **WHEN** 某名队员既无该赛季值、无当前已认证双打值，也无任何更早赛季的值
 - **THEN** 该队员仍出现在名单中，参赛 UTR 与来源均为 null
 - **AND** 球队列表里该队的人数与名单条数一致
+
+#### Scenario: 名单带出当前 UTR 与其状态
+- **WHEN** 请求某支球队的名单
+- **THEN** 每条记录带有当前单打 UTR、单打状态、当前双打 UTR、双打状态
+- **AND** 四者未填时为 null，MUST NOT 以 0 或空串代替
 
 #### Scenario: 旧字段恒为空
 - **WHEN** 读取任一名单记录的 `dutr_status` / `source_note` / `daily_utrs`

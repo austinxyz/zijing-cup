@@ -140,17 +140,43 @@ export interface RosterPlayer {
   last_name: string;
   first_name: string;
   gender: string | null;
-  /** The participation UTR: frozen before the event, and the only number a
-   *  lineup is checked against. */
-  match_utr: string;
-  /** The committee sheet's own status word, "/ Appeal" suffix included. */
-  dutr_status: string;
-  /** null when the status does not determine it (Unrated). Not a default:
-   *  whether such a player is committee-adjudicated or self-rated depends on
-   *  USTA match history the sheet does not carry. */
+  /** The participation UTR: the only number a lineup is checked against.
+   *  null together with `origin` when nothing could be derived — he is on the
+   *  team, so he is on the roster, and there is no number to show. Never 0:
+   *  0 is a legal UTR and a reader could not tell the two apart. */
+  match_utr: string | null;
+  /** "frozen" | "current_doubles" | "prior_season", or null with `match_utr`.
+   *  Anything but "frozen" is derived and must be presented as such. */
+  origin: string | null;
+  /** The season the value came from. null for "current_doubles", which is not
+   *  a season value. */
+  origin_year: number | null;
+  /** The season value has two candidates and nobody has ruled between them;
+   *  the larger is the one shown. */
+  is_unresolved: boolean;
+  /** Rides on top of `rating_class` rather than replacing it: any of the
+   *  three classes can be under appeal. */
+  under_appeal: boolean;
+  /** Always null. The registry does not store the sheet's own status word.
+   *  Kept so the response shape is unchanged — do not read a fact out of it:
+   *  null here means "not stored any more", not "the sheet said nothing". */
+  dutr_status: string | null;
+  /** "verified" | "committee" | "captain", or null when nobody has decided.
+   *  Not a default: an Unrated player could be committee-adjudicated or
+   *  captain-rated depending on USTA history the sheet does not carry. */
   rating_class: string | null;
+  /** Always null, for the same reason as `dutr_status`. */
   source_note: string | null;
+  /** Always empty, for the same reason as `dutr_status`. */
   daily_utrs: string[];
+  /** The player's live UTRs, each with the word UTR itself uses. These are
+   *  the input to step two of the derivation chain: without them a reader
+   *  cannot tell why an estimate landed where it did. Maintained by hand in
+   *  the admin screens — nothing syncs them — and today all null. */
+  singles_utr: string | null;
+  singles_status: string | null;
+  doubles_utr: string | null;
+  doubles_status: string | null;
   /** null means nobody has marked this player — not "confirmed not one". */
   is_borrowed_player: boolean | null;
   utr_profile_id: string | null;

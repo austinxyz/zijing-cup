@@ -134,10 +134,20 @@
 <p class="no">页面上不再出现 <code>Rated</code> / <code>Projected</code> /
 <code>Unrated</code> 等原始状态文本 —— 新来源不存它。</p>
 
-<h3>2.3 当前 UTR 列的说明（中性）</h3>
+<h3>2.3 当前 UTR 两列与其说明（中性）</h3>
+<p>名单表新增两列：<strong>当前单打</strong>、<strong>当前双打</strong>，各自带状态。
+它们是推导链第二步的输入 —— 没有它们，看的人无从判断某个估算为什么落在那里。</p>
+<table>
+  <thead><tr><th>状态</th><th>单元格</th></tr></thead>
+  <tbody>
+    <tr><td>有值，<code>rated</code></td><td><code>6.72</code> <span class="badge-neutral">rated</span></td></tr>
+    <tr><td>有值，<code>projected</code></td><td><code>6.10</code> <span class="badge-neutral">projected</span></td></tr>
+    <tr><td>无值</td><td><code>—</code>（不显示状态）</td></tr>
+  </tbody>
+</table>
 <div class="notice-neutral">当前 UTR 由人工维护，未与 UTR 官网同步</div>
-<p>该列现在全为空（尚未导入），说明<strong>照样呈现</strong>：空列不加说明会被读成
-「这个人没有 UTR」，而事实是「还没人填」。</p>
+<p>这两列现在<strong>一整列都是 —</strong>（尚未导入），说明照样呈现：空列不加说明
+会被读成「这个人没有 UTR」，而事实是「还没人填」。</p>
 
 <h2>3 · 排阵页 <code>lineup/[code]</code></h2>
 

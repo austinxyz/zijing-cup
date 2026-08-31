@@ -91,7 +91,7 @@
 - [x] 4.2 GREEN — 在 `backend/app/rosters/load.py` 的命令入口加默认拒绝
 - [x] 4.3 RED — 带 `--i-know-it-is-not-read` 时数据照常写入 `roster_entries`，且**仍然**打印同一条说明
 - [x] 4.4 GREEN — 加显式开关，说明在两条路径上共用同一份文案
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 名单页的估算标记与来源列
 
@@ -104,15 +104,15 @@
   - `frontend/lib/api.ts` 是唯一出口，新增字段的类型改在那里；改完记得跑 `npx tsc --noEmit`（vitest 只转译不校验类型）。
 - **Threshold**: 70
 
-- [ ] 5.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-5.md with the ### Contract block above
-- [ ] 5.1 MOCK — open docs/superpowers/specs/mocks/2026-08-30-read-path-switch-mocks.html 第 2 节；抄下估算标记的两条逐字文案、类别四档映射、Appeal 的呈现形式与当前 UTR 说明；记下 warning 与中性两档的 token
-- [ ] 5.2 RED — vitest：推导值的行渲染 `估算 · 2025 参赛值`，且 `wrapper.classes()` 命中 warning 档 token；冻结值的行不出现估算标注
-- [ ] 5.3 GREEN — RosterTable 加估算标记；`frontend/lib/api.ts` 补 `origin` / `origin_year` / `is_unresolved` 字段类型
-- [ ] 5.4 RED — 类别四档（已认证 / 委员会审定 / 队长评定 / 待定）各一例；Appeal 时呈现 `<类别> · Appeal`；断言页面不出现 `Rated` / `Projected` / `Unrated` 原文
-- [ ] 5.5 GREEN — 「UTR 来源」列改为类别映射加 Appeal 后缀，移除原文渲染
-- [ ] 5.6 RED — 当前 UTR 列全为空时说明仍然呈现，逐字为 `当前 UTR 由人工维护，未与 UTR 官网同步`
-- [ ] 5.7 GREEN — 加该说明，中性档
-- [ ] 5.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；打开 2026 银组**最长**的那份名单（26 人）并把窗口调矮；对照 mocks 第 2 节核对文案与色档；确认长名单仍有自己的滚动容器、表头不被卷走
+- [x] 5.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-5.md with the ### Contract block above
+- [x] 5.1 MOCK — open docs/superpowers/specs/mocks/2026-08-30-read-path-switch-mocks.html 第 2 节；抄下估算标记的两条逐字文案、类别四档映射、Appeal 的呈现形式与当前 UTR 说明；记下 warning 与中性两档的 token
+- [x] 5.2 RED — vitest：推导值的行渲染 `估算 · 2025 参赛值`，且 `wrapper.classes()` 命中 warning 档 token；冻结值的行不出现估算标注
+- [x] 5.3 GREEN — RosterTable 加估算标记；`frontend/lib/api.ts` 补 `origin` / `origin_year` / `is_unresolved` 字段类型
+- [x] 5.4 RED — 类别四档（已认证 / 委员会审定 / 队长评定 / 待定）各一例；Appeal 时呈现 `<类别> · Appeal`；断言页面不出现 `Rated` / `Projected` / `Unrated` 原文
+- [x] 5.5 GREEN — 「UTR 来源」列改为类别映射加 Appeal 后缀，移除原文渲染
+- [x] 5.6 RED — 当前 UTR 列全为空时说明仍然呈现，逐字为 `当前 UTR 由人工维护，未与 UTR 官网同步`
+- [x] 5.7 GREEN — 加该说明，中性档
+- [x] 5.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；打开 2026 银组**最长**的那份名单（26 人）并把窗口调矮；对照 mocks 第 2 节核对文案与色档；确认长名单仍有自己的滚动容器、表头不被卷走
 - [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 6. 排阵页的四类提示与旧链接状态

@@ -170,6 +170,10 @@ def client():
             select(Player).where(Player.first_name == "望舒")
         ).one()
         borrowed.utr_profile_id = "880077"
+        borrowed.singles_utr = Decimal("6.90")
+        borrowed.singles_status = "rated"
+        borrowed.doubles_utr = Decimal("6.72")
+        borrowed.doubles_status = "projected"
         session.add(borrowed)
         membership = session.exec(
             select(PlayerTeamMembership).where(
@@ -315,6 +319,25 @@ class TestRoster:
         body = client.get(roster_url(), headers=AUTH).json()
 
         assert len(body["players"]) == listed["API-ALPHA"]
+
+    def test_current_utrs_travel_with_the_roster(self, client):
+        # They are the input to step two of the derivation chain: without
+        # them a reader cannot tell why an estimate landed where it did, nor
+        # work one out themselves before the season's value exists.
+        body = client.get(roster_url(), headers=AUTH).json()
+        by_name = {p["first_name"]: p for p in body["players"]}
+
+        assert by_name["望舒"]["singles_utr"] == "6.90"
+        assert by_name["望舒"]["singles_status"] == "rated"
+        assert by_name["望舒"]["doubles_utr"] == "6.72"
+        assert by_name["望舒"]["doubles_status"] == "projected"
+
+    def test_an_unfilled_current_utr_is_null_not_zero(self, client):
+        body = client.get(roster_url(), headers=AUTH).json()
+        by_name = {p["first_name"]: p for p in body["players"]}
+
+        assert by_name["门吹雪"]["singles_utr"] is None
+        assert by_name["门吹雪"]["doubles_status"] is None
 
     def test_the_sheet_only_fields_are_always_null(self, client):
         # They have no counterpart in the registry. Kept in the response so

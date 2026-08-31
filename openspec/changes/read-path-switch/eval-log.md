@@ -49,3 +49,19 @@
   - Runtime: All 24 tests pass (1.34s). Fixture correctly builds new model (Player/PlayerSeasonUtr/PlayerTeamMembership) with explicit test cases for derived/unresolved/missing scenarios. Cleanup dependency-ordered across new tables. Test suite covers: key prefixing (TestPlayerKeys), counting (TestWhoIsAndIsNotInTheSearch), roster-lineup agreement (TestOneNumberPerPlayer), stale link rejection (TestStaleLinks). No import errors, no database access beyond test session.
   - Code: No CRITICAL/HIGH issues. Code-reviewer approved. D1 compliance verified: resolve_match_utr reused identically, not duplicated. D4 compliance verified: `_OLD_KEY.fullmatch()` with specific error message in both lock and exclude validation. Key construction, origin enum comparison, counter logic all correct. One MEDIUM observation from reviewer (duplicated roster-assembly logic around the resolve call in both lineups and rosters modules, not just the resolve logic itself) is non-blocking since the critical deduplication (D1 — resolve_match_utr itself) is done correctly; routing/membership-loading duplication noted for future opportunistic cleanup. Two LOW observations (regex comment fragility, test assertion redundancy) are purely editorial and do not affect correctness.
 - **code_review_summary**: APPROVE — No CRITICAL or HIGH issues. D1–D4 and all contract SHALL statements correctly implemented. Core deduplication (resolve_match_utr) properly reused per D1; three counting fields correctly tracked; old key detection works as specified. Test coverage comprehensive including edge cases (missing UTR, derived, unresolved, stale links). Ready to ship.
+
+## Group 4 — Attempt 1
+
+- **group**: 4
+- **attempt**: 1
+- **scores**:
+  - spec: 100
+  - runtime: 100
+  - code: 100
+- **total**: 100
+- **status**: PASS (100 >= 80 threshold)
+- **findings**:
+  - Spec: All SHALL statements correctly implemented. Refusal mechanism (D8 ✓): Early return 2 at line 50 before load_rosters() prevents all writes; tests verify row count unchanged. Explicit switch (D8 ✓): `--i-know-it-is-not-read` in argparse, visible in shell history not env var. Notice on both paths (D8 ✓): NOT_READ_NOTICE printed unconditionally before override check; tests verify presence in refuse and override cases. Message clarity (✓): Chinese message directly states "这些行不会被任何页面读取" and directs to "队员管理界面改". Both contract scenarios tested: test_it_refuses_by_default (refusal path) and test_the_explicit_override_still_says_it (override path).
+  - Runtime: All 35 tests pass (1.65s total); includes 2 new test cases validating refusal and override paths. Test fixtures create fresh CSV; assertions verify exit code, data writes, and message presence; no cross-test state contamination.
+  - Code: No CRITICAL/HIGH/MEDIUM issues. Code reviewer approved without exceptions. Hard exit at line 50 before file processing prevents any silent data writes. Output routing correct (notice → stdout, refusal → stderr). Comment explains rationale (line 44-45). Exit codes appropriate (2 for refuse, 0 for override). Notice redundancy in override case is correct per spec, not a defect.
+- **code_review_summary**: APPROVE — No CRITICAL or HIGH issues. D8 correctly implemented: explicit flag in command history, hard refusal before writes, notice printed in both paths, clear messaging about where to modify roster. Both required test scenarios passing. Ready to ship.

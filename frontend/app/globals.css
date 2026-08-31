@@ -43,7 +43,11 @@
      costly": a doubles pair that exceeds its line's UTR cap and therefore
      eats into the team's shared buffer budget. Named for the range it means,
      not for the one screen it currently appears on. */
-  --color-warning: #b8860b;
+  /* Darkened from #b8860b, which measured 2.99:1 against
+     --color-warning-surface — under the 4.5:1 small text needs, and the
+     subtle badge is 11px. #8a6508 measures 4.89:1. The player screens had
+     already worked around this by hard-coding the same value inline. */
+  --color-warning: #8a6508;
   --color-warning-fg: #ffffff;
   /* The same tier at low volume, for a state that repeats down a list —
      「待定」 sits on every player nobody has classified yet. Paired like

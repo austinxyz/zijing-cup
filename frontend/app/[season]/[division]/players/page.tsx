@@ -68,7 +68,7 @@ export default async function PlayersPage({ params, searchParams }: PageProps) {
             className="flex h-8 items-center gap-1.5 rounded-token border border-border bg-surface px-3 text-[12.5px] text-foreground no-underline"
           >
             未裁决
-            <span className="rounded-full border border-warning-border bg-warning-surface px-2 py-px text-[11px] text-[#8a6508]">
+            <span className="rounded-full border border-warning-border bg-warning-surface px-2 py-px text-[11px] text-warning">
               {unresolved}
             </span>
           </Link>
