@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{change}} mocks</title>
+  <!-- HAS_UI_SURFACE: <yes|no> -->
+  <style>
+    /* Design tokens go here. Reference docs/design/<style>.md for values. */
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 24px; }
+    section { margin-bottom: 48px; }
+    h1, h2 { margin-top: 0; }
+    .stub { color: #888; font-style: italic; }
+  </style>
+</head>
+<body>
+
+<!--
+  HAS_UI_SURFACE: no  → keep just this stub paragraph; delete the rest.
+  HAS_UI_SURFACE: yes → delete this stub; add one <section> per UI flow.
+-->
+<section class="stub">
+  <h1>{{change}}</h1>
+  <p>This change has no UI surface; no visual mocks needed.</p>
+</section>
+
+<!--
+  Example real-mock sections (delete this comment, replace stub above, fill in):
+
+    <section id="example-flow">
+      <h2>Example Flow Name (desktop)</h2>
+      <p>Description and intent. What problem does this UI solve?</p>
+      <div class="mock">
+        Self-contained markup using design tokens.
+      </div>
+    </section>
+
+    <section id="example-flow-mobile">
+      <h2>Example Flow Name (mobile)</h2>
+      <p>Narrower viewport, touch targets, sticky CTA at bottom, etc.</p>
+      <div class="mock" style="max-width: 393px;">
+        Mobile equivalent of the desktop section above.
+      </div>
+    </section>
+
+  Every desktop section MUST have a mobile equivalent (per mocks artifact
+  instruction) — copy + adjust layout, do not skip.
+-->
+
+</body>
+</html>

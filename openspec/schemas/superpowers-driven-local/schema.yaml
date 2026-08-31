@@ -1,0 +1,281 @@
+name: superpowers-driven-local
+version: 1
+description: Superpowers OpenSpec workflow - requirements → proposal → specs →
+  mocks → design → tasks
+artifacts:
+  - id: requirements
+    generates: requirements.md
+    description: Reviewed requirements doc — output of /opsx:explore
+    template: requirements.md
+    instruction: |
+      Capture WHAT and WHY before any implementation thinking.
+
+      Required frontmatter:
+      - Date (YYYY-MM-DD, the date this file was first written)
+      - Change name (kebab-case, matches openspec change directory name)
+      - Status: DRAFT or REVIEWED
+      - HAS_UI_SURFACE: yes or no
+
+      Required sections (in order):
+      - Goals: what this change achieves
+      - Non-Goals: what is explicitly out of scope
+      - Constraints: hard limits (perf, security, deploy targets, etc.)
+      - Success Criteria: how we know we're done
+      - User Stories: who uses this and how
+      - Open Questions: unresolved decisions
+      - Referenced Capabilities: link to openspec/specs/<capability>/spec.md
+        SHALL clauses this change adds, modifies, or removes
+
+      Reference any relevant SHALL clauses from openspec/specs/<capability>/spec.md.
+
+      Status flow: DRAFT (after first write) → REVIEWED (after brainstorming
+      review pass catches placeholders, contradictions, scope creep, ambiguity).
+      /opsx:propose REJECTS files with Status: DRAFT.
+
+      No implementation details. No code. This is a requirements doc.
+    requires: []
+  - id: proposal
+    generates: proposal.md
+    description: Initial proposal document outlining the change
+    template: proposal.md
+    instruction: |
+      Build on requirements.md (already produced by /opsx:explore).
+
+      Required frontmatter:
+      - Date (matches requirements.md date)
+      - Change (kebab-case, matches change directory name)
+      - HAS_UI_SURFACE: yes or no — drives whether mocks artifact is real or stub
+      - Requirements: path to the requirements doc
+
+      Required sections (in order):
+      - Why: 1-2 sentences on problem/opportunity. Why now?
+      - What Changes: bullet list of changes. Mark breaking changes with **BREAKING**.
+      - Capabilities:
+        - New Capabilities: kebab-case names becoming new specs/<name>/spec.md
+        - Modified Capabilities: existing capability folders getting delta specs
+      - Impact: affected code, APIs, dependencies, file groups
+      - Out of Scope: explicitly excluded; reference future change names
+
+      The Capabilities section creates the contract for the specs phase.
+      Research existing openspec/specs/ before writing it.
+
+      Keep concise (1-2 pages). Why, not how. Implementation belongs in design.md.
+    requires:
+      - requirements
+  - id: specs
+    generates: specs/**/*.md
+    description: Detailed specifications for the change
+    template: spec.md
+    instruction: >
+      Create specification files that define WHAT the system should do.
+
+
+      Create one spec file per capability listed in the proposal's Capabilities
+      section.
+
+      - New capabilities: use the exact kebab-case name from the proposal
+      (specs/<capability>/spec.md).
+
+      - Modified capabilities: use the existing spec folder name from
+      openspec/specs/<capability>/ when creating the delta spec at
+      specs/<capability>/spec.md.
+
+
+      Delta operations (use ## headers):
+
+      - **ADDED Requirements**: New capabilities
+
+      - **MODIFIED Requirements**: Changed behavior - MUST include full updated
+      content
+
+      - **REMOVED Requirements**: Deprecated features - MUST include **Reason**
+      and **Migration**
+
+      - **RENAMED Requirements**: Name changes only - use FROM:/TO: format
+
+
+      Format requirements:
+
+      - Each requirement: `### Requirement: <name>` followed by description
+
+      - Use SHALL/MUST for normative requirements (avoid should/may)
+
+      - Each scenario: `#### Scenario: <name>` with WHEN/THEN format
+
+      - **CRITICAL**: Scenarios MUST use exactly 4 hashtags (`####`). Using 3
+      hashtags or bullets will fail silently.
+
+      - Every requirement MUST have at least one scenario.
+
+
+      MODIFIED requirements workflow:
+
+      1. Locate the existing requirement in openspec/specs/<capability>/spec.md
+
+      2. Copy the ENTIRE requirement block (from `### Requirement:` through all
+      scenarios)
+
+      3. Paste under `## MODIFIED Requirements` and edit to reflect new behavior
+
+      4. Ensure header text matches exactly (whitespace-insensitive)
+
+
+      Common pitfall: Using MODIFIED with partial content loses detail at
+      archive time.
+
+      If adding new concerns without changing existing behavior, use ADDED
+      instead.
+
+
+      Example:
+
+      ```
+
+      ## ADDED Requirements
+
+
+      ### Requirement: User can export data
+
+      The system SHALL allow users to export their data in CSV format.
+
+
+      #### Scenario: Successful export
+
+      - **WHEN** user clicks "Export" button
+
+      - **THEN** system downloads a CSV file with all user data
+
+
+      ## REMOVED Requirements
+
+
+      ### Requirement: Legacy export
+
+      **Reason**: Replaced by new export system
+
+      **Migration**: Use new export endpoint at /api/v2/export
+
+      ```
+
+
+      Specs should be testable - each scenario is a potential test case.
+    requires:
+      - proposal
+  - id: mocks
+    generates: mocks.html
+    description: HTML mocks for UI changes; 1-line stub for backend-only changes
+    template: mocks.html
+    instruction: |
+      Self-contained HTML — open in browser, no server needed.
+
+      Read proposal.md frontmatter HAS_UI_SURFACE field:
+      - HAS_UI_SURFACE: yes → produce real mocks (one <section> per UI flow,
+        plus mobile equivalent). Reference design tokens from the design system
+        chosen via awesome-design-md (e.g., docs/design/notion.md if Notion).
+        Lock-down level is design tokens (e.g., bg-notion-brand-navy) and
+        verbatim text strings, NOT pixel measurements.
+      - HAS_UI_SURFACE: no → write the stub form (see template).
+
+      File MUST be self-contained: inline <style>, no external CSS or JS.
+      Do not embed images via http:// — use SVG or omit.
+    requires:
+      - proposal
+      - specs
+  - id: design
+    generates: design.md
+    description: Technical design document with implementation details
+    template: design.md
+    instruction: >
+      Create the design document that explains HOW to implement the change.
+
+
+      When to include design.md (create only if any apply):
+
+      - Cross-cutting change (multiple services/modules) or new architectural
+      pattern
+
+      - New external dependency or significant data model changes
+
+      - Security, performance, or migration complexity
+
+      - Ambiguity that benefits from technical decisions before coding
+
+
+      Sections:
+
+      - **Context**: Background, current state, constraints, stakeholders
+
+      - **Goals / Non-Goals**: What this design achieves and explicitly excludes
+
+      - **Decisions**: Key technical choices with rationale (why X over Y?).
+      Include alternatives considered for each decision.
+
+      - **Risks / Trade-offs**: Known limitations, things that could go wrong.
+      Format: [Risk] → Mitigation
+
+      - **Migration Plan**: Steps to deploy, rollback strategy (if applicable)
+
+      - **Open Questions**: Outstanding decisions or unknowns to resolve
+
+
+      Focus on architecture and approach, not line-by-line implementation.
+
+      Reference the proposal for motivation and specs for requirements.
+
+
+      Good design docs explain the "why" behind technical decisions.
+    requires:
+      - proposal
+      - specs
+  - id: tasks
+    generates: tasks.md
+    description: Implementation checklist with trackable tasks
+    template: tasks.md
+    instruction: |
+      Create the task list that breaks down the implementation work.
+
+      **STRUCTURAL RULES (apply phase parses checkboxes):**
+      - Tasks MUST be: `- [ ] N.X <description>`
+      - Group related tasks under `## N. <group name>` headings
+      - Order tasks by dependency
+
+      **TDD discipline (mandatory):**
+      - Each task introducing NEW behavior MUST be preceded by a failing-test task
+      - Pattern: `- [ ] N.X RED — write failing pytest/vitest test for <behavior>`
+        followed by `- [ ] N.X+1 GREEN — minimal impl to pass the test`
+      - Bug fixes MUST be preceded by a regression test that reproduces the bug
+
+      **Review checkpoints (mandatory):**
+      - Each `## N` task group MUST end with:
+        `- [ ] N.Z Run superpowers:requesting-code-review on the diff for group N; address CRITICAL/HIGH findings before moving on`
+      - Final group MUST include:
+        `- [ ] N.Z Run superpowers:verification-before-completion`
+        (N = final group number; Z = last position in that group)
+
+      **Frontend view sandwich (when applicable):**
+      For each frontend GREEN task implementing a VIEW / MODAL / named LAYOUT
+      component (>50 lines; utility helpers / stores / interceptors are exempt),
+      the GREEN task MUST be sandwiched:
+      - Preceding: `- [ ] N.X MOCK — open docs/superpowers/specs/mocks/<file>.html#<anchor>; note tokens + verbatim strings`
+      - Following: `- [ ] N.X+2 VISUAL DIFF — bring up dev stack; navigate; eyeball against mock; fix drift`
+
+      **Token-locked tests (when applicable):**
+      When a frontend RED test corresponds to a requirement that names design
+      tokens, the test SHALL assert presence via wrapper.classes() — e.g.,
+      `expect(cls).toMatch(/bg-notion-primary/)` — not only data-* selectors.
+      This makes design tokens load-bearing in the test suite.
+
+      Skill names: when a task should invoke a superpowers skill, name it
+      explicitly (e.g., `Invoke superpowers:test-driven-development to scaffold
+      tests for the new module`).
+    requires:
+      - specs
+      - design
+      - mocks
+apply:
+  requires:
+    - tasks
+  tracks: tasks.md
+  instruction: |
+    Read context files, work through pending tasks, mark complete as you go.
+    Pause if you hit blockers or need clarification.
