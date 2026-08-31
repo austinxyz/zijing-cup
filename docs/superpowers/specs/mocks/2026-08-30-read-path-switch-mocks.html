@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>read-path-switch — 标记文案与色档参照表</title>
+<style>
+  :root {
+    --color-fg: #1a1917;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f2efe9;
+    --color-border: #e4e0d8;
+    --color-warning: #b8860b;
+    --color-warning-surface: #fbf5e6;
+    --color-warning-border: #ecd9a4;
+    --color-danger: #b3261e;
+    --color-danger-surface: #fbf0ee;
+    --color-danger-border: #f0cfc9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2rem 1.5rem 4rem;
+    background: var(--color-surface);
+    color: var(--color-fg);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    line-height: 1.6;
+    max-width: 62rem;
+  }
+  h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.0625rem; margin: 2.5rem 0 .75rem; padding-bottom: .35rem;
+       border-bottom: 1px solid var(--color-border); }
+  h3 { font-size: .9375rem; margin: 1.5rem 0 .5rem; }
+  p, li { font-size: .875rem; }
+  .lede { color: #57534e; margin: 0 0 1.5rem; }
+  table { border-collapse: collapse; width: 100%; margin: .5rem 0 1rem; font-size: .8125rem; }
+  th, td { border: 1px solid var(--color-border); padding: .5rem .625rem; text-align: left;
+           vertical-align: top; }
+  th { background: var(--color-surface-muted); font-weight: 600; }
+  code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .8125em;
+         background: var(--color-surface-muted); padding: .1em .35em; border-radius: 3px; }
+  td code { background: none; padding: 0; }
+  .swatch { display: inline-block; width: .85rem; height: .85rem; border-radius: 3px;
+            vertical-align: -1px; margin-right: .4rem; border: 1px solid var(--color-border); }
+  .badge-warning {
+    display: inline-block; font-size: .75rem; padding: .1rem .4rem; border-radius: 4px;
+    background: var(--color-warning-surface); border: 1px solid var(--color-warning-border);
+    color: var(--color-warning); white-space: nowrap;
+  }
+  .notice-warning {
+    background: var(--color-warning-surface); border: 1px solid var(--color-warning-border);
+    color: var(--color-warning); padding: .5rem .75rem; border-radius: 6px;
+    font-size: .8125rem; margin: .4rem 0;
+  }
+  .notice-neutral {
+    background: var(--color-surface-muted); border: 1px solid var(--color-border);
+    padding: .5rem .75rem; border-radius: 6px; font-size: .8125rem; margin: .4rem 0;
+    color: #57534e;
+  }
+  .no { color: var(--color-danger); }
+  .narrow { max-width: 22rem; border: 1px dashed var(--color-border); padding: .75rem;
+            border-radius: 6px; }
+  .narrow-label { font-size: .75rem; color: #57534e; margin: 0 0 .5rem; }
+  ul { padding-left: 1.25rem; }
+</style>
+</head>
+<body>
+
+<h1>read-path-switch —— 标记文案与色档参照表</h1>
+<p class="lede">
+  本次<strong>没有新页面</strong>，改的都是往既有组件上加标记（名单页 <code>teams/[code]</code>、
+  排阵页 <code>lineup/[code]</code>）。因此这份文件不是屏幕稿，而是逐字文案与色档的对照表：
+  实现时打开真实页面，按这里的字符串与 token 核对。
+</p>
+
+<h2>1 · 色档（沿用既有三档，不新增 token）</h2>
+<table>
+  <thead><tr><th>档</th><th>token</th><th>本次用在哪</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="swatch" style="background:var(--color-warning-surface);border-color:var(--color-warning-border)"></span>warning</td>
+      <td><code>--color-warning-surface</code><br><code>--color-warning-border</code><br><code>--color-warning</code></td>
+      <td>「估算」「未裁决」—— 两者同属「这个数字还没被组委会确认」</td>
+    </tr>
+    <tr>
+      <td><span class="swatch" style="background:var(--color-danger-surface);border-color:var(--color-danger-border)"></span>danger</td>
+      <td><code>--color-danger-*</code></td>
+      <td class="no">本次不用。旧链接失效是提示，不是危险操作</td>
+    </tr>
+    <tr>
+      <td><span class="swatch" style="background:var(--color-surface-muted)"></span>中性</td>
+      <td><code>--color-border</code> / <code>--color-surface-muted</code></td>
+      <td>「N 人未参与计算」、当前 UTR 的维护说明、旧链接失效</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2 · 名单页 <code>teams/[code]</code></h2>
+
+<h3>2.1 参赛 UTR 旁的估算标记（warning）</h3>
+<table>
+  <thead><tr><th>取值来源</th><th>逐字文案</th><th>样例</th></tr></thead>
+  <tbody>
+    <tr><td>该赛季 match UTR（冻结值）</td><td class="no">不标注</td><td>—</td></tr>
+    <tr><td>当前 rated 双打 UTR</td><td><code>估算 · 当前已认证值</code></td>
+        <td><span class="badge-warning">估算 · 当前已认证值</span></td></tr>
+    <tr><td>更早赛季的 match UTR</td><td><code>估算 · &lt;年份&gt; 参赛值</code></td>
+        <td><span class="badge-warning">估算 · 2025 参赛值</span></td></tr>
+  </tbody>
+</table>
+<p>年份取<strong>实际取到的那一年</strong>，不是「去年」。用 2023 的值估 2026 与用 2025 的
+估 2026 是两种可信度，标签把年份吞掉就等于把这个差别吞掉。</p>
+
+<h3>2.2 「UTR 来源」列 —— 类别，不再有总表原文</h3>
+<table>
+  <thead><tr><th><code>player_season_utrs.status</code></th><th>页面显示</th></tr></thead>
+  <tbody>
+    <tr><td><code>verified</code></td><td>已认证</td></tr>
+    <tr><td><code>committee</code></td><td>委员会审定</td></tr>
+    <tr><td><code>captain</code></td><td>队长评定</td></tr>
+    <tr><td><code>null</code></td><td>待定</td></tr>
+    <tr><td><code>under_appeal = true</code>（骑在任一类别之上）</td>
+        <td>类别照常 + <code>· Appeal</code>，例：<strong>已认证 · Appeal</strong></td></tr>
+  </tbody>
+</table>
+<p class="no">页面上不再出现 <code>Rated</code> / <code>Projected</code> /
+<code>Unrated</code> 等原始状态文本 —— 新来源不存它。</p>
+
+<h3>2.3 当前 UTR 列的说明（中性）</h3>
+<div class="notice-neutral">当前 UTR 由人工维护，未与 UTR 官网同步</div>
+<p>该列现在全为空（尚未导入），说明<strong>照样呈现</strong>：空列不加说明会被读成
+「这个人没有 UTR」，而事实是「还没人填」。</p>
+
+<h2>3 · 排阵页 <code>lineup/[code]</code></h2>
+
+<h3>3.1 顶部提示</h3>
+<div class="notice-warning">本结果含 3 名参赛 UTR 未裁决的队员，按较大值计算</div>
+<div class="notice-neutral">本队 2 人因缺少参赛 UTR 未参与计算</div>
+<p>两句的 N 为 0 时<strong>都不呈现</strong>。第一句 warning 档，第二句中性档。</p>
+
+<h3>3.2 可达上限旁（warning）</h3>
+<p>达到可达上限的阵容中含估算值时，上限旁标 <span class="badge-warning">含估算值</span>。
+这个数字是全页最容易被单独记住、单独转述的一个，不带标注就会脱离上下文流传。</p>
+
+<h3>3.3 候选卡</h3>
+<ul>
+  <li>单个数字旁：<span class="badge-warning">估算</span></li>
+  <li>整套候选上：<span class="badge-warning">含 2 个估算值，合法性待总表确认</span></li>
+  <li>十个数字都是冻结值时：两处都不标</li>
+</ul>
+<p>整套那句是必需的：合法性是<strong>整套</strong>的属性 —— 线内之和、全队 buffer、
+高 UTR 人数都会用到那个数字，一个估算值就让「这套合法」本身成为估算。</p>
+
+<h3>3.4 旧链接失效（中性，非 danger）</h3>
+<div class="notice-neutral">这个链接是旧格式（队员编号已变），请重新选择锁定的搭档</div>
+<p>必须让人在<strong>不手工改 URL</strong> 的前提下从这个状态继续（清空锁定后重新选择）。
+不呈现一份忽略了锁定、看起来却完好的候选列表。</p>
+
+<h2>4 · 移动端</h2>
+<p>没有新的版式，因此没有独立的移动稿。本次全部改动是<strong>行内标记与顶部提示条</strong>，
+随既有响应式布局回流。窄屏下唯一要盯的是标记不换行到把数字挤走：</p>
+<div class="narrow">
+  <p class="narrow-label">窄屏（约 360px）下的行内标记</p>
+  <p style="font-size:.8125rem;margin:.25rem 0">
+    张 三 &nbsp; 6.42 <span class="badge-warning">估算 · 2025 参赛值</span>
+  </p>
+  <div class="notice-neutral" style="margin-top:.5rem">本队 2 人因缺少参赛 UTR 未参与计算</div>
+</div>
+
+<h2>5 · VISUAL DIFF 那一步要盯的</h2>
+<p>排阵页顶部现在可能<strong>同时</strong>出现四类提示 —— 未裁决、未参与计算、搜索被截断、
+外援限制未校验 —— 候选卡上还有估算。若发现顶部变成一片提示墙，那是信息结构该收拢的信号。
+本次不预先设计收拢方式：要看到真实数据才判断得了。用 <strong>2026 银组</strong>最长的那份
+名单（26 人）核对，并把窗口调矮。</p>
+
+</body>
+</html>
