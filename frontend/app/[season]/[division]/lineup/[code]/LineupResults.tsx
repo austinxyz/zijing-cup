@@ -7,8 +7,10 @@ import type {
 import {
   BorrowedPlayersNotice,
   InvalidLocks,
+  MissingUtrNotice,
   NoSolution,
   Truncated,
+  UnresolvedNotice,
 } from "./LineupStates";
 import { playerName } from "@/lib/name";
 
@@ -31,6 +33,13 @@ interface LineupResultsProps {
 
 const GENDER_LABEL: Record<string, string> = { M: "男", F: "女" };
 
+/** How many of the ten on court are playing on a derived number. */
+function estimatesIn(candidate: LineupCandidate): number {
+  return Object.values(candidate.lines)
+    .flat()
+    .filter((player) => player.origin !== "frozen").length;
+}
+
 /** Two decimal places for display. Never used for a comparison — those all
  *  happen on the server, against exact decimals. */
 function money(value: string): string {
@@ -49,6 +58,14 @@ function PlayerName({ player }: { player: LineupPlayer }) {
   return (
     <>
       {playerName(player)}
+      {/* On the number itself, not only in the summary above: a derived value
+          sorts by its size like any other, so this is the only thing telling
+          it apart while a line is checked by eye. */}
+      {player.origin !== "frozen" ? (
+        <span className="rounded-token border border-warning-border bg-warning-surface px-1 text-[10px] text-warning">
+          估算
+        </span>
+      ) : null}
       {/* Gender is not decoration: the high-UTR limits are written per
           gender, so a lineup shown without it cannot be checked by eye. */}
       <span className="text-muted-foreground">
@@ -69,8 +86,11 @@ function CandidateCard({
   bufferTotal: string;
   lineOrder: string[];
 }) {
+  const estimates = estimatesIn(candidate);
+
   return (
-    <article className="flex items-stretch rounded-token border border-border bg-surface px-3 py-[11px]">
+    <article className="flex flex-col rounded-token border border-border bg-surface px-3 py-[11px]">
+      <div className="flex items-stretch">
       <div className="flex w-24 flex-none flex-col gap-[3px] pr-2.5">
         <span className="font-mono text-[10px] text-muted-foreground">#{rank}</span>
         <span aria-label="总和" className="font-mono text-[15px] text-foreground">
@@ -110,6 +130,17 @@ function CandidateCard({
           </div>
         );
       })}
+      </div>
+      {/* On the set, not only on the individual numbers, and across the whole
+          card rather than squeezed into the 96px total column: legality is a
+          property of the whole lineup — the line sums, the shared buffer and
+          the high-UTR count all run through these values — so one estimate
+          makes "this one is legal" itself an estimate. */}
+      {estimates > 0 ? (
+        <p className="mt-2 rounded-token border border-warning-border bg-warning-surface px-2 py-1 text-[11px] leading-snug text-warning">
+          含 {estimates} 个估算值，合法性待总表确认
+        </p>
+      ) : null}
     </article>
   );
 }
@@ -155,6 +186,8 @@ export function LineupResults({
 
   return (
     <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden px-5 py-4">
+      <UnresolvedNotice count={search.unresolved_count} />
+      <MissingUtrNotice count={search.missing_utr_count} />
       {search.truncated ? <Truncated /> : null}
       <section
         aria-label="上限"
@@ -165,8 +198,18 @@ export function LineupResults({
             <span className="font-mono text-[10.5px] tracking-wide text-muted-foreground">
               本队可达上限
             </span>
-            <span className="font-mono text-[22px] font-medium text-foreground">
-              {search.ceiling ?? "—"}
+            <span className="flex items-baseline gap-1.5">
+              <span className="font-mono text-[22px] font-medium text-foreground">
+                {search.ceiling ?? "—"}
+              </span>
+              {/* The one number most likely to be quoted on its own, so it
+                  carries the caveat with it. */}
+              {search.candidates.length > 0 &&
+              estimatesIn(search.candidates[0]) > 0 ? (
+                <span className="rounded-token border border-warning-border bg-warning-surface px-1.5 py-px text-[10.5px] text-warning">
+                  含估算值
+                </span>
+              ) : null}
             </span>
           </span>
           <span className="flex flex-col gap-0.5">

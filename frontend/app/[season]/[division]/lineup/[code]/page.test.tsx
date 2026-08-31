@@ -9,7 +9,7 @@ import {
   type LineupPlayer,
   type LineupSearch,
 } from "@/lib/api";
-import Page from "./page";
+import Page, { hasStaleKeys } from "./page";
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
@@ -48,20 +48,29 @@ const RULES: DivisionRules = {
 };
 
 function player(key: string, first: string, gender: string, utr: string): LineupPlayer {
-  return { key, last_name: "南", first_name: first, gender, match_utr: utr };
+  return {
+    key,
+    last_name: "南",
+    first_name: first,
+    gender,
+    match_utr: utr,
+    origin: "frozen",
+    origin_year: 2026,
+    is_unresolved: false,
+  };
 }
 
 const ROSTER = [
-  player("1", "嘉禾", "M", "6.80"),
-  player("2", "鹏远", "M", "6.41"),
-  player("3", "明轩", "M", "6.00"),
-  player("4", "一鸣", "M", "5.93"),
-  player("5", "普强", "M", "5.60"),
-  player("6", "秦朗", "M", "5.40"),
-  player("7", "冠宇", "M", "5.20"),
-  player("8", "雨萌", "F", "4.90"),
-  player("9", "佳怡", "F", "4.63"),
-  player("10", "可欣", "F", "4.35"),
+  player("p1", "嘉禾", "M", "6.80"),
+  player("p2", "鹏远", "M", "6.41"),
+  player("p3", "明轩", "M", "6.00"),
+  player("p4", "一鸣", "M", "5.93"),
+  player("p5", "普强", "M", "5.60"),
+  player("p6", "秦朗", "M", "5.40"),
+  player("p7", "冠宇", "M", "5.20"),
+  player("p8", "雨萌", "F", "4.90"),
+  player("p9", "佳怡", "F", "4.63"),
+  player("p10", "可欣", "F", "4.35"),
 ];
 
 function candidate(total: string, buffer: string): LineupSearch["candidates"][number] {
@@ -97,6 +106,9 @@ const SEARCH: LineupSearch = {
   borrowed_players_checked: false,
   invalid_locks: [],
   roster: ROSTER,
+  missing_utr_count: 0,
+  estimated_count: 0,
+  unresolved_count: 0,
 };
 
 function renderPage(query: Record<string, string | string[]> = {}) {
@@ -119,15 +131,15 @@ describe("the lineup page reads its locks and exclusions from the URL", () => {
     vi.mocked(getDivisionRules).mockResolvedValue(RULES);
     vi.mocked(getTeamLineups).mockResolvedValue(SEARCH);
 
-    render(await renderPage({ D1a: "1", D1b: "2", ex: ["9"] }));
+    render(await renderPage({ D1a: "p1", D1b: "p2", ex: ["p9"] }));
 
     expect(getTeamLineups).toHaveBeenCalledWith(
       "2026",
       "silver",
       "PKU",
       expect.objectContaining({
-        locks: { D1: ["1", "2"] },
-        excluded: ["9"],
+        locks: { D1: ["p1", "p2"] },
+        excluded: ["p9"],
       }),
     );
   });
@@ -136,7 +148,7 @@ describe("the lineup page reads its locks and exclusions from the URL", () => {
     vi.mocked(getDivisionRules).mockResolvedValue(RULES);
     vi.mocked(getTeamLineups).mockResolvedValue(SEARCH);
 
-    render(await renderPage({ D1a: "1", D1b: "2", ex: ["9"] }));
+    render(await renderPage({ D1a: "p1", D1b: "p2", ex: ["p9"] }));
 
     // The control is a plain GET form: what it shows comes from the query
     // string, so opening the same URL again yields the same locks. Held in
@@ -144,8 +156,8 @@ describe("the lineup page reads its locks and exclusions from the URL", () => {
     // the link was shared or the page reloaded.
     const first = screen.getByLabelText("D1 第一位") as HTMLSelectElement;
     const second = screen.getByLabelText("D1 第二位") as HTMLSelectElement;
-    expect(first.value).toBe("1");
-    expect(second.value).toBe("2");
+    expect(first.value).toBe("p1");
+    expect(second.value).toBe("p2");
 
     const excluded = screen.getByLabelText(/佳怡/) as HTMLInputElement;
     expect(excluded.checked).toBe(true);
@@ -240,7 +252,7 @@ describe("what the locks cost", () => {
       return { ...SEARCH, ceiling: locked ? "55.71" : "55.92" };
     });
 
-    render(await renderPage({ D1a: "1", D1b: "2" }));
+    render(await renderPage({ D1a: "p1", D1b: "p2" }));
 
     // Without this the number reads as the team's ceiling rather than the
     // ceiling of the question that was actually asked.
@@ -267,7 +279,7 @@ describe("what the locks cost", () => {
     vi.mocked(getDivisionRules).mockResolvedValue(RULES);
     vi.mocked(getTeamLineups).mockResolvedValue(SEARCH);
 
-    render(await renderPage({ D1a: "1", D1b: "2" }));
+    render(await renderPage({ D1a: "p1", D1b: "p2" }));
 
     expect(screen.queryByText(/锁定是有代价的/)).toBeNull();
   });
@@ -282,10 +294,10 @@ describe("the three states that must never be read off an empty list", () => {
       ceiling: null,
       squads_at_ceiling: 0,
       infeasible_line: "WD",
-      placements: { "8": "MD", "9": "excluded" },
+      placements: { p8: "MD", p9: "excluded" },
     });
 
-    render(await renderPage({ ex: ["9"] }));
+    render(await renderPage({ ex: ["p9"] }));
 
     const blocked = screen.getByRole("region", { name: "无解" });
     expect(within(blocked).getByText("凑不出合法阵容")).toBeTruthy();
@@ -305,10 +317,10 @@ describe("the three states that must never be read off an empty list", () => {
       candidates: [],
       ceiling: null,
       infeasible_line: "WD",
-      placements: { "8": "MD", "9": "excluded" },
+      placements: { p8: "MD", p9: "excluded" },
     });
 
-    render(await renderPage({ ex: ["9"] }));
+    render(await renderPage({ ex: ["p9"] }));
 
     const blocked = screen.getByRole("region", { name: "无解" });
     expect(within(blocked).getByText(/南 雨萌/)).toBeTruthy();
@@ -368,7 +380,7 @@ describe("the three states that must never be read off an empty list", () => {
       ],
     });
 
-    render(await renderPage({ D3a: "1", D3b: "2" }));
+    render(await renderPage({ D3a: "p1", D3b: "p2" }));
 
     const invalid = screen.getByRole("region", { name: "锁定不合法" });
     expect(within(invalid).getByText(/超出 cap/)).toBeTruthy();
@@ -385,5 +397,29 @@ describe("an unknown season or division", () => {
     // caps looks checked when nothing checked it.
     await expect(renderPage()).rejects.toThrow("NEXT_NOT_FOUND");
     expect(getTeamLineups).not.toHaveBeenCalled();
+  });
+});
+
+describe("links built before the keys changed shape", () => {
+  it("spots a bare-integer lock", () => {
+    // Both id spaces are small integers, so a stale key can name a real
+    // player who is simply not the one the link meant.
+    expect(hasStaleKeys({ locks: { D1: ["12", "13"] }, excluded: [] })).toBe(
+      true,
+    );
+  });
+
+  it("spots a bare-integer exclusion", () => {
+    expect(hasStaleKeys({ locks: {}, excluded: ["12"] })).toBe(true);
+  });
+
+  it("accepts current keys", () => {
+    expect(
+      hasStaleKeys({ locks: { D1: ["p12", "p13"] }, excluded: ["p9"] }),
+    ).toBe(false);
+  });
+
+  it("accepts a request with no constraints at all", () => {
+    expect(hasStaleKeys({ locks: {}, excluded: [] })).toBe(false);
   });
 });

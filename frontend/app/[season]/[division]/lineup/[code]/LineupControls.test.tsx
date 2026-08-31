@@ -11,9 +11,12 @@ const LINES: RuleLine[] = [
 
 function roster(count: number): LineupPlayer[] {
   return Array.from({ length: count }, (_, i) => ({
-    key: String(i + 1),
+    key: `p${i + 1}`,
     last_name: "南",
     first_name: `队员${i + 1}`,
+    origin: "frozen",
+    origin_year: 2026,
+    is_unresolved: false,
     gender: i % 3 === 0 ? "F" : "M",
     match_utr: "5.00",
   }));

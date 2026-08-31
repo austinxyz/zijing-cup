@@ -3,6 +3,29 @@ import { notFound } from "next/navigation";
 import { getDivisionRules, getTeamLineups, type RuleLine } from "@/lib/api";
 import { LineupControls } from "./LineupControls";
 import { LineupResults } from "./LineupResults";
+import { StaleLink } from "./LineupStates";
+
+/** A key from before the read-path switch: a bare `roster_entries` id. */
+const OLD_KEY = /^\d+$/;
+
+/**
+ * Whether this request carries keys built before the keys changed shape.
+ *
+ * Checked here as well as on the server because the page must not fall back
+ * to an unconstrained search: both id spaces are small integers, so a stale
+ * key can name a real player who is simply not the one the link meant, and
+ * the resulting lineup would look entirely healthy.
+ */
+export function hasStaleKeys(constraints: {
+  locks: Record<string, [string, string]>;
+  excluded: string[];
+}): boolean {
+  const keys = [
+    ...Object.values(constraints.locks).flat(),
+    ...constraints.excluded,
+  ];
+  return keys.some((key) => OLD_KEY.test(key));
+}
 
 interface PageProps {
   params: Promise<{ season: string; division: string; code: string }>;
@@ -61,10 +84,18 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   // timing out before either answer arrives.
   const constrained =
     Object.keys(constraints.locks).length > 0 || constraints.excluded.length > 0;
-  const [search, baseline] = await Promise.all([
-    getTeamLineups(season, division, code, constraints),
-    constrained ? getTeamLineups(season, division, code) : Promise.resolve(null),
-  ]);
+  const stale = hasStaleKeys(constraints);
+  // A stale link is answered without asking for a search at all: running one
+  // and dropping the locks would produce a full, healthy-looking candidate
+  // list for a question nobody asked.
+  const [search, baseline] = stale
+    ? [await getTeamLineups(season, division, code), null]
+    : await Promise.all([
+        getTeamLineups(season, division, code, constraints),
+        constrained
+          ? getTeamLineups(season, division, code)
+          : Promise.resolve(null),
+      ]);
 
   // Not an empty result: that would claim this team can field nothing, which
   // is a different and false statement about a team that does not exist.
@@ -109,6 +140,13 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
           </span>
         </div>
 
+        {stale ? (
+          <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-5 py-4">
+            <StaleLink
+              resetHref={`/${season}/${division}/lineup/${encodeURIComponent(code)}`}
+            />
+          </div>
+        ) : (
         <LineupResults
           search={search}
           lines={lines}
@@ -116,6 +154,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
           lineOrder={lines.map((line) => line.code)}
           unconstrainedCeiling={baseline?.ceiling ?? null}
         />
+        )}
       </main>
     </div>
   );

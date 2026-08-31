@@ -10,7 +10,7 @@ endpoint above this module is a GET and locks travel in the query string.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional
 
@@ -28,7 +28,12 @@ from app.models import (
     PlayerTeamMembership,
     Team,
 )
-from app.players.utr_chain import SeasonUtrView, UtrOrigin, resolve_match_utr
+from app.players.utr_chain import (
+    ResolvedUtr,
+    SeasonUtrView,
+    UtrOrigin,
+    resolve_match_utr,
+)
 
 #: Prefixes every player key. The old keys were `roster_entries` ids — bare
 #: integers, as `players` ids are — so a stale shared link would have parsed
@@ -56,6 +61,13 @@ class PlayerOut(BaseModel):
     #: lineup shown without it cannot be checked against that rule by eye.
     gender: Optional[str] = None
     match_utr: Decimal
+
+    #: Where this number came from. A derived value sits exactly where its
+    #: size puts it, so without a mark on the number itself nothing on the
+    #: card distinguishes it from one the committee froze.
+    origin: UtrOrigin
+    origin_year: Optional[int] = None
+    is_unresolved: bool = False
 
 
 class LineTotalOut(BaseModel):
@@ -190,6 +202,11 @@ class LoadedRoster:
     #: Season values with two candidates and no ruling. The larger is used.
     unresolved_count: int = 0
 
+    #: Player key -> where that player's number came from. Kept beside the
+    #: candidates rather than on `Candidate` itself: the engine is pure and
+    #: has no business carrying provenance through the search.
+    provenance: dict[str, ResolvedUtr] = field(default_factory=dict)
+
 
 def load_roster(
     session: Session, year: int, code: str, team_code: str
@@ -231,6 +248,7 @@ def load_roster(
             )
 
     candidates: list[Candidate] = []
+    provenance: dict[str, ResolvedUtr] = {}
     missing = estimated = unresolved = 0
     for _membership, player in memberships:
         resolved = resolve_match_utr(
@@ -249,6 +267,7 @@ def load_roster(
             estimated += 1
         if resolved.is_unresolved:
             unresolved += 1
+        provenance[f"{KEY_PREFIX}{player.id}"] = resolved
         candidates.append(
             Candidate(
                 key=f"{KEY_PREFIX}{player.id}",
@@ -263,17 +282,28 @@ def load_roster(
         missing_utr_count=missing,
         estimated_count=estimated,
         unresolved_count=unresolved,
+        provenance=provenance,
     )
 
 
-def _player_out(candidate: Candidate) -> PlayerOut:
+def _player_out(
+    candidate: Candidate, provenance: dict[str, ResolvedUtr]
+) -> PlayerOut:
     last, _, first = candidate.name.partition("\t")
+    # Indexed, not `.get` with a default: every candidate came out of
+    # `load_roster`, so a miss is a bug in this module. Falling back to
+    # "frozen" would answer the reader's question with a wrong label, which
+    # is worse than crashing where the mistake actually is.
+    resolved = provenance[candidate.key]
     return PlayerOut(
         key=candidate.key,
         last_name=last,
         first_name=first,
         gender=candidate.gender,
         match_utr=candidate.match_utr,
+        origin=resolved.origin,
+        origin_year=resolved.origin_year,
+        is_unresolved=resolved.is_unresolved,
     )
 
 
@@ -309,7 +339,10 @@ def to_output(
                 total=candidate.total,
                 buffer_spent=candidate.buffer_spent,
                 lines={
-                    code: (_player_out(pair[0]), _player_out(pair[1]))
+                    code: (
+                        _player_out(pair[0], loaded.provenance),
+                        _player_out(pair[1], loaded.provenance),
+                    )
                     for code, pair in candidate.lines.items()
                 },
                 line_totals=line_totals,
@@ -330,7 +363,10 @@ def to_output(
             ViolationOut(code=v.code, line=v.line, amount=v.amount, message=v.message)
             for v in result.invalid_locks
         ],
-        roster=[_player_out(player) for player in loaded.candidates],
+        roster=[
+            _player_out(player, loaded.provenance)
+            for player in loaded.candidates
+        ],
         missing_utr_count=loaded.missing_utr_count,
         estimated_count=loaded.estimated_count,
         unresolved_count=loaded.unresolved_count,

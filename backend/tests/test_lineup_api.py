@@ -319,6 +319,41 @@ class TestOneNumberPerPlayer:
         assert engine["derived"] == by_name["derived"]["match_utr"]
 
 
+class TestPerPlayerProvenance:
+    def test_each_number_says_where_it_came_from(self, client):
+        # A candidate is checked line by line by eye. A derived number sits
+        # exactly where its size puts it, so without a mark on the number
+        # itself there is nothing to distinguish it from a frozen one.
+        body = search(client).json()
+        by_name = {p["first_name"]: p for p in body["roster"]}
+
+        assert by_name["m1"]["origin"] == "frozen"
+        assert by_name["derived"]["origin"] == "prior_season"
+        assert by_name["derived"]["origin_year"] == TEST_YEAR - 1
+        assert by_name["disputed"]["is_unresolved"] is True
+
+    def test_players_inside_a_candidate_carry_it_too(self, client):
+        # The roster list is not enough: the card shows the ten on court, and
+        # that is where the reader is looking.
+        body = search(client).json()
+
+        derived = 0
+        for candidate in body["candidates"]:
+            for pair in candidate["lines"].values():
+                for player in pair:
+                    # Not merely present: a null here would count as "not
+                    # frozen" downstream and mark every player as estimated.
+                    assert player["origin"] in {
+                        "frozen",
+                        "current_doubles",
+                        "prior_season",
+                    }, player
+                    if player["first_name"] == "derived":
+                        derived += 1
+                        assert player["origin"] == "prior_season"
+        assert derived > 0, "the derived player stands in at least one candidate"
+
+
 class TestStaleLinks:
     def test_a_bare_integer_lock_is_reported_as_an_old_link(self, client):
         # Not a generic 4xx: the reader has to know the link is stale rather

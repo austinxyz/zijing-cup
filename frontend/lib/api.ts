@@ -223,6 +223,15 @@ export interface LineupPlayer {
    *  so a lineup without it cannot be checked against that rule by eye. */
   gender: string | null;
   match_utr: string;
+  /** "frozen" | "current_doubles" | "prior_season". A derived number sits
+   *  exactly where its size puts it, so without a mark on the number itself
+   *  nothing on the card distinguishes it from one the committee froze. */
+  origin: string;
+  /** The season the value came from; null for "current_doubles". */
+  origin_year: number | null;
+  /** The season value has two candidates and nobody has ruled; the larger is
+   *  the one in play. */
+  is_unresolved: boolean;
 }
 
 export interface LineTotal {
@@ -271,6 +280,14 @@ export interface LineupSearch {
   borrowed_players_checked: boolean;
   invalid_locks: LineupViolation[];
   roster: LineupPlayer[];
+  /** On the team but with no derivable participation UTR, so not in the
+   *  search at all. Reported rather than dropped: the ceiling and every
+   *  candidate are computed over the rest. */
+  missing_utr_count: number;
+  /** How many players in the search are playing on a derived number. */
+  estimated_count: number;
+  /** How many are on a season value nobody has ruled on. */
+  unresolved_count: number;
 }
 
 export interface LineupConstraints {

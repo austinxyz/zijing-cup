@@ -113,7 +113,7 @@
 - [x] 5.6 RED — 当前 UTR 列全为空时说明仍然呈现，逐字为 `当前 UTR 由人工维护，未与 UTR 官网同步`
 - [x] 5.7 GREEN — 加该说明，中性档
 - [x] 5.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；打开 2026 银组**最长**的那份名单（26 人）并把窗口调矮；对照 mocks 第 2 节核对文案与色档；确认长名单仍有自己的滚动容器、表头不被卷走
-- [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 6. 排阵页的四类提示与旧链接状态
 
@@ -126,17 +126,17 @@
   - 锁定与排除仍完全由 URL 表达，MUST NOT 把选择只存在客户端状态里。
 - **Threshold**: 70
 
-- [ ] 6.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-6.md with the ### Contract block above
-- [ ] 6.1 MOCK — open docs/superpowers/specs/mocks/2026-08-30-read-path-switch-mocks.html 第 3 节；抄下五条逐字文案与各自色档（旧链接为中性，非 danger）
-- [ ] 6.2 RED — vitest：未裁决 N>0 时顶部出现该句且命中 warning 档；N=0 时该句不出现
-- [ ] 6.3 GREEN — LineupStates 加未裁决提示
-- [ ] 6.4 RED — 未参与计算 N>0 时顶部出现该句且命中中性档；N=0 时不出现
-- [ ] 6.5 GREEN — 加未参与计算提示
-- [ ] 6.6 RED — 候选卡：推导值的数字旁出现 `估算`；整套上出现 `含 N 个估算值，合法性待总表确认`；十个数字全为冻结值时两处都不出现；可达上限含估算时旁标 `含估算值`
-- [ ] 6.7 GREEN — LineupResults 加三处标记
-- [ ] 6.8 RED — 旧格式链接：页面呈现旧链接文案、命中中性档、不呈现候选列表，且提供清空锁定重新选择的入口
-- [ ] 6.9 GREEN — LineupControls / 页面加旧链接状态与清空入口
-- [ ] 6.10 VISUAL DIFF — bring up dev stack；打开 2026 银组一支真实球队的排阵页，构造未裁决与缺值两种情形；对照 mocks 第 3 节核对；**重点看顶部是否变成提示墙**，若是则在此收拢并记录理由
+- [x] 6.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-6.md with the ### Contract block above
+- [x] 6.1 MOCK — open docs/superpowers/specs/mocks/2026-08-30-read-path-switch-mocks.html 第 3 节；抄下五条逐字文案与各自色档（旧链接为中性，非 danger）
+- [x] 6.2 RED — vitest：未裁决 N>0 时顶部出现该句且命中 warning 档；N=0 时该句不出现
+- [x] 6.3 GREEN — LineupStates 加未裁决提示
+- [x] 6.4 RED — 未参与计算 N>0 时顶部出现该句且命中中性档；N=0 时不出现
+- [x] 6.5 GREEN — 加未参与计算提示
+- [x] 6.6 RED — 候选卡：推导值的数字旁出现 `估算`；整套上出现 `含 N 个估算值，合法性待总表确认`；十个数字全为冻结值时两处都不出现；可达上限含估算时旁标 `含估算值`
+- [x] 6.7 GREEN — LineupResults 加三处标记
+- [x] 6.8 RED — 旧格式链接：页面呈现旧链接文案、命中中性档、不呈现候选列表，且提供清空锁定重新选择的入口
+- [x] 6.9 GREEN — LineupControls / 页面加旧链接状态与清空入口
+- [x] 6.10 VISUAL DIFF — bring up dev stack；打开 2026 银组一支真实球队的排阵页，构造未裁决与缺值两种情形；对照 mocks 第 3 节核对；**重点看顶部是否变成提示墙**，若是则在此收拢并记录理由
 - [ ] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 7. 验证与 ship

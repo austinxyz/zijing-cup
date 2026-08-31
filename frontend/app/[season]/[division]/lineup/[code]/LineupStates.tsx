@@ -150,3 +150,74 @@ export function BorrowedPlayersNotice() {
     </section>
   );
 }
+
+/**
+ * How many of this team's players the search could not use at all.
+ *
+ * Neutral, not warning: nothing is wrong — those players simply have no
+ * participation UTR yet. But the ceiling and every candidate below are
+ * computed over the rest, so leaving it unsaid would quietly widen "the best
+ * this team can do" into "the best some of them can do".
+ */
+export function MissingUtrNotice({ count }: { count: number }) {
+  if (count === 0) return null;
+
+  return (
+    <p
+      aria-label="未参与计算"
+      className="flex-none rounded-token border border-border bg-surface-muted px-3.5 py-2 text-[12px] leading-relaxed text-foreground"
+    >
+      本队 {count} 人因缺少参赛 UTR 未参与计算
+    </p>
+  );
+}
+
+/**
+ * Season values with two candidates and no ruling.
+ *
+ * Reading the larger one is the safe direction — the participation UTR is an
+ * upper bound, so reading low would call an illegal lineup legal — but a
+ * reader is entitled to know which of the two they are looking at.
+ */
+export function UnresolvedNotice({ count }: { count: number }) {
+  if (count === 0) return null;
+
+  return (
+    <p
+      aria-label="未裁决"
+      className="flex-none rounded-token border border-warning-border bg-warning-surface px-3.5 py-2 text-[12px] leading-relaxed text-warning"
+    >
+      本结果含 {count} 名参赛 UTR 未裁决的队员，按较大值计算
+    </p>
+  );
+}
+
+/**
+ * A shared link built before the player keys changed shape.
+ *
+ * Neutral rather than danger: nothing dangerous happened, the link is simply
+ * from before. What matters is that the page does not quietly drop the locks
+ * and show a full candidate list — that result would look entirely healthy
+ * while answering a question nobody asked.
+ */
+export function StaleLink({ resetHref }: { resetHref: string }) {
+  return (
+    <section
+      aria-label="旧链接"
+      className="flex flex-none flex-col items-start gap-2 rounded-token border border-border bg-surface px-4 py-3.5"
+    >
+      <span className="text-[13px] font-semibold text-foreground">
+        这个链接是旧格式（队员编号已变），请重新选择锁定的搭档
+      </span>
+      <span className="text-[12px] leading-relaxed text-muted">
+        队员编号在这次改版里换了形式，旧链接里的编号已经指不到人了。系统不会拿它去猜——猜错的那套阵容看起来会完全正常。
+      </span>
+      <a
+        href={resetHref}
+        className="rounded-token border border-border px-2.5 py-1 text-[12px] text-foreground hover:bg-surface-muted"
+      >
+        清空锁定，重新选择
+      </a>
+    </section>
+  );
+}
