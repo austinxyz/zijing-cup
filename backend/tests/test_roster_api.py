@@ -61,6 +61,9 @@ REGISTRY = [
     # No value for this season at all: what he has is an older one, and the
     # roster has to derive from it rather than drop him.
     ("API-ALPHA", "柳", "如是", "F", None, None, False),
+    # Nothing anywhere: no value this season, none earlier, no current
+    # doubles rating. He is still on the team, so he is still on the roster.
+    ("API-ALPHA", "钱", "无名", "M", None, None, False),
     ("API-BETA", "北", "冥子", "M", "7.10", "committee", False),
     ("API-BETA", "东", "方朔", None, "5.00", "verified", False),
 ]
@@ -248,7 +251,7 @@ class TestTeamList:
 
         # Three, not two: one of them was added through the admin UI and has
         # no row in the CSV snapshot at all.
-        assert by_code["API-ALPHA"]["player_count"] == 4
+        assert by_code["API-ALPHA"]["player_count"] == 5
         assert by_code["API-BETA"]["player_count"] == 2
 
     def test_unknown_season_is_404(self, client):
@@ -293,6 +296,25 @@ class TestRoster:
 
         assert by_name["望舒"]["origin"] == "frozen"
         assert by_name["望舒"]["origin_year"] == TEST_YEAR
+
+    def test_a_player_with_no_derivable_value_still_appears(self, client):
+        # Dropping him would make the team list and the roster disagree with
+        # nothing on screen to say a player went missing.
+        body = client.get(roster_url(), headers=AUTH).json()
+        by_name = {p["first_name"]: p for p in body["players"]}
+
+        assert "无名" in by_name
+        assert by_name["无名"]["match_utr"] is None
+        assert by_name["无名"]["origin"] is None
+
+    def test_the_roster_length_matches_the_team_list_count(self, client):
+        listed = {
+            t["code"]: t["player_count"]
+            for t in client.get(teams_url(), headers=AUTH).json()
+        }
+        body = client.get(roster_url(), headers=AUTH).json()
+
+        assert len(body["players"]) == listed["API-ALPHA"]
 
     def test_the_sheet_only_fields_are_always_null(self, client):
         # They have no counterpart in the registry. Kept in the response so
@@ -429,7 +451,7 @@ class TestGenderBreakdown:
 
         # Two men and one woman: the third is the registry-only player, and
         # gender comes off the player record, not the snapshot row.
-        assert by_code["API-ALPHA"]["men_count"] == 2
+        assert by_code["API-ALPHA"]["men_count"] == 3
         assert by_code["API-ALPHA"]["women_count"] == 2
         # Zero, not one: the registry-only player has a gender on his player
         # record. Reading gender off the snapshot would drop him in here.

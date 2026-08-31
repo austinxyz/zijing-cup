@@ -48,6 +48,10 @@
 - [x] 2.10 GREEN — 若断言失败则修正路由；无写方法时确认守卫本身不空转
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
+### Attempt 2 Fixes
+
+- [x] 2.F1 FIX — `get_team_roster` silently drops players with zero derivable match_utr (backend/app/rosters/query.py:228–232). This violates "MUST NOT 因为缺值就把这名队员从名单里略去" and creates inconsistency with `list_teams` (which counts memberships regardless). Root cause: `RosterPlayerOut.match_utr` is non-optional Decimal, but spec requires showing players even without a value. **Fix direction**: Either (1) relax `match_utr` to `Optional[Decimal]` and update contract D5 (changes response type shape) OR (2) return dropped players explicitly and let frontend handle rendering (requires API change). **Decision needed**: Which approach is acceptable? Once decided, update code + add test case for player with zero derivable values (add fixture player with no season UTR and no current_doubles to test_roster_api.py)
+
 ## 3. 排阵引擎换源、key 前缀与旧链接拒绝
 
 ### Contract

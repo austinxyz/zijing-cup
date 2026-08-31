@@ -51,6 +51,11 @@
     color: var(--color-warning); padding: .5rem .75rem; border-radius: 6px;
     font-size: .8125rem; margin: .4rem 0;
   }
+  .badge-neutral {
+    display: inline-block; font-size: .75rem; padding: .1rem .4rem; border-radius: 4px;
+    background: var(--color-surface-muted); border: 1px solid var(--color-border);
+    color: #57534e; white-space: nowrap;
+  }
   .notice-neutral {
     background: var(--color-surface-muted); border: 1px solid var(--color-border);
     padding: .5rem .75rem; border-radius: 6px; font-size: .8125rem; margin: .4rem 0;
@@ -105,8 +110,12 @@
         <td><span class="badge-warning">估算 · 当前已认证值</span></td></tr>
     <tr><td>更早赛季的 match UTR</td><td><code>估算 · &lt;年份&gt; 参赛值</code></td>
         <td><span class="badge-warning">估算 · 2025 参赛值</span></td></tr>
+    <tr><td>四步都取不到</td><td><code>无参赛 UTR</code>（中性档，代替数字本身）</td>
+        <td><span class="badge-neutral">无参赛 UTR</span></td></tr>
   </tbody>
 </table>
+<p>最后一行不是估算，所以不用 warning 档：没有数字不等于数字可疑。他仍然在名单里 ——
+他在队里 —— 球队列表的人数和名单条数必须始终对得上。</p>
 <p>年份取<strong>实际取到的那一年</strong>，不是「去年」。用 2023 的值估 2026 与用 2025 的
 估 2026 是两种可信度，标签把年份吞掉就等于把这个差别吞掉。</p>
 

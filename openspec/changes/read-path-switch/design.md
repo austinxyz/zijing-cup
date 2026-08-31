@@ -97,9 +97,25 @@ resolve_match_utr(
 响应形状（前端类型、既有测试、可能的外部读取都不必跟着动），但 `dutr_status` 当前是
 **必填 str**，要放宽成 `Optional[str]`。
 
-这是本次唯一的响应类型变更，且是放宽而非收紧。spec 里配了一条「三者恒为 null」的
-scenario，用意是把它钉成有意为之：一个恒为 null 的字段读起来像「总表没说」，事实是
-「系统不再存它」。
+spec 里配了一条「三者恒为 null」的 scenario，用意是把它钉成有意为之：一个恒为 null 的
+字段读起来像「总表没说」，事实是「系统不再存它」。
+
+### D5b. `match_utr` 与 `origin` 也放宽为可空
+
+新模型允许一名队员**一个数都取不到**（无本赛季值、无当前双打值、无任何更早赛季值）。
+他仍然在队里，spec 因此要求他仍然出现在名单里；而必填的 `match_utr` 没有地方安放
+「没有值」这件事。
+
+这一条是评审在 group 2 拦下来的：实现当时把这种人 `continue` 掉了，于是
+`list_teams` 把他算进人数、`get_team_roster` 不返回他，两个端点自相矛盾且**没有任何
+迹象说少了人**。
+
+因此 `match_utr: Optional[Decimal]`、`origin: Optional[UtrOrigin]`，两者同时为 null
+表示「取不到」。**不用 0 或哨兵值**：0 是一个合法 UTR，看的人分辨不出来——错的标签
+比没有标签更糟。
+
+排阵那边规则不同且不受此影响：缺值队员**不参与排阵**并被计数（`lineup-search`）。
+名单页的规则是「他在队里，所以他在名单里」，两者不冲突。
 
 ### D6. `rating_class` 从 `player_season_utrs.status` 直接映射；Appeal 单独呈现
 

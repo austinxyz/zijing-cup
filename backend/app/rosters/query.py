@@ -64,12 +64,15 @@ class RosterPlayerOut(BaseModel):
     gender: Optional[str] = None
 
     #: The participation UTR the event actually uses. Frozen when the season
-    #: has one; otherwise derived — see `origin`.
-    match_utr: Decimal
+    #: has one; otherwise derived — see `origin`. Null together with `origin`
+    #: when the chain finds nothing at all: the player is on the team, so he
+    #: is on the roster, and there is no number to show. Never 0 or a
+    #: sentinel — 0 is a legal UTR and a reader could not tell them apart.
+    match_utr: Optional[Decimal] = None
 
     #: Where `match_utr` came from, and from which season. A derived value has
     #: to be presentable as derived: it is not what the committee froze.
-    origin: UtrOrigin
+    origin: Optional[UtrOrigin] = None
     origin_year: Optional[int] = None
 
     #: The season value has two candidates and nobody has ruled between them.
@@ -225,20 +228,18 @@ def get_team_roster(
             current_doubles_status=player.doubles_status,
             season_year=year,
         )
-        if resolved is None:
-            # Nothing to show a number for, but he is on the team: dropping
-            # him would misreport the squad. The caller decides how to render
-            # a player with no usable value.
-            continue
+        # A player the chain finds nothing for still belongs here: he is on
+        # the team, and dropping him would leave the team list and the roster
+        # disagreeing with nothing on screen to say who went missing.
         players.append(
             RosterPlayerOut(
                 last_name=player.last_name,
                 first_name=player.first_name,
                 gender=player.gender,
-                match_utr=resolved.value,
-                origin=resolved.origin,
-                origin_year=resolved.origin_year,
-                is_unresolved=resolved.is_unresolved,
+                match_utr=resolved.value if resolved else None,
+                origin=resolved.origin if resolved else None,
+                origin_year=resolved.origin_year if resolved else None,
+                is_unresolved=resolved.is_unresolved if resolved else False,
                 rating_class=status_by_player.get(player.id),
                 under_appeal=appeal_by_player.get(player.id, False),
                 is_borrowed_player=membership.is_borrowed_player,
@@ -248,8 +249,11 @@ def get_team_roster(
 
     # Strongest first: that is the order a captain reads a roster in when
     # working out who can fill the top lines. Sorted on the resolved value,
-    # so a derived number sits where its size puts it.
-    players.sort(key=lambda p: (-p.match_utr, p.last_name))
+    # so a derived number sits where its size puts it. Players with no value
+    # sort last rather than first — an unknown is not a strength.
+    players.sort(
+        key=lambda p: (p.match_utr is None, -(p.match_utr or 0), p.last_name)
+    )
 
     return TeamRosterOut(
         team=TeamOut(
