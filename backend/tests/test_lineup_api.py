@@ -13,6 +13,7 @@ All names are invented.
 """
 
 import os
+import re
 
 os.environ.setdefault(
     "DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
@@ -31,50 +32,132 @@ from app.models import (
     Division,
     DivisionEligibilityLimit,
     DivisionLine,
-    RosterEntry,
+    Player,
+    PlayerSeasonUtr,
+    PlayerTeamMembership,
     Season,
     Team,
 )
-from app.rosters.load import load_rosters
 
 AUTH = {"X-Backend-Secret": "test-secret"}
 TEST_YEAR = 1994  # reserved for this module
 
-HEADER = (
-    "Team,Last Name,First Name,Gender,DUTR Status,Match UTR,"
-    "Verified DUTR 09/22,Notes"
-)
 MEN = [("6.80", "m1"), ("6.40", "m2"), ("6.00", "m3"), ("5.80", "m4"),
        ("5.60", "m5"), ("5.40", "m6"), ("5.20", "m7"), ("5.00", "m8")]
 WOMEN = [("5.00", "w1"), ("4.80", "w2"), ("4.60", "w3"), ("4.40", "w4")]
+
+#: (team, last, first, gender, this season's participation UTR)
 ROWS = (
-    [f"LINEUP-A,南,{n},M,Rated,{utr},{utr}," for utr, n in MEN]
-    + [f"LINEUP-A,西,{n},F,Rated,{utr},{utr}," for utr, n in WOMEN]
+    [("LINEUP-A", "南", n, "M", utr) for utr, n in MEN]
+    + [("LINEUP-A", "西", n, "F", utr) for utr, n in WOMEN]
     # A second team too small to field five lines: the endpoint has to answer
     # for it without pretending the roster is merely weak.
-    + ["LINEUP-B,北,x1,M,Rated,6.00,6.00,"]
+    + [("LINEUP-B", "北", "x1", "M", "6.00")]
 )
+
+#: (last, first, gender, season offset from TEST_YEAR or None, utr, unresolved)
+EXTRA = [
+    # Nothing anywhere: on the team, but there is no number to place him with.
+    ("钱", "nought", "M", None, None, False),
+    # Only last season's value: he plays on a derived number.
+    ("孙", "derived", "M", -1, "5.10", False),
+    # This season, but with two candidates and no ruling.
+    ("李", "disputed", "M", 0, "5.30", True),
+]
+
+
+def _build_registry(session: Session, teams: dict[str, Team]) -> None:
+    for code, last, first, gender, utr in ROWS:
+        player = Player(last_name=last, first_name=first, gender=gender)
+        session.add(player)
+        session.commit()
+        session.refresh(player)
+        session.add(
+            PlayerTeamMembership(player_id=player.id, team_id=teams[code].id)
+        )
+        session.add(
+            PlayerSeasonUtr(
+                player_id=player.id,
+                season_year=TEST_YEAR,
+                value=Decimal(utr),
+                status="verified",
+                source="committee_sheet",
+            )
+        )
+    session.commit()
+
+
+def _build_extra(session: Session, team: Team) -> None:
+    for last, first, gender, offset, utr, unresolved in EXTRA:
+        player = Player(last_name=last, first_name=first, gender=gender)
+        session.add(player)
+        session.commit()
+        session.refresh(player)
+        session.add(
+            PlayerTeamMembership(player_id=player.id, team_id=team.id)
+        )
+        if offset is not None:
+            session.add(
+                PlayerSeasonUtr(
+                    player_id=player.id,
+                    season_year=TEST_YEAR + offset,
+                    value=Decimal(utr),
+                    is_unresolved=unresolved,
+                    alt_value=Decimal("5.00") if unresolved else None,
+                    status="verified",
+                    source="committee_sheet",
+                )
+            )
+    session.commit()
 
 
 def _cleanup(session: Session) -> None:
     teams = session.exec(select(Team).where(Team.season_year == TEST_YEAR)).all()
-    for team in teams:
-        session.execute(delete(RosterEntry).where(RosterEntry.team_id == team.id))
-    session.execute(delete(Team).where(Team.season_year == TEST_YEAR))
+    team_ids = [team.id for team in teams]
+    if team_ids:
+        player_ids = [
+            m.player_id
+            for m in session.exec(
+                select(PlayerTeamMembership).where(
+                    PlayerTeamMembership.team_id.in_(team_ids)
+                )
+            ).all()
+        ]
+        session.execute(
+            delete(PlayerTeamMembership).where(
+                PlayerTeamMembership.team_id.in_(team_ids)
+            )
+        )
+        if player_ids:
+            session.execute(
+                delete(PlayerSeasonUtr).where(
+                    PlayerSeasonUtr.player_id.in_(player_ids)
+                )
+            )
+        session.execute(delete(Team).where(Team.id.in_(team_ids)))
+        if player_ids:
+            session.execute(delete(Player).where(Player.id.in_(player_ids)))
     divisions = session.exec(
         select(Division).where(Division.season_year == TEST_YEAR)
     ).all()
     for division in divisions:
         session.execute(
+            delete(DivisionLine).where(DivisionLine.division_id == division.id)
+        )
+        session.execute(
             delete(DivisionEligibilityLimit).where(
                 DivisionEligibilityLimit.division_id == division.id
             )
         )
-        session.execute(
-            delete(DivisionLine).where(DivisionLine.division_id == division.id)
+    session.execute(
+        delete(PlayerSeasonUtr).where(
+            PlayerSeasonUtr.season_year.in_([TEST_YEAR, TEST_YEAR - 1])
         )
+    )
     session.execute(delete(Division).where(Division.season_year == TEST_YEAR))
-    session.execute(delete(Season).where(Season.year == TEST_YEAR))
+    session.execute(
+        delete(Season).where(Season.year.in_([TEST_YEAR, TEST_YEAR - 1]))
+    )
     session.commit()
 
 
@@ -122,7 +205,19 @@ def client():
             )
         )
         session.commit()
-        load_rosters(session, "\n".join([HEADER, *ROWS]) + "\n", TEST_YEAR, "silver")
+        teams: dict[str, Team] = {}
+        for code, *_ in ROWS:
+            if code in teams:
+                continue
+            team = Team(season_year=TEST_YEAR, division_code="silver", code=code)
+            session.add(team)
+            session.commit()
+            session.refresh(team)
+            teams[code] = team
+        _build_registry(session, teams)
+        session.add(Season(year=TEST_YEAR - 1, edition_name="阵容接口上届"))
+        session.commit()
+        _build_extra(session, teams["LINEUP-A"])
 
     yield TestClient(app)
 
@@ -149,6 +244,104 @@ def keys_by_name(client: TestClient) -> dict[str, str]:
             for player in pair:
                 found[player["first_name"]] = player["key"]
     return found
+
+
+class TestPlayerKeys:
+    def test_keys_are_prefixed_so_the_old_bare_integers_cannot_parse(self, client):
+        # The old keys were roster_entries ids: bare integers, the same shape
+        # as players ids. A stale shared link would have parsed cleanly and
+        # locked two unrelated people into a lineup that looked legal.
+        body = search(client).json()
+
+        assert body["roster"], "the response carries the roster it searched"
+        for player in body["roster"]:
+            assert re.fullmatch(r"p\d+", player["key"]), player["key"]
+
+
+class TestWhoIsAndIsNotInTheSearch:
+    def test_a_player_with_no_derivable_value_is_counted_not_dropped(self, client):
+        # The ceiling and every candidate are computed over the rest, so
+        # saying nothing would present a partial answer as the whole squad's.
+        body = search(client).json()
+
+        assert body["missing_utr_count"] == 1
+        assert all(p["first_name"] != "nought" for p in body["roster"])
+
+    def test_players_on_a_derived_number_are_counted(self, client):
+        body = search(client).json()
+
+        assert body["estimated_count"] == 1
+
+    def test_players_on_an_unruled_value_are_counted(self, client):
+        body = search(client).json()
+
+        assert body["unresolved_count"] == 1
+
+    def test_a_squad_with_nothing_missing_reports_zero(self, client):
+        body = search(client, team="LINEUP-B").json()
+
+        assert body["missing_utr_count"] == 0
+        assert body["estimated_count"] == 0
+        assert body["unresolved_count"] == 0
+
+
+class TestOneNumberPerPlayer:
+    def test_the_roster_page_and_the_engine_agree(self, client):
+        # Two readers, one chain. If they ever disagree, a captain checks a
+        # lineup against a roster that says something else and neither screen
+        # admits which is wrong.
+        lineup = search(client).json()
+        roster = client.get(
+            f"/api/seasons/{TEST_YEAR}/divisions/silver/teams/LINEUP-A/roster",
+            headers=AUTH,
+        ).json()
+
+        by_name = {p["first_name"]: p["match_utr"] for p in roster["players"]}
+        assert by_name, "the roster endpoint returned players"
+
+        for player in lineup["roster"]:
+            assert player["match_utr"] == by_name[player["first_name"]], (
+                player["first_name"]
+            )
+
+    def test_the_derived_player_is_derived_on_both(self, client):
+        roster = client.get(
+            f"/api/seasons/{TEST_YEAR}/divisions/silver/teams/LINEUP-A/roster",
+            headers=AUTH,
+        ).json()
+        by_name = {p["first_name"]: p for p in roster["players"]}
+
+        assert by_name["derived"]["origin"] == "prior_season"
+        assert by_name["derived"]["origin_year"] == TEST_YEAR - 1
+        # And the engine used the same number for him.
+        lineup = search(client).json()
+        engine = {p["first_name"]: p["match_utr"] for p in lineup["roster"]}
+        assert engine["derived"] == by_name["derived"]["match_utr"]
+
+
+class TestStaleLinks:
+    def test_a_bare_integer_lock_is_reported_as_an_old_link(self, client):
+        # Not a generic 4xx: the reader has to know the link is stale rather
+        # than that they mistyped something.
+        response = search(client, lock=["WD:12,13"])
+
+        assert response.status_code == 422
+        detail = response.json()["detail"]
+        assert "旧格式" in detail or "old link" in detail.lower()
+
+    def test_a_bare_integer_exclusion_is_reported_the_same_way(self, client):
+        response = search(client, exclude=["12"])
+
+        assert response.status_code == 422
+        detail = response.json()["detail"]
+        assert "旧格式" in detail or "old link" in detail.lower()
+
+    def test_a_stale_link_does_not_return_a_lineup(self, client):
+        # The dangerous outcome is a full candidate list computed as though
+        # the lock had been honoured.
+        body = search(client, lock=["WD:12,13"]).json()
+
+        assert "candidates" not in body
 
 
 class TestSearchResponse:

@@ -18,20 +18,18 @@
   - Code: No CRITICAL/HIGH issues; one MEDIUM (case-insensitivity not tested); one LOW (unique constraint assumption documented)
 - **code_review_summary**: APPROVE — implementation correctly follows all four contract requirements (D1–D3). One MEDIUM test-coverage gap (case-insensitive status matching) worth closing before merge but does not block.
 
-## Group 2 — Attempt 1
+## Group 2 — Attempt 2
 
 - **group**: 2
-- **attempt**: 1
+- **attempt**: 2
 - **scores**:
-  - spec: 92
+  - spec: 100
   - runtime: 100
-  - code: 68
-- **total**: 87.2 (insufficient due to HIGH issue)
-- **status**: BLOCK — HIGH severity spec violation found during code review
+  - code: 95
+- **total**: 99
+- **status**: PASS (99 >= 80 threshold)
 - **findings**:
-  - HIGH: Players with zero derivable match_utr are silently dropped from roster (backend/app/rosters/query.py:228–232). The code's own comment says dropping "would misreport the squad," yet it does so. This violates `team-roster/spec.md` requirement "MUST NOT 因为缺值就把这名队员从名单里略去" and the "缺值队员仍在名单里" scenario. Creates inconsistency: `list_teams` returns `player_count: N` but `get_team_roster` returns fewer than N players with no indication of the omission. Unfixed by test suite because fixture gives every player a resolvable value (either direct or from prior season). Per design.md, any registry player with no `player_season_utrs` row in any season and no current-doubles value will resolve to None and be dropped.
-  - Blocker: Fixing cleanly requires either (1) relaxing `match_utr` to `Optional[Decimal]` (violates contract D5 constraint that this is the only type change) or (2) showing unresolvable players explicitly and letting frontend render (requires design review).
-  - Spec: All other SHALL statements correctly implemented; data source switched to player registry (D7); response shape preserved (D5); rating_class from status, under_appeal separate (D6); sorting on resolved value
-  - Runtime: All 23 tests pass; fixture correctly builds on new tables without roster_entries
-  - Code: Data source fully switched, field types correct, query optimization sound; one CRITICAL logic gap (player omission on zero derivable value)
-- **code_review_summary**: BLOCK — spec violation in roster omission logic. Other implementation (D5–D7, SQL queries, field mapping) is sound but cannot proceed without fixing player dropout.
+  - Spec: All SHALL statements correctly implemented. Data source fully switched to player registry (D7 ✓). Response shape preserved with new fields correctly optional (D5/D5b ✓). dutr_status/source_note/daily_utrs hardcoded null/empty (D5 ✓). rating_class from status, under_appeal separate (D6 ✓). Players with no derivable UTR are correctly retained in roster, not dropped (spec "缺值队员仍在名单里" ✓). Team list count matches roster length (spec consistency ✓). Gender read from Player table not snapshot (D7 ✓).
+  - Runtime: All 25 tests pass (0.99s, no errors). Fixture correctly builds on registry tables without roster_entries. Tests cover frozen value, prior-season derivation, no-value-anywhere, registry-only player, count consistency, null fields, gender bucketing.
+  - Code: No CRITICAL/HIGH issues. Optional typing for dutr_status/match_utr/origin/origin_year matches contract exactly. list_teams() correctly remains single query with LEFT JOINs, grouped by gender, ordered by code. get_team_roster() correctly batches season_utrs query, delegates to resolve_match_utr(), keeps players with None values. Sorting by resolved match_utr correct (nulls last, then -utr desc, then name asc). is_borrowed_player/utr_profile_id correctly placed on membership vs player. No write endpoints added. One LOW observation (test data naming) is non-blocking readability note.
+- **code_review_summary**: APPROVE — No CRITICAL or HIGH issues. All contract decisions (D5/D5b/D6/D7) and spec SHALL statements correctly implemented. Solid test coverage with regression guard against N+1 queries. Ready to ship.

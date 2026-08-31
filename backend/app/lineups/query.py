@@ -10,6 +10,7 @@ endpoint above this module is a GET and locks travel in the query string.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
@@ -22,9 +23,18 @@ from app.models import (
     Division,
     DivisionEligibilityLimit,
     DivisionLine,
-    RosterEntry,
+    Player,
+    PlayerSeasonUtr,
+    PlayerTeamMembership,
     Team,
 )
+from app.players.utr_chain import SeasonUtrView, UtrOrigin, resolve_match_utr
+
+#: Prefixes every player key. The old keys were `roster_entries` ids — bare
+#: integers, as `players` ids are — so a stale shared link would have parsed
+#: cleanly and locked two unrelated people into a lineup that looked legal.
+#: The prefix is what makes that link fail instead.
+KEY_PREFIX = "p"
 
 
 class UnknownReference(ValueError):
@@ -107,6 +117,18 @@ class LineupSearchOut(BaseModel):
     #: back come from the same response.
     roster: list[PlayerOut] = []
 
+    #: On the team but with no derivable participation UTR, so not in the
+    #: search at all. Reported rather than dropped: the ceiling and every
+    #: candidate above are computed over the rest.
+    missing_utr_count: int = 0
+
+    #: How many players in the search are playing on a derived number.
+    estimated_count: int = 0
+
+    #: How many are on a season value nobody has ruled on. The larger of the
+    #: two candidates was used.
+    unresolved_count: int = 0
+
 
 def load_ruleset(session: Session, year: int, code: str) -> Optional[RuleSet]:
     """The division's rule values, or None when that division does not exist.
@@ -149,9 +171,29 @@ def load_ruleset(session: Session, year: int, code: str) -> Optional[RuleSet]:
     )
 
 
+@dataclass(frozen=True)
+class LoadedRoster:
+    """The engine's candidates, plus what had to be left out to build them."""
+
+    candidates: list[Candidate]
+
+    #: On the team but with no participation UTR the chain could derive. They
+    #: cannot be placed, and the count has to travel with the result: the
+    #: ceiling and every candidate are computed over the rest, so silence
+    #: would present a partial answer as the whole squad's.
+    missing_utr_count: int = 0
+
+    #: Playing with a derived number. Legality is a property of the whole
+    #: lineup, so one estimate makes "this is legal" itself an estimate.
+    estimated_count: int = 0
+
+    #: Season values with two candidates and no ruling. The larger is used.
+    unresolved_count: int = 0
+
+
 def load_roster(
     session: Session, year: int, code: str, team_code: str
-) -> Optional[list[Candidate]]:
+) -> Optional[LoadedRoster]:
     """The team's players as the engine needs them, or None for no such team.
 
     None rather than an empty list: "no such team" and "a team with nobody on
@@ -167,20 +209,61 @@ def load_roster(
     if team is None:
         return None
 
-    entries = session.exec(
-        select(RosterEntry)
-        .where(RosterEntry.team_id == team.id)
-        .order_by(RosterEntry.id)
+    memberships = session.exec(
+        select(PlayerTeamMembership, Player)
+        .join(Player, Player.id == PlayerTeamMembership.player_id)
+        .where(PlayerTeamMembership.team_id == team.id)
+        .order_by(PlayerTeamMembership.id)
     ).all()
-    return [
-        Candidate(
-            key=str(entry.id),
-            name=f"{entry.last_name}\t{entry.first_name}",
-            gender=entry.gender,
-            match_utr=entry.match_utr,
+
+    player_ids = [player.id for _, player in memberships]
+    seasons_by_player: dict[int, list[SeasonUtrView]] = {}
+    if player_ids:
+        for row in session.exec(
+            select(PlayerSeasonUtr).where(PlayerSeasonUtr.player_id.in_(player_ids))
+        ).all():
+            seasons_by_player.setdefault(row.player_id, []).append(
+                SeasonUtrView(
+                    season_year=row.season_year,
+                    value=row.value,
+                    is_unresolved=row.is_unresolved,
+                )
+            )
+
+    candidates: list[Candidate] = []
+    missing = estimated = unresolved = 0
+    for _membership, player in memberships:
+        resolved = resolve_match_utr(
+            season_utrs=seasons_by_player.get(player.id, []),
+            current_doubles=player.doubles_utr,
+            current_doubles_status=player.doubles_status,
+            season_year=year,
         )
-        for entry in entries
-    ]
+        if resolved is None:
+            # Unlike the roster page, which still lists him: there is no
+            # number to place him with, so he cannot be in a lineup. He is
+            # counted instead of dropped quietly.
+            missing += 1
+            continue
+        if resolved.origin is not UtrOrigin.FROZEN:
+            estimated += 1
+        if resolved.is_unresolved:
+            unresolved += 1
+        candidates.append(
+            Candidate(
+                key=f"{KEY_PREFIX}{player.id}",
+                name=f"{player.last_name}	{player.first_name}",
+                gender=player.gender,
+                match_utr=resolved.value,
+            )
+        )
+
+    return LoadedRoster(
+        candidates=candidates,
+        missing_utr_count=missing,
+        estimated_count=estimated,
+        unresolved_count=unresolved,
+    )
 
 
 def _player_out(candidate: Candidate) -> PlayerOut:
@@ -209,7 +292,7 @@ def rules_ceiling(rules: RuleSet) -> Optional[Decimal]:
 
 
 def to_output(
-    rules: RuleSet, roster: list[Candidate], result: SearchResult
+    rules: RuleSet, loaded: LoadedRoster, result: SearchResult
 ) -> LineupSearchOut:
     caps = {line.code: line.cap for line in rules.lines}
 
@@ -247,7 +330,10 @@ def to_output(
             ViolationOut(code=v.code, line=v.line, amount=v.amount, message=v.message)
             for v in result.invalid_locks
         ],
-        roster=[_player_out(player) for player in roster],
+        roster=[_player_out(player) for player in loaded.candidates],
+        missing_utr_count=loaded.missing_utr_count,
+        estimated_count=loaded.estimated_count,
+        unresolved_count=loaded.unresolved_count,
     )
 
 
@@ -264,9 +350,10 @@ def search_team_lineups(
     rules = load_ruleset(session, year, code)
     if rules is None:
         return None
-    roster = load_roster(session, year, code, team_code)
-    if roster is None:
+    loaded = load_roster(session, year, code, team_code)
+    if loaded is None:
         return None
+    roster = loaded.candidates
 
     line_codes = {line.code for line in rules.lines}
     by_key = {player.key: player for player in roster}
@@ -289,4 +376,4 @@ def search_team_lineups(
     result = search_lineups(
         rules, roster, locks=resolved, excluded=excluded or (), keep=keep
     )
-    return to_output(rules, roster, result)
+    return to_output(rules, loaded, result)

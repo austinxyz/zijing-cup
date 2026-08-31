@@ -9,6 +9,7 @@ The route reads the database, calls the pure engine, and hands back what it
 returned. No constraint or search logic lives here.
 """
 
+import re
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -18,6 +19,25 @@ from app.db import get_session
 from app.lineups.query import LineupSearchOut, UnknownReference, search_team_lineups
 
 router = APIRouter(prefix="/api", tags=["lineups"])
+
+#: A key from before the read-path switch: `roster_entries.id`, a bare
+#: integer. Current keys carry a `p` prefix.
+_OLD_KEY = re.compile(r"\d+")
+
+STALE_LINK_DETAIL = (
+    "这个链接是旧格式（队员编号已变），请重新选择锁定的搭档"
+)
+
+
+def _reject_old_keys(keys: list[str]) -> None:
+    """Refuse pre-switch keys by name rather than as "unknown player".
+
+    Both id spaces are small integers, so a stale key can name a real player
+    who is simply not the one the link meant. Saying "unknown player" would
+    send the reader looking for a typo; the link is the problem.
+    """
+    if any(_OLD_KEY.fullmatch(key) for key in keys):
+        raise UnknownReference(STALE_LINK_DETAIL)
 
 
 def _parse_locks(raw: list[str]) -> dict[str, tuple[str, str]]:
@@ -34,6 +54,7 @@ def _parse_locks(raw: list[str]) -> dict[str, tuple[str, str]]:
             raise UnknownReference(f"malformed lock: {item}")
         if line in locks:
             raise UnknownReference(f"line locked twice: {line}")
+        _reject_old_keys(keys)
         locks[line] = (keys[0], keys[1])
     return locks
 
@@ -57,6 +78,7 @@ def search_lineups_for_team(
     session: Session = Depends(get_session),
 ) -> LineupSearchOut:
     try:
+        _reject_old_keys(list(exclude or []))
         result = search_team_lineups(
             session,
             year,

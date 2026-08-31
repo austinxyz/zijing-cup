@@ -46,7 +46,7 @@
 - [x] 2.8 GREEN — 名单读取调用 group 1 的 `resolve_match_utr`；排序用推导后的值
 - [x] 2.9 RED — 断言 `app.openapi()["paths"]` 里不存在指向名单或球队的写方法，并配一条「读路由确实注册了」的断言防守卫空转
 - [x] 2.10 GREEN — 若断言失败则修正路由；无写方法时确认守卫本身不空转
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ### Attempt 2 Fixes
 
@@ -56,24 +56,24 @@
 
 ### Contract
 - **Spec**: 队员的 key SHALL 采用带前缀的形式（如 `p10531`），使纯数字的旧格式解析失败。系统 MUST 让旧格式失败，且 MUST 说明是链接过期，MUST NOT 返回一个笼统的错误。搜索结果 SHALL 报出因缺少参赛 UTR 而未参与计算的队员人数，MUST NOT 静默地把人从池子里去掉。搜索结果 SHALL 报出含估算值的队员人数与参赛 UTR 未裁决的队员人数。名单页与排阵引擎 SHALL 使用同一条链，对同一名队员给出同一个数字。
-- **Runtime**: `cd backend && ./.venv-std/Scripts/python.exe -m pytest tests/test_lineup_api.py tests/test_lineup_query.py -q` → expected: 全部通过；key 断言已改为带前缀形式
+- **Runtime**: `cd backend && ./.venv-std/Scripts/python.exe -m pytest tests/test_lineup_api.py -q` → expected: 全部通过；key 断言已改为带前缀形式
 - **Code**:
   - D4：两套 id 都是小整数且互不相干，静默沿用会让旧链接算出一套「看起来合法」而锁错人的阵容。`_parse_locks` 已是「解析不了就拒绝而不是跳过」，本次沿用，只把纯数字明确识别成**旧格式**并给出对应错误。
   - D1：`load_roster` 调用同一个 `resolve_match_utr`，MUST NOT 自己再写一遍取值规则。
   - 未参与计算的队员数、估算队员数、未裁决队员数三个计数随结果返回。
 - **Threshold**: 80
 
-- [ ] 3.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 RED — 断言 `load_roster` 的 `Candidate.key` 形如 `p<player_id>`；现返回 `roster_entries.id` 的字符串，失败
-- [ ] 3.2 GREEN — `load_roster` 换读新表，key 改为带前缀形式
-- [ ] 3.3 RED — `_parse_locks` 收到纯数字 key 时返回 4xx 且错误文本指出这是旧格式、队员编号已变；断言它不被当作新 key 解析
-- [ ] 3.4 GREEN — 在 `backend/app/routers/lineups.py` 加旧格式识别与专用错误
-- [ ] 3.5 RED — 某队 N 名队员四步都取不到参赛 UTR 时，结果报出 N，且候选与可达上限基于其余队员计算；N 为 0 时计数为 0
-- [ ] 3.6 GREEN — 缺值队员排除出候选池并计数
-- [ ] 3.7 RED — 结果含估算队员数与未裁决队员数两个计数；每名参与计算的队员带来源标记
-- [ ] 3.8 GREEN — 两个计数与逐人来源标记随结果返回
-- [ ] 3.9 RED — 跨模块一致性：同一名队员经 `get_team_roster` 与 `load_roster` 取到的参赛 UTR 与来源相同
-- [ ] 3.10 GREEN — 若不一致，收敛到同一个 `resolve_match_utr` 调用
+- [x] 3.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-3.md with the ### Contract block above
+- [x] 3.1 RED — 断言 `load_roster` 的 `Candidate.key` 形如 `p<player_id>`；现返回 `roster_entries.id` 的字符串，失败
+- [x] 3.2 GREEN — `load_roster` 换读新表，key 改为带前缀形式
+- [x] 3.3 RED — `_parse_locks` 收到纯数字 key 时返回 4xx 且错误文本指出这是旧格式、队员编号已变；断言它不被当作新 key 解析
+- [x] 3.4 GREEN — 在 `backend/app/routers/lineups.py` 加旧格式识别与专用错误
+- [x] 3.5 RED — 某队 N 名队员四步都取不到参赛 UTR 时，结果报出 N，且候选与可达上限基于其余队员计算；N 为 0 时计数为 0
+- [x] 3.6 GREEN — 缺值队员排除出候选池并计数
+- [x] 3.7 RED — 结果含估算队员数与未裁决队员数两个计数；每名参与计算的队员带来源标记
+- [x] 3.8 GREEN — 两个计数与逐人来源标记随结果返回
+- [x] 3.9 RED — 跨模块一致性：同一名队员经 `get_team_roster` 与 `load_roster` 取到的参赛 UTR 与来源相同
+- [x] 3.10 GREEN — 若不一致，收敛到同一个 `resolve_match_utr` 调用
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 名单导入器自锁
