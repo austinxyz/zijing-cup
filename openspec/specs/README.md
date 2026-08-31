@@ -193,10 +193,13 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 ## 规划中的能力（路线图）
 
+`lineup-engine` 与 `lineup-ui` 曾列在这里，现已实现并上线，条目见上方。
+
 | 能力 | 说明 | 状态 |
 |---|---|---|
-| `mobile-shell` | 移动端版式（侧栏收成顶栏、导航变 tab 条）+ 冷启动加载态。手机稿见 `design/TeamsMobile.dc.html` 与 `TeamsMobileRoster.dc.html` | 📋 规划中 |
-| `lineup-engine` | 移植 MatchApp 策略模式阵容优化引擎（Top-5 候选阵容、逐线 cap + 全局 buffer 预算、固定搭档）。田忌赛马判定已定（三线男双 UTR 和非递增，相等不算违规）；开工前仍需组委会澄清 `Unrated` 分类、`/ Appeal` 语义、金组 4:4 抢七判定三项 | 📋 规划中 |
-| `lineup-ui` | 前端锁定搭档 + 阵容对比交互界面 | 📋 规划中 |
+| `current-utr-source` | 当前单/双打 UTR、状态与 UTR 链接的**来源**：导入或同步，取代逐个手填。名单页那两列今天一整列是 `—`，推导链第二步（当前 `rated` 双打值）因此永不命中。后端 `PATCH /api/players/{id}` 已能写这五个字段，缺的是入口 | 🚧 进行中 |
+| `roster-import-rewrite` | 名单 CSV 导入器改写为直接写队员注册表，然后让 `roster_entries` 退休。拆掉现在的双写与 `--i-know-it-is-not-read` 绕行开关。属于清理：不改变任何人看到的东西 | 📋 规划中 |
+| `opponent-compare` | 侧栏那个「未开放」的入口：拿自己的阵容对着对手名单算胜负。开工前要先想清楚「怎么算胜负」——金银两组计分方式不同（`scoring_mode`），且要处理对手阵容未知时的假设 | 📋 规划中 |
+| `mobile-shell` | 移动端版式（侧栏收成顶栏、导航变 tab 条）+ 冷启动加载态。手机稿见 `design/TeamsMobile.dc.html` 与 `TeamsMobileRoster.dc.html`。比赛当天在场边看名单/改阵容才是真实场景，而现在所有页面都是桌面三栏 | 📋 规划中 |
 
 > `project-bootstrap` 已随 bootstrap 完成并部署，但未走 opsx change 流程，故无归档 spec。
