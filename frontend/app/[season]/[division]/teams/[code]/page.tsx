@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { isSignedIn } from "@/lib/admin";
 import { getTeamRoster } from "@/lib/api";
-import { RosterTable } from "./RosterTable";
+import { RosterEditor } from "./RosterEditor";
 
 interface PageProps {
   params: Promise<{ season: string; division: string; code: string }>;
@@ -14,6 +16,11 @@ export default async function TeamRosterPage({ params }: PageProps) {
   // Not an empty table: that would say "this team has no players", which is a
   // different and false claim about a team that does not exist.
   if (roster === null) notFound();
+
+  // Only decides whether to offer the controls. The write endpoint refuses an
+  // unauthenticated caller on its own; this keeps the page from showing a
+  // button that cannot work.
+  const canEdit = await isSignedIn();
 
   const men = roster.players.filter((p) => p.gender === "M").length;
   const women = roster.players.filter((p) => p.gender === "F").length;
@@ -44,17 +51,33 @@ export default async function TeamRosterPage({ params }: PageProps) {
             </span>
           </div>
         </div>
-        {/* The number in the table is not a live rating. A captain checking it
-            against the UTR site needs to know which one this is. */}
-        <span className="flex-none font-mono text-[11.5px] text-muted-foreground">
-          参赛 UTR · 赛前冻结
-        </span>
+        <div className="flex flex-none items-center gap-3">
+          {canEdit ? (
+            <Link
+              href={`/${season}/${division}/teams/${encodeURIComponent(code)}/utr`}
+              className="rounded-token border border-border bg-surface px-2.5 py-1 text-[12px] text-foreground no-underline"
+            >
+              当前 UTR 批量导入
+            </Link>
+          ) : null}
+          {/* The number in the table is not a live rating. A captain checking
+              it against the UTR site needs to know which one this is. */}
+          <span className="font-mono text-[11.5px] text-muted-foreground">
+            参赛 UTR · 赛前冻结
+          </span>
+        </div>
       </div>
 
       {/* Only the table scrolls: the team's name and head count stay in
           view, and the column labels stick to the top of this box. */}
       <div className="flex-1 overflow-y-auto">
-        <RosterTable players={roster.players} />
+        <RosterEditor
+          players={roster.players}
+          canEdit={canEdit}
+          season={season}
+          division={division}
+          teamCode={code}
+        />
       </div>
     </>
   );

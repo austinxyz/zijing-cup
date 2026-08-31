@@ -131,14 +131,14 @@
   - 现有 `RosterTable` 是无状态的展示组件；加编辑态时不要把整表变成客户端组件，只让需要交互的那一行是。
 - **Threshold**: 70
 
-- [ ] 6.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-6.md with the ### Contract block above
-- [ ] 6.1 MOCK — open docs/superpowers/specs/mocks/2026-08-31-current-utr-source-mocks.html 的「名单页就地改」一节；抄下编辑态行的形态、按钮文案与右上角入口
-- [ ] 6.2 RED — vitest：已登录时每行有编辑入口，点击后该行变输入态、其余行不变
-- [ ] 6.3 GREEN — 实现行内编辑态
-- [ ] 6.4 RED — 保存后该行显示新值并回到只读
-- [ ] 6.5 GREEN — 接上 Server Action
-- [ ] 6.6 RED — 未登录时行内入口与右上角批量导入入口都不渲染，名单照常可读
-- [ ] 6.7 GREEN — 按登录态渲染入口
+- [x] 6.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-6.md with the ### Contract block above
+- [x] 6.1 MOCK — open docs/superpowers/specs/mocks/2026-08-31-current-utr-source-mocks.html 的「名单页就地改」一节；抄下编辑态行的形态、按钮文案与右上角入口
+- [x] 6.2 RED — vitest：已登录时每行有编辑入口，点击后该行变输入态、其余行不变
+- [x] 6.3 GREEN — 实现行内编辑态
+- [x] 6.4 RED — 保存后该行显示新值并回到只读
+- [x] 6.5 GREEN — 接上 Server Action
+- [x] 6.6 RED — 未登录时行内入口与右上角批量导入入口都不渲染，名单照常可读
+- [x] 6.7 GREEN — 按登录态渲染入口
 - [ ] 6.8 VISUAL DIFF — bring up dev stack；登录后在 2025 银组某队名单页改一个人的当前双打为 rated，保存；确认该队排阵页上此人的来源变为 `估算 · 当前已认证值`（前提是他本赛季无参赛 UTR）
 - [ ] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 

@@ -1,5 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import type { RosterPlayer } from "@/lib/api";
 import { RosterTable } from "./RosterTable";
@@ -317,5 +317,54 @@ describe("current UTRs", () => {
     expect(
       screen.getByText("当前 UTR 由人工维护，未与 UTR 官网同步"),
     ).toBeTruthy();
+  });
+});
+
+describe("editing one player's current UTR in place", () => {
+  it("offers a way in on every row when signed in", () => {
+    render(<RosterTable players={[player(), player({ player_id: 2 })]} canEdit />);
+
+    expect(screen.getAllByRole("button", { name: "改" })).toHaveLength(2);
+  });
+
+  it("turns just that row into inputs", () => {
+    // One player at a time. Editing several at once is what the batch sheet
+    // is for, and two routes to the same job leave nobody sure which to use.
+    render(<RosterTable players={[player(), player({ player_id: 2 })]} canEdit />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "改" })[0]);
+
+    expect(screen.getAllByRole("spinbutton")).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "改" })).toHaveLength(1);
+  });
+
+  it("hands the save the player's id, not their name", () => {
+    const onSave = vi.fn();
+    render(<RosterTable players={[player({ player_id: 42 })]} canEdit onSave={onSave} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "改" }));
+    fireEvent.change(screen.getAllByRole("spinbutton")[1], {
+      target: { value: "6.40" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "存" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ player_id: 42, doubles_utr: "6.40" }),
+    );
+  });
+
+  it("shows no way in at all when signed out", () => {
+    // Hiding the control is only half of it — the write endpoint refuses an
+    // unauthenticated caller regardless. This half keeps the page from
+    // offering a control that cannot work.
+    render(<RosterTable players={[player()]} />);
+
+    expect(screen.queryByRole("button", { name: "改" })).toBeNull();
+  });
+
+  it("still shows the roster when signed out", () => {
+    render(<RosterTable players={[player()]} />);
+
+    expect(screen.getByText("南 望舒")).toBeTruthy();
   });
 });

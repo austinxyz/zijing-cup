@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 import { Badge } from "@/components/ui";
 import type { RosterPlayer } from "@/lib/api";
 import { playerName } from "@/lib/name";
@@ -33,7 +37,37 @@ function estimateLabel(
   return null;
 }
 
-export function RosterTable({ players }: { players: RosterPlayer[] }) {
+export interface CurrentUtrEdit {
+  player_id: number;
+  singles_utr: string | null;
+  singles_status: string | null;
+  doubles_utr: string | null;
+  doubles_status: string | null;
+}
+
+/**
+ * The roster, and — for a signed-in admin — a way to fix one player's current
+ * UTR without a round trip through the sheet.
+ *
+ * One player at a time on purpose. Editing several at once is what the batch
+ * sheet is for, and two routes to the same job leave nobody sure which one to
+ * reach for.
+ *
+ * `canEdit` hides the control; it is not the protection. The write endpoint
+ * refuses an unauthenticated caller on its own. This half keeps the page from
+ * offering a button that cannot work.
+ */
+export function RosterTable({
+  players,
+  canEdit = false,
+  onSave,
+}: {
+  players: RosterPlayer[];
+  canEdit?: boolean;
+  onSave?: (edit: CurrentUtrEdit) => void;
+}) {
+  const [editing, setEditing] = useState<number | null>(null);
+
   return (
     <div>
       {/* Beside the columns, not in a footer: a number that looks official
@@ -62,6 +96,7 @@ export function RosterTable({ players }: { players: RosterPlayer[] }) {
           <Th>UTR 来源</Th>
           <Th>当前单打</Th>
           <Th>当前双打</Th>
+          {canEdit ? <Th> </Th> : null}
         </tr>
       </thead>
       <tbody>
@@ -91,22 +126,150 @@ export function RosterTable({ players }: { players: RosterPlayer[] }) {
                 underAppeal={player.under_appeal}
               />
             </Td>
-            <Td className="font-mono text-[12.5px] text-muted">
-              <CurrentUtrCell
-                value={player.singles_utr}
-                status={player.singles_status}
+            {editing === player.player_id ? (
+              <EditableCells
+                player={player}
+                onSave={(edit) => {
+                  onSave?.(edit);
+                  setEditing(null);
+                }}
               />
-            </Td>
-            <Td className="font-mono text-[12.5px] text-muted">
-              <CurrentUtrCell
-                value={player.doubles_utr}
-                status={player.doubles_status}
-              />
-            </Td>
+            ) : (
+              <>
+                <Td className="font-mono text-[12.5px] text-muted">
+                  <CurrentUtrCell
+                    value={player.singles_utr}
+                    status={player.singles_status}
+                  />
+                </Td>
+                <Td className="font-mono text-[12.5px] text-muted">
+                  <CurrentUtrCell
+                    value={player.doubles_utr}
+                    status={player.doubles_status}
+                  />
+                </Td>
+                {canEdit ? (
+                  <Td>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(player.player_id)}
+                      className="rounded-token border border-border bg-surface px-2 py-0.5 text-[11.5px] text-foreground"
+                    >
+                      改
+                    </button>
+                  </Td>
+                ) : null}
+              </>
+            )}
           </tr>
         ))}
       </tbody>
       </table>
+    </div>
+  );
+}
+
+const STATUSES = ["", "unrated", "projected", "rated"] as const;
+
+/**
+ * One row, mid-edit.
+ *
+ * The id travels with the save, never the name: names repeat on a real
+ * roster, and this is the same identity the batch sheet round-trips.
+ */
+function EditableCells({
+  player,
+  onSave,
+}: {
+  player: RosterPlayer;
+  onSave: (edit: CurrentUtrEdit) => void;
+}) {
+  const [singles, setSingles] = useState(player.singles_utr ?? "");
+  const [singlesStatus, setSinglesStatus] = useState(
+    player.singles_status ?? "",
+  );
+  const [doubles, setDoubles] = useState(player.doubles_utr ?? "");
+  const [doublesStatus, setDoublesStatus] = useState(
+    player.doubles_status ?? "",
+  );
+
+  return (
+    <>
+      <Td className="font-mono text-[12.5px]">
+        <PairInputs
+          value={singles}
+          status={singlesStatus}
+          onValue={setSingles}
+          onStatus={setSinglesStatus}
+          label="当前单打"
+        />
+      </Td>
+      <Td className="font-mono text-[12.5px]">
+        <PairInputs
+          value={doubles}
+          status={doublesStatus}
+          onValue={setDoubles}
+          onStatus={setDoublesStatus}
+          label="当前双打"
+        />
+      </Td>
+      <Td>
+        <button
+          type="button"
+          onClick={() =>
+            onSave({
+              player_id: player.player_id,
+              singles_utr: singles === "" ? null : singles,
+              singles_status: singlesStatus === "" ? null : singlesStatus,
+              doubles_utr: doubles === "" ? null : doubles,
+              doubles_status: doublesStatus === "" ? null : doublesStatus,
+            })
+          }
+          className="rounded-token bg-primary px-2 py-0.5 text-[11.5px] text-primary-foreground"
+        >
+          存
+        </button>
+      </Td>
+    </>
+  );
+}
+
+/** A UTR and its status, which only mean anything together. */
+function PairInputs({
+  value,
+  status,
+  onValue,
+  onStatus,
+  label,
+}: {
+  value: string;
+  status: string;
+  onValue: (next: string) => void;
+  onStatus: (next: string) => void;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        type="number"
+        step="0.01"
+        aria-label={label}
+        value={value}
+        onChange={(event) => onValue(event.target.value)}
+        className="w-[58px] rounded border border-foreground bg-surface px-1.5 py-0.5 font-mono text-[11.5px]"
+      />
+      <select
+        aria-label={`${label}状态`}
+        value={status}
+        onChange={(event) => onStatus(event.target.value)}
+        className="rounded border border-foreground bg-surface px-1 py-0.5 text-[11px]"
+      >
+        {STATUSES.map((option) => (
+          <option key={option} value={option}>
+            {option === "" ? "—" : option}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

@@ -5,6 +5,11 @@ import { notFound } from "next/navigation";
 import { getTeamRoster, type TeamRoster } from "@/lib/api";
 import Page from "./page";
 
+// The page asks whether to offer the edit controls; there is no request
+// scope in a unit test, so the answer is stubbed. Signed out is the default
+// here — the affordances have their own tests in RosterTable.
+vi.mock("@/lib/admin", () => ({ isSignedIn: vi.fn(async () => false) }));
+
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return { ...actual, getTeamRoster: vi.fn() };
