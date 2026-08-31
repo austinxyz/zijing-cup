@@ -59,6 +59,12 @@ class TeamOut(BaseModel):
 
 
 class RosterPlayerOut(BaseModel):
+    #: The player's own id. Everything downstream that has to refer to this
+    #: person by anything other than a name uses it: the lineup keys, the
+    #: roster page's inline edit, and the current-UTR sheet, which orders its
+    #: rows by identity precisely so it never has to match on names.
+    player_id: int
+
     last_name: str
     first_name: str
     gender: Optional[str] = None
@@ -243,6 +249,7 @@ def get_team_roster(
         # disagreeing with nothing on screen to say who went missing.
         players.append(
             RosterPlayerOut(
+                player_id=player.id,
                 last_name=player.last_name,
                 first_name=player.first_name,
                 gender=player.gender,

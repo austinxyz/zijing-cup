@@ -26,7 +26,7 @@
 - [x] 1.14 GREEN — 实现链接归一
 - [x] 1.15 RED — 汇总：差异结果含按字段的改动计数、覆盖人数与未包含人数
 - [x] 1.16 GREEN — 实现汇总
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 两个端点：按队取导出行、按 id 批量写
 
@@ -39,19 +39,19 @@
   - 导出次序与名单页一致（参赛 UTR 降序，同值按姓）——两处不一致会让人以为导错了队。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — 新建 `backend/tests/test_utr_api.py`：GET 某队的导出行，断言每行含 id、姓名与五个字段
-- [ ] 2.2 GREEN — 在 `app/routers/players.py` 加只读端点
-- [ ] 2.3 RED — 导出次序与 `/roster` 端点返回的次序一致
-- [ ] 2.4 GREEN — 复用同一套排序
-- [ ] 2.5 RED — 批量写：提交若干改动后读回是新值；批次里含一个不存在的 id 时整批不写
-- [ ] 2.6 GREEN — 实现批量写与事务回滚
-- [ ] 2.7 RED — 请求体夹带 `last_name` / `gender` 时这些字段不被改动
-- [ ] 2.8 GREEN — 只取白名单里的五个字段
-- [ ] 2.9 RED — 赛季已锁时对该赛季某队的队员写当前 UTR，照常成功
-- [ ] 2.10 GREEN — 确认写路径不经过 `_assert_season_open`
-- [ ] 2.11 RED — 只带共享密钥、不带管理员凭据地调用写端点返回 403
-- [ ] 2.12 GREEN — 若未通过则修正（中间件应已覆盖，本条是防它被绕开）
+- [x] 2.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 RED — 新建 `backend/tests/test_utr_api.py`：GET 某队的导出行，断言每行含 id、姓名与五个字段
+- [x] 2.2 GREEN — 在 `app/routers/players.py` 加只读端点
+- [x] 2.3 RED — 导出次序与 `/roster` 端点返回的次序一致
+- [x] 2.4 GREEN — 复用同一套排序
+- [x] 2.5 RED — 批量写：提交若干改动后读回是新值；批次里含一个不存在的 id 时整批不写
+- [x] 2.6 GREEN — 实现批量写与事务回滚
+- [x] 2.7 RED — 请求体夹带 `last_name` / `gender` 时这些字段不被改动
+- [x] 2.8 GREEN — 只取白名单里的五个字段
+- [x] 2.9 RED — 赛季已锁时对该赛季某队的队员写当前 UTR，照常成功
+- [x] 2.10 GREEN — 确认写路径不经过 `_assert_season_open`
+- [x] 2.11 RED — 只带共享密钥、不带管理员凭据地调用写端点返回 403
+- [x] 2.12 GREEN — 若未通过则修正（中间件应已覆盖，本条是防它被绕开）
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 跨组别点名与整批拒绝

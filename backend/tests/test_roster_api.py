@@ -530,3 +530,17 @@ def test_team_list_does_not_issue_a_query_per_team(client):
     # One existence check for the division, one aggregate. Constant in the
     # number of teams.
     assert len(selects) == 2, "\n\n".join(selects)
+
+
+def test_roster_rows_carry_the_player_id(client):
+    """Identity, not a name, is how anything downstream refers to a player.
+
+    The lineup keys already expose it; the roster page needs it to save an
+    inline edit, and the UTR sheet needs it to order rows without matching on
+    names — which is the one thing that feature refuses to do.
+    """
+    body = client.get(roster_url(), headers=AUTH).json()
+
+    ids = [p["player_id"] for p in body["players"]]
+    assert all(isinstance(i, int) and i > 0 for i in ids)
+    assert len(set(ids)) == len(ids)
