@@ -9,23 +9,23 @@
   - D3：三种「空」各自有测试；只有值没状态、只有状态没值都要报错。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — 新建 `backend/tests/test_utr_sheet.py`：解析一段 TSV，断言得到逐行的 `SheetRow`（id、姓、名、五个可选值）；此时 `app.players.utr_sheet` 不存在，失败于 ImportError
-- [ ] 1.2 GREEN — 建 `backend/app/players/utr_sheet.py`，实现 TSV 解析与 `SheetRow`
-- [ ] 1.3 RED — 同一份内容以 CSV 提交时得到完全相同的 `SheetRow` 列表
-- [ ] 1.4 GREEN — CSV 入口归一到同一条路径
-- [ ] 1.5 RED — 比对：把导出行原样当作导入行时，差异为 0 处改动
-- [ ] 1.6 GREEN — 实现 `diff_rows(rows, players)`，返回逐字段的旧值/新值
-- [ ] 1.7 RED — 三种「空」：空白不改动；`-` 清空且算作一处改动；只有值没状态、只有状态没值都产生错误且错误指明缺哪个
-- [ ] 1.8 GREEN — 实现空值语义
-- [ ] 1.9 RED — 状态词：`Rated` 被接受；`已认证` 与 `verified` 都产生错误且错误列出可接受的三个词
-- [ ] 1.10 GREEN — 大小写不敏感的词表校验
-- [ ] 1.11 RED — 身份：id 不存在 → 错误；id 存在但姓名对不上 → 错误且指出库里是谁、表里写的是谁；**id 为空而姓名唯一匹配库中一人 → 仍然是错误，不落到那个人身上**
-- [ ] 1.12 GREEN — 实现按 id 定位与姓名校验位，无姓名兜底
-- [ ] 1.13 RED — `UTR链接`：纯数字与完整链接都归一成同一个 `utr_profile_id`；取不出 ID 的内容产生错误
-- [ ] 1.14 GREEN — 实现链接归一
-- [ ] 1.15 RED — 汇总：差异结果含按字段的改动计数、覆盖人数与未包含人数
-- [ ] 1.16 GREEN — 实现汇总
+- [x] 1.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — 新建 `backend/tests/test_utr_sheet.py`：解析一段 TSV，断言得到逐行的 `SheetRow`（id、姓、名、五个可选值）；此时 `app.players.utr_sheet` 不存在，失败于 ImportError
+- [x] 1.2 GREEN — 建 `backend/app/players/utr_sheet.py`，实现 TSV 解析与 `SheetRow`
+- [x] 1.3 RED — 同一份内容以 CSV 提交时得到完全相同的 `SheetRow` 列表
+- [x] 1.4 GREEN — CSV 入口归一到同一条路径
+- [x] 1.5 RED — 比对：把导出行原样当作导入行时，差异为 0 处改动
+- [x] 1.6 GREEN — 实现 `diff_rows(rows, players)`，返回逐字段的旧值/新值
+- [x] 1.7 RED — 三种「空」：空白不改动；`-` 清空且算作一处改动；只有值没状态、只有状态没值都产生错误且错误指明缺哪个
+- [x] 1.8 GREEN — 实现空值语义
+- [x] 1.9 RED — 状态词：`Rated` 被接受；`已认证` 与 `verified` 都产生错误且错误列出可接受的三个词
+- [x] 1.10 GREEN — 大小写不敏感的词表校验
+- [x] 1.11 RED — 身份：id 不存在 → 错误；id 存在但姓名对不上 → 错误且指出库里是谁、表里写的是谁；**id 为空而姓名唯一匹配库中一人 → 仍然是错误，不落到那个人身上**
+- [x] 1.12 GREEN — 实现按 id 定位与姓名校验位，无姓名兜底
+- [x] 1.13 RED — `UTR链接`：纯数字与完整链接都归一成同一个 `utr_profile_id`；取不出 ID 的内容产生错误
+- [x] 1.14 GREEN — 实现链接归一
+- [x] 1.15 RED — 汇总：差异结果含按字段的改动计数、覆盖人数与未包含人数
+- [x] 1.16 GREEN — 实现汇总
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 两个端点：按队取导出行、按 id 批量写
