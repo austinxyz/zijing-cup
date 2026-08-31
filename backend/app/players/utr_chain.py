@@ -19,12 +19,34 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
+from enum import Enum
 from typing import Optional, Sequence
+
+
+class UtrOrigin(str, Enum):
+    """Where a resolved participation UTR came from.
+
+    An enum rather than a bare string because two readers consume it — the
+    roster page and the lineup engine — and a typo in either would show up as
+    a missing badge, not as an error. Inherits `str` so it still serialises
+    as its value and needs no encoder on the response models.
+    """
+
+    #: This season's committee value.
+    FROZEN = "frozen"
+    #: Derived from the player's current rated doubles UTR.
+    CURRENT_DOUBLES = "current_doubles"
+    #: Derived from the most recent earlier season that had a value.
+    PRIOR_SEASON = "prior_season"
 
 
 @dataclass(frozen=True)
 class SeasonUtrView:
-    """One `player_season_utrs` row, already read out of the database."""
+    """One `player_season_utrs` row, already read out of the database.
+
+    `(player, season)` is unique in that table, so the caller never passes two
+    views for the same year; the chain does not deduplicate.
+    """
 
     season_year: int
     value: Decimal
@@ -38,9 +60,9 @@ class SeasonUtrView:
 class ResolvedUtr:
     value: Decimal
 
-    #: `frozen` — this season's committee value.
-    #: `current_doubles` / `prior_season` — derived, and the caller must say so.
-    origin: str
+    #: `FROZEN` is this season's committee value; the other two are derived
+    #: and the caller must say so on screen.
+    origin: UtrOrigin
 
     #: Which season the value came from. Present for `frozen` and
     #: `prior_season`; None for `current_doubles`, which is not a season value.
@@ -63,7 +85,7 @@ def resolve_match_utr(
         if entry.season_year == season_year:
             return ResolvedUtr(
                 value=entry.value,
-                origin="frozen",
+                origin=UtrOrigin.FROZEN,
                 origin_year=entry.season_year,
                 is_unresolved=entry.is_unresolved,
             )
@@ -72,7 +94,7 @@ def resolve_match_utr(
     # the committee's own reason for overriding with last year's figure, so
     # trusting them here would undo the rule the chain exists to follow.
     if current_doubles is not None and (current_doubles_status or "").lower() == "rated":
-        return ResolvedUtr(value=current_doubles, origin="current_doubles")
+        return ResolvedUtr(value=current_doubles, origin=UtrOrigin.CURRENT_DOUBLES)
 
     # The most recent earlier season that has a value, not "last year": a
     # player who sat out 2025 still has a 2024 number, and looking only one
@@ -84,7 +106,7 @@ def resolve_match_utr(
         latest = max(earlier, key=lambda entry: entry.season_year)
         return ResolvedUtr(
             value=latest.value,
-            origin="prior_season",
+            origin=UtrOrigin.PRIOR_SEASON,
             origin_year=latest.season_year,
             is_unresolved=latest.is_unresolved,
         )

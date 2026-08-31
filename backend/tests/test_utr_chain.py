@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from app.players.utr_chain import SeasonUtrView, resolve_match_utr
+from app.players.utr_chain import SeasonUtrView, UtrOrigin, resolve_match_utr
 
 
 def season(year: int, value: str, *, unresolved: bool = False) -> SeasonUtrView:
@@ -119,3 +119,47 @@ def test_an_unresolved_season_value_is_used_and_flagged() -> None:
     assert resolved is not None
     assert resolved.value == Decimal("6.98")
     assert resolved.is_unresolved is True
+
+
+def test_origin_is_an_enum_member_not_a_loose_string() -> None:
+    # Two readers consume this field; a bare string lets them drift apart on
+    # a typo that nothing catches.
+    resolved = resolve_match_utr(
+        season_utrs=[season(2026, "6.42")],
+        current_doubles=None,
+        current_doubles_status=None,
+        season_year=2026,
+    )
+
+    assert resolved is not None
+    assert resolved.origin is UtrOrigin.FROZEN
+
+
+def test_an_unresolved_flag_survives_the_prior_season_fallback() -> None:
+    # Two layers of doubt at once: the number is derived AND nobody has ruled
+    # between its two candidates. Dropping the flag here would report only
+    # one of them.
+    resolved = resolve_match_utr(
+        season_utrs=[season(2024, "5.80", unresolved=True)],
+        current_doubles=None,
+        current_doubles_status=None,
+        season_year=2026,
+    )
+
+    assert resolved is not None
+    assert resolved.origin is UtrOrigin.PRIOR_SEASON
+    assert resolved.is_unresolved is True
+
+
+def test_a_missing_current_status_does_not_stand_in_for_rated() -> None:
+    # A player with a current doubles number but no status recorded: the
+    # status is what makes the value usable, so an absent one must not be
+    # read as permission.
+    resolved = resolve_match_utr(
+        season_utrs=[],
+        current_doubles=Decimal("7.00"),
+        current_doubles_status=None,
+        season_year=2026,
+    )
+
+    assert resolved is None
