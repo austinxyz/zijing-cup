@@ -52,7 +52,7 @@
 - [x] 2.10 GREEN — 确认写路径不经过 `_assert_season_open`
 - [x] 2.11 RED — 只带共享密钥、不带管理员凭据地调用写端点返回 403
 - [x] 2.12 GREEN — 若未通过则修正（中间件应已覆盖，本条是防它被绕开）
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 跨组别点名与整批拒绝
 
@@ -64,13 +64,13 @@
   - 跨组别查询要一次查完，不要每人一查。
 - **Threshold**: 80
 
-- [ ] 3.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 RED — 一份含 1 条错误与若干改动的内容提交后，库中一处也没被改
-- [ ] 3.2 GREEN — 有错误即拒绝整批
-- [ ] 3.3 RED — 一名同时在金银两组的队员：经银组的表改动后，金组读到的是同一个新值；差异结果点名了他
-- [ ] 3.4 GREEN — 实现跨组别检测（一次查询）
-- [ ] 3.5 RED — 只含该队一部分人的内容：其余人不变，且结果报出覆盖 N 人、未包含 M 人
-- [ ] 3.6 GREEN — 实现覆盖/未包含统计
+- [x] 3.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-3.md with the ### Contract block above
+- [x] 3.1 RED — 一份含 1 条错误与若干改动的内容提交后，库中一处也没被改
+- [x] 3.2 GREEN — 有错误即拒绝整批
+- [x] 3.3 RED — 一名同时在金银两组的队员：经银组的表改动后，金组读到的是同一个新值；差异结果点名了他
+- [x] 3.4 GREEN — 实现跨组别检测（一次查询）
+- [x] 3.5 RED — 只含该队一部分人的内容：其余人不变，且结果报出覆盖 N 人、未包含 M 人
+- [x] 3.6 GREEN — 实现覆盖/未包含统计
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 导出与导入两页签

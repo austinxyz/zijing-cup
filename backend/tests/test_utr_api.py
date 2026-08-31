@@ -279,3 +279,92 @@ class TestBatchWrite:
         )
 
         assert response.status_code == 403
+
+
+class TestAcrossDivisions:
+    def test_a_change_shows_up_on_the_other_divisions_team_too(self, client):
+        # A current UTR belongs to the player, not to a team or a season. One
+        # person, one number — but reached from either side, which is exactly
+        # why the confirmation screen has to name these people.
+        with Session(engine) as session:
+            session.add(
+                Division(
+                    season_year=TEST_YEAR,
+                    code="gold",
+                    display_name="金组",
+                    scoring_mode="match_count",
+                    partner_gap_max=Decimal("3.50"),
+                )
+            )
+            session.commit()
+            gold = Team(
+                season_year=TEST_YEAR, division_code="gold", code="UTR-G"
+            )
+            session.add(gold)
+            session.commit()
+            session.refresh(gold)
+            person = session.exec(
+                select(Player).where(Player.first_name == "望舒")
+            ).one()
+            # One season UTR per (player, season) already exists; a player on
+            # two teams shares it, which is the point.
+            session.add(
+                PlayerTeamMembership(player_id=person.id, team_id=gold.id)
+            )
+            session.commit()
+            shared_id = person.id
+
+        client.put(
+            "/api/players/current-utr",
+            headers=WRITE,
+            json={
+                "updates": [
+                    {
+                        "player_id": shared_id,
+                        "doubles_utr": "6.72",
+                        "doubles_status": "rated",
+                    }
+                ]
+            },
+        )
+
+        gold_rows = client.get(
+            f"/api/seasons/{TEST_YEAR}/divisions/gold/teams/UTR-G/utr-sheet",
+            headers=READ,
+        ).json()
+        assert gold_rows[0]["doubles_utr"] == "6.72"
+
+    def test_the_sheet_reports_who_else_is_on_another_division(self, client):
+        with Session(engine) as session:
+            session.add(
+                Division(
+                    season_year=TEST_YEAR,
+                    code="gold",
+                    display_name="金组",
+                    scoring_mode="match_count",
+                    partner_gap_max=Decimal("3.50"),
+                )
+            )
+            session.commit()
+            gold = Team(
+                season_year=TEST_YEAR, division_code="gold", code="UTR-G"
+            )
+            session.add(gold)
+            session.commit()
+            session.refresh(gold)
+            person = session.exec(
+                select(Player).where(Player.first_name == "望舒")
+            ).one()
+            session.add(
+                PlayerTeamMembership(player_id=person.id, team_id=gold.id)
+            )
+            session.commit()
+            shared_id = person.id
+
+        response = client.get(
+            f"{sheet_url()}/elsewhere",
+            headers=READ,
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {str(shared_id): ["gold · UTR-G"]}

@@ -372,3 +372,20 @@ def test_the_profile_id_comes_from_the_profile_path_not_the_last_number() -> Non
 
     fields = {f.field: f for f in result.changes[0].fields}
     assert fields["utr_profile_id"].new == "880077"
+
+
+def test_a_sheet_with_any_error_produces_no_changes_at_all() -> None:
+    # The mistake this feature invites is a whole column pasted one place
+    # over, and then nearly every row is wrong. Writing the good half would
+    # leave the database half new and half old, with nothing recording which
+    # half is which.
+    people = [player(player_id=1), player(player_id=2)]
+    text = sheet(
+        "1\t南\t望舒\t6.90\trated\t\t\t",
+        "2\t南\t望舒\t6.10\t已认证\t\t\t",
+    )
+
+    result = diff_sheet(parse_sheet(text), people)
+
+    assert result.errors != []
+    assert result.applicable is False

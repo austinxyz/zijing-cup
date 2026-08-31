@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from app.db import get_session
-from app.models import Player
+from app.models import Player, PlayerTeamMembership, Team
 from app.rosters.query import get_team_roster
 
 router = APIRouter(prefix="/api", tags=["utr"])
@@ -41,6 +41,50 @@ class SheetRowOut(BaseModel):
     doubles_utr: Optional[Decimal] = None
     doubles_status: Optional[str] = None
     utr_profile_id: Optional[str] = None
+
+
+@router.get(
+    "/seasons/{year}/divisions/{code}/teams/{team_code}/utr-sheet/elsewhere",
+    response_model=dict[str, list[str]],
+)
+def read_other_memberships(
+    year: int,
+    code: str,
+    team_code: str,
+    session: Session = Depends(get_session),
+) -> dict[str, list[str]]:
+    """Which of this team's players also appear on some other team.
+
+    A current UTR belongs to the player, not to a team or a season, so a
+    change made from one team's sheet shows up on every page that player
+    appears on. That is right — one person has one current rating — and it is
+    also surprising, so the confirmation screen names these people rather
+    than letting the reader assume they only touched this squad.
+
+    One query for the whole team, not one per player.
+    """
+    roster = get_team_roster(session, year, code, team_code)
+    if roster is None:
+        raise HTTPException(status_code=404, detail="team not found")
+
+    ids = [entry.player_id for entry in roster.players]
+    if not ids:
+        return {}
+
+    rows = session.exec(
+        select(PlayerTeamMembership.player_id, Team.division_code, Team.code)
+        .join(Team, Team.id == PlayerTeamMembership.team_id)
+        .where(PlayerTeamMembership.player_id.in_(ids))
+    ).all()
+
+    elsewhere: dict[str, list[str]] = {}
+    for player_id, division_code, other_code in rows:
+        if division_code == code and other_code == team_code:
+            continue
+        elsewhere.setdefault(str(player_id), []).append(
+            f"{division_code} · {other_code}"
+        )
+    return elsewhere
 
 
 class CurrentUtrUpdate(BaseModel):

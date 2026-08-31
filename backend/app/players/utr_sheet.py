@@ -152,6 +152,17 @@ class DiffResult:
     covered: int
     not_covered: int
 
+    @property
+    def applicable(self) -> bool:
+        """Whether this sheet may be written at all.
+
+        All or nothing. A whole column pasted one place over makes nearly
+        every row wrong; applying the rest would leave the database half new
+        and half old, with nothing on any screen recording which half is
+        which.
+        """
+        return not self.errors
+
 
 def diff_sheet(
     rows: list[SheetRow], players: list[PlayerView]
