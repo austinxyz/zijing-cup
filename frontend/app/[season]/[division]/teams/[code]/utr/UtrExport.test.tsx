@@ -97,3 +97,29 @@ describe("when the clipboard refuses", () => {
     expect(await screen.findByText(/已复制/)).toBeTruthy();
   });
 });
+
+describe("taking the sheet away as CSV", () => {
+  it("quotes a cell that contains the delimiter", async () => {
+    // The parser reads quoted cells; the export has to write them, or a name
+    // with a comma in it comes back one column over — which is the single
+    // most damaging way this round trip can fail.
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    let captured = "";
+    const OriginalBlob = globalThis.Blob;
+    // @ts-expect-error — replaced for the duration of this test
+    globalThis.Blob = class {
+      constructor(parts: string[]) {
+        captured = parts.join("");
+      }
+    };
+    globalThis.URL.createObjectURL = vi.fn(() => "blob:x");
+    globalThis.URL.revokeObjectURL = vi.fn();
+
+    render(<UtrExport rows={[row({ first_name: "望舒, Jr." })]} />);
+    fireEvent.click(screen.getByRole("button", { name: "下载 CSV" }));
+
+    globalThis.Blob = OriginalBlob;
+    expect(captured).toContain('"望舒, Jr."');
+  });
+});

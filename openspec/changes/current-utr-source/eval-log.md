@@ -126,3 +126,26 @@
     - "code: LOW (non-blocking): React key uses player names (collision risk if duplicate names); use player_id for stable keying"
     - "code: LOW (UX enhancement): useTransition() called but isPending not captured; no visual feedback during save on Render free tier (slow cold starts)"
     - "code: Architecture sound — RosterEditor wraps table with save callback; editing state properly scoped"
+
+- group: 4
+  attempt: 2
+  scores: {spec: 100, runtime: 100, code: 90}
+  total: 98
+  status: PASS
+  findings:
+    - "spec: All 8 SHALL statements fully verified — two-tab route (export/import), first 3 cols marked read-only, both entry points same parser, button text 看差异, login gate, error.tsx present"
+    - "spec: Export table renders 8 columns in correct order (id/姓/名/当前单打/单打状态/当前双打/双打状态/UTR链接)"
+    - "spec: First three identity columns visually marked with bg-surface-muted class"
+    - "spec: Import textarea and file input both call onSubmit(text) → same previewSheet handler (verified no divergent paths)"
+    - "spec: Button labeled 看差异 with supporting text 不会直接写库 (clearly indicates diff-not-write)"
+    - "spec: Route has own layout.tsx with isSignedIn() check and redirect(/login) (not inherited from players/)"
+    - "spec: Route has scoped error.tsx that captures errors in this route only"
+    - "spec: Backend preview_sheet endpoint returns SheetDiffOut without writing; apply_sheet re-derives diff from text, checks applicable, raises 422 if false (all-or-nothing enforced)"
+    - "runtime: npm run test -- utr: 32 tests PASS (5 test files, all green)"
+    - "runtime: npx tsc --noEmit: 0 type errors"
+    - "runtime: pytest tests/test_utr_api.py: 15 tests PASS"
+    - "code: All 3 previous HIGH findings verified as FIXED: (1) Response models SheetDiffOut/AppliedOut/PlayerChangeOut now reach OpenAPI schema, (2) UtrPanel.test.tsx now has 8 tests including preview/apply failure paths, (3) UtrExport.copyAll() now catches rejection and shows 复制没有成功"
+    - "code: No CRITICAL or HIGH severity issues (code-reviewer: APPROVE)"
+    - "code: MEDIUM (non-blocking): getUtrElsewhere in lib/api.ts is dead code (unused export); elsewhere data already embedded in SheetDiffOut payload"
+    - "code: Architecture verified — two-step process (preview without write, apply re-derives), all-or-nothing batch, proper Pydantic models, strong type safety throughout"
+    - "code: Test quality high — 15 backend + 32 frontend = 47 tests; UtrPanel state machine verified (export→import→preview→diff→apply→export loop)"

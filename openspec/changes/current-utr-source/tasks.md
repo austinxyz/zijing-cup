@@ -99,12 +99,12 @@
   - [x] Runtime: 100/100 — 22/22 vitest tests pass; tsc exit 0
   - [x] Code: 60/100 — 3 HIGH issues (untyped responses, no UtrPanel test, unhandled clipboard error)
   - [x] Total: 92 → PASS (threshold 70)
-- [ ] 4.F1 FIX — Add Pydantic response models for preview_sheet and apply_sheet endpoints; add response_model to @router.post decorators
-- [ ] 4.F2 FIX — Add UtrPanel.test.tsx testing tab switching, state machine (preview→diff→apply), and failure paths
-- [ ] 4.F3 FIX — Wrap UtrExport.copyAll() in try/catch; show user feedback if clipboard.writeText rejects
-- [ ] 4.F4 CLEANUP — Remove unused getUtrElsewhere from lib/api.ts or add comment explaining deferred use case
-- [ ] 4.F5 CLEANUP — Fix CSV export to properly quote cells (csv.DictWriter or custom) to match parser expectations
-- [ ] 4.F6 CLEANUP — Add return type annotation to _typed() function in utr.py
+- [x] 4.F1 FIX — Add Pydantic response models for preview_sheet and apply_sheet endpoints; add response_model to @router.post decorators
+- [x] 4.F2 FIX — Add UtrPanel.test.tsx testing tab switching, state machine (preview→diff→apply), and failure paths
+- [x] 4.F3 FIX — Wrap UtrExport.copyAll() in try/catch; show user feedback if clipboard.writeText rejects
+- [x] 4.F4 CLEANUP — Remove unused getUtrElsewhere from lib/api.ts or add comment explaining deferred use case
+- [x] 4.F5 CLEANUP — Fix CSV export to properly quote cells (csv.DictWriter or custom) to match parser expectations
+- [x] 4.F6 CLEANUP — Add return type annotation to _typed() function in utr.py
 
 ## 5. 差异屏
 
@@ -128,7 +128,7 @@
 - [x] 5.8 RED — 「本表覆盖 N 人，另外 M 人未包含」命中中性档；跨组队员在顶部与行内都被点名
 - [x] 5.9 GREEN — 实现这两处提示
 - [x] 5.10 VISUAL DIFF — bring up dev stack；构造一份含改动、错误、未包含与跨组四种情形的真实输入，对照 mocks 核对；用 computed style 实测所有新文案的对比度 ≥ 4.5:1
-- [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 6. 名单页就地编辑
 
@@ -150,13 +150,13 @@
 - [x] 6.6 RED — 未登录时行内入口与右上角批量导入入口都不渲染，名单照常可读
 - [x] 6.7 GREEN — 按登录态渲染入口
 - [x] 6.8 VISUAL DIFF — bring up dev stack；登录后在 2025 银组某队名单页改一个人的当前双打为 rated，保存；确认该队排阵页上此人的来源变为 `估算 · 当前已认证值`（前提是他本赛季无参赛 UTR）
-- [ ] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 7. 验证与 ship
 
-- [ ] 7.1 Run backend test suite — `cd backend && ./.venv-std/Scripts/python.exe -m pytest`（本机 `uv run` 被 Application Control 拦，见 CLAUDE.md）
-- [ ] 7.2 Run frontend test suite — `cd frontend && npm run test`
-- [ ] 7.3 Run `cd frontend && npx tsc --noEmit` — vitest 只转译不校验类型，这条必须单独跑
-- [ ] 7.4 端到端手工核对一次真实往返：导出 2025 银组某队 → 在表里填两个人 → 贴回 → 差异屏 → 确认 → 名单页可见。**做视觉核对前不要跑 pytest**（它会清空本地库，见 CLAUDE.md）
-- [ ] 7.5 手工核对部署顺序：后端先上、前端后上
-- [ ] 7.6 Run superpowers:verification-before-completion（跑 project.test_commands、console.log 扫描、以及 openspec/config.yaml 里的全部 custom_verification_checks）
+- [x] 7.1 Run backend test suite — `cd backend && ./.venv-std/Scripts/python.exe -m pytest`（本机 `uv run` 被 Application Control 拦，见 CLAUDE.md）
+- [x] 7.2 Run frontend test suite — `cd frontend && npm run test`
+- [x] 7.3 Run `cd frontend && npx tsc --noEmit` — vitest 只转译不校验类型，这条必须单独跑
+- [x] 7.4 端到端手工核对一次真实往返：导出 2025 银组某队 → 在表里填两个人 → 贴回 → 差异屏 → 确认 → 名单页可见。**做视觉核对前不要跑 pytest**（它会清空本地库，见 CLAUDE.md）
+- [x] 7.5 手工核对部署顺序：后端先上、前端后上
+- [x] 7.6 Run superpowers:verification-before-completion（跑 project.test_commands、console.log 扫描、以及 openspec/config.yaml 里的全部 custom_verification_checks）

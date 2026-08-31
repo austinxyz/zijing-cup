@@ -10,7 +10,7 @@ check.
 """
 
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -202,7 +202,7 @@ def apply_sheet(
     return AppliedOut(updated=len(result.changes))
 
 
-def _typed(field: str, value: Optional[str]):
+def _typed(field: str, value: Optional[str]) -> Union[Decimal, str, None]:
     if value is None:
         return None
     if field in {"singles_utr", "doubles_utr"}:

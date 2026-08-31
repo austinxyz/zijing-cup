@@ -235,25 +235,6 @@ export async function getUtrSheet(
   return res.json();
 }
 
-/** Player id -> the other teams that player also sits on. Current UTRs are a
- *  property of the person, so a change made here shows up there too; the
- *  confirmation screen names them rather than letting that go unsaid. */
-export async function getUtrElsewhere(
-  year: number | string,
-  code: string,
-  teamCode: string,
-): Promise<Record<string, string[]>> {
-  const res = await fetch(
-    backendUrl(
-      `/api/seasons/${year}/divisions/${code}/teams/` +
-        `${encodeURIComponent(teamCode)}/utr-sheet/elsewhere`,
-    ),
-    backendRequestInit(),
-  );
-  if (!res.ok) throw new Error(`getUtrElsewhere failed: ${res.status}`);
-  return res.json();
-}
-
 /** One team's roster, or null when the season, division or team is unknown. */
 export async function getTeamRoster(
   year: number | string,

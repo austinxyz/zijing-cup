@@ -109,13 +109,19 @@ describe("preview, then write", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: /确认写入/ }));
 
-    await waitFor(() =>
-      expect(applySheet).toHaveBeenCalledWith(
-        "2025",
-        "silver",
-        "HUST",
-        "SHEET-TEXT",
-      ),
+    // The write runs inside a transition, so the assertion has to outlast
+    // React flushing it. The default 1s window is enough alone and not enough
+    // under a full-suite run — which made this the one test in the file that
+    // failed only when everything else was running.
+    await waitFor(
+      () =>
+        expect(applySheet).toHaveBeenCalledWith(
+          "2025",
+          "silver",
+          "HUST",
+          "SHEET-TEXT",
+        ),
+      { timeout: 5000 },
     );
   });
 

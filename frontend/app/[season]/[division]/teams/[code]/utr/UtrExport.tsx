@@ -32,10 +32,31 @@ function cellsOf(row: UtrSheetRow): string[] {
   ];
 }
 
+/** Quote a cell the way the parser expects to read it back.
+ *
+ *  Names really do contain commas. Writing one unquoted shifts the whole row
+ *  one column over on the way back in — the single most damaging way this
+ *  round trip can fail, and one the person would have no reason to suspect.
+ */
+function quote(cell: string, delimiter: string): string {
+  if (
+    !cell.includes(delimiter) &&
+    !cell.includes('"') &&
+    !cell.includes("\n")
+  ) {
+    return cell;
+  }
+  return `"${cell.replace(/"/g, '""')}"`;
+}
+
 function asText(rows: UtrSheetRow[], delimiter: string): string {
   return [
     COLUMNS.join(delimiter),
-    ...rows.map((row) => cellsOf(row).join(delimiter)),
+    ...rows.map((row) =>
+      cellsOf(row)
+        .map((cell) => quote(cell, delimiter))
+        .join(delimiter),
+    ),
   ].join("\n");
 }
 
