@@ -1,4 +1,14 @@
-## MODIFIED Requirements
+## REMOVED Requirements
+
+### Requirement: UTR 来源同时给出判定类别与总表原文
+**Reason**: 总表的原始状态文本（`Rated` / `Projected` / `Unrated`）在队员注册表里没有
+对应物 —— 赛季那一层只存判定类别与 `under_appeal` 标志。该要求的核心是「结论旁边放
+原始证据」，而证据本身已经不再被系统保存，继续渲染任何东西都是替它编造证据。
+**Migration**: 由「UTR 来源给出判定类别与取值出处」取代。判定类别照旧只在确凿时给出、
+不确凿写「待定」；Appeal 从原文里的后缀变成独立标志，以 `<类别> · Appeal` 呈现，因此
+这条信息没有随原文一起丢失。
+
+## ADDED Requirements
 
 ### Requirement: UTR 来源给出判定类别与取值出处
 名单的「UTR 来源」SHALL 呈现系统判定的评级类别；评级类别为空时 MUST 呈现为「待定」，
@@ -63,8 +73,6 @@ UTR，空白读起来像页面出错。
 #### Scenario: 冻结值不标注
 - **WHEN** 某名队员该赛季有 match UTR
 - **THEN** 该行不出现估算标注
-
-## ADDED Requirements
 
 ### Requirement: 名单页显示当前 UTR 并说明它的维护方式
 名单表 SHALL 显示每名队员的当前单打 UTR 与当前双打 UTR，各自带其状态

@@ -26,10 +26,17 @@ Google Sheets 手工维护的流程。
 2 名打女双，场上至少 3 名女队员是硬约束，而 26 人名单的平均值跟真正上场的 8 个人
 关系不大 —— 2025 金组 `JNU-UCLA` 恰好只有 3 名女队员，一人退赛就凑不出阵容。
 
-名单里的「UTR 来源」同时给出判定与总表原文。评级类别判不出来时显示**「待定」**，
-不显示「自评」：`Unrated` 属于第二类还是第三类取决于该队员有无 USTA 比赛历史，
-总表不带这个信息，页面替它下结论就等于决定了谁占用「场上至多 2 名自评级」的名额。
-2025 全部 459 行里有 36 行是这个状态，等组委会澄清。
+名单里的「UTR 来源」给出评级类别：已认证 / 委员会审定 / 队长评定，判不出来时显示
+**「待定」**，不显示「自评」——`Unrated` 属于第二类还是第三类取决于该队员有无 USTA
+比赛历史，总表不带这个信息，页面替它下结论就等于决定了谁占用「场上至多 2 名自评级」
+的名额。2025 全部 459 行里有 36 行是这个状态，等组委会澄清。Appeal 是骑在类别之上的
+独立标志，显示成 `已认证 · Appeal`。
+
+参赛 UTR 不是本赛季的冻结值时，数字旁会标 `估算 · 2025 参赛值` 或 `估算 · 当前已认证值`
+——年份是标签的一部分，用 2023 的值估 2026 与用 2025 的估 2026 是两种可信度。一个数
+都取不到的队员**仍在名单里**（他确实在队里），显示 `无参赛 UTR`：写 0 会被当成一个
+很低但真实的评级。名单还带当前单打 / 双打 UTR 两列，并注明这一列由人工维护、未与 UTR
+官网同步 —— 它们是上面那条估算规则的输入。
 
 **阵容排布** —— 给一支队锁定几对搭档、勾掉本场上不了的人，其余五条线交给引擎补齐：
 `/2026/silver/lineup/ZJU-USC`。锁定与排除都写在 URL 里，链接可以直接发给队友，他打开
@@ -88,9 +95,15 @@ uv run python -m app.seeds.load_rules    # 导入四套赛制规则
 
 # 名单需要组委会总表导出的 CSV，放到 backend/data/rosters/（该目录已 gitignore，
 # 内含真实姓名与 UTR，不进版本库；导出方法见该目录的 README）
-uv run python -m app.rosters 2025 gold data/rosters/2025-gold.csv
-uv run python -m app.rosters 2025 silver data/rosters/2025-silver.csv
+#
+# 导入器默认拒绝执行：它写的 roster_entries 已经没有任何页面在读了。这里仍要跑，
+# 是因为它是下一步队员迁移命令的输入源 —— 这正是那个开关存在的场合。
+uv run python -m app.rosters 2025 gold data/rosters/2025-gold.csv --i-know-it-is-not-read
+uv run python -m app.rosters 2025 silver data/rosters/2025-silver.csv --i-know-it-is-not-read
 uv run python -m app.seeds.team_names    # 球队中文名（可选，不导则只显示 code）
+
+# 把名单迁进队员注册表。页面读的是这里，不是上面那张快照表。
+uv run python -m app.players.migrate
 
 uv run python -m uvicorn app.main:app --port 8010
 
