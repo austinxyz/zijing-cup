@@ -10,17 +10,17 @@
   - 第三步取**最近一个有值赛季**，不限于上一年。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — 新建 `backend/tests/test_utr_chain.py`，断言有该赛季 match UTR 时返回该值且 `origin == "frozen"`；此时 `app.players.utr_chain` 尚不存在，失败于 ImportError
-- [ ] 1.2 GREEN — 建 `backend/app/players/utr_chain.py`，实现 `ResolvedUtr` 与 `resolve_match_utr` 的第一步
-- [ ] 1.3 RED — 无该赛季值、当前双打状态为 `rated` 时返回当前双打值且 `origin == "current_doubles"`
-- [ ] 1.4 GREEN — 实现第二步
-- [ ] 1.5 RED — 无该赛季值、当前双打状态为 `projected` 时回看历史，返回**最近**有值赛季的 match UTR，`origin == "prior_season"` 且 `origin_year` 为那一年；再加一例 2026/2025 皆空、2024 有值，断言取到 2024
-- [ ] 1.6 GREEN — 实现第三步（按年降序取第一个有值的赛季）
-- [ ] 1.7 RED — 四步都取不到时返回 `None`；当前双打有值但状态为 `unrated` 时不走第二步而回看历史
-- [ ] 1.8 GREEN — 补齐状态判定与 `None` 分支
-- [ ] 1.9 RED — 命中的赛季 UTR 为 `is_unresolved` 时，返回较大的候选值且 `is_unresolved` 为 True
-- [ ] 1.10 GREEN — 透传 `is_unresolved`
+- [x] 1.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — 新建 `backend/tests/test_utr_chain.py`，断言有该赛季 match UTR 时返回该值且 `origin == "frozen"`；此时 `app.players.utr_chain` 尚不存在，失败于 ImportError
+- [x] 1.2 GREEN — 建 `backend/app/players/utr_chain.py`，实现 `ResolvedUtr` 与 `resolve_match_utr` 的第一步
+- [x] 1.3 RED — 无该赛季值、当前双打状态为 `rated` 时返回当前双打值且 `origin == "current_doubles"`
+- [x] 1.4 GREEN — 实现第二步
+- [x] 1.5 RED — 无该赛季值、当前双打状态为 `projected` 时回看历史，返回**最近**有值赛季的 match UTR，`origin == "prior_season"` 且 `origin_year` 为那一年；再加一例 2026/2025 皆空、2024 有值，断言取到 2024
+- [x] 1.6 GREEN — 实现第三步（按年降序取第一个有值的赛季）
+- [x] 1.7 RED — 四步都取不到时返回 `None`；当前双打有值但状态为 `unrated` 时不走第二步而回看历史
+- [x] 1.8 GREEN — 补齐状态判定与 `None` 分支
+- [x] 1.9 RED — 命中的赛季 UTR 为 `is_unresolved` 时，返回较大的候选值且 `is_unresolved` 为 True
+- [x] 1.10 GREEN — 透传 `is_unresolved`
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 球队列表与名单读取换源
