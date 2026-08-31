@@ -36,3 +36,6 @@ migration/
 
 # vitest 的输出重定向，不该进仓库
 frontend/test-output.log
+
+# superpowers 视觉companion的临时产物（mock 定稿另存到 docs/superpowers/specs/mocks/）
+.superpowers/

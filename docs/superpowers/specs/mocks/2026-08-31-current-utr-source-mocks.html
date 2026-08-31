@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>current-utr-source — 视觉稿</title>
+<style>
+  body { margin:0; padding:2rem 1.5rem 4rem; background:#f6f4f0; color:#1a1917;
+         font-family:"Inter","Segoe UI",system-ui,sans-serif; line-height:1.6;
+         max-width:64rem; }
+  h1 { font-size:1.5rem; margin:0 0 .25rem; }
+  h2 { font-size:1.0625rem; margin:2.5rem 0 .75rem; padding-bottom:.35rem;
+       border-bottom:1px solid #e4e0d8; }
+  .subtitle { color:#57534e; font-size:.875rem; margin:0 0 1.25rem; }
+  p, li { font-size:.875rem; }
+  code, .mono { font-family:ui-monospace,Consolas,monospace; }
+  .lede { color:#57534e; margin:0 0 1.5rem; font-size:.875rem; }
+  .frame { background:#f6f4f0; padding:1rem; border-radius:8px; margin-bottom:1rem; }
+</style>
+</head>
+<body>
+
+<h1>current-utr-source —— 视觉稿</h1>
+<p class="lede">
+  四屏：差异屏（最要紧）、导出、导入、名单页就地编辑。设计体系沿用项目既有的
+  <code>linear</code>（见 <code>openspec/config.yaml</code> 的 <code>design_system</code>）。
+  色档沿用既有三档，不新增 token：warning <code>--color-warning-*</code>、
+  中性 <code>--color-border</code> / <code>--color-surface-muted</code>、
+  danger 只用于「被拒绝」标记。
+</p>
+
+<p class="lede">
+  <b>路由</b>：导出/导入两个 tab 挂在 <code>/[season]/[division]/teams/[code]/utr</code>，
+  离名单最近；该路由要自己配一个登录门（照 <code>players/layout.tsx</code> 的做法），
+  并自带 <code>error.tsx</code>。
+</p>
+
+<h2>差异屏</h2>
+<div class="frame">
+<h2>差异屏 v2 —— B 版，四条规则都加上了</h2>
+<p class="subtitle">
+  新增：顶部按字段的改动计数、跨组点名、有拒绝时按钮禁用、「不变」占位。
+  看一眼有没有不对的，或者说「可以」我就往下画导出/导入两屏。
+</p>
+
+<style>
+  .mock { border:1px solid #e4e0d8; border-radius:8px; background:#fff; color:#1a1917;
+          font-family:"Inter","Segoe UI",system-ui,sans-serif; overflow:hidden; margin:0 0 14px; }
+  .mock * { box-sizing:border-box; }
+  .mk-head { padding:14px 16px; border-bottom:1px solid #e4e0d8; }
+  .mk-title { font-size:15px; font-weight:600; }
+  .mk-sub { font-size:12px; color:#79736a; margin-top:3px; }
+  .mk-body { padding:12px 16px; }
+  .mk-foot { padding:12px 16px; border-top:1px solid #e4e0d8; display:flex; gap:10px;
+             align-items:center; background:#faf9f6; }
+  .btn { border-radius:6px; padding:7px 14px; font-size:12.5px; border:1px solid #e4e0d8;
+         background:#fff; color:#1a1917; }
+  .btn-primary { background:#1a1917; color:#fff; border-color:#1a1917; }
+  .btn-off { background:#f2efe9; color:#a09a90; border-color:#e4e0d8; }
+  .foot-note { font-size:11.5px; color:#79736a; }
+  .warn { background:#fbf5e6; border:1px solid #ecd9a4; color:#8a6508;
+          border-radius:6px; padding:8px 11px; font-size:12px; margin-bottom:8px; }
+  .neutral { background:#f2efe9; border:1px solid #e4e0d8; color:#1a1917;
+             border-radius:6px; padding:8px 11px; font-size:12px; margin-bottom:8px; }
+  .mono { font-family:ui-monospace,Consolas,monospace; }
+  .was { color:#a09a90; text-decoration:line-through; }
+  .now { color:#1a1917; font-weight:500; }
+  .same { color:#a09a90; }
+  .arrow { color:#79736a; padding:0 5px; }
+  .tag { display:inline-block; font-size:10px; padding:1px 5px; border-radius:4px;
+         border:1px solid #e4e0d8; background:#f2efe9; color:#57534e; }
+  .tag-rej { background:#fbf0ee; border-color:#f0cfc9; color:#b3261e; }
+  .tag-x { background:#fbf5e6; border-color:#ecd9a4; color:#8a6508; }
+  .sec { font-size:11px; color:#79736a; margin:14px 0 4px; font-weight:500; }
+  .rowline { display:flex; gap:8px; padding:7px 0; border-bottom:1px solid #eae7e0;
+             font-size:12px; align-items:baseline; }
+  .who { width:118px; flex:none; }
+  .fields { flex:1; }
+  .fieldbit { display:inline-block; margin-right:16px; }
+  .flabel { color:#79736a; font-size:10.5px; margin-right:4px; }
+  .tally { display:flex; gap:0; border:1px solid #e4e0d8; border-radius:6px;
+           overflow:hidden; margin-bottom:10px; }
+  .tally div { flex:1; padding:7px 10px; border-right:1px solid #e4e0d8; }
+  .tally div:last-child { border-right:0; }
+  .tally .n { font-family:ui-monospace,Consolas,monospace; font-size:15px; }
+  .tally .l { font-size:10.5px; color:#79736a; }
+  .hot { background:#fbf5e6; }
+  .note { font-size:12.5px; line-height:1.7; }
+</style>
+
+<div class="mock">
+  <div class="mk-head">
+    <div class="mk-title">确认导入 · HUST（2025 银组）</div>
+    <div class="mk-sub">本表 14 行 · 12 人有改动 · 2 行被拒绝 · 队里另外 12 人未包含</div>
+  </div>
+  <div class="mk-body">
+
+    <!-- ① 按字段的改动计数：B 版看不出整列错位，这行补上那个信号 -->
+    <div class="tally">
+      <div class="hot"><div class="n">12</div><div class="l">当前单打</div></div>
+      <div><div class="n">3</div><div class="l">当前双打</div></div>
+      <div class="hot"><div class="n">12</div><div class="l">UTR 链接</div></div>
+      <div><div class="n">1</div><div class="l">清空</div></div>
+    </div>
+
+    <div class="warn">
+      <b>2 行被拒绝，这批一行都不会写入。</b>
+      整列错位时几乎每行都会被拒，放行一半只会让库里一半新一半旧。改完表再贴一次。
+    </div>
+    <div class="neutral">本表覆盖 14 人，队里另外 12 人未包含 —— 他们不会被改动。</div>
+    <div class="warn">
+      这批里有 <b>2 人同时在 2025 金组名单上</b>（Cai Ying、Zong Qingqing）。
+      当前 UTR 是这个人自己的属性，不按队也不按赛季 —— 改完金组页面上看到的也是这个值。
+    </div>
+
+    <div class="sec">将写入（12 人）</div>
+
+    <div class="rowline">
+      <div class="who">Cai Ying <span class="tag tag-x">也在金组</span></div>
+      <div class="fields mono">
+        <span class="fieldbit"><span class="flabel">单</span><span class="was">—</span><span class="arrow">→</span><span class="now">7.31 rated</span></span>
+        <span class="fieldbit"><span class="flabel">双</span><span class="was">—</span><span class="arrow">→</span><span class="now">7.24 rated</span></span>
+        <span class="fieldbit"><span class="flabel">链接</span><span class="was">—</span><span class="arrow">→</span><span class="now">880077</span></span>
+      </div>
+    </div>
+
+    <div class="rowline">
+      <div class="who">Gao Hao</div>
+      <div class="fields mono">
+        <span class="fieldbit"><span class="flabel">单</span><span class="was">6.80</span><span class="arrow">→</span><span class="now">6.92 rated</span></span>
+        <span class="fieldbit"><span class="flabel">双</span><span class="same">不变</span></span>
+        <span class="fieldbit"><span class="flabel">链接</span><span class="same">不变</span></span>
+      </div>
+    </div>
+
+    <div class="rowline">
+      <div class="who">Tao Bob</div>
+      <div class="fields mono">
+        <span class="fieldbit"><span class="flabel">单</span><span class="was">6.55</span><span class="arrow">→</span><span class="now">—</span> <span class="tag">清空</span></span>
+        <span class="fieldbit"><span class="flabel">双</span><span class="was">—</span><span class="arrow">→</span><span class="now">6.40 projected</span></span>
+        <span class="fieldbit"><span class="flabel">链接</span><span class="same">不变</span></span>
+      </div>
+    </div>
+
+    <div class="rowline" style="color:#a09a90;font-style:italic">
+      <div class="who">…</div><div class="fields">其余 9 人</div>
+    </div>
+
+    <div class="sec">被拒绝（2 行）—— 有它们在，整批都不会写</div>
+
+    <div class="rowline">
+      <div class="who">Jin Yi</div>
+      <div class="fields">
+        <span class="tag tag-rej">缺状态</span>
+        双打填了 <span class="mono">5.87</span>，状态是空的。没有状态的数字排阵用不上，
+        页面上却照常显示 —— 看的人会以为它能用。
+      </div>
+    </div>
+
+    <div class="rowline">
+      <div class="who">第 9 行</div>
+      <div class="fields">
+        <span class="tag tag-rej">姓名对不上</span>
+        <span class="mono">id 1058</span> 在库里是「Xie Travis」，表里这一行写着「Mao Neil」。
+        通常意味着行被打乱或粘错位了。
+      </div>
+    </div>
+
+  </div>
+  <div class="mk-foot">
+    <button class="btn btn-off">确认写入</button>
+    <span class="foot-note">先解决 2 行拒绝</span>
+    <button class="btn" style="margin-left:auto">返回改表</button>
+  </div>
+</div>
+
+<h3>这一版改了什么</h3>
+<div class="note">
+  <p><b>① 顶部按字段计数</b> —— B 版一人一行、列不对齐，整列错位就看不出来了。
+  这行把那个信号换个形式给出来：你本来只想填 3 个人的双打，却看到
+  <span class="tag tag-x">单打 12</span>，说明粘错了列。计数明显偏高的格子标成 warning 底。</p>
+
+  <p><b>② 有拒绝就整批不写</b> —— 按钮是灰的，旁边写「先解决 2 行拒绝」。不做「只写好的那些」。</p>
+
+  <p><b>③「不变」占位不省略</b> —— 省掉之后满屏都是变动，反而看不出「这个人我只动了双打」。</p>
+
+  <p><b>④ 跨组点名</b> —— 顶部一条 warning 加行内 <span class="tag tag-x">也在金组</span> 标记。</p>
+</div>
+
+
+</div>
+
+<h2>导出 / 导入 / 就地编辑</h2>
+<div class="frame">
+<h2>另外三屏</h2>
+<p class="subtitle">
+  导出、导入、名单页就地编辑。都比差异屏简单，一次看完。
+  底下还有一个路由归属的问题要你定。
+</p>
+
+<style>
+  .mock { border:1px solid #e4e0d8; border-radius:8px; background:#fff; color:#1a1917;
+          font-family:"Inter","Segoe UI",system-ui,sans-serif; overflow:hidden; margin:0 0 10px; }
+  .mock * { box-sizing:border-box; }
+  .mk-head { padding:13px 16px; border-bottom:1px solid #e4e0d8; display:flex;
+             align-items:baseline; gap:10px; }
+  .mk-title { font-size:14.5px; font-weight:600; }
+  .mk-sub { font-size:11.5px; color:#79736a; }
+  .mk-body { padding:12px 16px; }
+  .mk-foot { padding:11px 16px; border-top:1px solid #e4e0d8; display:flex; gap:9px;
+             align-items:center; background:#faf9f6; }
+  .btn { border-radius:6px; padding:6px 13px; font-size:12.5px; border:1px solid #e4e0d8;
+         background:#fff; color:#1a1917; }
+  .btn-primary { background:#1a1917; color:#fff; border-color:#1a1917; }
+  .btn-sm { padding:3px 9px; font-size:11.5px; }
+  .foot-note { font-size:11.5px; color:#79736a; }
+  .neutral { background:#f2efe9; border:1px solid #e4e0d8; color:#1a1917;
+             border-radius:6px; padding:8px 11px; font-size:12px; margin-bottom:10px; }
+  .mono { font-family:ui-monospace,Consolas,monospace; }
+  .tabs { display:flex; gap:0; border-bottom:1px solid #e4e0d8; margin:-12px -16px 12px; }
+  .tab { padding:9px 15px; font-size:12.5px; border-bottom:2px solid transparent;
+         color:#79736a; }
+  .tab.on { border-bottom-color:#1a1917; color:#1a1917; font-weight:500; }
+  table.sheet { width:100%; border-collapse:collapse; font-size:11.5px;
+                font-family:ui-monospace,Consolas,monospace; }
+  table.sheet th { text-align:left; font-weight:500; color:#79736a; font-size:10px;
+                   padding:5px 7px; border:1px solid #e4e0d8; background:#f6f4f0;
+                   white-space:nowrap; }
+  table.sheet td { padding:5px 7px; border:1px solid #eae7e0; }
+  .fixed { background:#faf9f6; color:#57534e; }
+  .blank { background:#fff; }
+  .ta { width:100%; min-height:96px; border:1px solid #e4e0d8; border-radius:6px;
+        padding:9px 11px; font-family:ui-monospace,Consolas,monospace; font-size:11.5px;
+        color:#a09a90; background:#fff; }
+  .drop { border:1px dashed #e4e0d8; border-radius:6px; padding:18px; text-align:center;
+          font-size:12px; color:#79736a; background:#faf9f6; }
+  table.roster { width:100%; border-collapse:collapse; font-size:12px; }
+  table.roster th { text-align:left; font-weight:500; color:#79736a; font-size:10.5px;
+                    padding:6px 8px; border-bottom:1px solid #e4e0d8; background:#f6f4f0; }
+  table.roster td { padding:5px 8px; border-bottom:1px solid #eae7e0; }
+  .inp { border:1px solid #1a1917; border-radius:4px; padding:2px 6px; font-size:11.5px;
+         font-family:ui-monospace,Consolas,monospace; width:62px; background:#fff; }
+  .sel { border:1px solid #1a1917; border-radius:4px; padding:2px 4px; font-size:11px;
+         background:#fff; }
+  .editing { background:#fbf5e6; }
+  .note { font-size:12.5px; line-height:1.7; }
+  h3.s { margin:22px 0 7px; font-size:13.5px; }
+</style>
+
+<h3 class="s">① 导出 —— 把表拿出去</h3>
+<div class="mock">
+  <div class="mk-head">
+    <div class="mk-title">当前 UTR · HUST</div>
+    <div class="mk-sub">2025 银组 · 26 人</div>
+  </div>
+  <div class="mk-body">
+    <div class="tabs">
+      <div class="tab on">导出</div>
+      <div class="tab">导入</div>
+    </div>
+    <div class="neutral">
+      前三列是我们填好的，<b>别改</b> —— <span class="mono">id</span> 决定这一行是谁，
+      姓名是校验位。后五列你填。空着 = 不改，写 <span class="mono">-</span> = 清空。
+    </div>
+    <table class="sheet">
+      <thead>
+        <tr>
+          <th>id</th><th>姓</th><th>名</th>
+          <th>当前单打</th><th>单打状态</th><th>当前双打</th><th>双打状态</th><th>UTR 链接</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="fixed">1042</td><td class="fixed">Cai</td><td class="fixed">Ying</td>
+            <td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+        <tr><td class="fixed">1043</td><td class="fixed">Gao</td><td class="fixed">Hao</td>
+            <td class="blank">6.80</td><td class="blank">rated</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+        <tr><td class="fixed">1044</td><td class="fixed">Tao</td><td class="fixed">Bob</td>
+            <td class="blank">6.55</td><td class="blank">projected</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+        <tr><td colspan="8" style="color:#a09a90;font-style:italic;border:1px solid #eae7e0">… 其余 23 行</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="mk-foot">
+    <button class="btn btn-primary">复制整张表</button>
+    <button class="btn">下载 CSV</button>
+    <span class="foot-note">已有的值也带出去，方便你看着改</span>
+  </div>
+</div>
+
+<h3 class="s">② 导入 —— 贴回来或传回来</h3>
+<div class="mock">
+  <div class="mk-head">
+    <div class="mk-title">当前 UTR · HUST</div>
+    <div class="mk-sub">2025 银组 · 26 人</div>
+  </div>
+  <div class="mk-body">
+    <div class="tabs">
+      <div class="tab">导出</div>
+      <div class="tab on">导入</div>
+    </div>
+    <textarea class="ta" readonly>从 Google Sheets 里整块复制，粘到这里（含表头那一行）</textarea>
+    <div style="text-align:center;font-size:11px;color:#a09a90;margin:9px 0">或</div>
+    <div class="drop">把 CSV 拖到这里，或点击选择文件</div>
+  </div>
+  <div class="mk-foot">
+    <button class="btn btn-primary">看差异</button>
+    <span class="foot-note">不会直接写库</span>
+  </div>
+</div>
+
+<h3 class="s">③ 名单页就地改 —— 补一个人不值得走一趟往返</h3>
+<div class="mock">
+  <div class="mk-head">
+    <div class="mk-title">HUST · 华中科大</div>
+    <div class="mk-sub">17 人 · 12 男 · 5 女</div>
+    <button class="btn btn-sm" style="margin-left:auto">当前 UTR 批量导入</button>
+  </div>
+  <div class="mk-body" style="padding:0">
+    <div style="border-bottom:1px solid #e4e0d8;background:#f2efe9;padding:6px 14px;font-size:11px;color:#1a1917">
+      当前 UTR 由人工维护，未与 UTR 官网同步
+    </div>
+    <table class="roster">
+      <thead>
+        <tr><th style="width:30px">#</th><th>姓名</th><th>性别</th><th>参赛 UTR</th>
+            <th>UTR 来源</th><th style="width:130px">当前单打</th><th style="width:130px">当前双打</th><th style="width:56px"></th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">1</td><td>Cai Ying</td><td>男</td><td class="mono">7.24</td><td>已认证</td>
+          <td class="mono" style="color:#79736a">—</td><td class="mono" style="color:#79736a">—</td>
+          <td><button class="btn btn-sm">改</button></td>
+        </tr>
+        <tr class="editing">
+          <td class="mono">2</td><td>Gao Hao</td><td>男</td><td class="mono">6.72</td><td>已认证</td>
+          <td><input class="inp" value="6.92"> <select class="sel"><option>rated</option></select></td>
+          <td><input class="inp" value=""> <select class="sel"><option>—</option></select></td>
+          <td><button class="btn btn-sm btn-primary">存</button></td>
+        </tr>
+        <tr>
+          <td class="mono">3</td><td>Tao Bob</td><td>男</td><td class="mono">6.46</td><td>已认证</td>
+          <td class="mono" style="color:#79736a">—</td><td class="mono" style="color:#79736a">—</td>
+          <td><button class="btn btn-sm">改</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="note">
+  <p>就地编辑是<b>整行变输入框</b>，一次改一个人，存完这行变回只读。不做「同屏改多人」——
+  那正是批量导入要解决的事，两条路做同一件事只会让人不知道该用哪条。</p>
+  <p><b>未登录时</b>：「改」按钮和右上角「批量导入」都不出现，名单页照常只读。</p>
+</div>
+
+<h3 class="s">要你定的：这两屏挂在哪儿？</h3>
+
+
+</div>
+
+<h2>移动端</h2>
+<p>
+  本次不出移动稿：四屏都是<strong>表格与表单</strong>，随既有响应式布局回流，且
+  <code>mobile-shell</code> 是单独一个 change（见路线图）。窄屏下唯一要盯的是差异屏
+  一行里三个字段会折行——那时按人分组的版式反而比逐字段表格更耐窄，这也是选 B 版的
+  附带好处。
+</p>
+
+<h2>实现时要对照的</h2>
+<ul>
+  <li>逐字段计数那一行：数值明显偏高的格子标 warning 底，是「整列粘错」唯一的信号。</li>
+  <li>有任何一行被拒绝，确认按钮<strong>禁用</strong>，旁边写「先解决 N 行拒绝」。</li>
+  <li>「不变」占位显示，不省略。</li>
+  <li>跨组的人：顶部一条 warning + 行内标记。</li>
+  <li>导出屏三列灰底（<code>--color-surface-muted</code>）表示「别改」。</li>
+  <li>未登录时名单页不出现「改」与「批量导入」两个入口。</li>
+</ul>
+
+</body>
+</html>
