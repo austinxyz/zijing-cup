@@ -536,3 +536,45 @@ class TestTeamDisplayName:
         report = check_rosters(session, csv_text(), TEST_YEAR, "silver")
 
         assert report.is_clean, report.render()
+
+
+class TestTheImporterLocksItself:
+    """Nothing reads `roster_entries` any more.
+
+    A command that says "+30 rows" while the site shows no change sends the
+    reader looking for the bug somewhere else entirely.
+    """
+
+    def _csv(self, tmp_path):
+        path = tmp_path / "roster.csv"
+        path.write_text("\n".join([HEADER, *ROWS]) + "\n", encoding="utf-8")
+        return path
+
+    def test_it_refuses_by_default(self, session, tmp_path, capsys):
+        from app.rosters.__main__ import main
+
+        before = len(session.exec(select(RosterEntry)).all())
+        code = main([str(TEST_YEAR), "silver", str(self._csv(tmp_path))])
+        captured = capsys.readouterr()
+
+        assert code != 0
+        assert len(session.exec(select(RosterEntry)).all()) == before
+        assert "不会被任何页面读取" in captured.out + captured.err
+        assert "队员管理" in captured.out + captured.err
+
+    def test_the_explicit_override_still_says_it(self, session, tmp_path, capsys):
+        from app.rosters.__main__ import main
+
+        code = main(
+            [
+                str(TEST_YEAR),
+                "silver",
+                str(self._csv(tmp_path)),
+                "--i-know-it-is-not-read",
+            ]
+        )
+        captured = capsys.readouterr()
+
+        assert code == 0
+        assert session.exec(select(RosterEntry)).all()
+        assert "不会被任何页面读取" in captured.out + captured.err

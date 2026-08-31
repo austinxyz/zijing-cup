@@ -74,23 +74,23 @@
 - [x] 3.8 GREEN — 两个计数与逐人来源标记随结果返回
 - [x] 3.9 RED — 跨模块一致性：同一名队员经 `get_team_roster` 与 `load_roster` 取到的参赛 UTR 与来源相同
 - [x] 3.10 GREEN — 若不一致，收敛到同一个 `resolve_match_utr` 调用
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 名单导入器自锁
 
 ### Contract
 - **Spec**: 导入器 SHALL 拒绝执行，或在执行前后刺眼地说明这些行不会出现在任何页面上。MUST NOT 只输出「+N 行」。拒绝 SHALL 可以被一个显式的开关绕过；绕过时仍 SHALL 打印同一条说明。
-- **Runtime**: `cd backend && ./.venv-std/Scripts/python.exe -m pytest tests/test_roster_load.py -q` → expected: 全部通过，含拒绝与绕过两条新用例
+- **Runtime**: `cd backend && ./.venv-std/Scripts/python.exe -m pytest tests/test_roster_import.py -q` → expected: 全部通过，含拒绝与绕过两条新用例
 - **Code**:
   - D8：用显式开关 `--i-know-it-is-not-read`，不用环境变量——绕过这件事该出现在命令历史里，而不是藏在某个 shell 的环境里被忘记。
   - 拒绝时 MUST NOT 写入任何数据，且以非零码退出。
 - **Threshold**: 80
 
-- [ ] 4.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 RED — 默认运行导入命令时不写入任何数据、以非零码退出，且输出含「不会被任何页面读取」与「去哪里改名单」
-- [ ] 4.2 GREEN — 在 `backend/app/rosters/load.py` 的命令入口加默认拒绝
-- [ ] 4.3 RED — 带 `--i-know-it-is-not-read` 时数据照常写入 `roster_entries`，且**仍然**打印同一条说明
-- [ ] 4.4 GREEN — 加显式开关，说明在两条路径上共用同一份文案
+- [x] 4.0 CONTRACT — write openspec/changes/read-path-switch/contracts/group-4.md with the ### Contract block above
+- [x] 4.1 RED — 默认运行导入命令时不写入任何数据、以非零码退出，且输出含「不会被任何页面读取」与「去哪里改名单」
+- [x] 4.2 GREEN — 在 `backend/app/rosters/load.py` 的命令入口加默认拒绝
+- [x] 4.3 RED — 带 `--i-know-it-is-not-read` 时数据照常写入 `roster_entries`，且**仍然**打印同一条说明
+- [x] 4.4 GREEN — 加显式开关，说明在两条路径上共用同一份文案
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 名单页的估算标记与来源列
