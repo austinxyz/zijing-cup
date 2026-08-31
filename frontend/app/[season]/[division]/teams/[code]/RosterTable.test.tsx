@@ -6,6 +6,7 @@ import { RosterTable } from "./RosterTable";
 
 function player(overrides: Partial<RosterPlayer> = {}): RosterPlayer {
   return {
+    player_id: 1,
     last_name: "南",
     first_name: "望舒",
     gender: "M",

@@ -25,6 +25,7 @@ const ROSTER: TeamRoster = {
   },
   players: [
     {
+      player_id: 1,
       last_name: "南",
       first_name: "望舒",
       gender: "M",
@@ -45,6 +46,7 @@ const ROSTER: TeamRoster = {
       utr_profile_id: null,
     },
     {
+      player_id: 2,
       last_name: "西",
       first_name: "门吹雪",
       gender: "F",

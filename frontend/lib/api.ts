@@ -137,6 +137,9 @@ export async function getDivisionTeams(
 }
 
 export interface RosterPlayer {
+  /** The player's own id — how anything that is not a human refers to this
+   *  person. Names repeat. */
+  player_id: number;
   last_name: string;
   first_name: string;
   gender: string | null;
@@ -182,6 +185,22 @@ export interface RosterPlayer {
   utr_profile_id: string | null;
 }
 
+export interface UtrSheetRow {
+  /** The row's identity. It goes out with the sheet and comes back
+   *  untouched, so importing never has to work out which player a row is
+   *  about — the one judgement this feature refuses to make, because a
+   *  current UTR on the wrong person looks perfectly ordinary on every
+   *  screen. */
+  player_id: number;
+  last_name: string;
+  first_name: string;
+  singles_utr: string | null;
+  singles_status: string | null;
+  doubles_utr: string | null;
+  doubles_status: string | null;
+  utr_profile_id: string | null;
+}
+
 export interface TeamRoster {
   team: {
     code: string;
@@ -193,6 +212,46 @@ export interface TeamRoster {
    *  ties are common (players sit on the same cap) and a second sort would
    *  disagree with this one. */
   players: RosterPlayer[];
+}
+
+/** The rows a team's UTR sheet is built from, or null when there is no such
+ *  team. Ordered exactly as the roster page orders it — the person exports
+ *  this while looking at that page, and a different order would read as
+ *  having exported the wrong team. */
+export async function getUtrSheet(
+  year: number | string,
+  code: string,
+  teamCode: string,
+): Promise<UtrSheetRow[] | null> {
+  const res = await fetch(
+    backendUrl(
+      `/api/seasons/${year}/divisions/${code}/teams/` +
+        `${encodeURIComponent(teamCode)}/utr-sheet`,
+    ),
+    backendRequestInit(),
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`getUtrSheet failed: ${res.status}`);
+  return res.json();
+}
+
+/** Player id -> the other teams that player also sits on. Current UTRs are a
+ *  property of the person, so a change made here shows up there too; the
+ *  confirmation screen names them rather than letting that go unsaid. */
+export async function getUtrElsewhere(
+  year: number | string,
+  code: string,
+  teamCode: string,
+): Promise<Record<string, string[]>> {
+  const res = await fetch(
+    backendUrl(
+      `/api/seasons/${year}/divisions/${code}/teams/` +
+        `${encodeURIComponent(teamCode)}/utr-sheet/elsewhere`,
+    ),
+    backendRequestInit(),
+  );
+  if (!res.ok) throw new Error(`getUtrElsewhere failed: ${res.status}`);
+  return res.json();
 }
 
 /** One team's roster, or null when the season, division or team is unknown. */

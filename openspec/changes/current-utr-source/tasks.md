@@ -71,7 +71,7 @@
 - [x] 3.4 GREEN — 实现跨组别检测（一次查询）
 - [x] 3.5 RED — 只含该队一部分人的内容：其余人不变，且结果报出覆盖 N 人、未包含 M 人
 - [x] 3.6 GREEN — 实现覆盖/未包含统计
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 导出与导入两页签
 
@@ -85,14 +85,14 @@
   - 改完跑 `npx tsc --noEmit`：vitest 只转译不校验类型。
 - **Threshold**: 70
 
-- [ ] 4.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 MOCK — open docs/superpowers/specs/mocks/2026-08-31-current-utr-source-mocks.html 的「导出 / 导入」两节；抄下列名、灰底三列的处理、按钮文案（`看差异`）与色档
-- [ ] 4.2 RED — vitest：导出页签渲染八列表头，前三列带「不要修改」的样式标记；底部有「复制整张表」与「下载 CSV」
-- [ ] 4.3 GREEN — 实现导出页签
-- [ ] 4.4 RED — 导入页签同时有粘贴框与上传入口；同一份内容经两个入口得到相同的解析结果
-- [ ] 4.5 GREEN — 实现导入页签，两入口共用一条解析路径
-- [ ] 4.6 RED — 未登录访问该路由跳转到 `/login`；取数失败时侧栏仍在、只有内容区是错误态
-- [ ] 4.7 GREEN — 加该路由的 `layout.tsx` 登录门与 `error.tsx`
+- [x] 4.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-4.md with the ### Contract block above
+- [x] 4.1 MOCK — open docs/superpowers/specs/mocks/2026-08-31-current-utr-source-mocks.html 的「导出 / 导入」两节；抄下列名、灰底三列的处理、按钮文案（`看差异`）与色档
+- [x] 4.2 RED — vitest：导出页签渲染八列表头，前三列带「不要修改」的样式标记；底部有「复制整张表」与「下载 CSV」
+- [x] 4.3 GREEN — 实现导出页签
+- [x] 4.4 RED — 导入页签同时有粘贴框与上传入口；同一份内容经两个入口得到相同的解析结果
+- [x] 4.5 GREEN — 实现导入页签，两入口共用一条解析路径
+- [x] 4.6 RED — 未登录访问该路由跳转到 `/login`；取数失败时侧栏仍在、只有内容区是错误态
+- [x] 4.7 GREEN — 加该路由的 `layout.tsx` 登录门与 `error.tsx`
 - [ ] 4.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；打开 2025 银组最长的那份名单（26 人）对应的 `/utr`，对照 mocks 核对文案与色档；把窗口调矮确认长表有自己的滚动容器
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
@@ -107,16 +107,16 @@
   - 色档沿用既有三档：warning 用于计数偏高与跨组提示，中性用于「未包含 N 人」，danger 只用于「被拒绝」标记。
 - **Threshold**: 70
 
-- [ ] 5.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-5.md with the ### Contract block above
-- [ ] 5.1 MOCK — open docs/superpowers/specs/mocks/2026-08-31-current-utr-source-mocks.html 的「差异屏」一节；抄下计数条、逐人行、错误段、禁用按钮的文案与色档
-- [ ] 5.2 RED — vitest：某人只改双打时，该行显示双打旧→新，单打与链接显示「不变」
-- [ ] 5.3 GREEN — 实现逐人行
-- [ ] 5.4 RED — 顶部按字段计数正确；计数偏高的格子命中 warning 档 token
-- [ ] 5.5 GREEN — 实现计数条
-- [ ] 5.6 RED — 有错误时确认按钮 disabled 且旁注写明剩几条；无错误时可点
-- [ ] 5.7 GREEN — 实现按钮状态
-- [ ] 5.8 RED — 「本表覆盖 N 人，另外 M 人未包含」命中中性档；跨组队员在顶部与行内都被点名
-- [ ] 5.9 GREEN — 实现这两处提示
+- [x] 5.0 CONTRACT — write openspec/changes/current-utr-source/contracts/group-5.md with the ### Contract block above
+- [x] 5.1 MOCK — open docs/superpowers/specs/mocks/2026-08-31-current-utr-source-mocks.html 的「差异屏」一节；抄下计数条、逐人行、错误段、禁用按钮的文案与色档
+- [x] 5.2 RED — vitest：某人只改双打时，该行显示双打旧→新，单打与链接显示「不变」
+- [x] 5.3 GREEN — 实现逐人行
+- [x] 5.4 RED — 顶部按字段计数正确；计数偏高的格子命中 warning 档 token
+- [x] 5.5 GREEN — 实现计数条
+- [x] 5.6 RED — 有错误时确认按钮 disabled 且旁注写明剩几条；无错误时可点
+- [x] 5.7 GREEN — 实现按钮状态
+- [x] 5.8 RED — 「本表覆盖 N 人，另外 M 人未包含」命中中性档；跨组队员在顶部与行内都被点名
+- [x] 5.9 GREEN — 实现这两处提示
 - [ ] 5.10 VISUAL DIFF — bring up dev stack；构造一份含改动、错误、未包含与跨组四种情形的真实输入，对照 mocks 核对；用 computed style 实测所有新文案的对比度 ≥ 4.5:1
 - [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 

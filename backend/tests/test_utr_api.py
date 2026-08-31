@@ -368,3 +368,66 @@ class TestAcrossDivisions:
 
         assert response.status_code == 200
         assert response.json() == {str(shared_id): ["gold · UTR-G"]}
+
+
+class TestPreviewAndApply:
+    def _sheet_text(self, client, **cells) -> str:
+        rows = client.get(sheet_url(), headers=READ).json()
+        header = "id\t姓\t名\t当前单打\t单打状态\t当前双打\t双打状态\tUTR链接"
+        lines = [header]
+        for row in rows:
+            values = cells.get(row["first_name"], ["", "", "", "", ""])
+            lines.append(
+                "\t".join(
+                    [str(row["player_id"]), row["last_name"], row["first_name"], *values]
+                )
+            )
+        return "\n".join(lines)
+
+    def test_preview_reports_the_change_without_writing_it(self, client):
+        text = self._sheet_text(client, 望舒=["6.90", "rated", "", "", ""])
+
+        body = client.post(
+            f"{sheet_url()}/preview", headers=WRITE, json={"text": text}
+        ).json()
+
+        assert body["applicable"] is True
+        assert body["counts"]["singles_utr"] == 1
+        assert body["covered"] == 3
+        assert body["not_covered"] == 0
+
+        after = {r["first_name"]: r for r in client.get(sheet_url(), headers=READ).json()}
+        assert after["望舒"]["singles_utr"] is None
+
+    def test_preview_carries_the_errors_and_refuses_to_be_applicable(self, client):
+        text = self._sheet_text(client, 望舒=["6.90", "已认证", "", "", ""])
+
+        body = client.post(
+            f"{sheet_url()}/preview", headers=WRITE, json={"text": text}
+        ).json()
+
+        assert body["applicable"] is False
+        assert len(body["errors"]) == 1
+
+    def test_apply_writes_what_preview_showed(self, client):
+        text = self._sheet_text(client, 望舒=["6.90", "rated", "", "", ""])
+
+        response = client.post(
+            f"{sheet_url()}/apply", headers=WRITE, json={"text": text}
+        )
+        assert response.status_code == 200
+        assert response.json()["updated"] == 1
+
+        after = {r["first_name"]: r for r in client.get(sheet_url(), headers=READ).json()}
+        assert after["望舒"]["singles_utr"] == "6.90"
+
+    def test_apply_refuses_a_sheet_with_any_error(self, client):
+        text = self._sheet_text(client, 望舒=["6.90", "已认证", "", "", ""])
+
+        response = client.post(
+            f"{sheet_url()}/apply", headers=WRITE, json={"text": text}
+        )
+
+        assert response.status_code == 422
+        after = {r["first_name"]: r for r in client.get(sheet_url(), headers=READ).json()}
+        assert after["望舒"]["singles_utr"] is None

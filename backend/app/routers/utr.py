@@ -18,6 +18,12 @@ from sqlmodel import Session, select
 
 from app.db import get_session
 from app.models import Player, PlayerTeamMembership, Team
+from app.players.utr_sheet import (
+    DiffResult,
+    PlayerView,
+    diff_sheet,
+    parse_sheet,
+)
 from app.rosters.query import get_team_roster
 
 router = APIRouter(prefix="/api", tags=["utr"])
@@ -85,6 +91,138 @@ def read_other_memberships(
             f"{division_code} · {other_code}"
         )
     return elsewhere
+
+
+class SheetText(BaseModel):
+    text: str
+
+
+@router.post(
+    "/seasons/{year}/divisions/{code}/teams/{team_code}/utr-sheet/preview"
+)
+def preview_sheet(
+    year: int,
+    code: str,
+    team_code: str,
+    payload: SheetText,
+    session: Session = Depends(get_session),
+) -> dict:
+    """What this sheet would change. Writes nothing.
+
+    A POST because the sheet arrives in the body — it can run to thousands of
+    characters — not because it changes anything.
+    """
+    result, _ = _diff_for(session, year, code, team_code, payload.text)
+    return _diff_payload(result, session, year, code, team_code)
+
+
+@router.post(
+    "/seasons/{year}/divisions/{code}/teams/{team_code}/utr-sheet/apply"
+)
+def apply_sheet(
+    year: int,
+    code: str,
+    team_code: str,
+    payload: SheetText,
+    session: Session = Depends(get_session),
+) -> dict[str, int]:
+    """Write what preview showed, or nothing.
+
+    Re-derives the diff from the sheet text rather than accepting a diff from
+    the client: what lands is then computed from the same source under the
+    same rules as what the person read, not from a payload that could have
+    been altered on the way back.
+    """
+    result, people = _diff_for(session, year, code, team_code, payload.text)
+    if not result.applicable:
+        raise HTTPException(
+            status_code=422,
+            detail=[
+                {"line": e.line_number, "message": e.message}
+                for e in result.errors
+            ],
+        )
+
+    by_id = {person.id: person for person in people}
+    for change in result.changes:
+        person = by_id[change.player_id]
+        for field in change.fields:
+            setattr(person, field.field, _typed(field.field, field.new))
+        session.add(person)
+    session.commit()
+    return {"updated": len(result.changes)}
+
+
+def _typed(field: str, value: Optional[str]):
+    if value is None:
+        return None
+    if field in {"singles_utr", "doubles_utr"}:
+        return Decimal(value)
+    return value
+
+
+def _diff_for(
+    session: Session, year: int, code: str, team_code: str, text: str
+) -> tuple[DiffResult, list[Player]]:
+    roster = get_team_roster(session, year, code, team_code)
+    if roster is None:
+        raise HTTPException(status_code=404, detail="team not found")
+
+    ids = [entry.player_id for entry in roster.players]
+    people = list(
+        session.exec(select(Player).where(Player.id.in_(ids))).all()
+    ) if ids else []
+    # Ordered as the roster is, so `covered`/`not_covered` count the same
+    # squad the person was looking at.
+    by_id = {person.id: person for person in people}
+    ordered = [by_id[i] for i in ids if i in by_id]
+
+    views = [
+        PlayerView(
+            player_id=person.id,
+            last_name=person.last_name,
+            first_name=person.first_name,
+            singles_utr=person.singles_utr,
+            singles_status=person.singles_status,
+            doubles_utr=person.doubles_utr,
+            doubles_status=person.doubles_status,
+            utr_profile_id=person.utr_profile_id,
+        )
+        for person in ordered
+    ]
+    return diff_sheet(parse_sheet(text), views), ordered
+
+
+def _diff_payload(
+    result: DiffResult,
+    session: Session,
+    year: int,
+    code: str,
+    team_code: str,
+) -> dict:
+    return {
+        "changes": [
+            {
+                "player_id": change.player_id,
+                "last_name": change.last_name,
+                "first_name": change.first_name,
+                "fields": [
+                    {"field": f.field, "old": f.old, "new": f.new}
+                    for f in change.fields
+                ],
+            }
+            for change in result.changes
+        ],
+        "errors": [
+            {"line_number": e.line_number, "message": e.message}
+            for e in result.errors
+        ],
+        "counts": result.counts,
+        "covered": result.covered,
+        "not_covered": result.not_covered,
+        "applicable": result.applicable,
+        "elsewhere": read_other_memberships(year, code, team_code, session),
+    }
 
 
 class CurrentUtrUpdate(BaseModel):
