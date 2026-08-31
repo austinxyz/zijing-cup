@@ -72,7 +72,7 @@ export function UtrDiff({
                 >
                   {count}
                 </div>
-                <div className="text-[10.5px] text-muted">{label}</div>
+                <div className="text-[10.5px] text-foreground">{label}</div>
               </div>
             );
           })}
@@ -131,7 +131,7 @@ export function UtrDiff({
                           // Kept rather than omitted: without it the screen is
                           // all edits, and "only their doubles moved" is the
                           // fact worth reading.
-                          <span className="text-muted">不变</span>
+                          <span className="text-[#57534e]">不变</span>
                         ) : (
                           <>
                             <span className="text-muted line-through">
@@ -184,7 +184,7 @@ export function UtrDiff({
           确认写入 {diff.changes.length} 人
         </button>
         {diff.applicable ? null : (
-          <span className="text-[11.5px] text-muted">
+          <span className="text-[11.5px] text-foreground">
             先解决 {diff.errors.length} 条拒绝
           </span>
         )}

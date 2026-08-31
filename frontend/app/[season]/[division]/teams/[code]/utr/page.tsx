@@ -17,13 +17,16 @@ export default async function UtrSheetPage({ params }: PageProps) {
   if (rows === null) notFound();
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col bg-surface">
       <div className="flex flex-none items-baseline justify-between gap-2.5 border-b border-border bg-surface px-[22px] py-[11px]">
         <div className="flex items-baseline gap-2.5">
           <span className="text-[15px] font-semibold text-foreground">
             当前 UTR · {code}
           </span>
-          <span className="font-mono text-[11.5px] text-muted-foreground">
+          {/* `text-muted-foreground` measures 2.79:1 even on white — fine for
+              a decorative separator, not for a line that says which team and
+              season you are about to edit. */}
+          <span className="font-mono text-[11.5px] text-muted">
             {season} · {division} · {rows.length} 人
           </span>
         </div>

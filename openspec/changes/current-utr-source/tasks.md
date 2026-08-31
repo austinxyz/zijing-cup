@@ -93,7 +93,7 @@
 - [x] 4.5 GREEN — 实现导入页签，两入口共用一条解析路径
 - [x] 4.6 RED — 未登录访问该路由跳转到 `/login`；取数失败时侧栏仍在、只有内容区是错误态
 - [x] 4.7 GREEN — 加该路由的 `layout.tsx` 登录门与 `error.tsx`
-- [ ] 4.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；打开 2025 银组最长的那份名单（26 人）对应的 `/utr`，对照 mocks 核对文案与色档；把窗口调矮确认长表有自己的滚动容器
+- [x] 4.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；打开 2025 银组最长的那份名单（26 人）对应的 `/utr`，对照 mocks 核对文案与色档；把窗口调矮确认长表有自己的滚动容器
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 差异屏
@@ -117,7 +117,7 @@
 - [x] 5.7 GREEN — 实现按钮状态
 - [x] 5.8 RED — 「本表覆盖 N 人，另外 M 人未包含」命中中性档；跨组队员在顶部与行内都被点名
 - [x] 5.9 GREEN — 实现这两处提示
-- [ ] 5.10 VISUAL DIFF — bring up dev stack；构造一份含改动、错误、未包含与跨组四种情形的真实输入，对照 mocks 核对；用 computed style 实测所有新文案的对比度 ≥ 4.5:1
+- [x] 5.10 VISUAL DIFF — bring up dev stack；构造一份含改动、错误、未包含与跨组四种情形的真实输入，对照 mocks 核对；用 computed style 实测所有新文案的对比度 ≥ 4.5:1
 - [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 6. 名单页就地编辑
@@ -139,7 +139,7 @@
 - [x] 6.5 GREEN — 接上 Server Action
 - [x] 6.6 RED — 未登录时行内入口与右上角批量导入入口都不渲染，名单照常可读
 - [x] 6.7 GREEN — 按登录态渲染入口
-- [ ] 6.8 VISUAL DIFF — bring up dev stack；登录后在 2025 银组某队名单页改一个人的当前双打为 rated，保存；确认该队排阵页上此人的来源变为 `估算 · 当前已认证值`（前提是他本赛季无参赛 UTR）
+- [x] 6.8 VISUAL DIFF — bring up dev stack；登录后在 2025 银组某队名单页改一个人的当前双打为 rated，保存；确认该队排阵页上此人的来源变为 `估算 · 当前已认证值`（前提是他本赛季无参赛 UTR）
 - [ ] 6.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-6.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 7. 验证与 ship

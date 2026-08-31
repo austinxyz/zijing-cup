@@ -62,7 +62,11 @@ export function UtrPanel({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    // An explicit surface, not the page ground: `--color-muted` measures
+    // 4.69:1 on white and 4.27:1 on the page's own #f6f4f0, so a panel that
+    // forgets its background quietly drops every muted label below the
+    // threshold.
+    <div className="flex min-h-0 flex-1 flex-col bg-surface">
       <div className="flex flex-none border-b border-border">
         {(
           [
