@@ -271,3 +271,104 @@ def test_reports_who_the_sheet_left_out() -> None:
 
     assert result.covered == 1
     assert result.not_covered == 4
+
+
+def test_the_same_number_written_differently_is_not_a_change() -> None:
+    # The database holds Decimal("7.00"); a person types 7. Comparing the two
+    # as text calls that a change, which would fill the confirmation screen
+    # with edits nobody made — and the round trip is supposed to be inert.
+    people = [player(singles_utr=Decimal("7.00"), singles_status="rated")]
+    text = sheet("1042\t南\t望舒\t7\trated\t\t\t")
+
+    result = diff_sheet(parse_sheet(text), people)
+
+    assert result.errors == []
+    assert result.changes == []
+
+
+def test_a_real_numeric_change_is_still_caught() -> None:
+    people = [player(singles_utr=Decimal("7.00"), singles_status="rated")]
+    text = sheet("1042\t南\t望舒\t7.10\trated\t\t\t")
+
+    result = diff_sheet(parse_sheet(text), people)
+
+    assert [f.field for f in result.changes[0].fields] == ["singles_utr"]
+
+
+def test_a_utr_that_is_not_a_number_is_rejected() -> None:
+    text = sheet("1042\t南\t望舒\t约 6.9\trated\t\t\t")
+
+    result = diff_sheet(parse_sheet(text), [player()])
+
+    assert result.changes == []
+    assert len(result.errors) == 1
+
+
+def test_clearing_one_half_of_a_pair_is_rejected() -> None:
+    # Clearing the value while setting the status leaves exactly the state the
+    # pairing rule exists to prevent: a status with no number under it.
+    text = sheet("1042\t南\t望舒\t-\trated\t\t\t")
+
+    result = diff_sheet(parse_sheet(text), [player()])
+
+    assert result.changes == []
+    assert len(result.errors) == 1
+
+
+def test_clearing_both_halves_together_is_fine() -> None:
+    people = [player(singles_utr=Decimal("6.90"), singles_status="rated")]
+    text = sheet("1042\t南\t望舒\t-\t-\t\t\t")
+
+    result = diff_sheet(parse_sheet(text), people)
+
+    assert result.errors == []
+    assert {f.field for f in result.changes[0].fields} == {
+        "singles_utr",
+        "singles_status",
+    }
+
+
+def test_the_same_player_twice_is_an_error_not_a_silent_overwrite() -> None:
+    # Easy to produce by copy-pasting in a spreadsheet. Letting the last row
+    # win would quietly discard one of two numbers the person typed, with
+    # nothing to say which.
+    text = sheet(
+        "1042\t南\t望舒\t6.90\trated\t\t\t",
+        "1042\t南\t望舒\t7.10\trated\t\t\t",
+    )
+
+    result = diff_sheet(parse_sheet(text), [player()])
+
+    assert result.changes == []
+    assert len(result.errors) == 1
+    assert "1042" in result.errors[0].message
+
+
+def test_a_csv_cell_may_contain_a_comma() -> None:
+    # Real names and notes contain commas; a spreadsheet quotes them. Splitting
+    # on every comma shifts the whole row one column over.
+    csv = "\n".join(
+        [
+            HEADER.replace("\t", ","),
+            '1042,南,"望舒, Jr.",6.90,rated,,,',
+        ]
+    )
+
+    rows = parse_sheet(csv)
+
+    assert rows[0].first_name == "望舒, Jr."
+    assert rows[0].singles_utr == "6.90"
+
+
+def test_the_profile_id_comes_from_the_profile_path_not_the_last_number() -> None:
+    # A link can carry a tracking parameter; taking the last run of digits
+    # would store that instead of the profile.
+    text = sheet(
+        "1042\t南\t望舒\t\t\t\t\t"
+        "https://app.utrsports.net/profiles/880077?t=12345"
+    )
+
+    result = diff_sheet(parse_sheet(text), [player()])
+
+    fields = {f.field: f for f in result.changes[0].fields}
+    assert fields["utr_profile_id"].new == "880077"

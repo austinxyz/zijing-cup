@@ -18,9 +18,10 @@ convert has to be reportable as an error rather than silently coerced.
 
 from __future__ import annotations
 
+import csv
 import re
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Optional
 
 from app.models.players import CURRENT_UTR_STATUSES
@@ -70,13 +71,19 @@ def parse_sheet(text: str) -> list[SheetRow]:
     single entry point, so nothing downstream can behave differently
     depending on which way the content arrived — two entry points that
     disagreed would leave the reader with no way to tell which to believe.
+
+    Read through `csv`, not `str.split`: a cell may legitimately contain the
+    delimiter (a name with a comma in it), and a spreadsheet quotes it. A
+    naive split shifts the whole row one column over, which is the single
+    most damaging way this can go wrong.
     """
     lines = text.splitlines()
     delimiter = _delimiter_of(lines[0] if lines else "")
 
     rows: list[SheetRow] = []
-    for index, line in enumerate(lines[1:], start=2):
-        rows.append(_row_from_cells(index, line.split(delimiter)))
+    reader = csv.reader(lines[1:], delimiter=delimiter)
+    for index, cells in enumerate(reader, start=2):
+        rows.append(_row_from_cells(index, cells))
     return rows
 
 
@@ -161,6 +168,26 @@ def diff_sheet(
     changes: list[PlayerChange] = []
     errors: list[SheetError] = []
 
+    # Two rows for one player is easy to produce by copy-pasting in a
+    # spreadsheet. Letting the later row win would quietly discard one of two
+    # numbers the person typed, with nothing on screen to say which.
+    lines_by_id: dict[int, list[int]] = {}
+    for row in rows:
+        if row.player_id is not None:
+            lines_by_id.setdefault(row.player_id, []).append(row.line_number)
+
+    duplicated = {pid for pid, lines in lines_by_id.items() if len(lines) > 1}
+    for pid in sorted(duplicated):
+        lines = lines_by_id[pid]
+        errors.append(
+            SheetError(
+                lines[0],
+                f"id {pid} 在这张表里出现了不止一次（第 "
+                f"{'、'.join(str(n) for n in lines)} 行）—— "
+                f"哪一行算数无从判断",
+            )
+        )
+
     for row in rows:
         if _is_blank(row):
             continue
@@ -175,6 +202,10 @@ def diff_sheet(
                     "系统不会按姓名去猜，请重新导出一份表再填。",
                 )
             )
+            continue
+
+        if row.player_id in duplicated:
+            # Already reported once, naming every line it appeared on.
             continue
 
         person = by_id.get(row.player_id)
@@ -200,7 +231,10 @@ def diff_sheet(
             continue
 
         row_errors = (
-            _pairing_errors(row) + _status_errors(row) + _link_errors(row)
+            _pairing_errors(row)
+            + _numeric_errors(row)
+            + _status_errors(row)
+            + _link_errors(row)
         )
         if row_errors:
             errors.extend(row_errors)
@@ -287,6 +321,17 @@ def _pairing_errors(row: SheetRow) -> list[SheetError]:
                     f"{label}填了状态但没填值",
                 )
             )
+        elif (value == CLEAR) != (status == CLEAR):
+            # Clearing one half while writing the other lands in exactly the
+            # state this rule exists to prevent: a status with no number under
+            # it, or a number with nothing to say whether it counts.
+            errors.append(
+                SheetError(
+                    row.line_number,
+                    f"{label}的值与状态要一起清空 —— "
+                    f"只清掉一半会留下一个说不清的记录",
+                )
+            )
     return errors
 
 
@@ -320,6 +365,12 @@ def _normalised_status(written: str) -> str:
     return written if written == CLEAR else written.lower()
 
 
+#: Where the id sits in a UTR profile URL. Anchored on the path segment
+#: rather than "the last run of digits": a link can carry a tracking
+#: parameter, and taking the last number would store that instead.
+_PROFILE_PATH = re.compile(r"/profiles?/(\d+)")
+
+
 def profile_id_from(written: str) -> Optional[str]:
     """The profile id inside whatever the person pasted, or None.
 
@@ -332,8 +383,8 @@ def profile_id_from(written: str) -> Optional[str]:
     trimmed = written.strip()
     if trimmed.isdigit():
         return trimmed
-    digits = re.findall(r"\d+", trimmed)
-    return digits[-1] if digits else None
+    match = _PROFILE_PATH.search(trimmed)
+    return match.group(1) if match else None
 
 
 def _normalised_link(written: str) -> str:
@@ -370,9 +421,58 @@ def _changed_fields(row: SheetRow, person: PlayerView) -> list[FieldChange]:
             continue
         old = None if existing is None else str(existing)
         new = None if written == CLEAR else written
-        if new != old:
-            fields.append(FieldChange(field=name, old=old, new=new))
+        if _same_value(name, old, new):
+            continue
+        fields.append(FieldChange(field=name, old=old, new=new))
     return fields
+
+
+#: The two numeric fields. Compared as numbers, not as text: the database
+#: holds Decimal("7.00") and a person types 7. Those are the same UTR, and
+#: reporting them as a change would fill the confirmation screen with edits
+#: nobody made — while the round trip is supposed to be inert.
+_NUMERIC_FIELDS = {"singles_utr", "doubles_utr"}
+
+
+def _same_value(field: str, old: Optional[str], new: Optional[str]) -> bool:
+    if old == new:
+        return True
+    if field not in _NUMERIC_FIELDS or old is None or new is None:
+        return False
+    return _as_decimal(old) == _as_decimal(new)
+
+
+def _as_decimal(written: str) -> Optional[Decimal]:
+    try:
+        return Decimal(written)
+    except InvalidOperation:
+        return None
+
+
+def _numeric_errors(row: SheetRow) -> list[SheetError]:
+    """A UTR that is not a number at all.
+
+    Refused rather than coerced: everything downstream compares it against a
+    cap, and a value that silently became 0 — or NaN, which `Decimal` accepts
+    and which compares false against every cap — would pass checks it should
+    fail.
+    """
+    errors: list[SheetError] = []
+    for label, written in [
+        ("单打", row.singles_utr),
+        ("双打", row.doubles_utr),
+    ]:
+        if not written or written == CLEAR:
+            continue
+        value = _as_decimal(written)
+        if value is None or not value.is_finite():
+            errors.append(
+                SheetError(
+                    row.line_number,
+                    f"{label} 不是一个数：「{written}」",
+                )
+            )
+    return errors
 
 
 def _delimiter_of(header: str) -> str:
