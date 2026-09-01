@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lineup-results-redesign — 视觉稿</title>
+<style>
+  body { margin:0; padding:2rem 1.5rem 4rem; background:#f6f4f0; color:#1a1917;
+         font-family:"Inter","Segoe UI",system-ui,sans-serif; line-height:1.6; }
+  h1 { font-size:1.5rem; margin:0 0 .25rem; }
+  h2 { font-size:1.0625rem; margin:2.5rem 0 .5rem; padding-bottom:.35rem;
+       border-bottom:1px solid #e4e0d8; }
+  p,li { font-size:.875rem; }
+  code,.mono { font-family:ui-monospace,Consolas,monospace; }
+  .lede { color:#57534e; margin:0 0 1.5rem; font-size:.875rem; max-width:62rem; }
+  .note { color:#57534e; font-size:.8125rem; margin:.5rem 0 1rem; max-width:52rem; }
+  .cap { font-size:12px; color:#57534e; margin:8px 0 0; }
+  .cap b { color:#1a1917; }
+  .row { display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; }
+
+  /* ---- shared tokens (linear, from globals.css) ---- */
+  /* --color-muted #6b665d, muted-fg #706a61, border #e4e0d8, surface #fff,
+     surface-muted #f2efe9, warning #8a6508 / surface #fbf5e6 / border #ecd9a4,
+     primary #9c3417, danger #b3261e */
+
+  /* ================= DESKTOP: comparison table ================= */
+  .deskframe { width:980px; max-width:100%; border:1px solid #cfc9bc; border-radius:12px;
+               overflow:hidden; background:#fff; }
+  .thead-note { padding:8px 14px; background:#f2efe9; border-bottom:1px solid #e4e0d8;
+                font-size:12px; color:#6b665d; display:flex; justify-content:space-between; }
+  .ltbl { width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }
+  .ltbl thead th { position:sticky; top:0; z-index:2; background:#f2efe9;
+                   border-bottom:1px solid #e4e0d8; height:34px; padding:0 10px;
+                   font-family:ui-monospace,Consolas,monospace; font-size:11px;
+                   font-weight:500; color:#6b665d; text-align:left; white-space:nowrap; }
+  .ltbl thead th.num { text-align:right; }
+  .col-rank { width:38px; } .col-total { width:66px; } .col-buf { width:78px; }
+  .ltbl td { height:40px; padding:0 10px; border-bottom:1px solid #eae7e0;
+             vertical-align:middle; overflow:hidden; }
+  .ltbl tbody tr:hover td { background:#faf9f6; }
+  .c-rank { font-family:ui-monospace,Consolas,monospace; font-size:11px; color:#706a61; }
+  .c-total { font-family:ui-monospace,Consolas,monospace; font-size:14px; font-weight:500;
+             text-align:right; }
+  .c-buf { font-family:ui-monospace,Consolas,monospace; font-size:11px; color:#6b665d;
+           text-align:right; }
+  .cell-pair { min-width:0; }
+  .cell-pair .names { font-size:12px; white-space:nowrap; overflow:hidden;
+                      text-overflow:ellipsis; }
+  .cell-pair .sub { font-family:ui-monospace,Consolas,monospace; font-size:10px;
+                    color:#706a61; }
+  .sex { color:#706a61; font-size:10px; }
+  .est { color:#8a6508; font-weight:600; }            /* 估算 marker on a name */
+  .over { color:#b3261e; }                            /* 超 cap marker on line sum */
+  .estdot { display:inline-block; width:14px; height:14px; border-radius:50%;
+            background:#fbf5e6; border:1px solid #ecd9a4; color:#8a6508;
+            font-size:9px; line-height:12px; text-align:center; vertical-align:middle;
+            margin-left:4px; }
+  .legend { padding:8px 14px; border-top:1px solid #e4e0d8; background:#faf9f6;
+            font-size:11px; color:#6b665d; display:flex; gap:16px; flex-wrap:wrap; }
+
+  /* ================= MOBILE: compact row + expand ================= */
+  .phone { width:375px; height:667px; border:1px solid #cfc9bc; border-radius:14px;
+           overflow:hidden; background:#f6f4f0; display:flex; flex-direction:column; }
+  .phone * { box-sizing:border-box; }
+  .top { background:#1c1b18; color:#b8b2a6; flex:none; }
+  .top-main { display:flex; align-items:center; justify-content:space-between;
+              padding:10px 14px 8px; }
+  .brand-name { font-size:13.5px; font-weight:600; color:#f2eee7; }
+  .brand-ctx { font-size:11px; color:#b8b2a6; }
+  .season { display:flex; align-items:center; gap:6px; height:32px; padding:0 10px;
+            border-radius:6px; background:#14130f; border:1px solid #33322c;
+            color:#f2eee7; font-size:12px; }
+  .tabs { display:flex; padding:0 8px; border-top:1px solid #2a2823; }
+  .tab { flex:1; height:44px; display:flex; align-items:center; justify-content:center;
+         font-size:12.5px; color:#b8b2a6; border-bottom:2px solid transparent; }
+  .tab.on { color:#f2eee7; font-weight:600; border-bottom-color:#c9502f; }
+  .tab.off { color:#8f8a7e; }
+  .cbar { display:flex; align-items:center; justify-content:space-between; min-height:44px;
+          padding:8px 14px; background:#fff; border-bottom:1px solid #e4e0d8; }
+  .cbar-l { font-size:12.5px; }
+  .cbar-r { font-size:12px; color:#9c3417; }
+  .ceil { padding:10px 14px; background:#fff; border-bottom:1px solid #e4e0d8; }
+  .ceil-lab { font-family:ui-monospace,Consolas,monospace; font-size:10px; color:#706a61; }
+  .ceil-v { font-family:ui-monospace,Consolas,monospace; font-size:20px; font-weight:500; }
+  .ceil-note { font-size:11.5px; color:#6b665d; margin-top:3px; line-height:1.5; }
+  .listhead { display:flex; justify-content:space-between; padding:7px 14px;
+              background:#f2efe9; border-bottom:1px solid #e4e0d8;
+              font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#6b665d; }
+  .scroll { flex:1; min-height:0; overflow-y:auto; }
+  /* compact candidate row */
+  .crow { border-bottom:1px solid #eae7e0; background:#fff; }
+  .crow-head { display:flex; align-items:center; gap:10px; min-height:52px; padding:8px 14px; }
+  .crow-rank { width:20px; flex:none; font-family:ui-monospace,Consolas,monospace;
+               font-size:11px; color:#706a61; }
+  .crow-total { flex:none; font-family:ui-monospace,Consolas,monospace; font-size:17px;
+                font-weight:500; width:56px; }
+  .crow-sig { flex:1; min-width:0; font-size:12px; color:#1a1917; white-space:nowrap;
+              overflow:hidden; text-overflow:ellipsis; }
+  .crow-sig .k { color:#706a61; font-family:ui-monospace,Consolas,monospace; font-size:10px; }
+  .crow-flags { flex:none; display:flex; gap:4px; align-items:center; }
+  .flag { font-size:9.5px; border-radius:4px; padding:1px 4px; border:1px solid; }
+  .flag-est { background:#fbf5e6; border-color:#ecd9a4; color:#8a6508; }
+  .flag-over { background:#fbf0ee; border-color:#f0cfc9; color:#b3261e; }
+  .chev { color:#706a61; flex:none; }
+  /* expanded five lines */
+  .exp { background:#faf9f6; border-top:1px solid #eae7e0; padding:4px 14px 10px 44px; }
+  .lrow { display:flex; align-items:baseline; gap:10px; padding:5px 0;
+          border-bottom:1px solid #f2efe9; }
+  .lrow:last-child { border-bottom:0; }
+  .lcode { width:30px; flex:none; font-family:ui-monospace,Consolas,monospace;
+           font-size:10.5px; color:#706a61; }
+  .lpair { flex:1; min-width:0; font-size:13px; }
+  .lsum { flex:none; font-family:ui-monospace,Consolas,monospace; font-size:12px; }
+</style>
+</head>
+<body>
+
+<h1>lineup-results-redesign —— 视觉稿</h1>
+<p class="lede">
+  候选阵容从「20 张叠卡」改成 <b>桌面对比表</b> + <b>手机紧凑行/点开</b>。设计体系沿用
+  <code>linear</code>，不新增 token；估算/超cap/buffer 沿用既有 warning/danger 档。
+  数据取自 USTC-CMU-HQU 真实响应，另手造几行演示估算值与超 cap（线上 2025 银组 buffer=0、
+  全 frozen，触发不了这两态）。<b>顶部摘要区不改</b>，稿里只示意一行。
+</p>
+
+<h2 id="desktop-table">桌面：对比表</h2>
+<p class="note">
+  行 = 候选（≤20），列 = 名次 / 总和 / buffer + D1/D2/D3/MD/WD。<b>列对齐</b>，竖扫一列
+  即看「谁在这条线」。名字不换行、过长截断（hover 出全名）。<b>表头钉住</b>（这里示意 8 行，
+  真实 20 行滚动时表头不动）。估算：名字后一个 <span class="est">˟</span> 角标 + 该行总和格
+  一个 <span class="estdot">估</span>；超 cap：该线之和标红「超 N」。
+</p>
+<div class="row">
+<div class="deskframe">
+  <div class="thead-note"><span>候选阵容 · 去重后 20 套 · 按总和从高到低</span><span>参赛 UTR · 赛前冻结</span></div>
+  <table class="ltbl">
+    <colgroup>
+      <col class="col-rank"><col class="col-total"><col class="col-buf">
+      <col><col><col><col><col>
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="num">#</th><th class="num">总和</th><th>buffer</th>
+        <th>D1</th><th>D2</th><th>D3</th><th>MD</th><th>WD</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- row 1 -->
+      <tr>
+        <td class="c-rank">1</td>
+        <td class="c-total">55.94</td>
+        <td class="c-buf">0/0.50</td>
+        <td class="cell-pair"><div class="names" title="Cai Zesheng + Liu Jiada">Cai Zesheng<span class="sex"> 男</span> · Liu Jiada<span class="sex"> 男</span></div><div class="sub">13.00</div></td>
+        <td class="cell-pair"><div class="names" title="Gu Tianyu + Qing Roger">Gu Tianyu<span class="sex"> 男</span> · Qing Roger<span class="sex"> 男</span></div><div class="sub">12.41</div></td>
+        <td class="cell-pair"><div class="names">Bo Chunkun<span class="sex"> 男</span> · She Bowen<span class="sex"> 男</span></div><div class="sub">10.94</div></td>
+        <td class="cell-pair"><div class="names">Jin Tao<span class="sex"> 男</span> · Zhong Ke<span class="sex"> 女</span></div><div class="sub">10.21</div></td>
+        <td class="cell-pair"><div class="names">Luo Alicia<span class="sex"> 女</span> · Wang May<span class="sex"> 女</span></div><div class="sub">9.18</div></td>
+      </tr>
+      <!-- row 2: same total (tie) — different pairings -->
+      <tr>
+        <td class="c-rank">2</td>
+        <td class="c-total">55.94</td>
+        <td class="c-buf">0/0.50</td>
+        <td class="cell-pair"><div class="names">Cai Zesheng<span class="sex"> 男</span> · Gu Tianyu<span class="sex"> 男</span></div><div class="sub">13.00</div></td>
+        <td class="cell-pair"><div class="names">Liu Jiada<span class="sex"> 男</span> · Qing Roger<span class="sex"> 男</span></div><div class="sub">12.41</div></td>
+        <td class="cell-pair"><div class="names">Bo Chunkun<span class="sex"> 男</span> · She Bowen<span class="sex"> 男</span></div><div class="sub">10.94</div></td>
+        <td class="cell-pair"><div class="names">Jin Tao<span class="sex"> 男</span> · Zhong Ke<span class="sex"> 女</span></div><div class="sub">10.21</div></td>
+        <td class="cell-pair"><div class="names">Luo Alicia<span class="sex"> 女</span> · Wang May<span class="sex"> 女</span></div><div class="sub">9.18</div></td>
+      </tr>
+      <!-- row 3: an estimate in D2 + whole-set flag -->
+      <tr>
+        <td class="c-rank">3</td>
+        <td class="c-total">55.71 <span class="estdot" title="含 1 个估算值，合法性待总表确认">估</span></td>
+        <td class="c-buf">0/0.50</td>
+        <td class="cell-pair"><div class="names">Cai Zesheng<span class="sex"> 男</span> · Liu Jiada<span class="sex"> 男</span></div><div class="sub">13.00</div></td>
+        <td class="cell-pair"><div class="names" title="Gu Tianyu (估算) + Qing Roger">Gu Tianyu<span class="est" title="估算值">˟</span><span class="sex"> 男</span> · Qing Roger<span class="sex"> 男</span></div><div class="sub">12.18</div></td>
+        <td class="cell-pair"><div class="names">Bo Chunkun<span class="sex"> 男</span> · She Bowen<span class="sex"> 男</span></div><div class="sub">10.94</div></td>
+        <td class="cell-pair"><div class="names">Jin Tao<span class="sex"> 男</span> · Zhong Ke<span class="sex"> 女</span></div><div class="sub">10.21</div></td>
+        <td class="cell-pair"><div class="names">Luo Alicia<span class="sex"> 女</span> · Wang May<span class="sex"> 女</span></div><div class="sub">9.18</div></td>
+      </tr>
+      <!-- row 4: over cap on MD, buffer spent -->
+      <tr>
+        <td class="c-rank">4</td>
+        <td class="c-total">55.60</td>
+        <td class="c-buf">0.30/0.50</td>
+        <td class="cell-pair"><div class="names">Cai Zesheng<span class="sex"> 男</span> · Liu Jiada<span class="sex"> 男</span></div><div class="sub">13.00</div></td>
+        <td class="cell-pair"><div class="names">Gu Tianyu<span class="sex"> 男</span> · Bo Chunkun<span class="sex"> 男</span></div><div class="sub">12.10</div></td>
+        <td class="cell-pair"><div class="names">Qing Roger<span class="sex"> 男</span> · She Bowen<span class="sex"> 男</span></div><div class="sub">10.94</div></td>
+        <td class="cell-pair"><div class="names">Jin Tao<span class="sex"> 男</span> · Zhong Ke<span class="sex"> 女</span></div><div class="sub">10.55 <span class="over">超 0.30</span></div></td>
+        <td class="cell-pair"><div class="names">Luo Alicia<span class="sex"> 女</span> · Wang May<span class="sex"> 女</span></div><div class="sub">9.01</div></td>
+      </tr>
+      <!-- rows 5-8 plain -->
+      <tr><td class="c-rank">5</td><td class="c-total">55.42</td><td class="c-buf">0/0.50</td>
+        <td class="cell-pair"><div class="names">Cai Zesheng<span class="sex"> 男</span> · She Bowen<span class="sex"> 男</span></div><div class="sub">12.71</div></td>
+        <td class="cell-pair"><div class="names">Gu Tianyu<span class="sex"> 男</span> · Liu Jiada<span class="sex"> 男</span></div><div class="sub">12.60</div></td>
+        <td class="cell-pair"><div class="names">Bo Chunkun<span class="sex"> 男</span> · Qing Roger<span class="sex"> 男</span></div><div class="sub">11.02</div></td>
+        <td class="cell-pair"><div class="names">Jin Tao<span class="sex"> 男</span> · Zhong Ke<span class="sex"> 女</span></div><div class="sub">10.21</div></td>
+        <td class="cell-pair"><div class="names">Luo Alicia<span class="sex"> 女</span> · Wang May<span class="sex"> 女</span></div><div class="sub">8.88</div></td></tr>
+      <tr><td class="c-rank">6</td><td class="c-total">55.30</td><td class="c-buf">0/0.50</td>
+        <td class="cell-pair"><div class="names">Cai Zesheng<span class="sex"> 男</span> · Qing Roger<span class="sex"> 男</span></div><div class="sub">12.55</div></td>
+        <td class="cell-pair"><div class="names">Gu Tianyu<span class="sex"> 男</span> · She Bowen<span class="sex"> 男</span></div><div class="sub">12.30</div></td>
+        <td class="cell-pair"><div class="names">Bo Chunkun<span class="sex"> 男</span> · Liu Jiada<span class="sex"> 男</span></div><div class="sub">11.10</div></td>
+        <td class="cell-pair"><div class="names">Jin Tao<span class="sex"> 男</span> · Zhong Ke<span class="sex"> 女</span></div><div class="sub">10.21</div></td>
+        <td class="cell-pair"><div class="names">Luo Alicia<span class="sex"> 女</span> · Wang May<span class="sex"> 女</span></div><div class="sub">9.14</div></td></tr>
+      <tr><td class="c-rank">7</td><td class="c-total">55.18</td><td class="c-buf">0/0.50</td>
+        <td class="cell-pair"><div class="names">Liu Jiada<span class="sex"> 男</span> · She Bowen<span class="sex"> 男</span></div><div class="sub">12.40</div></td>
+        <td class="cell-pair"><div class="names">Cai Zesheng<span class="sex"> 男</span> · Gu Tianyu<span class="sex"> 男</span></div><div class="sub">13.00</div></td>
+        <td class="cell-pair"><div class="names">Bo Chunkun<span class="sex"> 男</span> · Qing Roger<span class="sex"> 男</span></div><div class="sub">11.02</div></td>
+        <td class="cell-pair"><div class="names">Jin Tao<span class="sex"> 男</span> · Zhong Ke<span class="sex"> 女</span></div><div class="sub">10.21</div></td>
+        <td class="cell-pair"><div class="names">Luo Alicia<span class="sex"> 女</span> · Wang May<span class="sex"> 女</span></div><div class="sub">8.55</div></td></tr>
+      <tr><td class="c-rank">8</td><td class="c-total">55.03</td><td class="c-buf">0/0.50</td>
+        <td class="cell-pair"><div class="names">Cai Zesheng<span class="sex"> 男</span> · Bo Chunkun<span class="sex"> 男</span></div><div class="sub">12.20</div></td>
+        <td class="cell-pair"><div class="names">Gu Tianyu<span class="sex"> 男</span> · Qing Roger<span class="sex"> 男</span></div><div class="sub">12.41</div></td>
+        <td class="cell-pair"><div class="names">Liu Jiada<span class="sex"> 男</span> · She Bowen<span class="sex"> 男</span></div><div class="sub">11.00</div></td>
+        <td class="cell-pair"><div class="names">Jin Tao<span class="sex"> 男</span> · Zhong Ke<span class="sex"> 女</span></div><div class="sub">10.21</div></td>
+        <td class="cell-pair"><div class="names">Luo Alicia<span class="sex"> 女</span> · Wang May<span class="sex"> 女</span></div><div class="sub">9.21</div></td></tr>
+    </tbody>
+  </table>
+  <div class="legend">
+    <span><span class="est">˟</span> 名字后 = 该数字是估算值</span>
+    <span><span class="estdot">估</span> 总和旁 = 整套含估算，合法性待总表确认</span>
+    <span><span class="over">超 N</span> = 该线之和超过 cap（由全队 buffer 覆盖）</span>
+  </div>
+</div>
+<p class="cap"><b>行高 40px 固定</b>，每格「名字（不换行截断）+ 该线之和」两行；估算/超cap 用
+小角标与内联小字，不撑高格子、不破坏列对齐。名次/总和/buffer 三个窄元信息列靠左，五线
+均分剩余宽度。第 1、2 行演示<b>同分不同搭配</b>——竖扫 D1 列即见谁在打头。</p>
+</div>
+
+<h2 id="mobile-list">手机：紧凑行 + 点开</h2>
+<p class="note">
+  每套一行：名次 + <b>总和</b>（大）+ 签名（D1 搭配，最能代表这套）+ 代价角标（含估算/超cap）。
+  点开展开五线纵向堆叠、名字不换行。扫总和/签名、开看着顺眼的那套。
+</p>
+<div class="row">
+<div class="phone">
+  <div class="top">
+    <div class="top-main">
+      <div><div class="brand-name">USTC-CMU-HQU</div><div class="brand-ctx">26 人 · 18 男 8 女 · 银组</div></div>
+      <div class="season">2025 · 银组
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#b8b2a6" stroke-width="1.5" stroke-linecap="round"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
+      </div>
+    </div>
+    <div class="tabs"><div class="tab">队伍</div><div class="tab on">阵容</div><div class="tab off">对手</div><div class="tab">规则</div></div>
+  </div>
+  <div class="cbar"><span class="cbar-l">没有锁定或排除</span><span class="cbar-r">改约束 ›</span></div>
+  <div class="ceil">
+    <div class="ceil-lab">本队可达上限</div>
+    <div class="ceil-v">55.94</div>
+    <div class="ceil-note">达到上限的十人组合只有 2 组——顶点还有得选。下面 20 套是去重后的合法阵容，按总和从高到低。</div>
+  </div>
+  <div class="listhead"><span>候选 · 20 套</span><span>点开看五线</span></div>
+  <div class="scroll">
+    <!-- collapsed rows -->
+    <div class="crow"><div class="crow-head">
+      <span class="crow-rank">1</span><span class="crow-total">55.94</span>
+      <span class="crow-sig"><span class="k">D1</span> Cai Zesheng · Liu Jiada</span>
+      <span class="crow-flags"></span>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg>
+    </div></div>
+    <!-- expanded row 2 -->
+    <div class="crow"><div class="crow-head">
+      <span class="crow-rank">2</span><span class="crow-total">55.94</span>
+      <span class="crow-sig"><span class="k">D1</span> Cai Zesheng · Gu Tianyu</span>
+      <span class="crow-flags"></span>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="transform:rotate(90deg)"><path d="M6 3.5L10.5 8L6 12.5"/></svg>
+    </div>
+    <div class="exp">
+      <div class="lrow"><span class="lcode">D1</span><span class="lpair">Cai Zesheng 男 · Gu Tianyu 男</span><span class="lsum">13.00</span></div>
+      <div class="lrow"><span class="lcode">D2</span><span class="lpair">Liu Jiada 男 · Qing Roger 男</span><span class="lsum">12.41</span></div>
+      <div class="lrow"><span class="lcode">D3</span><span class="lpair">Bo Chunkun 男 · She Bowen 男</span><span class="lsum">10.94</span></div>
+      <div class="lrow"><span class="lcode">MD</span><span class="lpair">Jin Tao 男 · Zhong Ke 女</span><span class="lsum">10.21</span></div>
+      <div class="lrow"><span class="lcode">WD</span><span class="lpair">Luo Alicia 女 · Wang May 女</span><span class="lsum">9.18</span></div>
+    </div></div>
+    <!-- row 3 with estimate flag -->
+    <div class="crow"><div class="crow-head">
+      <span class="crow-rank">3</span><span class="crow-total">55.71</span>
+      <span class="crow-sig"><span class="k">D1</span> Cai Zesheng · Liu Jiada</span>
+      <span class="crow-flags"><span class="flag flag-est">含估算</span></span>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg>
+    </div></div>
+    <!-- row 4 with over flag -->
+    <div class="crow"><div class="crow-head">
+      <span class="crow-rank">4</span><span class="crow-total">55.60</span>
+      <span class="crow-sig"><span class="k">D1</span> Cai Zesheng · Liu Jiada</span>
+      <span class="crow-flags"><span class="flag flag-over">超 cap</span></span>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg>
+    </div></div>
+    <div class="crow"><div class="crow-head">
+      <span class="crow-rank">5</span><span class="crow-total">55.42</span>
+      <span class="crow-sig"><span class="k">D1</span> Cai Zesheng · She Bowen</span>
+      <span class="crow-flags"></span>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg>
+    </div></div>
+    <div class="crow"><div class="crow-head">
+      <span class="crow-rank">6</span><span class="crow-total">55.30</span>
+      <span class="crow-sig"><span class="k">D1</span> Cai Zesheng · Qing Roger</span>
+      <span class="crow-flags"></span>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg>
+    </div></div>
+    <div class="crow"><div class="crow-head">
+      <span class="crow-rank">7</span><span class="crow-total">55.18</span>
+      <span class="crow-sig"><span class="k">D1</span> Liu Jiada · She Bowen</span>
+      <span class="crow-flags"></span>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg>
+    </div></div>
+  </div>
+</div>
+<p class="cap">签名取 <b>D1 搭配</b>——同分时 D1 最能代表一套的取向；代价角标（含估算/超cap）
+让「有戴的那套」在收起态就看得见。点开的第 2 套展开五线，名字整行不换行。</p>
+</div>
+
+<h2>核对清单（实现后逐条量）</h2>
+<ul>
+  <li>桌面 1280、满 20 套：无横向溢出；名字过长省略号截断而非撑宽表；表头滚动钉住；表体滚到第 20 行。</li>
+  <li>同一列跨行对齐（D1 列每格左边缘对齐），可竖扫。</li>
+  <li>估算两处（名字角标 + 总和格「估」）、超 cap「超 N」、buffer spent/total 两位小数都在。</li>
+  <li>手机 375×667：紧凑行签名 + 代价角标；点开五线纵向、名字不换行；无横向溢出。</li>
+  <li>对比度 ≥ 4.5:1（量 computed style）：重点 est #8a6508 / over #b3261e / muted #6b665d / 表头 #6b665d on #f2efe9。</li>
+  <li>顶部摘要区与非正常态面板未改。</li>
+</ul>
+
+</body>
+</html>
