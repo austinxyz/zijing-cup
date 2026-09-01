@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mobile-shell — 视觉稿</title>
+<style>
+  body { margin:0; padding:2rem 1.5rem 4rem; background:#f6f4f0; color:#1a1917;
+         font-family:"Inter","Segoe UI",system-ui,sans-serif; line-height:1.6; }
+  h1 { font-size:1.5rem; margin:0 0 .25rem; }
+  h2 { font-size:1.0625rem; margin:2.5rem 0 .5rem; padding-bottom:.35rem;
+       border-bottom:1px solid #e4e0d8; }
+  h3 { font-size:.9375rem; margin:1.5rem 0 .5rem; }
+  p, li { font-size:.875rem; }
+  code, .mono { font-family:ui-monospace,Consolas,monospace; }
+  .lede { color:#57534e; margin:0 0 1.5rem; font-size:.875rem; max-width:60rem; }
+  .note { color:#57534e; font-size:.8125rem; margin:.5rem 0 1rem; max-width:46rem; }
+  .row { display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; margin:1rem 0 0; }
+  .cap { font-size:12px; color:#57534e; margin:8px 0 0; width:375px; }
+  .cap b { color:#1a1917; }
+
+  /* 手机框：375×667，刻意取最矮的常见视口 —— 高度模型要在这里核对 */
+  .phone { width:375px; height:667px; border:1px solid #cfc9bc; border-radius:14px;
+           overflow:hidden; background:#f6f4f0; display:flex; flex-direction:column;
+           font-family:"Inter","Segoe UI",system-ui,sans-serif; color:#1a1917; }
+  .phone * { box-sizing:border-box; }
+
+  /* 顶栏：沿用侧栏那组深色 token，不借内容区的 */
+  .top { background:#1c1b18; color:#b8b2a6; flex:none; }
+  .top-main { display:flex; align-items:center; justify-content:space-between;
+              gap:10px; padding:10px 14px 8px; }
+  .brand { display:flex; align-items:center; gap:8px; min-width:0; }
+  .brand-mark { width:22px; height:22px; flex:none; border-radius:5px; background:#9c3417;
+                color:#fff; font-size:11.5px; font-weight:600; display:flex;
+                align-items:center; justify-content:center; }
+  .brand-txt { min-width:0; }
+  .brand-name { font-size:13.5px; font-weight:600; color:#f2eee7; line-height:1.25; }
+  .brand-ctx { font-size:11px; color:#b8b2a6; line-height:1.3; white-space:nowrap;
+               overflow:hidden; text-overflow:ellipsis; }
+  .season { flex:none; display:flex; align-items:center; gap:6px; height:32px;
+            padding:0 10px; border-radius:6px; background:#14130f; border:1px solid #33322c;
+            color:#f2eee7; font-size:12px; font-weight:500; }
+  .tabs { display:flex; gap:2px; padding:0 8px; border-top:1px solid #2a2823; }
+  .tab { flex:1; height:44px; display:flex; align-items:center; justify-content:center;
+         gap:5px; font-size:12.5px; color:#b8b2a6; border-bottom:2px solid transparent; }
+  .tab.on { color:#f2eee7; font-weight:600; border-bottom-color:#c9502f; }
+  .tab.off { color:#8f8a7e; }
+  .tab .lock { font-family:ui-monospace,Consolas,monospace; font-size:8.5px;
+               border:1px solid #33322c; border-radius:4px; padding:0 3px; color:#8f8a7e; }
+
+  .scroll { flex:1; min-height:0; overflow-y:auto; background:#f6f4f0; }
+  .sect { background:#f2efe9; border-bottom:1px solid #e4e0d8; padding:7px 14px;
+          font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#6b665d;
+          display:flex; justify-content:space-between; }
+
+  /* 球队行 */
+  .trow { min-height:52px; display:flex; align-items:center; justify-content:space-between;
+          gap:10px; padding:8px 14px; background:#fff; border-bottom:1px solid #eae7e0; }
+  .tname { font-size:14px; font-weight:500; }
+  .tzh { font-size:12px; color:#79736a; margin-left:7px; font-weight:400; }
+  .tmeta { display:flex; align-items:center; gap:9px; }
+  .tcount { text-align:right; }
+  .tc1 { font-family:ui-monospace,Consolas,monospace; font-size:12.5px; }
+  .tc2 { font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#79736a; }
+  .chev { color:#79736a; flex:none; }
+
+  /* 返回条 */
+  .back { display:flex; align-items:center; gap:7px; min-height:44px; padding:0 14px;
+          background:#fff; border-bottom:1px solid #e4e0d8; font-size:13px; color:#9c3417; }
+
+  /* 名单行 */
+  .prow { display:flex; align-items:flex-start; gap:10px; padding:9px 14px;
+          background:#fff; border-bottom:1px solid #eae7e0; min-height:56px; }
+  .seat { width:18px; flex:none; font-family:ui-monospace,Consolas,monospace;
+          font-size:11px; color:#79736a; padding-top:2px; }
+  .pmain { flex:1; min-width:0; }
+  .pname { font-size:14px; }
+  .plink { color:#9c3417; text-decoration:underline; text-underline-offset:2px; }
+  .sex { font-size:11px; color:#79736a; margin-left:6px; }
+  .psub { margin-top:3px; display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+  .putr { flex:none; text-align:right; padding-top:1px; }
+  .putr-v { font-family:ui-monospace,Consolas,monospace; font-size:15px; font-weight:500; }
+  .putr-none { font-size:11.5px; color:#79736a; }
+
+  .tag { font-size:10px; border-radius:4px; padding:1px 5px; border:1px solid; }
+  .tag-est { background:#fbf5e6; border-color:#ecd9a4; color:#8a6508; }
+  .tag-quiet { background:#f2efe9; border-color:#e4e0d8; color:#6b665d; }
+  .tag-warn { background:#fbf0ee; border-color:#f0cfc9; color:#b3261e; }
+
+  /* 排阵 */
+  .cbar { display:flex; align-items:center; justify-content:space-between; gap:10px;
+          min-height:44px; padding:8px 14px; background:#fff;
+          border-bottom:1px solid #e4e0d8; }
+  .cbar-l { font-size:12.5px; color:#1a1917; }
+  .cbar-r { font-size:12px; color:#9c3417; display:flex; align-items:center; gap:5px; }
+  .card { background:#fff; border:1px solid #e4e0d8; border-radius:8px; margin:10px 12px; }
+  .card-h { display:flex; align-items:center; justify-content:space-between;
+            padding:9px 12px; border-bottom:1px solid #eae7e0; }
+  .card-t { font-size:13px; font-weight:600; }
+  .card-s { font-family:ui-monospace,Consolas,monospace; font-size:11.5px; color:#79736a; }
+  .lrow { display:flex; align-items:center; justify-content:space-between; gap:8px;
+          padding:7px 12px; border-bottom:1px solid #f2efe9; }
+  .lrow:last-child { border-bottom:0; }
+  .lline { font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#6b665d;
+           width:34px; flex:none; }
+  .lpair { flex:1; min-width:0; font-size:12.5px; }
+  .lsum { font-family:ui-monospace,Consolas,monospace; font-size:12px; flex:none; }
+  .locked { font-size:9.5px; color:#79736a; }
+
+  /* 底部抽屉 */
+  .sheet-wrap { position:relative; flex:1; min-height:0; display:flex; flex-direction:column; }
+  .dim { position:absolute; inset:0; background:rgba(26,25,23,.45); }
+  .sheet { position:absolute; left:0; right:0; bottom:0; max-height:78%; background:#fff;
+           border-top-left-radius:14px; border-top-right-radius:14px;
+           display:flex; flex-direction:column; }
+  .sheet-h { display:flex; align-items:center; justify-content:space-between;
+             padding:12px 14px 10px; border-bottom:1px solid #e4e0d8; }
+  .grip { position:absolute; top:6px; left:50%; transform:translateX(-50%);
+          width:34px; height:4px; border-radius:2px; background:#e4e0d8; }
+  .sheet-b { overflow-y:auto; }
+  .sheet-f { padding:10px 14px; border-top:1px solid #e4e0d8; background:#faf9f6;
+             display:flex; gap:9px; }
+  .btn { flex:1; height:42px; border-radius:6px; font-size:13px; border:1px solid #e4e0d8;
+         background:#fff; color:#1a1917; display:flex; align-items:center;
+         justify-content:center; }
+  .btn-primary { background:#1a1917; color:#fff; border-color:#1a1917; }
+
+  /* 编辑面板 */
+  .field { padding:9px 14px; border-bottom:1px solid #f2efe9; }
+  .flab { font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#79736a; }
+  .fin { margin-top:5px; height:44px; border:1px solid #e4e0d8; border-radius:6px;
+         background:#fff; display:flex; align-items:center; padding:0 11px;
+         font-family:ui-monospace,Consolas,monospace; font-size:14px; }
+  .fin-ph { color:#79736a; }
+  .seg { margin-top:5px; display:flex; gap:6px; }
+  .seg span { flex:1; height:38px; border:1px solid #e4e0d8; border-radius:6px;
+              display:flex; align-items:center; justify-content:center; font-size:12.5px;
+              background:#fff; color:#1a1917; }
+  .seg span.on { background:#1a1917; color:#fff; border-color:#1a1917; }
+
+  /* 切换器展开 */
+  .sw { background:#14130f; border-top:1px solid #2a2823; padding:6px 8px 8px; }
+  .swi { height:38px; display:flex; align-items:center; padding:0 10px; border-radius:6px;
+         color:#b8b2a6; font-size:12.5px; }
+  .swi.on { background:#2c2a25; color:#f2eee7; font-weight:500;
+            border-left:2px solid #c9502f; padding-left:8px; }
+
+  .rule-card { background:#fff; border:1px solid #e4e0d8; border-radius:8px; margin:10px 12px;
+               padding:11px 12px; }
+  .rc-t { font-size:12.5px; font-weight:600; margin-bottom:6px; }
+  .rc-g { display:flex; justify-content:space-between; padding:5px 0;
+          border-bottom:1px solid #f2efe9; font-size:12.5px; }
+  .rc-g:last-child { border-bottom:0; }
+</style>
+</head>
+<body>
+
+<h1>mobile-shell —— 视觉稿</h1>
+<p class="lede">
+  六屏，全部画在 <b>375×667</b>（最矮的常见视口，不是 375×812）—— 高度模型是本次最容易
+  静默出错的地方，稿子就画在会出错的那个尺寸上。设计体系沿用项目既有的
+  <code>linear</code>，<b>不新增 token</b>：顶栏用侧栏那组 <code>--color-sidebar-*</code>
+  与 <code>--color-sidebar-well</code>，内容区用 <code>--color-surface</code> /
+  <code>--color-border</code>，估算标签用既有的 warning 三件套。
+</p>
+<p class="lede">
+  已有的三张旧稿（<code>design/TeamsMobile.dc.html</code> 等）<b>不作数</b>：它们的 tab 条
+  是旧的三项、名单画在「当前单/双打」两列存在之前、也没有 UTR 链接。本文件取代它们。
+</p>
+
+<h2>1 · 球队列表（tab 条的基准屏）</h2>
+<p class="note">
+  顶栏两层：上层是品牌 + 当前上下文 + 赛季药丸，下层是 tab 条。tab 四项，
+  <b>「队员管理」不在上面</b> —— 管理界面本次不做手机版式，摆在最显眼处等于把一个会
+  横向滚动的页面推给人。「对手对比」保留禁用态占位，将来接上时不用重排。
+  tab 高 44px（触摸目标），球队行 52px。
+</p>
+<div class="row">
+<div class="phone">
+  <div class="top">
+    <div class="top-main">
+      <div class="brand">
+        <div class="brand-mark">紫</div>
+        <div class="brand-txt">
+          <div class="brand-name">紫荆杯</div>
+          <div class="brand-ctx">18 支球队 · 339 人</div>
+        </div>
+      </div>
+      <div class="season">2025 · 银组
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#b8b2a6" stroke-width="1.5" stroke-linecap="round"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab on">队伍</div>
+      <div class="tab">阵容</div>
+      <div class="tab off">对手<span class="lock">未开放</span></div>
+      <div class="tab">规则</div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="sect"><span>球队</span><span>按代号</span></div>
+    <div class="trow"><div><span class="tname">BIT</span><span class="tzh">北京理工</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">16 人</div><div class="tc2">11 男 · 5 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">BUAA-UMN-UCB</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">15 人</div><div class="tc2">11 男 · 4 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">CUHK-HKU</span><span class="tzh">港中大 港大</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">14 人</div><div class="tc2">10 男 · 4 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">DLUT-HIT</span><span class="tzh">大连理工 哈工大</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">15 人</div><div class="tc2">10 男 · 5 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">FDU</span><span class="tzh">复旦大学</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">22 人</div><div class="tc2">15 男 · 7 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">HUST</span><span class="tzh">华中科大</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">17 人</div><div class="tc2">12 男 · 5 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">JLU-UESTC</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">17 人</div><div class="tc2">11 男 · 6 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">NJU-SEU</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">19 人</div><div class="tc2">14 男 · 5 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">NKU-TJU</span><span class="tzh">南开 天大</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">17 人</div><div class="tc2">12 男 · 5 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">NTU-NCTU</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">18 人</div><div class="tc2">12 男 · 6 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">NYU-UMICH</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">16 人</div><div class="tc2">11 男 · 5 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">PKU</span><span class="tzh">北京大学</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">19 人</div><div class="tc2">13 男 · 6 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">SCUT-SYSU</span><span class="tzh">华工 中大</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">19 人</div><div class="tc2">13 男 · 6 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">SJTU</span><span class="tzh">上海交大</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">26 人</div><div class="tc2">17 男 · 9 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">THU</span><span class="tzh">清华大学</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">24 人</div><div class="tc2">16 男 · 8 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">USTC</span><span class="tzh">中国科大</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">18 人</div><div class="tc2">12 男 · 6 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">WHU</span><span class="tzh">武汉大学</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">20 人</div><div class="tc2">14 男 · 6 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">ZJU-USC</span><span class="tzh">浙大</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">21 人</div><div class="tc2">15 男 · 6 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+  </div>
+</div>
+<p class="cap"><b>滚动在 <code>.scroll</code> 这一层</b>，不在整页也不在顶栏的共同祖先上 ——
+放在祖先上，顶栏与 tab 条会跟着卷走。壳这一层是 <code>100dvh</code> 而不是
+<code>100vh</code>（地址栏收起前后 <code>vh</code> 算的是同一个数，内容会被顶出可视区），
+并且去掉桌面那条 <code>min-h-[640px]</code>：667 的屏减去顶栏就不足 640，那条会直接
+造成溢出。</p>
+</div>
+
+<h2>2 · 赛季 × 组别切换器（展开）</h2>
+<p class="note">
+  点顶栏的药丸展开，压在 tab 条上方。沿用桌面的两条规矩：列出<b>全部</b>组合（当前那条
+  也在，只是标记且不可点），选项是链接不是客户端状态。底色用
+  <code>--color-sidebar-well</code>（#14130f）—— 桌面上这里曾误用内容区的
+  <code>bg-background</code>，近白标签配浅色底只有 1.05:1。
+</p>
+<div class="row">
+<div class="phone">
+  <div class="top">
+    <div class="top-main">
+      <div class="brand">
+        <div class="brand-mark">紫</div>
+        <div class="brand-txt">
+          <div class="brand-name">紫荆杯</div>
+          <div class="brand-ctx">18 支球队 · 339 人</div>
+        </div>
+      </div>
+      <div class="season">2025 · 银组
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#b8b2a6" stroke-width="1.5" stroke-linecap="round" style="transform:rotate(180deg)"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
+      </div>
+    </div>
+    <div class="sw">
+      <div class="swi">2026 · 金组</div>
+      <div class="swi">2026 · 银组</div>
+      <div class="swi">2025 · 金组</div>
+      <div class="swi on">2025 · 银组</div>
+    </div>
+    <div class="tabs">
+      <div class="tab on">队伍</div>
+      <div class="tab">阵容</div>
+      <div class="tab off">对手<span class="lock">未开放</span></div>
+      <div class="tab">规则</div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="sect"><span>球队</span><span>按代号</span></div>
+    <div class="trow"><div><span class="tname">BUAA-UMN-UCB</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">15 人</div><div class="tc2">11 男 · 4 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow"><div><span class="tname">HUST</span><span class="tzh">华中科大</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">17 人</div><div class="tc2">12 男 · 5 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+    <div class="trow" style="opacity:.5"><div><span class="tname">NJU-SEU</span></div>
+      <div class="tmeta"><div class="tcount"><div class="tc1">19 人</div><div class="tc2">14 男 · 5 女</div></div>
+      <svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div></div>
+  </div>
+</div>
+<p class="cap">展开是原生 <code>&lt;details&gt;</code>，零客户端 JS —— 与桌面同一个组件，
+只是在手机上从侧栏移到顶栏。</p>
+</div>
+
+<h2>3 · 球队名单</h2>
+<p class="note">
+  行是两层：主行「序号 · 姓名+性别 · 参赛 UTR」，副行是来源标签。
+  <b>桌面那两列「当前单打 / 当前双打」不上手机</b> —— 要看实时值就点姓名去 UTR 官网。
+  参赛 UTR 才是决定阵容合不合法的值，它必须是这一行里最大的那个数。
+</p>
+<p class="note">
+  <b>四种来源状态各画一行</b>：冻结值不标（多数）、估自当前已认证双打值、估自去年参赛值、
+  以及取不到值。最后一种<b>仍然占一行</b> —— 他在队，球队列的人数把他算进去了，名单里
+  少他一行就是两个页面互相矛盾而页面不说。绝不写成 0（0 是合法 UTR）。
+</p>
+<div class="row">
+<div class="phone">
+  <div class="top">
+    <div class="top-main">
+      <div class="brand">
+        <div class="brand-mark">紫</div>
+        <div class="brand-txt">
+          <div class="brand-name">SJTU</div>
+          <div class="brand-ctx">上海交大 · 26 人 · 17 男 9 女</div>
+        </div>
+      </div>
+      <div class="season">2025 · 银组
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#b8b2a6" stroke-width="1.5" stroke-linecap="round"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab on">队伍</div>
+      <div class="tab">阵容</div>
+      <div class="tab off">对手<span class="lock">未开放</span></div>
+      <div class="tab">规则</div>
+    </div>
+  </div>
+  <div class="back">
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 3.5L5.5 8L10 12.5"/></svg>
+    球队列表
+  </div>
+  <div class="sect"><span>名单 · 按参赛 UTR</span><span>参赛 UTR</span></div>
+  <div class="scroll">
+    <div class="prow"><div class="seat">1</div>
+      <div class="pmain"><div class="pname"><span class="plink">陈嘉禾</span><span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">7.12</div></div></div>
+    <div class="prow"><div class="seat">2</div>
+      <div class="pmain"><div class="pname">吴普强<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-est">估算 · 当前已认证值</span></div></div>
+      <div class="putr"><div class="putr-v">6.98</div></div></div>
+    <div class="prow"><div class="seat">3</div>
+      <div class="pmain"><div class="pname">叶明轩<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span><span class="tag tag-warn">申诉中</span></div></div>
+      <div class="putr"><div class="putr-v">6.84</div></div></div>
+    <div class="prow"><div class="seat">4</div>
+      <div class="pmain"><div class="pname"><span class="plink">张冠宇</span><span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">6.72</div></div></div>
+    <div class="prow"><div class="seat">5</div>
+      <div class="pmain"><div class="pname">郑翔宇<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-est">估算 · 2024 参赛值</span></div></div>
+      <div class="putr"><div class="putr-v">6.61</div></div></div>
+    <div class="prow"><div class="seat">6</div>
+      <div class="pmain"><div class="pname">高铭远<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">6.54</div></div></div>
+    <div class="prow"><div class="seat">7</div>
+      <div class="pmain"><div class="pname"><span class="plink">林牧之</span><span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">6.43</div></div></div>
+    <div class="prow"><div class="seat">8</div>
+      <div class="pmain"><div class="pname">韩雨萌<span class="sex">女</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">6.35</div></div></div>
+    <div class="prow"><div class="seat">9</div>
+      <div class="pmain"><div class="pname">周乐言<span class="sex">女</span></div>
+      <div class="psub"><span class="tag tag-warn">两个候选值未裁决</span></div></div>
+      <div class="putr"><div class="putr-v">6.28</div></div></div>
+    <div class="prow"><div class="seat">10</div>
+      <div class="pmain"><div class="pname"><span class="plink">苏晚晴</span><span class="sex">女</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">6.21</div></div></div>
+    <div class="prow"><div class="seat">11</div>
+      <div class="pmain"><div class="pname">徐怀安<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">6.14</div></div></div>
+    <div class="prow"><div class="seat">12</div>
+      <div class="pmain"><div class="pname">罗嘉树<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">6.06</div></div></div>
+    <div class="prow"><div class="seat">13</div>
+      <div class="pmain"><div class="pname"><span class="plink">彭子航</span><span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">5.97</div></div></div>
+    <div class="prow"><div class="seat">14</div>
+      <div class="pmain"><div class="pname">何知微<span class="sex">女</span></div>
+      <div class="psub"><span class="tag tag-quiet">委员会审定</span></div></div>
+      <div class="putr"><div class="putr-v">5.90</div></div></div>
+    <div class="prow"><div class="seat">15</div>
+      <div class="pmain"><div class="pname">邓聿宁<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">5.83</div></div></div>
+    <div class="prow"><div class="seat">16</div>
+      <div class="pmain"><div class="pname"><span class="plink">孔繁星</span><span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">5.75</div></div></div>
+    <div class="prow"><div class="seat">17</div>
+      <div class="pmain"><div class="pname">卢予同<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">5.68</div></div></div>
+    <div class="prow"><div class="seat">18</div>
+      <div class="pmain"><div class="pname">崔宛白<span class="sex">女</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">5.60</div></div></div>
+    <div class="prow"><div class="seat">19</div>
+      <div class="pmain"><div class="pname"><span class="plink">薛牧原</span><span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">5.52</div></div></div>
+    <div class="prow"><div class="seat">20</div>
+      <div class="pmain"><div class="pname">段方舟<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-est">估算 · 2023 参赛值</span></div></div>
+      <div class="putr"><div class="putr-v">5.44</div></div></div>
+    <div class="prow"><div class="seat">21</div>
+      <div class="pmain"><div class="pname">尹柏舟<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">5.36</div></div></div>
+    <div class="prow"><div class="seat">22</div>
+      <div class="pmain"><div class="pname"><span class="plink">阮清和</span><span class="sex">女</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">5.27</div></div></div>
+    <div class="prow"><div class="seat">23</div>
+      <div class="pmain"><div class="pname">章屿<span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">5.18</div></div></div>
+    <div class="prow"><div class="seat">24</div>
+      <div class="pmain"><div class="pname">康之榆<span class="sex">女</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">5.09</div></div></div>
+    <div class="prow"><div class="seat">25</div>
+      <div class="pmain"><div class="pname"><span class="plink">陶隐之</span><span class="sex">男</span></div>
+      <div class="psub"><span class="tag tag-quiet">已认证</span></div></div>
+      <div class="putr"><div class="putr-v">4.96</div></div></div>
+    <div class="prow"><div class="seat">26</div>
+      <div class="pmain"><div class="pname">柯若萱<span class="sex">女</span></div>
+      <div class="psub"><span class="tag tag-quiet">待定</span></div></div>
+      <div class="putr"><div class="putr-none">无参赛 UTR</div></div></div>
+  </div>
+</div>
+<p class="cap">
+  <b>姓名带下划线 = 这个人填了 <code>utr_profile_id</code></b>，点开
+  <code>app.utrsports.net/profiles/&lt;id&gt;</code>。没填的人是纯文字，
+  <b>不渲染一个点不动的壳子</b>。稿子里画成七个人里三个有 —— 线上填充率未知，按大面积
+  为空设计，所以「多数人没有链接」必须看起来正常，而不是像坏了。
+</p>
+</div>
+
+<h2>4 · 排阵 —— 结果打底</h2>
+<p class="note">
+  首屏就是 Top-5，不是控件。<b>顶部那条约束摘要是收起状态的全部信息</b> —— 不能做成
+  「点开才知道有没有约束」，否则一套受限的结果会被读成无约束的最优解。摘要点名到人，
+  不只给数字：知道锁了 2 对，但不知道锁了谁，等于还得点开。
+</p>
+<div class="row">
+<div class="phone">
+  <div class="top">
+    <div class="top-main">
+      <div class="brand">
+        <div class="brand-mark">紫</div>
+        <div class="brand-txt">
+          <div class="brand-name">PKU</div>
+          <div class="brand-ctx">19 人 · 13 男 6 女 · 银组</div>
+        </div>
+      </div>
+      <div class="season">2025 · 银组
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#b8b2a6" stroke-width="1.5" stroke-linecap="round"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab">队伍</div>
+      <div class="tab on">阵容</div>
+      <div class="tab off">对手<span class="lock">未开放</span></div>
+      <div class="tab">规则</div>
+    </div>
+  </div>
+  <div class="cbar">
+    <div class="cbar-l">已锁 陈嘉禾+吴普强 · 排除 1 人</div>
+    <div class="cbar-r">改约束
+      <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="card">
+      <div class="card-h"><div class="card-t">方案 1</div><div class="card-s">总分 8 · buffer 0.30/0.50</div></div>
+      <div class="lrow"><div class="lline">D1</div><div class="lpair">陈嘉禾 · 吴普强 <span class="locked">已锁</span></div><div class="lsum">13.38</div></div>
+      <div class="lrow"><div class="lline">D2</div><div class="lpair">叶明轩 · 张冠宇</div><div class="lsum">12.60</div></div>
+      <div class="lrow"><div class="lline">D3</div><div class="lpair">郑翔 · 高铭</div><div class="lsum">10.94</div></div>
+      <div class="lrow"><div class="lline">MD</div><div class="lpair">林牧 · 韩雨萌</div><div class="lsum">10.21</div></div>
+      <div class="lrow"><div class="lline">WD</div><div class="lpair">周乐言 · 苏晚</div><div class="lsum">9.18</div></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">方案 2</div><div class="card-s">总分 8 · buffer 0.45/0.50</div></div>
+      <div class="lrow"><div class="lline">D1</div><div class="lpair">陈嘉禾 · 吴普强 <span class="locked">已锁</span></div><div class="lsum">13.38</div></div>
+      <div class="lrow"><div class="lline">D2</div><div class="lpair">叶明轩 · 郑翔</div><div class="lsum">12.41</div></div>
+      <div class="lrow"><div class="lline">D3</div><div class="lpair">张冠宇 · 高铭</div><div class="lsum">11.02</div></div>
+    </div>
+  </div>
+</div>
+<p class="cap">每套方案是一张自带边框与白底的卡片（<code>bg-surface</code>）——
+<code>--color-muted</code> 在白底 4.69:1、在页面底色 4.27:1，差 0.42 正好卡在阈值两侧，
+所以面板必须显式给自己白底而不是继承页面色。</p>
+</div>
+
+<h2>5 · 排阵 —— 约束面板展开</h2>
+<p class="note">
+  底部抽屉，压在结果上方。<b>抽屉自己带滚动</b>（19 人的排除列表比屏还长），
+  最高 78%，上面留一条能看见结果的缝 —— 让人知道自己没有离开这一页。
+</p>
+<div class="row">
+<div class="phone">
+  <div class="top">
+    <div class="top-main">
+      <div class="brand">
+        <div class="brand-mark">紫</div>
+        <div class="brand-txt">
+          <div class="brand-name">PKU</div>
+          <div class="brand-ctx">19 人 · 13 男 6 女 · 银组</div>
+        </div>
+      </div>
+      <div class="season">2025 · 银组
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#b8b2a6" stroke-width="1.5" stroke-linecap="round"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab">队伍</div>
+      <div class="tab on">阵容</div>
+      <div class="tab off">对手<span class="lock">未开放</span></div>
+      <div class="tab">规则</div>
+    </div>
+  </div>
+  <div class="sheet-wrap">
+    <div class="scroll">
+      <div class="card">
+        <div class="card-h"><div class="card-t">方案 1</div><div class="card-s">总分 8</div></div>
+        <div class="lrow"><div class="lline">D1</div><div class="lpair">陈嘉禾 · 吴普强</div><div class="lsum">13.38</div></div>
+      </div>
+    </div>
+    <div class="dim"></div>
+    <div class="sheet">
+      <div class="grip"></div>
+      <div class="sheet-h">
+        <div class="card-t">约束</div>
+        <div class="card-s">已锁 1 对 · 排除 1 人</div>
+      </div>
+      <div class="sheet-b">
+        <div class="sect"><span>锁定搭档</span><span>D1</span></div>
+        <div class="lrow"><div class="lpair">陈嘉禾 · 吴普强</div><div class="card-s">解锁</div></div>
+        <div class="sect"><span>排除队员</span><span>不参与搜索</span></div>
+        <div class="prow" style="min-height:44px"><div class="pmain"><div class="pname">高铭<span class="sex">男</span></div></div><div class="card-s">取消</div></div>
+        <div class="sect"><span>加约束</span><span></span></div>
+        <div class="lrow"><div class="lpair">选两个人锁成一对</div><svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div>
+        <div class="lrow"><div class="lpair">选人排除</div><svg class="chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 3.5L10.5 8L6 12.5"/></svg></div>
+      </div>
+      <div class="sheet-f">
+        <div class="btn">全部清空</div>
+        <div class="btn btn-primary">重新搜索</div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="cap">按钮 42px 高。「重新搜索」是主操作 —— 关抽屉不自动重算，因为排阵是一次
+后端整解，在冷启动的 Render 免费实例上要等；改三个约束触发三次搜索是浪费。</p>
+</div>
+
+<h2>6 · 名单页行内编辑（管理员）</h2>
+<p class="note">
+  这一屏回答 Open Question 4。桌面是表格行里的 inputs，手机名单不是表格，所以形态不同：
+  <b>点开那一行 → 一个编辑抽屉</b>。功能与桌面同一条路径（改一个人的当前单/双打 UTR），
+  写接口自己会拒绝没有管理员凭据的请求，这一屏只负责不给一个按不动的按钮。
+</p>
+<p class="note">
+  状态默认 <b>已认证 / rated</b>，只填数字那个框就能保存 —— 这条是
+  <code>current-utr-io</code> 交付后追加的。另外<b>赛季没锁时，写当前双打 UTR 会同时把
+  该赛季的参赛 UTR 设成同一个值</b>，覆盖不论原来源；屏上必须说出这件事，否则一次手填
+  会无声覆盖组委会的冻结值。
+</p>
+<div class="row">
+<div class="phone">
+  <div class="top">
+    <div class="top-main">
+      <div class="brand">
+        <div class="brand-mark">紫</div>
+        <div class="brand-txt">
+          <div class="brand-name">PKU</div>
+          <div class="brand-ctx">北京大学 · 19 人</div>
+        </div>
+      </div>
+      <div class="season">2025 · 银组
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#b8b2a6" stroke-width="1.5" stroke-linecap="round"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab on">队伍</div>
+      <div class="tab">阵容</div>
+      <div class="tab off">对手<span class="lock">未开放</span></div>
+      <div class="tab">规则</div>
+    </div>
+  </div>
+  <div class="sheet-wrap">
+    <div class="scroll">
+      <div class="prow"><div class="seat">1</div>
+        <div class="pmain"><div class="pname"><span class="plink">陈嘉禾</span><span class="sex">男</span></div></div>
+        <div class="putr"><div class="putr-v">6.84</div></div></div>
+    </div>
+    <div class="dim"></div>
+    <div class="sheet">
+      <div class="grip"></div>
+      <div class="sheet-h">
+        <div class="card-t">吴普强 · 男</div>
+        <div class="card-s">取消</div>
+      </div>
+      <div class="sheet-b">
+        <div class="field">
+          <div class="flab">当前双打 UTR</div>
+          <div class="fin">6.72</div>
+          <div class="seg"><span class="on">已认证</span><span>委员会审定</span><span>队长评</span></div>
+        </div>
+        <div class="field">
+          <div class="flab">当前单打 UTR</div>
+          <div class="fin"><span class="fin-ph">未填</span></div>
+        </div>
+        <div class="field" style="border-bottom:0">
+          <div class="psub">
+            <span class="tag tag-warn">2025 赛季未锁</span>
+          </div>
+          <div style="font-size:12px;color:#79736a;margin-top:6px;line-height:1.5">
+            保存会把他这个赛季的<b>参赛 UTR 一并改成 6.72</b>，覆盖原来的值（含组委会导入的）。
+            赛季锁上后就只改当前 UTR。
+          </div>
+        </div>
+      </div>
+      <div class="sheet-f">
+        <div class="btn">取消</div>
+        <div class="btn btn-primary">保存</div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="cap">输入框 44px 高 —— 桌面那两个框曾经因为列宽 112px 而内容 166px 被切掉，
+手机上宽度不是问题，高度才是（触摸目标）。</p>
+</div>
+
+<h2>7 · 赛制规则（改动最小的一屏）</h2>
+<p class="note">
+  桌面本来就是单列，手机上只是把栅格压成一列。留在稿里是为了核对顶栏 + tab 条在一个
+  「非列表」页面上的样子，以及 buffer 那句最容易被误读的说明有没有被压缩掉。
+</p>
+<div class="row">
+<div class="phone">
+  <div class="top">
+    <div class="top-main">
+      <div class="brand">
+        <div class="brand-mark">紫</div>
+        <div class="brand-txt">
+          <div class="brand-name">紫荆杯</div>
+          <div class="brand-ctx">2025 银组 · 赛制规则</div>
+        </div>
+      </div>
+      <div class="season">2025 · 银组
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#b8b2a6" stroke-width="1.5" stroke-linecap="round"><path d="M4 6.5L8 10.5L12 6.5"/></svg>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab">队伍</div>
+      <div class="tab">阵容</div>
+      <div class="tab off">对手<span class="lock">未开放</span></div>
+      <div class="tab on">规则</div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="rule-card">
+      <div class="rc-t">各线 UTR 上限</div>
+      <div class="rc-g"><span>D1 男双</span><span class="mono">13.00</span></div>
+      <div class="rc-g"><span>D2 男双</span><span class="mono">12.00</span></div>
+      <div class="rc-g"><span>D3 男双</span><span class="mono">11.00</span></div>
+      <div class="rc-g"><span>MD 混双</span><span class="mono">10.25</span></div>
+      <div class="rc-g"><span>WD 女双</span><span class="mono">9.25</span></div>
+    </div>
+    <div class="rule-card">
+      <div class="rc-t">Buffer 0.50</div>
+      <div style="font-size:12.5px;color:#79736a;line-height:1.55">
+        <b>共享预算，不是每线容差。</b>五条线各超 0.2、合计 1.0 是非法的。
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rc-t">较 2024 赛季</div>
+      <div class="rc-g"><span>MD 混双</span><span class="mono">10.50 → 10.25</span></div>
+    </div>
+  </div>
+</div>
+<p class="cap">「较上一赛季」在没有上一届时整块不渲染 —— 最早的赛季本就没有上一届，
+不是错误状态。</p>
+</div>
+
+<h2>核对清单（实现后逐条量，不照源码估）</h2>
+<ul>
+  <li>375×<b>667</b> 下五条读路由：无横向滚动；最长名单（SJTU 26 人）能滚到最后一行。</li>
+  <li>滚动容器在 <code>.scroll</code> 那一层：顶栏与 tab 条不跟着卷走，且没有内容被
+      <code>overflow-hidden</code> 静默裁掉（裁掉时<b>不出现滚动条</b>，这是它难发现的原因）。</li>
+  <li>壳用 <code>100dvh</code>，且不带 <code>min-h-[640px]</code>。</li>
+  <li>tab 与可点行 ≥ 44px。</li>
+  <li>对比度全部 ≥ 4.5:1，量 computed style。重点看：深色顶栏里的
+      <code>--color-sidebar-fg-dim</code>（#6f6a60，禁用态那一项）、白卡片上的
+      <code>--color-muted</code>、估算标签 #8a6508 在 #fbf5e6 上。</li>
+  <li>无 <code>utr_profile_id</code> 的人不渲染链接壳子；有的人跳
+      <code>app.utrsports.net/profiles/&lt;id&gt;</code>，<code>rel="noopener noreferrer"</code>。</li>
+  <li>参赛 UTR 为 null 的队员仍占一行，写「无参赛 UTR」，不是 0、不是被跳过。</li>
+  <li>≥768px 逐屏与改动前一致（只多出三处 UTR 链接）。</li>
+</ul>
+
+</body>
+</html>
