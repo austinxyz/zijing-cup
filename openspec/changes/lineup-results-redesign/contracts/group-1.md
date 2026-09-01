@@ -1,0 +1,13 @@
+### Contract
+- **Spec**:
+  - 「宽视口（≥ 768px）下，候选 SHALL 呈现为一张表：每套一行，列含名次、总和、buffer 与五条线（D1/D2/D3/MD/WD 各一列），使同一条线在各套之间**跨行对齐**、可竖向扫读。名字 SHALL 不换行，过长时截断……表 MUST NOT 横向溢出视口。」（lineup-ui）
+  - 「表头 SHALL 在表体滚动时保持可见（钉住）……表体 SHALL 自带滚动容器。」（lineup-ui）
+  - 「前端 MUST NOT 自行重排候选：按后端 `search.candidates` 的顺序渲染。」（lineup-ui）
+  - 「每一套候选 SHALL 显示五条线各自的两名队员、性别、该线的参赛 UTR 之和、超出 cap 的量（若有），以及该套用掉的全队 buffer 与额度。」+ 估算标记两处、密集视图紧凑标记 + 图例保留整句。（lineup-ui MODIFIED）
+- **Runtime**: `cd frontend && npx vitest run app/[season]/[division]/lineup/` → expected: 对比表用例（列对齐/不换行/表头钉住/顺序即后端序/估算·超cap·buffer 标记）全绿，既有 lineup 用例不转红
+- **Code**:
+  - D1：用真 `<table>` + `table-fixed`（对齐是价值，flex 拼的伪表对不齐）；长名 `overflow:hidden`+`text-overflow:ellipsis`+`title` 全名；表头 `position:sticky top:0`，表体沿用既有滚动容器。
+  - D3：判定逻辑（估算/超cap/buffer 文案/性别/开放线）抽成共用纯函数，桌面表与手机行都调它。
+  - D4：表内估算用紧凑角标（数字 `˟` + 整套「估」badge）+ 底部图例给完整措辞「含 N 个估算值，合法性待总表确认」；标记不省略、整句不删只挪。
+  - D5：不重排，按 `search.candidates` 序。
+- **Threshold**: 70
