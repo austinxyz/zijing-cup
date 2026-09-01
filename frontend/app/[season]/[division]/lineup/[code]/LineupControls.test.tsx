@@ -49,3 +49,36 @@ describe("the lock and exclude panel", () => {
     expect(screen.getByRole("button", { name: "搜索阵容" })).toBeTruthy();
   });
 });
+
+describe("the drawer variant's touch targets", () => {
+  it("makes the selects and exclusion chips 44px tall on mobile", () => {
+    const { container } = render(
+      <LineupControls
+        lines={LINES}
+        roster={roster(3)}
+        locks={{}}
+        excluded={[]}
+        variant="drawer"
+      />,
+    );
+    for (const select of container.querySelectorAll("select")) {
+      expect(select.className).toMatch(/h-11\b/);
+      // Must be able to shrink past a long option name, not force overflow.
+      expect(select.className).toMatch(/min-w-0/);
+    }
+    for (const label of container.querySelectorAll('label:has(input[type="checkbox"])')) {
+      expect(label.className).toMatch(/min-h-11\b/);
+    }
+    const submit = screen.getByRole("button", { name: "搜索阵容" });
+    expect(submit.className).toMatch(/h-11\b/);
+  });
+
+  it("keeps the desktop column compact (34px selects)", () => {
+    const { container } = render(
+      <LineupControls lines={LINES} roster={roster(3)} locks={{}} excluded={[]} />,
+    );
+    for (const select of container.querySelectorAll("select")) {
+      expect(select.className).toMatch(/h-\[34px\]/);
+    }
+  });
+})

@@ -15,12 +15,15 @@ import { RosterTable, type CurrentUtrEdit } from "./RosterTable";
 export function RosterEditor({
   players,
   canEdit,
+  locked,
   season,
   division,
   teamCode,
 }: {
   players: RosterPlayer[];
   canEdit: boolean;
+  /** Whether the season is frozen — drives the overwrite warning in the editor. */
+  locked: boolean;
   season: string;
   division: string;
   teamCode: string;
@@ -34,6 +37,11 @@ export function RosterEditor({
   }
 
   return (
-    <RosterTable players={players} canEdit={canEdit} onSave={save} />
+    <RosterTable
+      players={players}
+      canEdit={canEdit}
+      locked={locked}
+      onSave={save}
+    />
   );
 }

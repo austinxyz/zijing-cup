@@ -30,6 +30,7 @@ from app.models import (
     PlayerTeamMembership,
     RosterEntry,
     Season,
+    SeasonLock,
     Team,
 )
 from app.rosters.load import load_rosters
@@ -188,6 +189,23 @@ def client():
 
     with Session(engine) as session:
         _cleanup(session)
+
+
+@pytest.fixture
+def locked_test_season():
+    """Freeze TEST_YEAR for one test, then thaw it.
+
+    yield-based so the teardown runs even if the assertion fails — a stray
+    lock row would otherwise make every later roster call in the module report
+    locked=True.
+    """
+    with Session(engine) as session:
+        session.add(SeasonLock(season_year=TEST_YEAR))
+        session.commit()
+    yield
+    with Session(engine) as session:
+        session.exec(delete(SeasonLock).where(SeasonLock.season_year == TEST_YEAR))
+        session.commit()
 
 
 def _cleanup(session: Session) -> None:
@@ -374,6 +392,19 @@ class TestRoster:
 
         assert by_name["望舒"]["utr_profile_id"] == "880077"
         assert by_name["门吹雪"]["utr_profile_id"] is None
+
+    def test_reports_the_season_as_unlocked_by_default(self, client):
+        # The edit UI reads this to decide whether to warn that saving a
+        # doubles UTR also overwrites the participation UTR — true only while
+        # the season is unlocked.
+        body = client.get(roster_url(), headers=AUTH).json()
+        assert body["locked"] is False
+
+    def test_reports_the_season_as_locked_when_a_lock_row_exists(
+        self, client, locked_test_season
+    ):
+        body = client.get(roster_url(), headers=AUTH).json()
+        assert body["locked"] is True
 
     def test_unknown_team_is_404_not_an_empty_roster(self, client):
         # An empty list would read as "this team has no players", which is a

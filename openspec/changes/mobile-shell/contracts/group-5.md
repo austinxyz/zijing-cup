@@ -1,0 +1,13 @@
+### Contract
+- **Spec**:
+  - 「窄视口（< 768px）下排阵页 SHALL 以候选阵容为首屏内容，锁定与排除的控件 SHALL 收进一个可展开、可关闭的面板。关闭面板 SHALL 回到结果，MUST NOT 离开当前页面。」（lineup-ui）
+  - 「面板内的约束列表可能比一屏长（一支队最多 26 人），因此面板 SHALL 自带滚动容器。」（lineup-ui）
+  - 「面板关闭时，页面 SHALL 呈现当前生效的锁定与排除的摘要，且摘要 SHALL 点名到具体队员，MUST NOT 只给数量。」（lineup-ui）
+  - 「无任何约束时，摘要 SHALL 说明当前没有约束，MUST NOT 什么都不显示。」（lineup-ui）
+  - 「窄视口下，在面板内增删约束 SHALL NOT 自行触发一次新的搜索；面板 SHALL 提供一个显式的重新搜索操作。」（lineup-ui）
+- **Runtime**: `cd frontend && npx vitest run app/[season]/[division]/lineup/` → expected: 面板开合、摘要点名、无约束时的文案、不自动搜索四组用例全绿；既有 `LineupControls` 与结果用例不转红
+- **Code**:
+  - D6：面板开合是**纯本地 UI 状态**，不进 URL —— 约束本身已完全由 URL 表达，把开合塞进 URL 会让同一份结果有两个链接。
+  - 面板内仍是既有的 plain GET form（`LineupControls.tsx:75`），提交即导航 —— 与桌面同一段代码，不引入行为分叉。
+  - 摘要点名到人的理由要落到实现上：一份受约束的结果与无约束最优解在屏幕上长得一样；只给数量仍需展开面板才能判断该不该信这份结果。
+- **Threshold**: 70

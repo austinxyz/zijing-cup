@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { notFound } from "next/navigation";
@@ -72,6 +72,7 @@ const ROSTER: TeamRoster = {
       utr_profile_id: null,
     },
   ],
+  locked: false,
 };
 
 function params() {
@@ -120,8 +121,24 @@ describe("team roster page", () => {
 
     render(await Page({ params: params() }));
 
-    expect(screen.getByText("南 望舒")).toBeTruthy();
-    expect(screen.getByText("西 门吹雪")).toBeTruthy();
+    // Names appear in both the table and the mobile card list; scope to the
+    // table so the assertion is about presence, not which DOM.
+    const t = within(screen.getByRole("table"));
+    expect(t.getByText("南 望舒")).toBeTruthy();
+    expect(t.getByText("西 门吹雪")).toBeTruthy();
+  });
+
+  it("offers a link back to the team list for narrow viewports", async () => {
+    vi.mocked(getTeamRoster).mockResolvedValue(ROSTER);
+
+    render(await Page({ params: params() }));
+
+    // On mobile the list and roster are separate screens; without this a
+    // captain who tapped a team is stuck on it. Desktop keeps both columns,
+    // so the link is md:hidden — present in the DOM, hidden by the breakpoint.
+    const back = screen.getByRole("link", { name: /球队列表/ });
+    expect(back.getAttribute("href")).toBe("/2025/silver/teams");
+    expect(back.className).toMatch(/md:hidden/);
   });
 
   it("is a not-found for an unknown team, not an empty roster", async () => {

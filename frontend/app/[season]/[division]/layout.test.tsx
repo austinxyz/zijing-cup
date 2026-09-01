@@ -41,10 +41,11 @@ describe("Division layout", () => {
 
     render(await Layout(layoutProps(<p>页面内容</p>)));
 
-    expect(screen.getByText("赛制规则")).toBeInTheDocument();
-    // Appears twice by design: the collapsed switcher label and the marked
-    // entry inside its option list.
-    expect(screen.getAllByText("2026 · 银组")).toHaveLength(2);
+    // Rendered in both shells now — the sidebar (hidden on mobile) and the top
+    // bar (hidden on desktop). CSS shows one; the DOM holds both.
+    expect(screen.getAllByText("赛制规则").length).toBeGreaterThanOrEqual(1);
+    // Switcher label + its marked option, in each of the two shells.
+    expect(screen.getAllByText("2026 · 银组")).toHaveLength(4);
     expect(screen.getByText("页面内容")).toBeInTheDocument();
   });
 
@@ -55,11 +56,41 @@ describe("Division layout", () => {
 
     render(await Layout(layoutProps(<p>页面内容</p>)));
 
-    expect(screen.getByText("赛制规则")).toBeInTheDocument();
+    expect(screen.getAllByText("赛制规则").length).toBeGreaterThanOrEqual(1);
     // Falls back to the URL's own values rather than inventing a division
-    // name it does not have.
-    // Only the summary: with no season list there are no options to list.
-    expect(screen.getByText("2026 · silver")).toBeInTheDocument();
+    // name. Only the summary in each shell — with no season list there are no
+    // options to list, so twice (sidebar + top bar), not more.
+    expect(screen.getAllByText("2026 · silver")).toHaveLength(2);
+  });
+
+  it("uses the dynamic-viewport height and drops the min-height on mobile", async () => {
+    vi.mocked(getSeasons).mockResolvedValue(SEASONS);
+
+    const { container } = render(await Layout(layoutProps(<p>页面内容</p>)));
+    const shell = container.firstElementChild as HTMLElement;
+
+    // 100vh over-counts on mobile (address bar retracted) and min-h-[640px]
+    // exceeds a 667px screen once the top bar is subtracted — both push
+    // content out under overflow-hidden with no scrollbar to show it.
+    expect(shell.className).toMatch(/shell-height/);
+    expect(shell.className).not.toMatch(/(^|\s)min-h-\[640px\]/);
+    expect(shell.className).toMatch(/md:min-h-\[640px\]/);
+    // Column on mobile (top bar over content), row on desktop (sidebar beside).
+    expect(shell.className).toMatch(/flex-col/);
+    expect(shell.className).toMatch(/md:flex-row/);
+  });
+
+  it("keeps the top bar out of any scroll container", async () => {
+    vi.mocked(getSeasons).mockResolvedValue(SEASONS);
+
+    const { container } = render(await Layout(layoutProps(<p>页面内容</p>)));
+    const shell = container.firstElementChild as HTMLElement;
+    const topBar = container.querySelector('[data-testid="top-bar"]');
+
+    // The scroll lives below the top bar, never on a shared ancestor: put it
+    // higher and the bar scrolls away with the content.
+    expect(topBar).not.toBeNull();
+    expect(topBar!.parentElement).toBe(shell);
   });
 
   it("rejects an unknown division code before fetching anything", async () => {

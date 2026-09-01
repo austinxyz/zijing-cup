@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -31,6 +31,13 @@ function renderSidebar() {
   );
 }
 
+/** The desktop sidebar (<aside>). Both shells render the same nav from the
+ *  same derived section + teamCode, so proving it in one is enough — and it
+ *  avoids the duplicate matches the two shells would otherwise produce. */
+function sb() {
+  return within(screen.getByRole("complementary"));
+}
+
 describe("ActiveSidebar", () => {
   afterEach(() => vi.clearAllMocks());
 
@@ -39,7 +46,7 @@ describe("ActiveSidebar", () => {
 
     renderSidebar();
 
-    expect(screen.getByText("队伍").closest("[aria-current]")).toHaveAttribute(
+    expect(sb().getByText("队伍").closest("[aria-current]")).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -51,7 +58,7 @@ describe("ActiveSidebar", () => {
     renderSidebar();
 
     expect(
-      screen.getByText("赛制规则").closest("[aria-current]"),
+      sb().getByText("赛制规则").closest("[aria-current]"),
     ).toHaveAttribute("aria-current", "page");
   });
 
@@ -63,7 +70,7 @@ describe("ActiveSidebar", () => {
     renderSidebar();
 
     expect(
-      screen.getByText("赛制规则").closest("[aria-current]"),
+      sb().getByText("赛制规则").closest("[aria-current]"),
     ).toHaveAttribute("aria-current", "page");
   });
 });
@@ -75,11 +82,11 @@ describe("ActiveSidebar on the lineup route", () => {
 
     renderSidebar();
 
-    expect(screen.getByText("阵容").closest("[aria-current]")).toHaveAttribute(
+    expect(sb().getByText("阵容").closest("[aria-current]")).toHaveAttribute(
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
+    expect(sb().getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
       "/2026/silver/lineup/PKU",
     );
   });
@@ -90,7 +97,7 @@ describe("ActiveSidebar on the lineup route", () => {
 
     renderSidebar();
 
-    expect(screen.getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
+    expect(sb().getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
       "/2026/silver/lineup/THU-I",
     );
   });
@@ -101,7 +108,7 @@ describe("ActiveSidebar on the lineup route", () => {
 
     renderSidebar();
 
-    expect(screen.getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
+    expect(sb().getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
       "/2026/silver/lineup",
     );
   });
@@ -114,7 +121,7 @@ describe("ActiveSidebar on the admin routes", () => {
 
     renderSidebar();
 
-    expect(screen.getByText("队员管理").closest("[aria-current]")).toHaveAttribute(
+    expect(sb().getByText("队员管理").closest("[aria-current]")).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -128,7 +135,7 @@ describe("ActiveSidebar on the admin routes", () => {
 
     // 阵容 takes the team in scope when there is one; a player id is not a
     // team code, and following it would 404.
-    expect(screen.getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
+    expect(sb().getByRole("link", { name: /阵容/ }).getAttribute("href")).toBe(
       "/2026/silver/lineup",
     );
   });

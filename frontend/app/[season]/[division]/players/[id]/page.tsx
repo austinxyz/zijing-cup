@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getPlayer, type Player, type PlayerSeasonUtr } from "@/lib/api";
 import { playerName } from "@/lib/name";
+import { profileUrl } from "@/lib/utr";
 
 interface PageProps {
   params: Promise<{ season: string; division: string; id: string }>;
@@ -23,7 +24,7 @@ const TAG =
 const WARN =
   "inline-flex items-center rounded-full border border-warning-border bg-warning-surface px-2 py-px text-[11px] leading-relaxed text-warning";
 const OK =
-  "inline-flex items-center rounded-full border border-[#cfe1d6] bg-[#eef4f0] px-2 py-px text-[11px] leading-relaxed text-success";
+  "inline-flex items-center rounded-full border border-[#cfe1d6] bg-[#eef4f0] px-2 py-px text-[11px] leading-relaxed text-[#3b6e4f]";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -121,9 +122,17 @@ export default async function PlayerDetailPage({ params }: PageProps) {
             </Field>
             <Field label="UTR 链接">
               {player.utr_profile_id ? (
-                <span className="font-mono text-[11.5px]">
+                // Checked here rather than inside profileUrl: a helper with an
+                // "empty" return would hand back "" or "#", and a link that
+                // cannot be clicked is the shape this is meant to avoid.
+                <a
+                  href={profileUrl(player.utr_profile_id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-[11.5px] text-primary underline"
+                >
                   …/profiles/{player.utr_profile_id}
-                </span>
+                </a>
               ) : (
                 <span className="text-muted-foreground">未填</span>
               )}

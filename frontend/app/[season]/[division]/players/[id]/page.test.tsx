@@ -156,6 +156,35 @@ describe("the player detail page", () => {
     expect(screen.getByText(/名单页与排阵页/)).toBeTruthy();
   });
 
+  it("makes the UTR profile a link you can actually open", async () => {
+    vi.mocked(getPlayer).mockResolvedValue(PLAYER);
+
+    render(await renderPage());
+
+    // The address was already written out here, just not clickable — which
+    // left the reader to retype it. It is also the only evidence a future
+    // merge could rest on, so getting to it has to be one click.
+    const link = screen.getByRole("link", { name: /3872011/ });
+    expect(link.getAttribute("href")).toBe(
+      "https://app.utrsports.net/profiles/3872011",
+    );
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  it("leaves the UTR profile as plain text when nobody has filled it in", async () => {
+    vi.mocked(getPlayer).mockResolvedValue({
+      ...PLAYER,
+      utr_profile_id: null,
+    });
+
+    render(await renderPage());
+
+    // Not a link, and not an error either: an unfilled id is an ordinary
+    // state, and a dead link would be worse than none.
+    expect(screen.queryByRole("link", { name: /profiles/ })).toBeNull();
+    expect(screen.getByText("未填")).toBeTruthy();
+  });
+
   it("is a 404 for an unknown player", async () => {
     vi.mocked(getPlayer).mockResolvedValue(null);
 

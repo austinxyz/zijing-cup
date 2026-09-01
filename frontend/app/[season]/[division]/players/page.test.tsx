@@ -143,6 +143,28 @@ describe("the player list", () => {
     expect(marker.className).not.toMatch(/danger/);
   });
 
+  it("makes a present UTR link openable rather than a yes/no marker", async () => {
+    vi.mocked(getPlayers).mockResolvedValue([CONTESTED]);
+
+    render(await renderPage());
+
+    const row = screen.getByRole("row", { name: /Zong Qingqing/ });
+    const link = within(row).getByRole("link", { name: "有" });
+    expect(link.getAttribute("href")).toBe(
+      "https://app.utrsports.net/profiles/3872011",
+    );
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  it("does not turn a missing UTR link into a dead link", async () => {
+    vi.mocked(getPlayers).mockResolvedValue([PREFILLED]);
+
+    render(await renderPage());
+
+    const row = screen.getByRole("row", { name: /Zhang Qingyang/ });
+    expect(within(row).queryByRole("link", { name: "无" })).toBeNull();
+  });
+
   it("offers the unresolved queue as a destination", async () => {
     vi.mocked(getPlayers).mockResolvedValue([CONTESTED, PREFILLED]);
 

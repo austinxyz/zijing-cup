@@ -1,0 +1,14 @@
+### Contract
+- **Spec**:
+  - 「窄视口（< 768px）下，球队列表与某支球队的名单 SHALL 各占一屏，MUST NOT 并排。从名单 SHALL 有一个返回球队列表的入口。」（team-roster-ui）
+  - 「两屏 SHALL 由同一套路由承载，由视口宽度决定哪一侧可见。实现 MUST NOT 依据 user-agent 判定设备。」（team-roster-ui）
+  - 「**窄视口（< 768px）下不存在「未选球队」这个中间态**……窄视口下访问球队列表页 SHALL 直接呈现球队列表。」（team-roster-ui）
+  - 「窄视口（< 768px）下名单 SHALL 呈现为逐行的列表而非表格，每行给出序号、姓名、性别、参赛 UTR 与 UTR 来源。参赛 UTR……在行内 SHALL 是最显著的数字。」（team-roster-ui）
+  - 「**窄视口（< 768px）下这两列不呈现。**」（当前单打 / 当前双打，team-roster-ui）
+  - 「名单页 SHALL 为填有 `utr_profile_id` 的队员提供一个指向该队员 UTR 官网档案页的链接……为空时 MUST NOT 渲染链接，也 MUST NOT 渲染一个点不动的链接外壳或错误提示。」（team-roster-ui）
+- **Runtime**: `cd frontend && npx vitest run app/[season]/[division]/teams/` → expected: 两屏切换、窄视口名单行、UTR 链接三组用例全绿；既有名单表用例不转红
+- **Code**:
+  - D2：同一套路由 + CSS 决定可见性，由当前 segment 判断哪一侧在窄视口显示（segment 已在 `SelectedTeamList` 里读了，不新增机制）。**不得**出现按 user-agent 的分支。
+  - D5：名单是两套 DOM，不是把 `<table>` 用 CSS 打散 —— 后者会毁掉表格语义且做不到隐藏两列 + 来源换行。判定逻辑（来源标签文案、是否可链接、排序）抽成共用纯函数，两套 DOM 只负责排版。
+  - 参赛 UTR 为 null 的队员**仍要占一行**，写「无参赛 UTR」，不是 0（0 是合法 UTR）也不是跳过 —— 跳过会让球队列的人数与名单条数对不上而页面不说。
+- **Threshold**: 70

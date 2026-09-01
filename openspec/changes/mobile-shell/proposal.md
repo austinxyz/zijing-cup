@@ -71,7 +71,12 @@ overflow-hidden`。手机上打开会横向溢出，而 `overflow-hidden` 让溢
 - `frontend/app/globals.css` —— `--color-muted` 与 `--color-sidebar-fg-dim`
   两个值；波及桌面 ~76 处用到它们的地方（只变颜色，不变布局）。
 - 新增一处 UTR 网址常量（单一出口），预计放在 `frontend/lib/`。
-- **不动后端**：`utr_profile_id` 早已在两个只读端点的响应里。无 migration。
+- **后端仅一处只读扩展**：`utr_profile_id` 早已在两个只读端点的响应里。名单端点
+  （`get_team_roster`）**新增一个 `locked: bool`** —— 该赛季是否已冻结（`season_locks`
+  表里有没有该年的行）。这是 apply 阶段发现的：手机行内编辑要按锁状态显示「保存会覆盖
+  参赛 UTR」的说明，而锁状态存在 DB 却没被只读端点返回，前端拿不到；负责人拍板加这一个
+  只读字段（原本的「不动后端」由此放宽为「只读、不写、无 migration」）。锁表已存在，
+  **无 migration**。
 
 ## Out of Scope
 

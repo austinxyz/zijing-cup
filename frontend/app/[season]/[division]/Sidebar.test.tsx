@@ -258,6 +258,24 @@ describe("Sidebar 阵容 and 对手对比", () => {
     expect(item).toHaveAttribute("aria-disabled", "true");
   });
 
+  it("says 对手对比 is disabled with colour, not with opacity", () => {
+    renderSidebar();
+
+    // Opacity blends the token into whatever is behind it, so the contrast a
+    // reader actually gets cannot be worked out from the source. This row was
+    // text-sidebar-foreground-dim at opacity-45 — #413f38 on #1c1b18, 1.63:1,
+    // which is close to invisible. Disabled has to be said in colour.
+    // Only the text-carrying elements. The nav icon keeps opacity-85, which
+    // every row uses including the enabled ones — it is not how this row says
+    // "disabled", and it measures 3.98:1, above the 3:1 non-text needs.
+    const item = screen.getByText("对手对比").closest("div")!;
+    const textNodes = [item, ...item.querySelectorAll("span")];
+    for (const node of textNodes) {
+      expect(node.getAttribute("class") ?? "").not.toMatch(/opacity-/);
+    }
+    expect(item.getAttribute("class")).toMatch(/text-sidebar-foreground-dim/);
+  });
+
   it("marks 阵容 as the current page on the lineup section", () => {
     render(
       <Sidebar

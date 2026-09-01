@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getDivisionRules, getTeamLineups, type RuleLine } from "@/lib/api";
 import { LineupControls } from "./LineupControls";
+import { LineupMobileControls } from "./LineupMobileControls";
 import { LineupResults } from "./LineupResults";
 import { StaleLink } from "./LineupStates";
 
@@ -139,6 +140,24 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
             参赛 UTR · 赛前冻结
           </span>
         </div>
+
+        {/* Narrow viewport: results lead, controls fold into a sheet whose
+            closed state names the constraints in force. The desktop keeps the
+            controls as the left column (hidden md:flex on that form). */}
+        <LineupMobileControls
+          controls={
+            <LineupControls
+              lines={lines}
+              roster={search.roster}
+              locks={constraints.locks}
+              excluded={constraints.excluded}
+              variant="drawer"
+            />
+          }
+          locks={constraints.locks}
+          excluded={constraints.excluded}
+          roster={search.roster}
+        />
 
         {stale ? (
           <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-5 py-4">

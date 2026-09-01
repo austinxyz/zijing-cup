@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { Player } from "@/lib/api";
 import { playerName } from "@/lib/name";
+import { profileUrl } from "@/lib/utr";
 
 const GENDER_LABEL: Record<string, string> = { M: "男", F: "女" };
 
@@ -11,7 +12,7 @@ const UNCONFIRMED =
 const QUIET =
   "inline-flex items-center rounded-full border border-border bg-surface px-2 py-px text-[11px] leading-relaxed text-muted-foreground";
 const SETTLED =
-  "inline-flex items-center rounded-full border border-[#cfe1d6] bg-[#eef4f0] px-2 py-px text-[11px] leading-relaxed text-success";
+  "inline-flex items-center rounded-full border border-[#cfe1d6] bg-[#eef4f0] px-2 py-px text-[11px] leading-relaxed text-[#3b6e4f]";
 
 const SEASON_STATUS_LABEL: Record<string, string> = {
   verified: "已认证",
@@ -135,7 +136,16 @@ export function PlayerTable({
             </Td>
             <Td>
               {player.utr_profile_id ? (
-                <span className={SETTLED}>有</span>
+                // The marker doubles as the way there. It said "有" and stopped,
+                // leaving the reader to go find the profile themselves.
+                <a
+                  href={profileUrl(player.utr_profile_id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${SETTLED} underline`}
+                >
+                  有
+                </a>
               ) : (
                 // Not an error state: nobody has filled it in yet. It is also
                 // the only evidence a future merge could rest on, so it has to

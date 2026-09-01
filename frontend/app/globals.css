@@ -28,8 +28,18 @@
   --color-primary: #9c3417;
   --color-primary-fg: #ffffff;
 
-  --color-muted: #79736a;
-  --color-muted-fg: #a09a90;
+  /* #79736a measured 4.09:1 on --color-surface-muted (#f2efe9), which is what
+     every table header sits on — under the 4.5:1 small text needs. Whether
+     this token is legible depends on the container behind it, and that is not
+     visible from the source. #6b665d measures 4.97:1 there, 5.70:1 on white. */
+  --color-muted: #6b665d;
+  /* #a09a90 measured 2.79:1 on white and 2.43:1 on --color-surface-muted —
+     the third contrast defect found by measuring rather than reading. It
+     carries the "—" placeholders and the small notes, which are text and
+     need 4.5:1. Meeting that leaves it close to --color-muted; the tier is
+     now told apart by size and weight rather than by colour. #706a61
+     measures 5.35 / 4.87 / 4.66 on white / page ground / muted strip. */
+  --color-muted-fg: #706a61;
 
   --color-danger: #b3261e;
   --color-danger-fg: #ffffff;
@@ -60,7 +70,11 @@
   --color-sidebar: #1c1b18;
   --color-sidebar-border: #2a2823;
   --color-sidebar-fg: #b8b2a6;
-  --color-sidebar-fg-dim: #6f6a60;
+  /* #6f6a60 measured 3.20:1 on the sidebar, and the disabled nav row layered
+     opacity-45 on top of it: #413f38 on #1c1b18, 1.63:1 — close to invisible.
+     The opacity is gone (see Sidebar.tsx) and the token itself now measures
+     5.01:1, so disabled is said in colour. */
+  --color-sidebar-fg-dim: #8f8a7e;
   --color-sidebar-fg-bright: #f2eee7;
   --color-sidebar-active: #2c2a25;
   /* Recessed well INSIDE the dark panel — the season switcher sits in it.
@@ -115,4 +129,20 @@ body {
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-sans), "Segoe UI", sans-serif;
+}
+
+/*
+ * Shell height: the visible viewport, with a fallback.
+ *
+ * `100dvh` tracks the viewport as the mobile browser's address bar shows and
+ * hides; `100vh` there is the taller value with the bar retracted, so the
+ * shell would stand taller than the screen and push content out of view under
+ * `overflow-hidden` — with no scrollbar to show it happened. The `100vh` line
+ * stays first as the fallback for anything that does not know `dvh`; the `dvh`
+ * line wins where it is supported. Two declarations is the only honest way to
+ * say "dvh with a vh fallback"; a single Tailwind utility cannot.
+ */
+.shell-height {
+  height: 100vh;
+  height: 100dvh;
 }

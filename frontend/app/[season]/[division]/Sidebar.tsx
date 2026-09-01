@@ -3,9 +3,9 @@ import Link from "next/link";
 import { cn } from "@/lib/cn";
 import type { SeasonIndex } from "@/lib/api";
 import { logout } from "@/app/login/actions";
+import { navItems, type NavSection } from "./nav";
 
-/** Which nav destination the current URL is under. */
-export type NavSection = "teams" | "lineup" | "rules" | "players";
+export type { NavSection };
 
 interface SidebarProps {
   season: string;
@@ -25,15 +25,6 @@ interface SidebarProps {
    *  one would misread who can change things. */
   signedIn?: boolean;
 }
-
-const GRID_ICON =
-  "M2.6 2.6h4.2v4.2H2.6zM9.2 2.6h4.2v4.2H9.2zM2.6 9.2h4.2v4.2H2.6zM9.2 9.2h4.2v4.2H9.2z";
-const CHART_ICON = "M2.6 13.4h10.8M4.8 11V7.2M8 11V3.4M11.2 11V5.8";
-const SWAP_ICON =
-  "M2.6 5.2h9.4M9.4 2.6L12 5.2 9.4 7.8M13.4 10.8H4M6.6 8.2L4 10.8l2.6 2.6";
-const DOC_ICON = "M4 2.4h8v11.2H4zM6.4 5.4h3.2M6.4 8h3.2M6.4 10.6h2";
-const PEOPLE_ICON =
-  "M6 7.2a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM2.6 13.4c0-2 1.5-3.4 3.4-3.4s3.4 1.4 3.4 3.4M10.6 6.4a1.7 1.7 0 1 0 0-3.4M11.2 9.6c1.3.3 2.2 1.5 2.2 3";
 
 function NavIcon({ path }: { path: string }) {
   return (
@@ -68,7 +59,7 @@ function PendingNavItem({ label, icon }: { label: string; icon: string }) {
       aria-disabled="true"
       className="flex h-[34px] items-center justify-between gap-2 rounded-token px-2.5 text-[13px] text-sidebar-foreground-dim"
     >
-      <span className="flex min-w-0 items-center gap-[9px] opacity-45">
+      <span className="flex min-w-0 items-center gap-[9px]">
         <NavIcon path={icon} />
         <span>{label}</span>
       </span>
@@ -142,7 +133,7 @@ export function Sidebar({
   );
 
   return (
-    <aside className="flex w-[216px] flex-none flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+    <aside className="hidden w-[216px] flex-none flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
       <div className="flex flex-col gap-2.5 border-b border-sidebar-border px-4 pb-4 pt-[18px]">
         <div className="flex flex-col gap-[3px]">
           <div className="flex items-center gap-2">
@@ -211,39 +202,22 @@ export function Sidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 p-2">
-        <NavLink
-          label="队伍"
-          icon={GRID_ICON}
-          href={`/${season}/${division}/teams`}
-          current={section === "teams"}
-        />
-        <NavLink
-          label="阵容"
-          icon={CHART_ICON}
-          href={
-            teamCode
-              ? `/${season}/${division}/lineup/${encodeURIComponent(teamCode)}`
-              : `/${season}/${division}/lineup`
-          }
-          current={section === "lineup"}
-        />
-        {/* Its own row, and still closed. Folding it into 阵容 under the old
-            name 分析 would claim this app can already compare opponents. */}
-        <PendingNavItem label="对手对比" icon={SWAP_ICON} />
-        <NavLink
-          label="赛制规则"
-          icon={DOC_ICON}
-          href={`/${season}/${division}/rules`}
-          current={section === "rules"}
-        />
-        {/* A real destination, so a real link. Visiting it without a session
-            lands on the login page rather than an empty admin screen. */}
-        <NavLink
-          label="队员管理"
-          icon={PEOPLE_ICON}
-          href={`/${season}/${division}/players`}
-          current={section === "players"}
-        />
+        {/* Driven by the shared nav list so this and the mobile top bar cannot
+            drift. The sidebar shows every item; a pending one is a disabled
+            row, never a link. 阵容's href already carries the team in scope. */}
+        {navItems(season, division, teamCode).map((item) =>
+          item.pending ? (
+            <PendingNavItem key={item.key} label={item.label} icon={item.icon} />
+          ) : (
+            <NavLink
+              key={item.key}
+              label={item.label}
+              icon={item.icon}
+              href={item.href!}
+              current={section === item.key}
+            />
+          ),
+        )}
       </nav>
 
       {signedIn ? (

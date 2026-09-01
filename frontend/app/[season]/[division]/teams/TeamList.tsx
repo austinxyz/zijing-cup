@@ -33,7 +33,7 @@ export function TeamList({
     // teams at 46px already overflow a short window. The scroll goes on the
     // list, not this column: on the column it would carry the count header
     // away with it.
-    <div className="flex w-[248px] flex-none flex-col overflow-hidden border-r border-border bg-surface">
+    <div className="flex w-full flex-none flex-col overflow-hidden border-border bg-surface md:w-[248px] md:border-r">
       <div className="flex flex-none items-baseline justify-between gap-2 border-b border-border px-3.5 py-[13px]">
         <span className="font-mono text-[11px] tracking-wide text-muted-foreground">
           球队 · {teams.length}

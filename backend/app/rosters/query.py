@@ -23,6 +23,7 @@ from app.models import (
     Player,
     PlayerSeasonUtr,
     PlayerTeamMembership,
+    SeasonLock,
     Team,
 )
 from app.players.utr_chain import SeasonUtrView, UtrOrigin, resolve_match_utr
@@ -126,6 +127,11 @@ class RosterPlayerOut(BaseModel):
 class TeamRosterOut(BaseModel):
     team: TeamOut
     players: list[RosterPlayerOut]
+    #: Whether the season is frozen (a `season_locks` row exists for the year).
+    #: Read-only, for the edit UI: while unlocked, writing a current doubles UTR
+    #: also overwrites the participation UTR, and the editor says so; once
+    #: locked, the backend refuses that write, so the warning must not show.
+    locked: bool
 
 
 def _division_exists(session: Session, year: int, code: str) -> bool:
@@ -284,4 +290,5 @@ def get_team_roster(
             division_code=team.division_code,
         ),
         players=players,
+        locked=session.get(SeasonLock, year) is not None,
     )

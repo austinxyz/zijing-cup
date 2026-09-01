@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getDivisionTeams } from "@/lib/api";
 import { SelectedTeamList } from "./SelectedTeamList";
+import { TeamsPanes } from "./TeamsPanes";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,14 +24,16 @@ export default async function TeamsLayout({ children, params }: LayoutProps) {
   const teams = await getDivisionTeams(season, division);
   if (teams === null) notFound();
 
+  // TeamsPanes owns the row and the narrow-viewport show/hide; each page still
+  // decides what scrolls inside it, so a page keeps its own header fixed while
+  // its body moves.
   return (
-    <div className="flex flex-1 min-h-0">
-      <SelectedTeamList season={season} division={division} teams={teams} />
-      {/* Each page decides what scrolls inside it, so a page can keep its
-          own header fixed while its body moves. */}
-      <main className="flex flex-1 min-w-0 flex-col overflow-hidden bg-background">
-        {children}
-      </main>
-    </div>
+    <TeamsPanes
+      list={
+        <SelectedTeamList season={season} division={division} teams={teams} />
+      }
+    >
+      {children}
+    </TeamsPanes>
   );
 }

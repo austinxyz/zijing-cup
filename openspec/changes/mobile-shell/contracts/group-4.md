@@ -1,0 +1,14 @@
+### Contract
+- **Spec**:
+  - 「窄视口（< 768px）下，已登录的管理员 SHALL 仍能就地修改一名队员的当前单打 / 双打 UTR。功能与宽视口是同一条路径；呈现形态可以不同。」（team-roster-ui）
+  - 「窄视口的编辑入口 SHALL 遵循与宽视口相同的两条既有约束：未登录时不出现任何编辑入口；输入框只填数值，状态默认已认证。可点区域高度 SHALL 不小于 44px。」（team-roster-ui）
+  - 「赛季未锁时写入当前双打 UTR 会同时覆盖该赛季的参赛 UTR，窄视口的编辑界面 SHALL 同样把这件事说出来。」（team-roster-ui）
+- **Runtime**: `cd backend && ./.venv-std/Scripts/python.exe -m pytest tests/ -k roster` 与 `cd frontend && npx vitest run app/[season]/[division]/teams/[code]/` → expected: 后端 `locked` 字段用例 + 抽屉开合、未登录不出现入口、赛季未锁说明用例全绿
+- **Code**:
+  - 写接口自己会拒绝没有管理员凭据的请求；`canEdit` 只决定要不要给一个按不动的按钮，**不是防护**。
+  - **D9（apply 拍板放宽 Non-Goal）**：名单端点 `TeamRosterOut` 新增只读 `locked: bool`（`session.get(SeasonLock, year) is not None`），只读、不写、无 migration。锁状态原本存 DB 却没返回前端，故加这一个字段。
+  - 「赛季未锁时一并覆盖参赛 UTR」是既定设计（`current-utr-io` D9），护栏只有赛季锁 —— 界面必须说出来，否则一次手填会无声覆盖组委会的冻结值。
+  - 桌面行内编辑此前没有这个说明，本次同一个 `locked` 也接上，使两种视口一致。
+  - 状态默认 `rated`，只填数值那个框即可保存。
+  - 输入框高度 ≥44px（触摸目标）。
+- **Threshold**: 70

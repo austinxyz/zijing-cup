@@ -11,21 +11,22 @@
 - **Runtime**: `cd frontend && npx vitest run lib/ app/[season]/[division]/players/` → expected: 新增的 `profileUrl` 用例与两处链接用例全绿，无既有用例转红
 - **Code**:
   - D7：`profileUrl(id)` 是纯函数 + 唯一一处字面量；`id` 为空时**调用方不调用它**，不让函数返回空串或 `#` —— 那会造出点不动的链接。
-  - D8：只改 `--color-muted` → #6b665d 与 `--color-sidebar-fg-dim` → #8f8a7e，不新增 token；`PendingNavItem` 的 `opacity-45` **删掉**，禁用态改用颜色表达 —— 不透明度会让最终对比度在源码里读不出来。
-  - `--color-muted` 变深波及桌面 ~76 处，只变颜色不变布局。
+  - D8：改**三个** token 的值，不新增 token，`PendingNavItem` 的 `opacity-45` **删掉**（禁用态改用颜色表达 —— 不透明度会让最终对比度在源码里读不出来）：`--color-muted` #79736a→#6b665d、`--color-muted-fg` #a09a90→#706a61、`--color-sidebar-fg-dim` #6f6a60→#8f8a7e。
+  - 第三个 token（`--color-muted-fg`，白底 2.79）是 propose 未预见、apply 实测才发现的第三个既有缺陷，负责人拍板本次一并修；那条 SHALL 是通用的，按规格本就该修。
+  - `--color-muted` 与 `--color-muted-fg` 变深各波及桌面数十处，只变颜色不变布局。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/mobile-shell/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — vitest: `profileUrl("abc123")` 返回 `https://app.utrsports.net/profiles/abc123`；并断言 `frontend/` 源码中该网址字面量只出现一处（grep 断言，排除测试文件）
-- [ ] 1.2 GREEN — 新建 `frontend/lib/utr.ts`，实现 `profileUrl`
-- [ ] 1.3 RED — vitest（`players/[id]/page.test.tsx`）：`utr_profile_id` 有值时，详情页渲染出 `href` 指向该 profile 的 `<a>` 且带 `rel="noopener noreferrer"`；为空时该处不是 `<a>`
-- [ ] 1.4 GREEN — 改 `players/[id]/page.tsx`：把 `…/profiles/{id}` 的纯文字换成链接，空值保持「未填」纯文本
-- [ ] 1.5 RED — vitest（`players/PlayerTable.test.tsx`）：某行 `utr_profile_id` 有值时「有」是链接；为空时仍显示「无」且不是链接、不带错误样式
-- [ ] 1.6 GREEN — 改 `players/PlayerTable.tsx`
-- [ ] 1.7 RED — vitest：`Sidebar` 的未开放导航项**不带任何降低不透明度的类**（断言 `wrapper.classes()` 不匹配 `/opacity-/`），且用 `text-sidebar-foreground-dim`
-- [ ] 1.8 GREEN — 改 `frontend/app/globals.css` 的 `--color-muted` 与 `--color-sidebar-fg-dim` 两个值；删掉 `Sidebar.tsx` 的 `PendingNavItem` 上那个 `opacity-45`
-- [ ] 1.9 实测对比度 — 起 dev stack，用 computed style 逐节点量桌面四条读路由 + 队员管理两页：报告低于 4.5:1 的节点数应为 0；把改前/改后的数字记进 eval-log.md（改前已知：表头 4.09、侧栏未开放项合成后 1.63）
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.0 CONTRACT — write openspec/changes/mobile-shell/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — vitest: `profileUrl("abc123")` 返回 `https://app.utrsports.net/profiles/abc123`；并断言 `frontend/` 源码中该网址字面量只出现一处（grep 断言，排除测试文件）
+- [x] 1.2 GREEN — 新建 `frontend/lib/utr.ts`，实现 `profileUrl`
+- [x] 1.3 RED — vitest（`players/[id]/page.test.tsx`）：`utr_profile_id` 有值时，详情页渲染出 `href` 指向该 profile 的 `<a>` 且带 `rel="noopener noreferrer"`；为空时该处不是 `<a>`
+- [x] 1.4 GREEN — 改 `players/[id]/page.tsx`：把 `…/profiles/{id}` 的纯文字换成链接，空值保持「未填」纯文本
+- [x] 1.5 RED — vitest（`players/PlayerTable.test.tsx`）：某行 `utr_profile_id` 有值时「有」是链接；为空时仍显示「无」且不是链接、不带错误样式
+- [x] 1.6 GREEN — 改 `players/PlayerTable.tsx`
+- [x] 1.7 RED — vitest：`Sidebar` 的未开放导航项**不带任何降低不透明度的类**（断言 `wrapper.classes()` 不匹配 `/opacity-/`），且用 `text-sidebar-foreground-dim`
+- [x] 1.8 GREEN — 改 `frontend/app/globals.css` 的 `--color-muted` 与 `--color-sidebar-fg-dim` 两个值；删掉 `Sidebar.tsx` 的 `PendingNavItem` 上那个 `opacity-45`
+- [x] 1.9 实测对比度 — 起 dev stack，用 computed style 逐节点量桌面四条读路由 + 队员管理两页：报告低于 4.5:1 的节点数应为 0；把改前/改后的数字记进 eval-log.md（改前已知：表头 4.09、侧栏未开放项合成后 1.63）
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 应用壳的窄视口版式：顶栏 + tab 条 + 高度模型
 
@@ -44,16 +45,16 @@
   - D2：隐藏用 `display:none`（Tailwind `hidden`），不用 `visibility`/`opacity` —— 隐藏的一侧必须从无障碍树里消失，否则读屏会念到两份导航。
 - **Threshold**: 70
 
-- [ ] 2.0 CONTRACT — write openspec/changes/mobile-shell/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-31-mobile-shell-mocks.html#teams-list` 与 `#season-switcher`；记下顶栏用的是 `--color-sidebar-*` / `--color-sidebar-well`（不是内容区 token）、tab 高 44px、四项 tab 的逐字文案（队伍 / 阵容 / 对手 + 「未开放」/ 规则）
-- [ ] 2.2 RED — vitest：抽出的 nav 数据源导出五项（含队员管理），而 `TopNav` 渲染出的项恰为四项且**不含**「队员管理」；断言 `wrapper.classes()` 含 `bg-sidebar` 一类的 token 类而非硬编码颜色
-- [ ] 2.3 GREEN — 抽 `navItems` 数据源；新建 `TopNav`（顶栏 + tab 条 + 赛季切换器），`Sidebar` 改为消费同一份数据源
-- [ ] 2.4 RED — vitest：`TopNav` 的当前区段选中态由 `useSelectedLayoutSegment()` 推导（在球队名单路由下「队伍」为选中态）；「对手对比」是禁用态且**不是** `<a>`；每个 tab 的类里含 `h-11` 或等价的 ≥44px 高度
-- [ ] 2.5 GREEN — 实现选中态与禁用态
-- [ ] 2.6 RED — vitest（`layout.test.tsx`）：壳的类中不含 `min-h-[640px]` 在窄视口生效的形式；含 `dvh` 形式的高度；滚动容器不是顶栏的祖先
-- [ ] 2.7 GREEN — 改 `[season]/[division]/layout.tsx` 的高度模型与断点分支（窄视口纵向堆叠、宽视口保持左右分栏）
-- [ ] 2.8 VISUAL DIFF — 起 dev stack（`npm run dev --prefix frontend`），把视口设为 **375×667**，逐条访问 `/2025/silver/rules`、`/teams`、`/lineup`；对照 `#teams-list` 与 `#rules` 两屏；**同时用脚本量**：文档无横向溢出、顶栏在滚动后仍可见、tab 高度 ≥44px、对比度 0 个不合格。宽视口（≥768px）回看一遍确认桌面未变形
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.0 CONTRACT — write openspec/changes/mobile-shell/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 MOCK — 打开 `docs/superpowers/specs/mocks/2026-08-31-mobile-shell-mocks.html#teams-list` 与 `#season-switcher`；记下顶栏用的是 `--color-sidebar-*` / `--color-sidebar-well`（不是内容区 token）、tab 高 44px、四项 tab 的逐字文案（队伍 / 阵容 / 对手 + 「未开放」/ 规则）
+- [x] 2.2 RED — vitest：抽出的 nav 数据源导出五项（含队员管理），而 `TopNav` 渲染出的项恰为四项且**不含**「队员管理」；断言 `wrapper.classes()` 含 `bg-sidebar` 一类的 token 类而非硬编码颜色
+- [x] 2.3 GREEN — 抽 `navItems` 数据源；新建 `TopNav`（顶栏 + tab 条 + 赛季切换器），`Sidebar` 改为消费同一份数据源
+- [x] 2.4 RED — vitest：`TopNav` 的当前区段选中态由 `useSelectedLayoutSegment()` 推导（在球队名单路由下「队伍」为选中态）；「对手对比」是禁用态且**不是** `<a>`；每个 tab 的类里含 `h-11` 或等价的 ≥44px 高度
+- [x] 2.5 GREEN — 实现选中态与禁用态
+- [x] 2.6 RED — vitest（`layout.test.tsx`）：壳的类中不含 `min-h-[640px]` 在窄视口生效的形式；含 `dvh` 形式的高度；滚动容器不是顶栏的祖先
+- [x] 2.7 GREEN — 改 `[season]/[division]/layout.tsx` 的高度模型与断点分支（窄视口纵向堆叠、宽视口保持左右分栏）
+- [x] 2.8 VISUAL DIFF — 起 dev stack（`npm run dev --prefix frontend`），把视口设为 **375×667**，逐条访问 `/2025/silver/rules`、`/teams`、`/lineup`；对照 `#teams-list` 与 `#rules` 两屏；**同时用脚本量**：文档无横向溢出、顶栏在滚动后仍可见、tab 高度 ≥44px、对比度 0 个不合格。宽视口（≥768px）回看一遍确认桌面未变形
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 球队两屏与窄视口名单行（含名单页的 UTR 链接）
 
@@ -72,16 +73,16 @@
   - 参赛 UTR 为 null 的队员**仍要占一行**，写「无参赛 UTR」，不是 0（0 是合法 UTR）也不是跳过 —— 跳过会让球队列的人数与名单条数对不上而页面不说。
 - **Threshold**: 70
 
-- [ ] 3.0 CONTRACT — write openspec/changes/mobile-shell/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 MOCK — 打开 `#teams-list` 与 `#roster`；记下球队行 52px / 名单行两层结构（主行 序号·姓名+性别·参赛UTR，副行 来源标签）、返回条「‹ 球队列表」的逐字文案、有链接的姓名带下划线而无链接的是纯文字
-- [ ] 3.2 RED — vitest：窄视口分支下 `teams/` 索引路由不渲染「从左侧选一支球队」文案；宽视口分支下仍渲染
-- [ ] 3.3 GREEN — 改 `teams/layout.tsx` 与索引页：按 segment + 断点决定球队列与内容区各自的可见性（`hidden` / `md:flex`）
-- [ ] 3.4 RED — vitest：窄视口名单渲染出逐行列表（非 `<table>`），行内含参赛 UTR 与来源标签，**不含**当前单打/当前双打；`match_utr` 为 null 的队员仍有一行且文案为「无参赛 UTR」
-- [ ] 3.5 GREEN — 抽共用的「一名队员的展示数据」纯函数；实现窄视口名单列表 DOM
-- [ ] 3.6 RED — vitest：`utr_profile_id` 有值时姓名是 `<a>` 且 `href` 由 `profileUrl` 给出、带 `rel="noopener noreferrer"`；为空时姓名是纯文本且页面无额外提示
-- [ ] 3.7 GREEN — 名单页姓名接上 `profileUrl`（宽窄两套 DOM 都接）
-- [ ] 3.8 VISUAL DIFF — dev stack，视口 375×667，访问 `/2025/silver/teams` 与人数最多的那支队（**SJTU 26 人**）；对照 `#teams-list` 与 `#roster`；量：18 队与 26 人两屏都有真实滚动容器（`scrollHeight > clientHeight`）、能滚到最后一行、顶栏不跟着卷走、无横向溢出、对比度 0 不合格。宽视口回看确认桌面名单表 7 列未变
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.0 CONTRACT — write openspec/changes/mobile-shell/contracts/group-3.md with the ### Contract block above
+- [x] 3.1 MOCK — 打开 `#teams-list` 与 `#roster`；记下球队行 52px / 名单行两层结构（主行 序号·姓名+性别·参赛UTR，副行 来源标签）、返回条「‹ 球队列表」的逐字文案、有链接的姓名带下划线而无链接的是纯文字
+- [x] 3.2 RED — vitest：窄视口分支下 `teams/` 索引路由不渲染「从左侧选一支球队」文案；宽视口分支下仍渲染
+- [x] 3.3 GREEN — 改 `teams/layout.tsx` 与索引页：按 segment + 断点决定球队列与内容区各自的可见性（`hidden` / `md:flex`）
+- [x] 3.4 RED — vitest：窄视口名单渲染出逐行列表（非 `<table>`），行内含参赛 UTR 与来源标签，**不含**当前单打/当前双打；`match_utr` 为 null 的队员仍有一行且文案为「无参赛 UTR」
+- [x] 3.5 GREEN — 抽共用的「一名队员的展示数据」纯函数；实现窄视口名单列表 DOM
+- [x] 3.6 RED — vitest：`utr_profile_id` 有值时姓名是 `<a>` 且 `href` 由 `profileUrl` 给出、带 `rel="noopener noreferrer"`；为空时姓名是纯文本且页面无额外提示
+- [x] 3.7 GREEN — 名单页姓名接上 `profileUrl`（宽窄两套 DOM 都接）
+- [x] 3.8 VISUAL DIFF — dev stack，视口 375×667，访问 `/2025/silver/teams` 与人数最多的那支队（**SJTU 26 人**）；对照 `#teams-list` 与 `#roster`；量：18 队与 26 人两屏都有真实滚动容器（`scrollHeight > clientHeight`）、能滚到最后一行、顶栏不跟着卷走、无横向溢出、对比度 0 不合格。宽视口回看确认桌面名单表 7 列未变
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 4. 窄视口下的行内编辑抽屉
 
@@ -90,22 +91,26 @@
   - 「窄视口（< 768px）下，已登录的管理员 SHALL 仍能就地修改一名队员的当前单打 / 双打 UTR。功能与宽视口是同一条路径；呈现形态可以不同。」（team-roster-ui）
   - 「窄视口的编辑入口 SHALL 遵循与宽视口相同的两条既有约束：未登录时不出现任何编辑入口；输入框只填数值，状态默认已认证。可点区域高度 SHALL 不小于 44px。」（team-roster-ui）
   - 「赛季未锁时写入当前双打 UTR 会同时覆盖该赛季的参赛 UTR，窄视口的编辑界面 SHALL 同样把这件事说出来。」（team-roster-ui）
-- **Runtime**: `cd frontend && npx vitest run app/[season]/[division]/teams/[code]/` → expected: 抽屉的开合、未登录不出现入口、赛季未锁时的说明三组用例全绿
+- **Runtime**: `cd backend && ./.venv-std/Scripts/python.exe -m pytest tests/ -k roster` 与 `cd frontend && npx vitest run app/[season]/[division]/teams/[code]/` → expected: 后端 `locked` 字段用例 + 抽屉开合、未登录不出现入口、赛季未锁说明用例全绿
 - **Code**:
   - 写接口自己会拒绝没有管理员凭据的请求；`canEdit` 只决定要不要给一个按不动的按钮，**不是防护**。
+  - **D9（apply 拍板放宽 Non-Goal）**：名单端点 `TeamRosterOut` 新增只读 `locked: bool`（`session.get(SeasonLock, year) is not None`），只读、不写、无 migration。锁状态原本存 DB 却没返回前端，故加这一个字段。
   - 「赛季未锁时一并覆盖参赛 UTR」是既定设计（`current-utr-io` D9），护栏只有赛季锁 —— 界面必须说出来，否则一次手填会无声覆盖组委会的冻结值。
+  - 桌面行内编辑此前没有这个说明，本次同一个 `locked` 也接上，使两种视口一致。
   - 状态默认 `rated`，只填数值那个框即可保存。
   - 输入框高度 ≥44px（触摸目标）。
 - **Threshold**: 70
 
-- [ ] 4.0 CONTRACT — write openspec/changes/mobile-shell/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 MOCK — 打开 `#inline-edit`；记下抽屉的三块（当前双打 + 状态分段控件、当前单打、赛季未锁的说明）、输入框 44px、按钮 42px、说明的逐字文案
-- [ ] 4.2 RED — vitest：已登录时窄视口名单行有编辑入口且可点高度 ≥44px；未登录时整页无任何编辑入口
-- [ ] 4.3 GREEN — 实现窄视口的编辑抽屉与入口
-- [ ] 4.4 RED — vitest：赛季未锁时抽屉内呈现「保存会把该赛季的参赛 UTR 一并改成同一个值」这一说明；赛季已锁时不呈现该说明
-- [ ] 4.5 GREEN — 接上赛季锁状态并渲染说明
-- [ ] 4.6 VISUAL DIFF — dev stack，375×667，以管理员身份打开一支队的名单并点开某一行；对照 `#inline-edit`；量输入框与按钮高度、抽屉内可滚动、对比度 0 不合格
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 4.0 CONTRACT — write openspec/changes/mobile-shell/contracts/group-4.md with the ### Contract block above
+- [x] 4.1 MOCK — 打开 `#inline-edit`；记下抽屉的三块（当前双打 + 状态分段控件、当前单打、赛季未锁的说明）、输入框 44px、按钮 42px、说明的逐字文案
+- [x] 4.2 RED — pytest：`get_team_roster` 在该赛季有 `SeasonLock` 行时返回 `locked=True`，无行时 `False`
+- [x] 4.3 GREEN — `TeamRosterOut` 加 `locked` 字段并在查询里填值；`lib/api.ts` 的 `TeamRoster` 类型加 `locked: boolean`
+- [x] 4.4 RED — vitest：已登录时窄视口名单行有编辑入口且可点高度 ≥44px；未登录时整页无任何编辑入口
+- [x] 4.5 GREEN — 实现窄视口的编辑抽屉与入口
+- [x] 4.6 RED — vitest：赛季未锁（`locked=false`）时抽屉内呈现「保存会把该赛季的参赛 UTR 一并改成同一个值」这一说明；赛季已锁（`locked=true`）时不呈现该说明
+- [x] 4.7 GREEN — 把 `locked` 从 page 传到编辑组件并按它渲染说明（桌面与手机同一个来源）
+- [x] 4.8 VISUAL DIFF — dev stack，375×667，以管理员身份打开一支队的名单并点开某一行；对照 `#inline-edit`；量输入框与按钮高度、抽屉内可滚动、对比度 0 不合格
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 5. 排阵页的窄视口版式
 
@@ -123,24 +128,33 @@
   - 摘要点名到人的理由要落到实现上：一份受约束的结果与无约束最优解在屏幕上长得一样；只给数量仍需展开面板才能判断该不该信这份结果。
 - **Threshold**: 70
 
-- [ ] 5.0 CONTRACT — write openspec/changes/mobile-shell/contracts/group-5.md with the ### Contract block above
-- [ ] 5.1 MOCK — 打开 `#lineup-results` 与 `#lineup-constraints`；记下摘要条的形态（「已锁 陈嘉禾+吴普强 · 排除 1 人」+「改约束」）、抽屉最高 78% 且上方留缝、按钮 42px、「重新搜索」是主操作
-- [ ] 5.2 RED — vitest：窄视口下首屏渲染候选阵容而控件不在首屏；点开/关闭面板后地址未变
-- [ ] 5.3 GREEN — 实现窄视口的结果打底 + 约束抽屉（`LineupControls` 复用，外面套抽屉）
-- [ ] 5.4 RED — vitest：有锁定时摘要含两名队员姓名；有排除时含被排除者姓名；无任何约束时摘要逐字说明当前没有约束
-- [ ] 5.5 GREEN — 实现约束摘要
-- [ ] 5.6 RED — vitest：在面板内增删一个约束不发出搜索请求（不触发导航），点「重新搜索」才提交
-- [ ] 5.7 GREEN — 确认面板内是既有 GET form 且无 onChange 自动提交
-- [ ] 5.8 VISUAL DIFF — dev stack，375×667，打开一支 26 人球队的排阵页（带一个锁定与一个排除）；对照 `#lineup-results` 与 `#lineup-constraints`；量抽屉内可滚动、按钮高度、摘要在关闭态可见、对比度 0 不合格。宽视口回看确认桌面两栏未变
-- [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 5.0 CONTRACT — write openspec/changes/mobile-shell/contracts/group-5.md with the ### Contract block above
+- [x] 5.1 MOCK — 打开 `#lineup-results` 与 `#lineup-constraints`；记下摘要条的形态（「已锁 陈嘉禾+吴普强 · 排除 1 人」+「改约束」）、抽屉最高 78% 且上方留缝、按钮 42px、「重新搜索」是主操作
+- [x] 5.2 RED — vitest：窄视口下首屏渲染候选阵容而控件不在首屏；点开/关闭面板后地址未变
+- [x] 5.3 GREEN — 实现窄视口的结果打底 + 约束抽屉（`LineupControls` 复用，外面套抽屉）
+- [x] 5.4 RED — vitest：有锁定时摘要含两名队员姓名；有排除时含被排除者姓名；无任何约束时摘要逐字说明当前没有约束
+- [x] 5.5 GREEN — 实现约束摘要
+- [x] 5.6 RED — vitest：在面板内增删一个约束不发出搜索请求（不触发导航），点「重新搜索」才提交
+- [x] 5.7 GREEN — 确认面板内是既有 GET form 且无 onChange 自动提交
+- [x] 5.8 VISUAL DIFF — dev stack，375×667，打开一支 26 人球队的排阵页（带一个锁定与一个排除）；对照 `#lineup-results` 与 `#lineup-constraints`；量抽屉内可滚动、按钮高度、摘要在关闭态可见、对比度 0 不合格。宽视口回看确认桌面两栏未变
+- [x] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+
+### 5.F Fixes (attempt 2) — HIGH/MEDIUM issues from code review
+
+- [x] 5.F1 FIX — **Touch targets: select & checkbox in drawer variant undersized** — `LineupControls.tsx:33` `PlayerSelect` has `h-[34px]` (not 44px); line 141 checkbox label has `px-2 py-1` (no min-height). Contract item 5 requires ≥44px for "inputs"; these are now in touch-first mobile sheet. Fix: Add `variant` parameter to `PlayerSelect`; bump height to `h-11` when `variant="drawer"`. Also add min-h/padding to checkbox label when inside drawer.
+- [x] 5.F2 FIX — **No-auto-fire test gives false confidence** — `LineupMobileControls.test.tsx:341-350` asserts `form.getAttribute("onchange")===null`, but React never sets literal `onchange` DOM attr for synthetic handlers — test passes identically with or without auto-fire behavior. Real behavior (select/checkbox `onChange` + navigation) is never exercised. Fix: Render real `LineupControls` (or stub with a select), fire `change` event, assert no location change / no navigation spy triggered.
+- [x] 5.F3 FIX — **Horizontal overflow risk on select with long names** — `LineupControls.tsx:104-127` lock row has `flex-1` select with default `min-w-auto`, which can refuse to shrink on 360px viewport when select content (long player names) is wider than available space, forcing row to overflow horizontally. Undetected in existing tests. Fix: Add `min-w-0` to `PlayerSelect` or flex-row container so select shrinks properly; add regression test at 360px viewport.
+- [x] 5.F4 FIX — **Modal focus lands on close button, not first form field** — `LineupMobileControls.tsx:38` `querySelector("select, input, button")` matches header close-button first (rendered before controls in DOM), not the first editable field. If intent was to focus first input, this focuses "close" instead. Fix: Scope query to `.overflow-y-auto` child only, or query for `"select, input"` only (not `button`).
+
+Then re-run 5.E EVAL with attempt 2.
 
 ## 6. 验证与交付
 
-- [ ] 6.1 跑后端测试 —— `cd backend && uv run pytest`（本机若被 Application Control 拦，改走 `backend/.venv-std/Scripts/python.exe -m pytest`）。本次不动后端，这一步是确认没有连带损伤
-- [ ] 6.2 跑前端测试 —— `cd frontend && npm run test`
-- [ ] 6.3 类型检查 —— `cd frontend && npx tsc --noEmit`。**vitest 走 esbuild 只转译不校验类型**，测试全绿不等于构建能过；这条单列
-- [ ] 6.4 **补种再看页面**：跑完 pytest 本地库是空的（fixture 会 TRUNCATE 规则表与名单表）。顺序写死 —— 先跑测试 → `bash backend/scripts/reseed-local.sh` → 再做任何视觉核对，中途不插测试
-- [ ] 6.5 全站对比度终检 —— 窄视口（375×667）与宽视口各跑一遍 computed-style 扫描，报告低于 4.5:1 的节点数应为 0；与视觉稿的基线（370 个叶子节点、最低 4.69）对齐后记进 eval-log.md
-- [ ] 6.6 桌面回归核对 —— 逐屏比对四条读路由 + 队员管理两页：布局（行高、列数、列宽）与改动前一致，差别只有两个 token 的颜色与三处新增链接
-- [ ] 6.7 Run superpowers:verification-before-completion —— 跑 `openspec/config.yaml` 的 `test_commands` 与全部 `custom_verification_checks`（含真实球员数据扫描、凭据泄漏扫描、migration schema 守卫）
-- [ ] 6.8 `openspec validate mobile-shell` 通过；`openspec status --change mobile-shell` 全部 done
+- [x] 6.1 跑后端测试 —— `cd backend && uv run pytest`（本机若被 Application Control 拦，改走 `backend/.venv-std/Scripts/python.exe -m pytest`）。本次不动后端，这一步是确认没有连带损伤
+- [x] 6.2 跑前端测试 —— `cd frontend && npm run test`
+- [x] 6.3 类型检查 —— `cd frontend && npx tsc --noEmit`。**vitest 走 esbuild 只转译不校验类型**，测试全绿不等于构建能过；这条单列
+- [x] 6.4 **补种再看页面**：跑完 pytest 本地库是空的（fixture 会 TRUNCATE 规则表与名单表）。顺序写死 —— 先跑测试 → `bash backend/scripts/reseed-local.sh` → 再做任何视觉核对，中途不插测试
+- [x] 6.5 全站对比度终检 —— 窄视口（375×667）与宽视口各跑一遍 computed-style 扫描，报告低于 4.5:1 的节点数应为 0；与视觉稿的基线（370 个叶子节点、最低 4.69）对齐后记进 eval-log.md
+- [x] 6.6 桌面回归核对 —— 逐屏比对四条读路由 + 队员管理两页：布局（行高、列数、列宽）与改动前一致，差别只有两个 token 的颜色与三处新增链接
+- [x] 6.7 Run superpowers:verification-before-completion —— 跑 `openspec/config.yaml` 的 `test_commands` 与全部 `custom_verification_checks`（含真实球员数据扫描、凭据泄漏扫描、migration schema 守卫）
+- [x] 6.8 `openspec validate mobile-shell` 通过；`openspec status --change mobile-shell` 全部 done

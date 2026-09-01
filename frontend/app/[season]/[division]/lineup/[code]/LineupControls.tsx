@@ -8,6 +8,10 @@ interface LineupControlsProps {
    *  only record of what was locked, so a link reproduces the same search. */
   locks: Record<string, [string, string]>;
   excluded: string[];
+  /** "sidebar" is the desktop left column; "drawer" is the same form inside
+   *  the mobile bottom sheet — full width, no fixed width or right border, and
+   *  the sheet owns the scroll. Same fields either way; only the frame differs. */
+  variant?: "sidebar" | "drawer";
 }
 
 function PlayerSelect({
@@ -15,18 +19,25 @@ function PlayerSelect({
   label,
   roster,
   value,
+  tall = false,
 }: {
   name: string;
   label: string;
   roster: LineupPlayer[];
   value: string;
+  /** 44px in the mobile sheet (touch target); the desktop column stays 34px.
+   *  min-w-0 lets a flex select shrink past a long option name instead of
+   *  forcing the row wider than the viewport. */
+  tall?: boolean;
 }) {
   return (
     <select
       name={name}
       aria-label={label}
       defaultValue={value}
-      className="h-[34px] flex-1 rounded-token border border-border bg-surface px-2.5 text-[12.5px] text-foreground"
+      className={`min-w-0 flex-1 rounded-token border border-border bg-surface px-2.5 text-[12.5px] text-foreground ${
+        tall ? "h-11" : "h-[34px]"
+      }`}
     >
       {/* The empty option is not "nobody": it is this line left to the
           engine, which is the normal case and has to read that way. */}
@@ -68,15 +79,23 @@ export function LineupControls({
   roster,
   locks,
   excluded,
+  variant = "sidebar",
 }: LineupControlsProps) {
   const excludedSet = new Set(excluded);
+
+  const frame =
+    variant === "sidebar"
+      ? // Desktop left column, hidden on mobile (the drawer copy takes over there).
+        "hidden w-[520px] flex-none border-r border-border overflow-y-auto md:flex"
+      : // Inside the mobile sheet: full width, no border; the sheet scrolls.
+        "flex w-full";
 
   return (
     <form
       method="get"
       role="search"
       aria-label="锁定与排除"
-      className="flex w-[520px] flex-none flex-col gap-3.5 overflow-y-auto border-r border-border bg-surface px-[18px] py-4"
+      className={`flex-col gap-3.5 bg-surface px-[18px] py-4 ${frame}`}
     >
       <div className="flex flex-col gap-[3px]">
         <span className="text-[13px] font-semibold text-foreground">锁定搭档</span>
@@ -106,12 +125,14 @@ export function LineupControls({
                 label={`${line.code} 第一位`}
                 roster={roster}
                 value={pair[0]}
+                tall={variant === "drawer"}
               />
               <PlayerSelect
                 name={`${line.code}b`}
                 label={`${line.code} 第二位`}
                 roster={roster}
                 value={pair[1]}
+                tall={variant === "drawer"}
               />
             </div>
           );
@@ -126,7 +147,10 @@ export function LineupControls({
           {roster.map((player) => (
             <label
               key={player.key}
-              className="flex items-center gap-1.5 rounded-token border border-border px-2 py-1 text-[12.5px] text-foreground"
+              className={`flex items-center gap-1.5 rounded-token border border-border px-2 text-[12.5px] text-foreground ${
+                // 44px tap target in the sheet; the desktop column stays compact.
+                variant === "drawer" ? "min-h-11 py-2" : "py-1"
+              }`}
             >
               <input
                 type="checkbox"
@@ -142,7 +166,11 @@ export function LineupControls({
 
       <button
         type="submit"
-        className="flex h-9 flex-none items-center justify-center rounded-token bg-primary text-[13px] font-medium text-primary-foreground"
+        className={`flex flex-none items-center justify-center rounded-token bg-primary text-[13px] font-medium text-primary-foreground ${
+          // 44px touch target inside the mobile sheet; the desktop column keeps
+          // its tighter 36px.
+          variant === "drawer" ? "h-11" : "h-9"
+        }`}
       >
         搜索阵容
       </button>

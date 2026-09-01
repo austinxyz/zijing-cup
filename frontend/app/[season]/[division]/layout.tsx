@@ -40,7 +40,7 @@ export default async function DivisionLayout({ children, params }: LayoutProps) 
   if (seasons.length > 0 && !match) notFound();
 
   return (
-    <div className="flex h-screen min-h-[640px] overflow-hidden bg-background">
+    <div className="shell-height flex flex-col overflow-hidden bg-background md:min-h-[640px] md:flex-row">
       <ActiveSidebar
         season={season}
         division={division}

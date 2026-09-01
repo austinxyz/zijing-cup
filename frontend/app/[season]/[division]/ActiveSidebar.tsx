@@ -7,6 +7,7 @@ import {
 
 import type { SeasonIndex } from "@/lib/api";
 import { Sidebar, type NavSection } from "./Sidebar";
+import { TopNav } from "./TopNav";
 
 /**
  * Tells the sidebar which section the URL is under, and which team.
@@ -48,5 +49,13 @@ export function ActiveSidebar(props: {
       ? decodeURIComponent(segments[1])
       : undefined;
 
-  return <Sidebar {...props} section={section} teamCode={teamCode} />;
+  // Both shells rendered; CSS shows one. The top bar comes first so it sits
+  // above the content in the mobile column; the sidebar is hidden there and
+  // takes the left of the desktop row. Same section + teamCode feed both.
+  return (
+    <>
+      <TopNav {...props} section={section} teamCode={teamCode} />
+      <Sidebar {...props} section={section} teamCode={teamCode} />
+    </>
+  );
 }

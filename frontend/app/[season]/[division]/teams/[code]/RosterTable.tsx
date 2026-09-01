@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui";
 import type { RosterPlayer } from "@/lib/api";
 import { playerName } from "@/lib/name";
+import { profileUrl } from "@/lib/utr";
 
 /** The committee's own class for a participation value.
  *
@@ -60,13 +61,18 @@ export interface CurrentUtrEdit {
 export function RosterTable({
   players,
   canEdit = false,
+  locked = false,
   onSave,
 }: {
   players: RosterPlayer[];
   canEdit?: boolean;
+  /** Whether the season is frozen. While false, saving a doubles UTR also
+   *  overwrites the participation UTR, and the editor says so. */
+  locked?: boolean;
   onSave?: (edit: CurrentUtrEdit) => void;
 }) {
   const [editing, setEditing] = useState<number | null>(null);
+  const [drawerFor, setDrawerFor] = useState<number | null>(null);
 
   return (
     <div>
@@ -74,10 +80,87 @@ export function RosterTable({
           gets used as official, and these are typed in by hand in the admin
           screens with nothing syncing them. Today the two columns are
           entirely 「—」, which without this line reads as a broken page. */}
-      <p className="border-b border-border bg-surface-muted px-3.5 py-1.5 text-[11px] text-foreground">
+      <p className="hidden border-b border-border bg-surface-muted px-3.5 py-1.5 text-[11px] text-foreground md:block">
         当前 UTR 由人工维护，未与 UTR 官网同步
+        {canEdit && !locked ? (
+          // Same fact the mobile drawer states, on the same `locked` source:
+          // while unlocked, saving a doubles UTR overwrites the participation
+          // UTR. Only for an editor, and only when it is actually true.
+          <span className="text-warning">
+            {" "}· 保存当前双打 UTR 会一并覆盖本赛季参赛 UTR
+          </span>
+        ) : null}
       </p>
-      <table className="w-full table-fixed border-collapse bg-surface">
+
+      {/* Narrow viewport: a card list, not the table. The two columns for the
+          current singles/doubles are dropped — a row that carried five numbers
+          would not stay readable at 375px, and the live values are one tap away
+          through the profile link. The participation UTR (what a lineup is
+          checked against) is the prominent number. Same display helpers as the
+          table, so the judgement cannot drift; only the layout differs. */}
+      <ul
+        role="list"
+        data-testid="roster-cards"
+        className="flex flex-col md:hidden"
+      >
+        {players.map((player, index) => (
+          <li
+            key={player.player_id}
+            className="flex items-start gap-2.5 border-b border-border px-3.5 py-2.5"
+          >
+            <span className="w-4 flex-none pt-0.5 font-mono text-[11px] text-muted-foreground">
+              {index + 1}
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="text-[14px] text-foreground">
+                <PlayerNameMaybeLink player={player} />
+                {player.gender ? (
+                  <span className="ml-1.5 text-[11px] text-muted">
+                    {GENDER_LABEL[player.gender] ?? player.gender}
+                  </span>
+                ) : null}
+              </div>
+              <SourceCell
+                ratingClass={player.rating_class}
+                underAppeal={player.under_appeal}
+              />
+            </div>
+            <div className="flex-none pt-0.5 text-right font-mono text-[15px] font-medium text-foreground">
+              <UtrCell player={player} />
+            </div>
+            {canEdit ? (
+              <button
+                type="button"
+                onClick={() => setDrawerFor(player.player_id)}
+                className="flex h-11 w-9 flex-none items-center justify-center rounded-token border border-border bg-surface text-[12px] text-foreground"
+                aria-label={`改 ${playerName(player)}`}
+              >
+                改
+              </button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+
+      {drawerFor !== null
+        ? (() => {
+            const player = players.find((p) => p.player_id === drawerFor);
+            if (!player) return null;
+            return (
+              <EditDrawer
+                player={player}
+                locked={locked}
+                onClose={() => setDrawerFor(null)}
+                onSave={(edit) => {
+                  onSave?.(edit);
+                  setDrawerFor(null);
+                }}
+              />
+            );
+          })()
+        : null}
+
+      <table className="hidden w-full table-fixed border-collapse bg-surface md:table">
       <colgroup>
         <col className="w-12" />
         <col className="w-[168px]" />
@@ -117,7 +200,7 @@ export function RosterTable({
               {index + 1}
             </Td>
             <Td className="text-[13px] text-foreground">
-              {playerName(player)}
+              <PlayerNameMaybeLink player={player} />
             </Td>
             <Td className="text-[12.5px] text-muted">
               {player.gender ? GENDER_LABEL[player.gender] ?? player.gender : ""}
@@ -176,9 +259,225 @@ export function RosterTable({
   );
 }
 
+/**
+ * The player's name, a link to their UTR profile when there is one.
+ *
+ * Checked before calling profileUrl, not inside it: a helper with an "empty"
+ * return would hand back a href that leads nowhere, and a link that cannot be
+ * clicked is worse than none. A missing id is an ordinary state — nobody has
+ * filled it in — so the name stays plain text, with no dead link and no error.
+ * Used by both the table and the card list so the two cannot disagree.
+ */
+function PlayerNameMaybeLink({ player }: { player: RosterPlayer }) {
+  const name = playerName(player);
+  if (!player.utr_profile_id) return <>{name}</>;
+  return (
+    <a
+      href={profileUrl(player.utr_profile_id)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-primary underline"
+    >
+      {name}
+    </a>
+  );
+}
+
 const STATUSES = ["", "unrated", "projected", "rated"] as const;
 
 const DEFAULT_STATUS = "rated";
+
+/**
+ * The narrow-viewport editor: a bottom drawer over the roster.
+ *
+ * Same write as the desktop inline row — one player, the id travelling with
+ * the save, never the name. The form differs because the card list is not a
+ * table: full-width 44px fields instead of cells clipped to a column. Empty
+ * rows start at `rated`, the number-only decision the person already made; an
+ * existing status is kept.
+ *
+ * While the season is unlocked it says, in words, that saving the doubles UTR
+ * also overwrites the participation UTR — the one guardrail is the season
+ * lock, so a hand-edit that forgets it would otherwise silently overwrite the
+ * committee's frozen value. Once locked the backend refuses the write, so the
+ * line would be false and is not shown.
+ */
+function EditDrawer({
+  player,
+  locked,
+  onClose,
+  onSave,
+}: {
+  player: RosterPlayer;
+  locked: boolean;
+  onClose: () => void;
+  onSave: (edit: CurrentUtrEdit) => void;
+}) {
+  const [singles, setSingles] = useState(player.singles_utr ?? "");
+  const [singlesStatus, setSinglesStatus] = useState(
+    player.singles_status ?? DEFAULT_STATUS,
+  );
+  const [doubles, setDoubles] = useState(player.doubles_utr ?? "");
+  const [doublesStatus, setDoublesStatus] = useState(
+    player.doubles_status ?? DEFAULT_STATUS,
+  );
+  const panel = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+
+  // A modal drawer, so it behaves like one: Escape closes it, and focus lands
+  // inside on open rather than staying on the card behind. A full focus trap is
+  // more than this one-form drawer needs; moving focus in and honouring Escape
+  // covers the keyboard path a screen-reader user actually takes.
+  useEffect(() => {
+    panel.current?.querySelector<HTMLElement>("input, button")?.focus();
+  }, []);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      // Named by the on-screen title (the player's name); aria-labelledby wins
+      // over aria-label when both are present, so only this one is kept.
+      aria-labelledby={titleId}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") onClose();
+      }}
+      className="fixed inset-0 z-40 flex flex-col justify-end md:hidden"
+    >
+      <button
+        type="button"
+        aria-label="关闭"
+        onClick={onClose}
+        className="absolute inset-0 bg-[#1a1917]/45"
+      />
+      <div
+        ref={panel}
+        className="relative flex max-h-[80%] flex-col rounded-t-2xl bg-surface"
+      >
+        <div className="flex flex-none items-center justify-between border-b border-border px-4 py-3">
+          <span id={titleId} className="text-[14px] font-semibold text-foreground">
+            {playerName(player)}
+            {player.gender ? (
+              <span className="ml-1.5 text-[11px] text-muted">
+                {GENDER_LABEL[player.gender] ?? player.gender}
+              </span>
+            ) : null}
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[12.5px] text-muted-foreground"
+          >
+            取消
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          <DrawerField
+            label="当前双打"
+            value={doubles}
+            status={doublesStatus}
+            onValue={setDoubles}
+            onStatus={setDoublesStatus}
+          />
+          <DrawerField
+            label="当前单打"
+            value={singles}
+            status={singlesStatus}
+            onValue={setSingles}
+            onStatus={setSinglesStatus}
+          />
+          {!locked ? (
+            <p className="mt-1 rounded-token border border-warning-border bg-warning-surface px-3 py-2 text-[12px] leading-relaxed text-warning">
+              保存会把该赛季的参赛 UTR 一并改成同一个值，覆盖原来的值（含组委会导入的）。赛季锁上后就只改当前 UTR。
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-none gap-2.5 border-t border-border bg-surface-muted px-4 py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-11 flex-1 rounded-token border border-border bg-surface text-[13px] text-foreground"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onSave({
+                player_id: player.player_id,
+                singles_utr: singles === "" ? null : singles,
+                singles_status: singlesStatus === "" ? null : singlesStatus,
+                doubles_utr: doubles === "" ? null : doubles,
+                doubles_status: doublesStatus === "" ? null : doublesStatus,
+              })
+            }
+            className="h-11 flex-1 rounded-token bg-primary text-[13px] font-medium text-primary-foreground"
+          >
+            保存
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** A UTR and its status in the drawer, full-width 44px controls. */
+function DrawerField({
+  label,
+  value,
+  status,
+  onValue,
+  onStatus,
+}: {
+  label: string;
+  value: string;
+  status: string;
+  onValue: (next: string) => void;
+  onStatus: (next: string) => void;
+}) {
+  const statusId = useId();
+  return (
+    <div className="mb-3">
+      <label className="flex flex-col gap-1">
+        <span className="font-mono text-[10.5px] text-muted-foreground">
+          {label}
+        </span>
+        {/* type="number" like the desktop editor: this field is for a UTR and
+            nothing else, and the two surfaces must not disagree on what they
+            accept. step allows the .01 the sheet uses. */}
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          aria-label={label}
+          value={value}
+          onChange={(event) => onValue(event.target.value)}
+          className="h-11 rounded-token border border-border bg-surface px-3 font-mono text-[15px] text-foreground"
+        />
+      </label>
+      <div className="mt-1.5">
+        <label className="sr-only" htmlFor={statusId}>
+          {label}状态
+        </label>
+        <select
+          id={statusId}
+          aria-label={`${label}状态`}
+          value={status}
+          onChange={(event) => onStatus(event.target.value)}
+          className="h-9 w-full rounded-token border border-border bg-surface px-2 text-[12.5px] text-foreground"
+        >
+          {STATUSES.map((option) => (
+            <option key={option} value={option}>
+              {option === "" ? "（不填状态）" : option}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
 
 /**
  * One row, mid-edit.

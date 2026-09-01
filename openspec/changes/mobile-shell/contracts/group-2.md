@@ -1,0 +1,14 @@
+### Contract
+- **Spec**:
+  - 「**窄视口（< 768px）下侧栏 SHALL 变形为顶栏加一条 tab 导航**，而不是保持固定宽度的纵向侧栏。变形只改呈现，导航语义不变。」（app-shell）
+  - 「窄视口的 tab 条 SHALL 只列「队伍」「阵容」「对手对比」「赛制规则」四项，**MUST NOT 列出「队员管理」**。」（app-shell）
+  - 「窄视口下 tab 与其他主要可点区域的可点高度 SHALL 不小于 44px。」（app-shell）
+  - 「应用壳在窄视口下 SHALL 保证任何可能变长的内容都落在一个真实的滚动容器内。壳 MUST NOT 依赖一个按 `100vh` 计算的高度……MUST NOT 施加一个大于窄视口可视高度的最小高度。」（app-shell）
+  - 「内容超出可视区时 MUST 出现滚动条或可滚动反馈，MUST NOT 被静默裁切。」（app-shell）
+  - 「滚动容器 MUST 位于顶栏与 tab 条**之下**的那一层。」（app-shell）
+- **Runtime**: `cd frontend && npx vitest run app/[season]/[division]/` → expected: 新增的 TopNav / 高度模型用例全绿，既有 Sidebar 与 layout 用例不转红
+- **Code**:
+  - D4：一份 nav 数据源 + 两个呈现组件（`Sidebar` / `TopNav`），不在一个组件里塞两套 DOM。tab 少一项是**消费侧的显式过滤**，不是数据源里恰好没列。
+  - D3：三处一起改才成立 —— `100dvh`（保留 `100vh` 作前一条声明作回退）、窄视口不施加 `min-h-[640px]`、滚动容器放在顶栏与 tab 之下那一层。给顶栏加 `flex-none` 钉不住它。
+  - D2：隐藏用 `display:none`（Tailwind `hidden`），不用 `visibility`/`opacity` —— 隐藏的一侧必须从无障碍树里消失，否则读屏会念到两份导航。
+- **Threshold**: 70

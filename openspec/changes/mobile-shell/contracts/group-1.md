@@ -1,0 +1,16 @@
+### Contract
+- **Spec**:
+  - 「网址 SHALL 由单一常量拼出（`https://app.utrsports.net/profiles/<id>`），MUST NOT 在多处各写一份字面量。外链 SHALL 带 `rel="noopener noreferrer"`。」（team-roster-ui）
+  - 「队员列表与队员详情页在 `utr_profile_id` 有值时 SHALL 把它呈现为指向该队员 UTR 官网档案页的链接，MUST NOT 只呈现为不可点的文字或一个「有 / 无」的指示。」（player-admin-ui）
+  - 「`utr_profile_id` 为空时列表 SHALL 仍然呈现「无」（它是将来合并的唯一依据，缺失必须可见），但 MUST NOT 呈现为链接或错误。」（player-admin-ui）
+  - 「文本 token 与它实际所处容器底色的对比度 SHALL 不低于 4.5:1。判定依据 MUST 是**合成之后的实际颜色**：叠加了不透明度的文本，按合成结果参与判定，MUST NOT 按 token 的原始值判定。」（app-shell）
+- **Runtime**: `cd frontend && npx vitest run lib/ app/[season]/[division]/players/` → expected: 新增的 `profileUrl` 用例与两处链接用例全绿，无既有用例转红
+- **Code**:
+  - D7：`profileUrl(id)` 是纯函数 + 唯一一处字面量；`id` 为空时**调用方不调用它**，不让函数返回空串或 `#` —— 那会造出点不动的链接。
+  - D8：改**三个** token 的值，不新增 token，`PendingNavItem` 的 `opacity-45` **删掉**（禁用态改用颜色表达 —— 不透明度会让最终对比度在源码里读不出来）：
+    - `--color-muted` #79736a → #6b665d（表头所在的 surface-muted 上 4.09 → 4.97）
+    - `--color-muted-fg` #a09a90 → #706a61（白底 2.79 → 5.35；「—」占位与小字说明所在）
+    - `--color-sidebar-fg-dim` #6f6a60 → #8f8a7e（侧栏底上合成 1.63 → 5.01）
+  - 第三个 token（`--color-muted-fg`）是 propose 时没预见、apply 实测时才发现的第三个既有缺陷，负责人拍板本次一并修（「压深到合格，三档塌成两档」）。这条 SHALL 是通用的（任何文本 token 都要 ≥4.5），所以按规格它本就该修。
+  - `--color-muted` 与 `--color-muted-fg` 变深各波及桌面数十处，只变颜色不变布局。
+- **Threshold**: 80

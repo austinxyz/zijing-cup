@@ -212,6 +212,10 @@ export interface TeamRoster {
    *  ties are common (players sit on the same cap) and a second sort would
    *  disagree with this one. */
   players: RosterPlayer[];
+  /** Whether the season is frozen. While false, saving a current doubles UTR
+   *  also overwrites the participation UTR, and the editor says so; once true
+   *  the backend refuses that write, so the warning must not show. */
+  locked: boolean;
 }
 
 /** The rows a team's UTR sheet is built from, or null when there is no such
