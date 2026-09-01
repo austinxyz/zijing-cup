@@ -19,9 +19,10 @@ Run:
 
 ```bash
 openspec status --change <name>
+openspec validate <name>
 ```
 
-Every artifact must be `done`. Every task in `tasks.md` must be `- [x]`. If any are not, warn the user and ask for confirmation to proceed.
+Every artifact must be `done`. Every task in `tasks.md` must be `- [x]`. `validate` must pass (OpenSpec ≥1.11 catches structural problems here, including zero-delta changes without `skip_specs: true`). If any are not, warn the user and ask for confirmation to proceed.
 
 If delta specs exist at `openspec/changes/<name>/specs/`, show a sync summary (compare each delta with the corresponding `openspec/specs/<capability>/spec.md`):
 
@@ -48,15 +49,16 @@ openspec archive <name>
 
 Expected: change directory moves to `openspec/changes/archive/<date>-<name>/`. Capability specs at `openspec/specs/<capability>/spec.md` are created (if new) or updated (if delta). The proposal / specs / design / tasks files now live at `openspec/changes/archive/<date>-<name>/` (referred to as `<archived-dir>` below).
 
-### 3. Cleanup step 1 — fill capability spec `## Purpose`
+### 3. Cleanup step 1 — verify capability spec `## Purpose`
 
-`openspec archive` leaves a `## Purpose\nTBD - created by archiving change.` placeholder in any newly-created capability spec. Find them:
+The spec template now authors `## Purpose` at propose time, and `openspec validate` (≥1.10) flags unwritten Purpose sections — so this step is usually a **verification**, not authoring. Check anyway (older changes, or archive-created specs, still leave placeholders):
 
 ```bash
 grep -l 'TBD - created by archiving' openspec/specs/*/spec.md
+openspec validate --archived <date>-<name>
 ```
 
-For each match, write a 1-3 sentence Purpose derived from:
+For any hit (or any Purpose that is placeholder-thin), write a 1-3 sentence Purpose derived from:
 - The change's `<archived-dir>/proposal.md` Why section
 - The requirements doc at `docs/superpowers/specs/<date>-<name>-requirements.md` Goals section
 
@@ -98,6 +100,33 @@ Examples:
 - `auth-rate-limiting` → NO (internal hardening, no UX change) → skip
 - `multi-user-auth-admin-ui` → YES (new admin UI) → update README
 
+### 6b. Cleanup step 5 — register signadot plans (only if present)
+
+If `<archived-dir>/signadot-plans/` contains plan yamls, move each validated plan into the owning capability's durable library:
+
+```bash
+mkdir -p openspec/specs/<capability>/plans
+git mv openspec/changes/archive/<date>-<name>/signadot-plans/<behavior-id>.yaml openspec/specs/<capability>/plans/
+```
+
+The accumulating `selectionHint` catalog under `openspec/specs/*/plans/` is the versioned plan library — future changes touching the same behavior reuse these plans instead of authoring from scratch. If a plan's behavior failed final validation or was descoped, delete it instead of registering it; note why in the commit message.
+
+### 6c. Cleanup step 6 — tear down validation environment (only if signadot was used)
+
+The change's ephemeral validation resources should not outlive the archive:
+
+```bash
+signadot sandbox list                       # any sandbox created for this change?
+signadot sandbox delete <sandbox-name>      # ask first if it might be shared
+```
+
+Also sweep:
+- **Draft/probe plans** created while iterating: delete unexecuted ones (`signadot plan delete <id>`); executed plans cannot be deleted (server keeps them as audit trail) — that's fine, the registered yaml in `openspec/specs/<cap>/plans/` is the durable artifact.
+- **Fork images**: remove from the local docker daemon and the cluster nodes (e.g. `kind`: `docker exec <node> ctr --namespace k8s.io images rm docker.io/library/<image>`), plus any `dist/` build output.
+- **Baseline mutations** made for smoke testing (image overrides, temporary port-forwards): restore/stop them.
+
+Keep: the Managed Plan Runner (future changes reuse it) and the registered plan library entry.
+
 ### 7. Dev log check
 
 Check whether `docs/log/YYYY-MM-DD.md` for today's date exists (use the Glob tool or, in bash: `ls docs/log/$(date +%Y-%m-%d).md 2>/dev/null`; in PowerShell: `Get-ChildItem docs/log/$((Get-Date).ToString('yyyy-MM-dd')).md`).
@@ -111,7 +140,7 @@ If Y, draft from the proposal + commits + review findings; let the user finalize
 ### 8. Commit cleanup + final summary
 
 ```bash
-git add openspec/specs/ CLAUDE.md README.md docs/log/
+git add openspec/specs/ openspec/changes/archive/ CLAUDE.md README.md docs/log/
 git commit -m "chore: archive <name> cleanup (Purpose, README, pitfalls, dev log)"
 ```
 

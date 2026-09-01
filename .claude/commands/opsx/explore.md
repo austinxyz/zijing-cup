@@ -13,6 +13,20 @@ If a topic is given, derive a kebab-case `<topic>` from it (e.g., "real-time col
 
 ---
 
+## Phase 0 — Ceremony scaling (classify before exploring)
+
+Before entering explore stance, classify the request (adopted from Superpowers 6.3 ceremony scaling). Say the classification out loud and let the user override.
+
+| Tier | Signals | Path |
+|---|---|---|
+| **spike** | one file or throwaway; bug fix; typo; experiment; "just try X" | **Exit opsx.** Tell the user this doesn't need the workflow — fix/spike directly, commit, done. No requirements doc. |
+| **bounded** | 2-5 files, one capability, low decision count, no architecture questions | **Fast track.** Phase 1 may be 2-3 turns; Phase 2 writes a SHORT requirements doc (Goals / Success Criteria / Referenced Capabilities only — mark the omitted sections `N/A (bounded)`); Phase 3 review still mandatory. |
+| **architectural** | new capability; cross-cutting change; multiple valid designs; UI surface; third-party integration | **Full flow.** All five phases, full requirements sections. |
+
+When unsure between two tiers, pick the higher one. A spike that grows past one file mid-work → stop and restart through `/opsx:explore` as bounded.
+
+---
+
 ## Phase 1 — Explore stance (free thinking)
 
 **This phase is the existing explore mode. NEVER write code, never modify code, never propose implementation. Thinking only.**
