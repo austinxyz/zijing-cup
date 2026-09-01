@@ -1,9 +1,4 @@
-import type {
-  LineupCandidate,
-  LineupPlayer,
-  LineupSearch,
-  RuleLine,
-} from "@/lib/api";
+import type { LineupSearch, RuleLine } from "@/lib/api";
 import {
   BorrowedPlayersNotice,
   InvalidLocks,
@@ -12,7 +7,9 @@ import {
   Truncated,
   UnresolvedNotice,
 } from "./LineupStates";
-import { playerName } from "@/lib/name";
+import { CandidateTable } from "./CandidateTable";
+import { CandidateRows } from "./CandidateRow";
+import { estimatesIn } from "./candidate";
 
 interface LineupResultsProps {
   search: LineupSearch;
@@ -31,118 +28,11 @@ interface LineupResultsProps {
   unconstrainedCeiling?: string | null;
 }
 
-const GENDER_LABEL: Record<string, string> = { M: "男", F: "女" };
-
-/** How many of the ten on court are playing on a derived number. */
-function estimatesIn(candidate: LineupCandidate): number {
-  return Object.values(candidate.lines)
-    .flat()
-    .filter((player) => player.origin !== "frozen").length;
-}
-
-/** Two decimal places for display. Never used for a comparison — those all
- *  happen on the server, against exact decimals. */
-function money(value: string): string {
-  const n = Number(value);
-  return Number.isFinite(n) ? n.toFixed(2) : value;
-}
-
 function difference(a: string | null, b: string | null): string | null {
   if (a === null || b === null) return null;
   const gap = Number(b) - Number(a);
   if (!Number.isFinite(gap)) return null;
   return gap.toFixed(2);
-}
-
-function PlayerName({ player }: { player: LineupPlayer }) {
-  return (
-    <>
-      {playerName(player)}
-      {/* On the number itself, not only in the summary above: a derived value
-          sorts by its size like any other, so this is the only thing telling
-          it apart while a line is checked by eye. */}
-      {player.origin !== "frozen" ? (
-        <span className="rounded-token border border-warning-border bg-warning-surface px-1 text-[10px] text-warning">
-          估算
-        </span>
-      ) : null}
-      {/* Gender is not decoration: the high-UTR limits are written per
-          gender, so a lineup shown without it cannot be checked by eye. */}
-      <span className="text-muted-foreground">
-        {player.gender ? GENDER_LABEL[player.gender] ?? player.gender : "—"}
-      </span>
-    </>
-  );
-}
-
-function CandidateCard({
-  candidate,
-  rank,
-  bufferTotal,
-  lineOrder,
-}: {
-  candidate: LineupCandidate;
-  rank: number;
-  bufferTotal: string;
-  lineOrder: string[];
-}) {
-  const estimates = estimatesIn(candidate);
-
-  return (
-    <article className="flex flex-col rounded-token border border-border bg-surface px-3 py-[11px]">
-      <div className="flex items-stretch">
-      <div className="flex w-24 flex-none flex-col gap-[3px] pr-2.5">
-        <span className="font-mono text-[10px] text-muted-foreground">#{rank}</span>
-        <span aria-label="总和" className="font-mono text-[15px] text-foreground">
-          {candidate.total}
-        </span>
-        <span className="font-mono text-[10px] text-muted">
-          {/* Both sides to the same two places. The backend sends an exact
-              decimal, and "0/0.50" next to "0.21/0.50" reads as a different
-              kind of number rather than the same one. Display only — every
-              comparison happens on the server, where the value is a
-              Decimal. */}
-          buffer {money(candidate.buffer_spent)}/{money(bufferTotal)}
-        </span>
-      </div>
-      {lineOrder.map((code) => {
-        const pair = candidate.lines[code];
-        const line = candidate.line_totals[code];
-        if (!pair || !line) return null;
-        const over = Number(line.over) > 0 ? line.over : null;
-        return (
-          <div
-            key={code}
-            className="flex min-w-0 flex-1 flex-col gap-[3px] border-l border-border px-2.5"
-          >
-            <span className="font-mono text-[10px] tracking-wide text-muted-foreground">
-              {code}
-            </span>
-            <span className="text-xs leading-snug text-foreground">
-              <PlayerName player={pair[0]} /> + <PlayerName player={pair[1]} />
-            </span>
-            <span className="font-mono text-[11px] text-muted">
-              {line.total}
-              {over ? (
-                <span className="font-mono text-[10px] text-[#b8860b]"> 超 {over}</span>
-              ) : null}
-            </span>
-          </div>
-        );
-      })}
-      </div>
-      {/* On the set, not only on the individual numbers, and across the whole
-          card rather than squeezed into the 96px total column: legality is a
-          property of the whole lineup — the line sums, the shared buffer and
-          the high-UTR count all run through these values — so one estimate
-          makes "this one is legal" itself an estimate. */}
-      {estimates > 0 ? (
-        <p className="mt-2 rounded-token border border-warning-border bg-warning-surface px-2 py-1 text-[11px] leading-snug text-warning">
-          含 {estimates} 个估算值，合法性待总表确认
-        </p>
-      ) : null}
-    </article>
-  );
 }
 
 /**
@@ -257,20 +147,20 @@ export function LineupResults({
         </span>
       </div>
 
-      {/* The list scrolls inside its own box. The shell is h-screen
-          overflow-hidden, so a long list without this is silently cut off
-          with no scrollbar to say there is more. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-        {search.candidates.map((candidate, index) => (
-          <CandidateCard
-            key={index}
-            candidate={candidate}
-            rank={index + 1}
-            bufferTotal={bufferTotal}
-            lineOrder={lineOrder}
-          />
-        ))}
-      </div>
+      {/* Wide viewport: a comparison table (candidates as rows, lines as
+          aligned columns). Each surface owns its own scroll — the shell is
+          overflow-hidden, so a long list without it is silently cut off. */}
+      <CandidateTable
+        candidates={search.candidates}
+        bufferTotal={bufferTotal}
+        lineOrder={lineOrder}
+      />
+      {/* Narrow viewport: the same candidates as a compact, tappable list. */}
+      <CandidateRows
+        candidates={search.candidates}
+        bufferTotal={bufferTotal}
+        lineOrder={lineOrder}
+      />
 
       <BorrowedPlayersNotice />
     </div>

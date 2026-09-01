@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { LineupPlayer, LineupSearch, RuleLine } from "@/lib/api";
@@ -134,7 +134,9 @@ describe("estimated numbers inside a lineup", () => {
       estimated_count: 1,
     });
 
-    expect(screen.getAllByText("估算").length).toBeGreaterThan(0);
+    // Dense view marks the number with a compact glyph (title 估算值), not the
+    // literal word — see the MODIFIED spec.
+    expect(screen.getAllByTitle("估算值").length).toBeGreaterThan(0);
   });
 
   it("says what the whole lineup rests on", () => {
@@ -159,9 +161,11 @@ describe("estimated numbers inside a lineup", () => {
       estimated_count: 1,
     });
 
+    // The full wording moves to a reachable place (the set marker's title and
+    // the legend), rather than repeating inline on every row.
     expect(
-      screen.getByText("含 1 个估算值，合法性待总表确认"),
-    ).toBeTruthy();
+      screen.getAllByTitle("含 1 个估算值，合法性待总表确认").length,
+    ).toBeGreaterThan(0);
   });
 
   it("marks nothing when every number is frozen", () => {
@@ -192,5 +196,134 @@ describe("estimated numbers inside a lineup", () => {
     });
 
     expect(screen.getByText("含估算值")).toBeTruthy();
+  });
+});
+
+function threeCandidates() {
+  const a = person({ key: "p1", first_name: "望舒" });
+  const b = person({ key: "p2", first_name: "方朔" });
+  const mk = (total: string) => ({
+    total,
+    buffer_spent: "0.00",
+    lines: { D1: [a, b] as [LineupPlayer, LineupPlayer] },
+    line_totals: { D1: { total: "13.00", cap: "13.00", over: "0.00" } },
+  });
+  return [mk("13.00"), mk("12.80"), mk("12.60")];
+}
+
+describe("desktop comparison table", () => {
+  it("renders candidates as a table with a column per line", () => {
+    show();
+    const table = screen.getByRole("table");
+    const heads = within(table)
+      .getAllByRole("columnheader")
+      .map((h) => h.textContent?.trim());
+    expect(heads).toContain("总和");
+    expect(heads).toContain("D1");
+    expect(heads).toContain("WD");
+  });
+
+  it("gives one body row per candidate, in the backend order", () => {
+    show({ candidates: threeCandidates() });
+    const table = screen.getByRole("table");
+    const bodyRows = within(table).getAllByRole("row").slice(1); // drop header
+    expect(bodyRows).toHaveLength(3);
+    // Totals appear top-to-bottom in the order the backend gave them.
+    const totals = bodyRows.map((r) => {
+      const cells = within(r).getAllByRole("cell");
+      return cells[1].textContent?.replace(/[^\d.]/g, ""); // 2nd cell = 总和
+    });
+    expect(totals).toEqual(["13.00", "12.80", "12.60"]);
+  });
+
+  it("exposes the full pair name via title when the cell truncates", () => {
+    show();
+    const table = screen.getByRole("table");
+    const nameCell = within(table).getByText(/望舒/).closest("[title]");
+    // Contract D1: a truncated long name must stay recoverable on hover.
+    expect(nameCell).not.toBeNull();
+    expect(nameCell!.getAttribute("title")).toContain("南 望舒");
+    expect(nameCell!.getAttribute("title")).toContain("南 方朔");
+  });
+
+  it("keeps player names on a single line (no wrap)", () => {
+    show();
+    const table = screen.getByRole("table");
+    const nameCell = within(table).getByText(/望舒/).closest("div,td");
+    expect(nameCell).not.toBeNull();
+    // whitespace-nowrap class is how the table keeps names from wrapping.
+    expect(nameCell!.className).toMatch(/nowrap|truncate/);
+  });
+});
+
+describe("mobile candidate rows", () => {
+  function rows() {
+    return within(screen.getByTestId("candidate-rows"));
+  }
+
+  it("renders a compact list, not a second table", () => {
+    show({ candidates: threeCandidates() });
+    const list = screen.getByTestId("candidate-rows");
+    expect(list.querySelector("table")).toBeNull();
+  });
+
+  it("shows total and the D1 signature on each row", () => {
+    show({ candidates: threeCandidates() });
+    // Signature = the D1 pair (南 望舒 · 南 方朔), the marquee line.
+    expect(rows().getAllByText(/望舒/).length).toBeGreaterThan(0);
+    expect(rows().getAllByText("13.00").length).toBeGreaterThan(0);
+  });
+
+  it("flags a row that contains an estimate", () => {
+    const derived = person({ key: "p2", first_name: "方朔", origin: "prior_season", origin_year: 2024 });
+    show({
+      candidates: [{
+        total: "13.00", buffer_spent: "0.00",
+        lines: { D1: [person(), derived] },
+        line_totals: { D1: { total: "13.00", cap: "13.00", over: "0.00" } },
+      }],
+      estimated_count: 1,
+    });
+    expect(rows().getByText("含估算")).toBeTruthy();
+  });
+
+  it("flags a row with a line over cap", () => {
+    show({
+      candidates: [{
+        total: "13.30", buffer_spent: "0.30",
+        lines: { D1: [person(), person({ key: "p2", first_name: "方朔" })] },
+        line_totals: { D1: { total: "13.30", cap: "13.00", over: "0.30" } },
+      }],
+    });
+    expect(rows().getByText("超 cap")).toBeTruthy();
+  });
+
+  it("shows buffer spent/total in the expanded panel", () => {
+    show(); // buffer_spent 0.00, bufferTotal 0.50
+    const toggle = rows().getAllByRole("button")[0];
+    fireEvent.click(toggle);
+    const panel = screen.getByTestId("candidate-lines");
+    expect(panel.textContent).toContain("0.00/0.50");
+  });
+
+  it("puts no cost flag on an all-frozen, within-cap candidate", () => {
+    show(); // default: frozen, over 0.00
+    const firstRow = rows().getAllByRole("listitem")[0];
+    expect(within(firstRow).queryByText("含估算")).toBeNull();
+    expect(within(firstRow).queryByText("超 cap")).toBeNull();
+  });
+
+  it("expands a row to the five lines and collapses again", () => {
+    show({ candidates: threeCandidates() });
+    const toggle = rows().getAllByRole("button")[0];
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    const li = toggle.closest("li")!;
+    expect(within(li).queryByTestId("candidate-lines")).toBeNull();
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(within(li).getByTestId("candidate-lines")).toBeTruthy();
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(within(li).queryByTestId("candidate-lines")).toBeNull();
   });
 });

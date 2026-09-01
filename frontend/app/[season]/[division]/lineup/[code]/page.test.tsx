@@ -210,22 +210,24 @@ describe("the result area leads with the ceilings, then the candidates", () => {
 
     render(await renderPage());
 
-    const candidates = screen.getAllByRole("article");
-    expect(candidates).toHaveLength(2);
-
-    const first = candidates[0];
+    const table = screen.getByRole("table");
+    // Line codes are column headers now, shared across rows.
+    const heads = within(table)
+      .getAllByRole("columnheader")
+      .map((h) => h.textContent?.trim());
     for (const line of ["D1", "D2", "D3", "MD", "WD"]) {
-      expect(within(first).getByText(line)).toBeTruthy();
+      expect(heads).toContain(line);
     }
+    const first = within(table).getAllByRole("row")[1]; // first candidate
     expect(within(first).getByText(/南 嘉禾/)).toBeTruthy();
-    // Gender is a required column: the high-UTR limits are written per
-    // gender, so a lineup shown without it cannot be checked by eye.
+    // Gender is required: the high-UTR limits are written per gender.
     expect(within(first).getAllByText("男").length).toBeGreaterThan(0);
     expect(within(first).getAllByText("女").length).toBeGreaterThan(0);
     expect(within(first).getByText("13.21")).toBeTruthy();
-    // Only the line that is over says so, and it says by how much.
-    expect(within(first).getByText("超 0.21")).toBeTruthy();
-    expect(within(first).getByText("buffer 0.21/0.50")).toBeTruthy();
+    // Only the line that is over says so, and by how much.
+    expect(within(first).getByText(/超 0\.21/)).toBeTruthy();
+    // buffer is a column; the cell shows spent/total without the word.
+    expect(within(first).getByText("0.21/0.50")).toBeTruthy();
   });
 
   it("counts the candidates it was given, without re-sorting or re-deduplicating", async () => {
@@ -237,9 +239,11 @@ describe("the result area leads with the ceilings, then the candidates", () => {
     // The backend already deduplicated by the ten on court and ordered them.
     // Re-sorting here would break ties differently on every render.
     expect(screen.getByText(/去重后 2 套/)).toBeTruthy();
-    const totals = screen
-      .getAllByRole("article")
-      .map((card) => within(card).getByLabelText("总和").textContent);
+    const table = screen.getByRole("table");
+    const totals = within(table)
+      .getAllByRole("row")
+      .slice(1)
+      .map((r) => within(r).getAllByRole("cell")[1].textContent?.replace(/[^\d.]/g, ""));
     expect(totals).toEqual(["55.92", "55.90"]);
   });
 });
