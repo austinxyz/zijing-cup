@@ -1,6 +1,32 @@
 import type { LineupPlayer, RuleLine } from "@/lib/api";
 import { playerName } from "@/lib/name";
 
+/** Rank a gender for the select order: men, then women, then unmarked. */
+function genderRank(gender: string | null): number {
+  if (gender === "M") return 0;
+  if (gender === "F") return 1;
+  return 2;
+}
+
+/**
+ * The order the player dropdowns list people in: by gender first (men, then
+ * women, then unmarked), then by participation UTR high-to-low within a
+ * gender. The mixed and women's lines pick from a different pool than the
+ * men's, so clustering by gender puts the relevant people together, and
+ * strongest-first is how a captain fills a line.
+ *
+ * UTR compares as a number — "10.00" is above "9.00", which a string sort
+ * would get backwards. Returns a new array; the caller's roster is left as the
+ * backend gave it (that order is what the search itself depends on).
+ */
+export function orderForSelect(roster: LineupPlayer[]): LineupPlayer[] {
+  return [...roster].sort((a, b) => {
+    const g = genderRank(a.gender) - genderRank(b.gender);
+    if (g !== 0) return g;
+    return Number(b.match_utr) - Number(a.match_utr);
+  });
+}
+
 interface LineupControlsProps {
   lines: RuleLine[];
   roster: LineupPlayer[];
@@ -82,6 +108,9 @@ export function LineupControls({
   variant = "sidebar",
 }: LineupControlsProps) {
   const excludedSet = new Set(excluded);
+  // The dropdowns list people by gender then UTR; the exclusion checkboxes
+  // below keep the backend order.
+  const sortedRoster = orderForSelect(roster);
 
   const frame =
     variant === "sidebar"
@@ -123,14 +152,14 @@ export function LineupControls({
               <PlayerSelect
                 name={`${line.code}a`}
                 label={`${line.code} 第一位`}
-                roster={roster}
+                roster={sortedRoster}
                 value={pair[0]}
                 tall={variant === "drawer"}
               />
               <PlayerSelect
                 name={`${line.code}b`}
                 label={`${line.code} 第二位`}
-                roster={roster}
+                roster={sortedRoster}
                 value={pair[1]}
                 tall={variant === "drawer"}
               />

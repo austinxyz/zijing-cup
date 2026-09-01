@@ -82,3 +82,48 @@ describe("the drawer variant's touch targets", () => {
     }
   });
 })
+
+import { orderForSelect } from "./LineupControls";
+
+function p(key: string, gender: string | null, utr: string): LineupPlayer {
+  return {
+    key, last_name: "南", first_name: key, gender,
+    match_utr: utr, origin: "frozen", origin_year: 2025, is_unresolved: false,
+  };
+}
+
+describe("orderForSelect", () => {
+  it("groups men first, then women, then unknown gender", () => {
+    const out = orderForSelect([
+      p("f1", "F", "6.0"),
+      p("m1", "M", "5.0"),
+      p("u1", null, "9.9"),
+    ]).map((x) => x.key);
+    expect(out).toEqual(["m1", "f1", "u1"]);
+  });
+
+  it("orders by UTR high-to-low within a gender", () => {
+    const out = orderForSelect([
+      p("m_low", "M", "5.20"),
+      p("m_high", "M", "6.80"),
+      p("m_mid", "M", "6.00"),
+    ]).map((x) => x.key);
+    expect(out).toEqual(["m_high", "m_mid", "m_low"]);
+  });
+
+  it("compares UTR as a number, not a string", () => {
+    // "10.00" > "9.00" numerically, but "10.00" < "9.00" as strings.
+    const out = orderForSelect([
+      p("nine", "M", "9.00"),
+      p("ten", "M", "10.00"),
+    ]).map((x) => x.key);
+    expect(out).toEqual(["ten", "nine"]);
+  });
+
+  it("does not mutate the input array", () => {
+    const input = [p("f1", "F", "6.0"), p("m1", "M", "5.0")];
+    const before = input.map((x) => x.key);
+    orderForSelect(input);
+    expect(input.map((x) => x.key)).toEqual(before);
+  });
+});
