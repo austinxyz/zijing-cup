@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lineup-infeasibility-detail — 视觉稿</title>
+<style>
+  body { margin:0; padding:2rem 1.5rem 4rem; background:#f6f4f0; color:#1a1917;
+         font-family:"Inter","Segoe UI",system-ui,sans-serif; line-height:1.6; }
+  h1 { font-size:1.5rem; margin:0 0 .25rem; }
+  h2 { font-size:1.0625rem; margin:2.5rem 0 .5rem; padding-bottom:.35rem;
+       border-bottom:1px solid #e4e0d8; }
+  p,li { font-size:.875rem; }
+  code,.mono { font-family:ui-monospace,Consolas,monospace; }
+  .lede { color:#57534e; margin:0 0 1.5rem; font-size:.875rem; max-width:62rem; }
+  .note { color:#57534e; font-size:.8125rem; margin:.5rem 0 1rem; max-width:52rem; }
+  .cap { font-size:12px; color:#57534e; margin:8px 0 0; }
+  .cap b { color:#1a1917; }
+  .row { display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; }
+
+  /* NoSolution panel — linear tokens */
+  .frame { width:560px; max-width:100%; }
+  .phoneframe { width:375px; }
+  .panel { border:1px solid #e4e0d8; border-radius:8px; background:#fff; padding:14px 16px;
+           display:flex; flex-direction:column; gap:12px; }
+  .p-title { font-size:15px; font-weight:600; }
+  .p-sub { font-size:12.5px; line-height:1.55; color:#6b665d; }
+  .p-sub b { color:#1a1917; }
+  .p-not-search { font-size:12.5px; line-height:1.55; color:#6b665d; }
+
+  /* reason block */
+  .reasons { display:flex; flex-direction:column; gap:8px; }
+  .reasons-h { font-size:12.5px; font-weight:500; }
+  .reason { display:flex; gap:8px; align-items:flex-start; border-left:2px solid #ecd9a4;
+            background:#fbf5e6; border-radius:0 6px 6px 0; padding:7px 10px; }
+  .reason.rule { border-left-color:#cfc9bc; background:#f2efe9; }
+  .reason-ic { flex:none; font-family:ui-monospace,Consolas,monospace; font-size:10px;
+               color:#8a6508; margin-top:1px; }
+  .reason.rule .reason-ic { color:#6b665d; }
+  .reason-tx { font-size:12.5px; line-height:1.5; color:#1a1917; }
+  .reason-tx .k { color:#8a6508; font-weight:600; }
+
+  /* attribution: named players + where they went */
+  .attrib { display:flex; flex-direction:column; gap:6px; }
+  .attrib-h { font-size:12.5px; font-weight:500; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { display:flex; align-items:center; gap:6px; border:1px solid #e4e0d8;
+          border-radius:6px; padding:3px 8px; font-size:12px; }
+  .chip .where { font-family:ui-monospace,Consolas,monospace; font-size:10px; color:#6b665d; }
+  .chip.exc .where { color:#b3261e; }
+  .fine { font-size:12px; line-height:1.5; color:#6b665d; }
+</style>
+</head>
+<body>
+
+<h1>lineup-infeasibility-detail —— 视觉稿</h1>
+<p class="lede">
+  某条线凑不出合法搭档时的 <code>NoSolution</code> 面板，从「{线}没有任何合法搭档」一句
+  升级成 <b>原因 + 归因</b>。设计体系沿用 <code>linear</code>，不新增 token：客观原因用
+  warning 三件套（<code>#8a6508</code> / <code>#fbf5e6</code> / <code>#ecd9a4</code>），
+  规则类原因（资格）用中性 <code>#6b665d</code> / <code>#f2efe9</code>，排除用 danger
+  <code>#b3261e</code>。三屏演示三种触发；桌面 + 手机各一。数据是代表性手造场景。
+</p>
+
+<h2 id="desktop">桌面：三种触发</h2>
+<p class="note">
+  <b>场景 A（人手不足 + 归因）</b>：WD 需 2 名女队员，可用只剩 1——因为你排除了一个、
+  把另一个锁进 MD。原因据实说，归因点名到你的排除/锁定。<b>场景 B（都超 cap）</b>：能凑出
+  组合但每一对都超 cap，无可归因。<b>场景 C（资格挡，规则属性不归因）</b>：够格的人被
+  「高 UTR 只能打某几条线」挡在本线外——据实说，但不点名成「你干的」。
+</p>
+<div class="row">
+
+<!-- Scenario A -->
+<div class="frame">
+<div class="panel">
+  <div>
+    <div class="p-title">凑不出合法阵容</div>
+    <div class="p-sub">在当前的锁定与排除下，<b>WD（女双）没有任何合法搭档</b>。</div>
+  </div>
+  <div class="reasons">
+    <div class="reasons-h">为什么这条线凑不出</div>
+    <div class="reason">
+      <span class="reason-ic">人手</span>
+      <span class="reason-tx">WD 需要 <span class="k">2 名女队员</span>，当前可用只有 <span class="k">1 名</span>。</span>
+    </div>
+  </div>
+  <div class="attrib">
+    <div class="attrib-h">少的女队员现在在哪</div>
+    <div class="chips">
+      <span class="chip exc"><span>周乐言</span><span class="where">排除</span></span>
+      <span class="chip"><span>韩雨萌</span><span class="where">已锁 MD</span></span>
+    </div>
+    <div class="fine">松开其中一个——让周乐言归队，或把韩雨萌从 MD 解锁——WD 就有得配了。这是直接读你当前的锁定与排除得到的，不是逐条拆锁重算。</div>
+  </div>
+  <div class="p-not-search">这不是「搜索没找到」——这套限制本身就没有解，再等也不会有结果。</div>
+</div>
+<p class="cap"><b>原因（warning 档）</b>说客观事实「需 2、有 1」；<b>归因</b>只点名被你
+<span style="color:#b3261e">排除</span>或<span class="mono">锁进别线</span>的相关队员，
+并给一句可操作的「松开哪个就行」，但措辞是「就有得配」而非「一定有解」（不承诺全局）。</p>
+</div>
+
+<!-- Scenario B -->
+<div class="frame">
+<div class="panel">
+  <div>
+    <div class="p-title">凑不出合法阵容</div>
+    <div class="p-sub">在当前的锁定与排除下，<b>D1（男双）没有任何合法搭档</b>。</div>
+  </div>
+  <div class="reasons">
+    <div class="reasons-h">为什么这条线凑不出</div>
+    <div class="reason">
+      <span class="reason-ic">超cap</span>
+      <span class="reason-tx">能凑出的每一对，参赛 UTR 之和都<span class="k">超过 cap 13.00（含 buffer 0.50）</span>——这条线可用的人都太强了。</span>
+    </div>
+  </div>
+  <div class="p-not-search">这不是「搜索没找到」——把某个高 UTR 队员留给别的线，或换一条 cap 更高的线安排他们。</div>
+</div>
+<p class="cap">无可归因（不是你排/锁造成的，是人本身对这条 cap 太强）——<b>只给客观原因</b>，
+不硬凑一个「归因」出来。</p>
+</div>
+
+<!-- Scenario C -->
+<div class="frame">
+<div class="panel">
+  <div>
+    <div class="p-title">凑不出合法阵容</div>
+    <div class="p-sub">在当前的锁定与排除下，<b>MD（混双）没有任何合法搭档</b>。</div>
+  </div>
+  <div class="reasons">
+    <div class="reasons-h">为什么这条线凑不出</div>
+    <div class="reason rule">
+      <span class="reason-ic">资格</span>
+      <span class="reason-tx">陈嘉禾 的参赛 UTR 高于 9.00，按规则<span class="k">只能打 D1/MD</span>；本线其余够格的男队员不足以配出一对。</span>
+    </div>
+  </div>
+  <div class="p-not-search">这不是「搜索没找到」——这是赛制的资格限制，不是你的锁定或排除造成的。</div>
+</div>
+<p class="cap">资格是<b>规则属性</b>，用<b>中性档</b>（不是 warning，也不进「你的锁/排」归因）——
+据实说清限制，但不点名成「你干的」。</p>
+</div>
+
+</div>
+
+<h2 id="mobile">手机（375）：场景 A</h2>
+<p class="note">同一面板窄视口堆叠——标题、原因、归因 chips、可操作提示纵向排；无横向溢出。</p>
+<div class="row">
+<div class="phoneframe">
+<div class="panel">
+  <div>
+    <div class="p-title">凑不出合法阵容</div>
+    <div class="p-sub">当前锁定与排除下，<b>WD（女双）没有任何合法搭档</b>。</div>
+  </div>
+  <div class="reasons">
+    <div class="reasons-h">为什么凑不出</div>
+    <div class="reason">
+      <span class="reason-ic">人手</span>
+      <span class="reason-tx">WD 需 <span class="k">2 名女队员</span>，可用只 <span class="k">1 名</span>。</span>
+    </div>
+  </div>
+  <div class="attrib">
+    <div class="attrib-h">少的女队员在哪</div>
+    <div class="chips">
+      <span class="chip exc"><span>周乐言</span><span class="where">排除</span></span>
+      <span class="chip"><span>韩雨萌</span><span class="where">已锁 MD</span></span>
+    </div>
+    <div class="fine">松开其一，WD 就有得配。直接读当前锁定/排除得到，非拆锁重算。</div>
+  </div>
+</div>
+</div>
+<p class="cap">窄视口下 chips 自然换行，提示文字缩短；不横向溢出。</p>
+</div>
+
+<h2>核对清单（实现后逐条量）</h2>
+<ul>
+  <li>四类原因各有一个后端最小无解场景 + 断言（人手不足 / 都超cap / 都超差距 / 资格）。</li>
+  <li>可归因时（排除 / 锁进别线）点名 + 去向；资格/cap/差距不点名成「你干的」。</li>
+  <li>诊断不触发第二次搜索（只读候选池分析）；响应无「哪条锁该负责」的因果断言。</li>
+  <li>桌面 + 375 都读得清、无横向溢出、对比度 ≥ 4.5:1（量 computed style）：
+      warning #8a6508/#fbf5e6、danger #b3261e、中性 #6b665d/#f2efe9。</li>
+  <li>invalid_locks（锁本身非法）面板与改动前一致。</li>
+</ul>
+
+</body>
+</html>
