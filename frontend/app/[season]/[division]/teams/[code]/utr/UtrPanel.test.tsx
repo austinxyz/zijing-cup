@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { UtrSheetRow } from "@/lib/api";
@@ -109,19 +109,18 @@ describe("preview, then write", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: /确认写入/ }));
 
-    // The write runs inside a transition, so the assertion has to outlast
-    // React flushing it. The default 1s window is enough alone and not enough
-    // under a full-suite run — which made this the one test in the file that
-    // failed only when everything else was running.
-    await waitFor(
-      () =>
-        expect(applySheet).toHaveBeenCalledWith(
-          "2025",
-          "silver",
-          "HUST",
-          "SHEET-TEXT",
-        ),
-      { timeout: 5000 },
+    // Waits on something rendered, not on the spy. The write runs inside a
+    // transition, and polling the spy races with React flushing it — under a
+    // full-suite run that race was lost often enough to make this the one
+    // test in the file that failed only when everything else was running.
+    // Returning to the export side is the observable proof it finished.
+    await screen.findByRole("button", { name: "复制整张表" });
+
+    expect(applySheet).toHaveBeenCalledWith(
+      "2025",
+      "silver",
+      "HUST",
+      "SHEET-TEXT",
     );
   });
 
