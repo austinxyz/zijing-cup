@@ -121,6 +121,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **BREAKING**：队员 key 从 `roster_entries.id` 改为带前缀的 `p<player_id>`，使旧分享链接里的裸数字**解析失败**并明确报「链接是旧格式」。两套 id 都是小整数且互不相干，不换格式的话旧链接会静默锁到两个不相干的人，而算出的阵容看起来完全正常。同期把 `origin` 的兜底默认值去掉，改成缺失即 KeyError —— 给一个查不到来源的数字盖「组委会冻结」的章，比崩掉更糟。
 
+**infeasibility-detail（2026-09-01）**: `infeasible_line` 旁新增结构化诊断 `infeasibility`（`line` + `reasons[]`），说清那条线的候选池**为什么**空——四类客观原因：性别人手不足 / 都超 cap / 都超搭档差距 / 资格线限制，多因并存全列。可直接读出时归因到用户动作（被排除、锁进别线），点名队员及去向；`over_cap`/`over_gap`/`eligibility` 是规则或队员自身属性，`attributed` 恒空、中性措辞、**不**点名成用户造成。诊断只读候选池、一趟 `combinations`、不触发第二次整解搜索，也不声称哪条锁「该负责」——守住既有免责边界。同期把局部可判的 `restricted_to_lines`（资格挡线）并入 `legal_pairs`：它是「队员×线」的可判事实（`check_locks` 早就这么判锁定对），据实提前剪枝，资格才能让某线 pool 真正为空；SILVER（无 restriction）不受影响。
+
 **验收标准**: 2025 全部 24 支真实球队（金 6 + 银 18）各搜一次，全部返回完整结果、0 截断，开发机最坏 0.09s（2025 两组 buffer 均为 0.00，可行空间小；2026 开了 buffer 会变慢，Render 免费实例的真实耗时仍需部署后实测）；小名单上穷举全部合法阵容，最大值等于报告的上限；锁定被遵守、排除被遵守、换线不算两套；未知球队 404，格式非法的 query 返回 4xx 而非 500；OpenAPI 中仍不存在 POST/PUT/PATCH/DELETE。
 
 ---
@@ -147,6 +149,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **验收标准**: 锁定与排除写在 URL 里且直接访问该 URL 得到同一套限制；结果区四个数（可达上限/规则允许/差值/组合数）在候选之前；候选显示五线搭档、性别、各线之和、超出量与 buffer 用量；锁定使上限下降时页面呈现该差值；无解时不渲染空候选列表且指名线位；截断与外援未校验各自可见；26 人名单在 660px 高的窗口里锁定面板不出滚动条、候选列表可滚到底且表头不动；客户端 bundle 不含 `BACKEND_SECRET`。
 
 **mobile-shell（2026-08-31）**: 窄视口下排阵页**结果打底**，锁定/排除控件收进底部抽屉（`role=dialog`）；关闭态一条摘要**点名到人**（「已锁 陈嘉禾·吴普强 · 排除 …」，不只给数量——受约束结果与无约束最优在屏上长得一样）。改约束不自动搜索（沿用既有 GET form 的显式提交，一次搜索在冷启动免费实例上是整解）。抽屉自带滚动、44px 目标；桌面仍是左栏控件。
+
+**infeasibility-detail（2026-09-01）**: `NoSolution` 从光秃秃的「{线}没有任何合法搭档」升级成**原因 + 归因**：读后端 `infeasibility.reasons`，客观原因走 warning 档（`warning`/`warning-surface`/`warning-border`）、资格类规则原因走中性档（`muted`/`surface-muted`），归因 chips 只在有 `attributed` 时出现，点名 + 去向（排除用 danger），固定顺序人手→cap→差距→资格。既有免责声明句保留；后端没给 `infeasibility` 时退回原 `placements` 呈现。数值原样取自后端字符串，前端不做数值比较。对比度实测桌面与 375 全 ≥4.5（reason 16.15 / danger chip 6.54 / 中性档 4.66），无横向溢出。归因显示名由后端把 `Candidate.name`（tab 拼 last/first）格成 `playerName` 同款 `last first`。
 
 **lineup-results-redesign（2026-09-01）**: 候选阵容从 20 张叠卡改成**桌面对比表**（真 `<table>`+`table-fixed`：行=候选、列=名次/总和/buffer + 五线；列对齐可竖扫「谁在 D1」，同分不同搭配一眼分辨；名字不换行截断带 `title`，表头滚动钉住，表体自带滚动）与**手机紧凑行**（名次+总和+D1 签名+代价角标，点开展开五线纵向 + buffer）。既有合法性信号不丢，但密集视图里逐字「估算」改成紧凑角标（数字 `˟`、整套「估」badge / 含估算 flag），完整句「含 N 个估算值，合法性待总表确认」挪到图例/悬停/手机展开态保留一处——标记不省略、整句不删只挪（spec MODIFIED 放宽了这一条）。判定 helper 抽 `candidate.ts` 两套 DOM 共用，`CandidateCard` 退役；不重排候选（`keep=20`）。纯前端，不动后端。另：锁定搭档的下拉选人改成先按性别（男→女→未填）、组内按 UTR 从高到低（`orderForSelect`，数值比非字符串比；排除 checkbox 仍按后端序）。
 
