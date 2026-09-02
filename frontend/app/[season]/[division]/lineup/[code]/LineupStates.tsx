@@ -1,4 +1,9 @@
-import type { LineupPlayer, LineupSearch, RuleLine } from "@/lib/api";
+import type {
+  LineupInfeasibilityReason,
+  LineupPlayer,
+  LineupSearch,
+  RuleLine,
+} from "@/lib/api";
 import { playerName } from "@/lib/name";
 
 const LINE_LABEL: Record<string, string> = {
@@ -11,6 +16,78 @@ function lineName(lines: RuleLine[], code: string): string {
   const line = lines.find((item) => item.code === code);
   const kind = line ? LINE_LABEL[line.kind] : undefined;
   return kind ? `${kind}（${code}）` : code;
+}
+
+/** The order reasons are shown in, fixed so the panel does not reshuffle
+ *  between renders: manpower first, then the two budget limits, then the rule
+ *  restriction. Any kind the backend adds later sorts last. */
+const REASON_ORDER = ["gender_shortage", "over_cap", "over_gap", "eligibility"];
+
+function reasonRank(kind: string): number {
+  const i = REASON_ORDER.indexOf(kind);
+  return i === -1 ? REASON_ORDER.length : i;
+}
+
+/** Eligibility is a rule attribute, not something the captain did, so it reads
+ *  on the neutral tier; the manpower and budget reasons are things to act on
+ *  and take the warning tier. */
+function isRuleReason(kind: string): boolean {
+  return kind === "eligibility";
+}
+
+function whereLabel(where: string): string {
+  return where === "excluded" ? "排除" : `已锁 ${where}`;
+}
+
+/**
+ * One reason a line's candidate pool is empty.
+ *
+ * The tier follows the kind: a warning surface for what the captain can act on
+ * (too few of a gender, everyone over cap or over the gap), a neutral surface
+ * for the eligibility restriction, which is the rules' doing and not theirs.
+ * Attribution chips only appear when the backend named players — which it does
+ * only for a gender shortage — and never for the rule reasons.
+ */
+function ReasonTile({ reason }: { reason: LineupInfeasibilityReason }) {
+  const rule = isRuleReason(reason.kind);
+  const surface = rule
+    ? "border-border bg-surface-muted"
+    : "border-warning-border bg-warning-surface";
+  return (
+    <div
+      data-reason={reason.kind}
+      className={`flex flex-col gap-2 rounded-r-token border-l-2 px-3 py-2 ${surface}`}
+    >
+      <span
+        className={`text-[12.5px] leading-relaxed ${
+          rule ? "text-muted-foreground" : "text-foreground"
+        }`}
+      >
+        {reason.message}
+      </span>
+      {reason.attributed.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {reason.attributed.map((placed, index) => (
+            <span
+              key={`${placed.name}-${index}`}
+              className="flex items-center gap-1.5 rounded-token border border-border bg-surface px-2 py-0.5 text-[12px] text-foreground"
+            >
+              <span>{placed.name}</span>
+              <span
+                className={`font-mono text-[10.5px] ${
+                  placed.where === "excluded"
+                    ? "text-danger"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {whereLabel(placed.where)}
+              </span>
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 /**
@@ -30,6 +107,12 @@ export function NoSolution({
 }) {
   const byKey = new Map(search.roster.map((player) => [player.key, player]));
   const placements = Object.entries(search.placements);
+  const reasons = [...(search.infeasibility?.reasons ?? [])].sort(
+    (a, b) => reasonRank(a.kind) - reasonRank(b.kind),
+  );
+  // Attribution rides the reasons when we have them; the flat placements list
+  // is the fallback for an older backend that only sent infeasible_line.
+  const showPlacementsFallback = reasons.length === 0 && placements.length > 0;
 
   return (
     <section
@@ -52,7 +135,26 @@ export function NoSolution({
         </span>
       </div>
 
-      {placements.length > 0 ? (
+      {reasons.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <span className="text-[12.5px] font-medium text-foreground">
+            为什么这条线凑不出
+          </span>
+          <div className="flex flex-col gap-2">
+            {reasons.map((reason, index) => (
+              <ReasonTile key={`${reason.kind}-${index}`} reason={reason} />
+            ))}
+          </div>
+          {/* The same no-blame disclaimer the flat list carried: a named
+              player is a fact read off the input, not a claim that undoing
+              their exclude or lock is what makes the line solvable. */}
+          <span className="text-[12px] leading-relaxed text-muted">
+            点名的队员是直接读当前的锁定与排除得到的，不是逐条拆锁重算——系统不声称知道是哪一条锁定「该负责」。
+          </span>
+        </div>
+      ) : null}
+
+      {showPlacementsFallback ? (
         <div className="flex flex-col gap-2">
           <span className="text-[12.5px] font-medium text-foreground">
             相关队员现在的去向

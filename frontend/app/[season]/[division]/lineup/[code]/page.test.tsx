@@ -101,6 +101,7 @@ const SEARCH: LineupSearch = {
   squads_at_ceiling_exact: true,
   rules_ceiling: "56.00",
   infeasible_line: null,
+  infeasibility: null,
   placements: {},
   truncated: false,
   borrowed_players_checked: false,

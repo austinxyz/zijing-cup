@@ -19,7 +19,7 @@
 - [x] 1.10 GREEN — `diagnose_line` 的 gender_shortage 从 `placements` 填 `attributed`（只取 `where != 本线` 的同性别）
 - [x] 1.11 RED — pytest：无解但非用户造成（人本身对 cap 太强）的场景，断言 `over_cap.attributed == []`；并断言 `diagnose_line` 不调用整解搜索（不出现第二次 `search_lineups`/因果字段）
 - [x] 1.12 GREEN — 确保 cap/gap/eligibility 三类 `attributed` 恒空；诊断路径只读候选池
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 前端：NoSolution 呈现原因 + 归因
 
@@ -29,12 +29,12 @@
 - **Code**: D4 `lib/api.ts` 的 `LineupSearch` 加 `infeasibility?` 类型（reasons: {kind, message, attributed:{name,where}[]}[]）。`NoSolution` 有 `infeasibility` 则渲染原因列表 + 归因 chips（[mocks.html](mocks.html)：warning `#8a6508`/`#fbf5e6`、资格中性 `#6b665d`/`#f2efe9`、排除 danger `#b3261e`），无则退回现有 placements 呈现；既有免责声明句保留。固定渲染顺序人手→cap→差距→资格。前端不做数值比较。
 - **Threshold**: 70
 
-- [ ] 2.0 CONTRACT — write openspec/changes/lineup-infeasibility-detail/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-01-lineup-infeasibility-detail-mocks.html; note linear tokens (warning `#8a6508`/`#fbf5e6`/`#ecd9a4`, 资格中性 `#6b665d`/`#f2efe9`, danger `#b3261e`) and verbatim strings（「为什么这条线凑不出」「少的女队员现在在哪」等）
-- [ ] 2.2 RED — vitest：给 `NoSolution` 传含 gender_shortage + attributed 的 `infeasibility`，断言渲染出原因 message、点名队员与去向、且 `wrapper.classes()`/className 含 warning token；断言免责声明句仍在
-- [ ] 2.3 RED — vitest：传 eligibility 原因，断言渲染中性档、且不出现任何「你的锁/排造成」措辞（attributed 为空 → 不渲染归因 chips）
-- [ ] 2.4 GREEN — `lib/api.ts` 加 `infeasibility?` 类型；`NoSolution` 渲染原因列表 + 归因 chips，退回逻辑保留，免责声明保留
-- [ ] 2.5 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); 造一个无解场景导航到排阵页; eyeball against mock; 量 computed style 确认对比度 ≥ 4.5:1、桌面与 375 都不横向溢出、fix any token/color/text drift
+- [x] 2.0 CONTRACT — write openspec/changes/lineup-infeasibility-detail/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-01-lineup-infeasibility-detail-mocks.html; note linear tokens (warning `#8a6508`/`#fbf5e6`/`#ecd9a4`, 资格中性 `#6b665d`/`#f2efe9`, danger `#b3261e`) and verbatim strings（「为什么这条线凑不出」「少的女队员现在在哪」等）
+- [x] 2.2 RED — vitest：给 `NoSolution` 传含 gender_shortage + attributed 的 `infeasibility`，断言渲染出原因 message、点名队员与去向、且 `wrapper.classes()`/className 含 warning token；断言免责声明句仍在
+- [x] 2.3 RED — vitest：传 eligibility 原因，断言渲染中性档、且不出现任何「你的锁/排造成」措辞（attributed 为空 → 不渲染归因 chips）
+- [x] 2.4 GREEN — `lib/api.ts` 加 `infeasibility?` 类型；`NoSolution` 渲染原因列表 + 归因 chips，退回逻辑保留，免责声明保留
+- [x] 2.5 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); 造一个无解场景导航到排阵页; eyeball against mock; 量 computed style 确认对比度 ≥ 4.5:1、桌面与 375 都不横向溢出、fix any token/color/text drift
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 验证与交付

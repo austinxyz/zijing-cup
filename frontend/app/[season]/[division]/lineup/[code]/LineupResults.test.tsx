@@ -40,6 +40,7 @@ function search(overrides: Partial<LineupSearch> = {}): LineupSearch {
     squads_at_ceiling_exact: true,
     rules_ceiling: "13.50",
     infeasible_line: null,
+    infeasibility: null,
     placements: {},
     truncated: false,
     borrowed_players_checked: false,

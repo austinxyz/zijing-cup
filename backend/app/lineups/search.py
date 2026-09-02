@@ -307,10 +307,13 @@ def _attribution(
             continue
         if gender is not None and roster_gender.get(key) != gender:
             continue
-        name = names.get(key)
-        if name is None:
+        raw = names.get(key)
+        if raw is None:
             continue
-        out.append(PlacedPlayer(name=name, where=where))
+        # Candidate.name joins the sheet's last/first columns with a tab; the
+        # display form drops the separator, matching the frontend's playerName.
+        display = " ".join(part for part in raw.split("\t") if part)
+        out.append(PlacedPlayer(name=display, where=where))
     return out
 
 

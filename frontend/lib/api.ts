@@ -299,6 +299,30 @@ export interface LineupViolation {
   message: string;
 }
 
+/** A named player and where the current input has put them: a line code, or
+ *  "excluded". Read straight off the request. */
+export interface LineupPlacedPlayer {
+  name: string;
+  where: string;
+}
+
+/** Why one line's candidate pool is empty. `kind` is one of
+ *  "gender_shortage" | "over_cap" | "over_gap" | "eligibility". `attributed`
+ *  names players an exclude or lock-elsewhere accounts for — non-empty only
+ *  for gender_shortage; the rule/attribute reasons are never the user's doing. */
+export interface LineupInfeasibilityReason {
+  kind: string;
+  message: string;
+  attributed: LineupPlacedPlayer[];
+}
+
+/** The reasons the infeasible line ran dry. A read of the pool, never a claim
+ *  about which lock is to blame. `line === infeasible_line`. */
+export interface LineupInfeasibility {
+  line: string;
+  reasons: LineupInfeasibilityReason[];
+}
+
 export interface LineupSearch {
   /** Already deduplicated by the ten on court and ordered strongest first.
    *  Do not re-sort: ties are the common case and a second sort would pick a
@@ -315,6 +339,10 @@ export interface LineupSearch {
   /** Set when a line has no legal pair at all — a different answer from an
    *  empty candidate list, which reads as "searched, found nothing". */
   infeasible_line: string | null;
+  /** The richer form of infeasible_line: why that line's pool is empty, and
+   *  attribution to the user's own excludes/locks where the input shows it.
+   *  null when the search is feasible. line === infeasible_line. */
+  infeasibility: LineupInfeasibility | null;
   /** Where each unavailable player is: a line code, or "excluded". Read off
    *  the request — never a claim about which lock caused the dead end. */
   placements: Record<string, string>;
