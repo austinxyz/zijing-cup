@@ -33,11 +33,11 @@
 - [x] 2.3 RED — vitest：载入锁定引用不在 roster 的 preset → 断言拒载面板（明说+失效锁与人+删/重建），不渲染候选；排除引用离队球员 → 断言照常载入路径 + 中性提示
 - [x] 2.4 GREEN — `lib/api.ts` 列出类型/fetch；`lib/admin.ts` 存/删 action；控件里 preset 块 + 载入（写回 URL）+ 失效面板；token 化
 - [x] 2.5 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); admin 登录（`requestSubmit()`）造 preset，桌面 + 375 对照 mock，量 computed style 确认对比度 ≥4.5、无横向溢出、44px 目标；fix drift
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 验证与交付
 
-- [ ] 3.1 Run backend test suite — `cd backend && uv run pytest`（本机用 `backend/.venv-std/Scripts/python.exe -m pytest`）确保无回归
-- [ ] 3.2 Run frontend test suite — `cd frontend && npm run test` 确保无回归
-- [ ] 3.3 `cd frontend && npx tsc --noEmit` — 类型检查（vitest 不校验类型，单列必跑）
-- [ ] 3.4 Run superpowers:verification-before-completion — 跑 test_commands + tsc + `grep -rn console.log frontend/app frontend/lib` + config 的 custom_verification_checks；补种前不再跑 pytest（先测试→补种→视觉核对）；远程迁移记得去 Dashboard 手动执行
+- [x] 3.1 Run backend test suite — `cd backend && uv run pytest`（本机用 `backend/.venv-std/Scripts/python.exe -m pytest`）确保无回归
+- [x] 3.2 Run frontend test suite — `cd frontend && npm run test` 确保无回归
+- [x] 3.3 `cd frontend && npx tsc --noEmit` — 类型检查（vitest 不校验类型，单列必跑）
+- [x] 3.4 Run superpowers:verification-before-completion — 跑 test_commands + tsc + `grep -rn console.log frontend/app frontend/lib` + config 的 custom_verification_checks；补种前不再跑 pytest（先测试→补种→视觉核对）；远程迁移记得去 Dashboard 手动执行
