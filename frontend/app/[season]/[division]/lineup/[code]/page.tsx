@@ -1,6 +1,13 @@
 import { notFound } from "next/navigation";
 
-import { getDivisionRules, getTeamLineups, type RuleLine } from "@/lib/api";
+import {
+  getDivisionRules,
+  getTeamLineups,
+  getTeamPresets,
+  type RuleLine,
+} from "@/lib/api";
+import { isSignedIn } from "@/lib/admin";
+import { savePreset, deletePreset } from "./actions";
 import { LineupControls } from "./LineupControls";
 import { LineupMobileControls } from "./LineupMobileControls";
 import { LineupResults } from "./LineupResults";
@@ -102,6 +109,21 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   // is a different and false statement about a team that does not exist.
   if (search === null) notFound();
 
+  // Presets and admin state for the saved-filter block. Read in parallel with
+  // nothing that depends on them; the block is read-only for a visitor.
+  const [presets, canEdit] = await Promise.all([
+    getTeamPresets(season, division, code),
+    isSignedIn(),
+  ]);
+  const basePath = `/${season}/${division}/lineup/${encodeURIComponent(code)}`;
+  // Bound server actions: the client supplies only the name / id. The current
+  // locks and exclusions travel with the save, captured here on the server.
+  const saveAction = savePreset.bind(null, season, division, code, {
+    locks: constraints.locks,
+    excluded: constraints.excluded,
+  });
+  const deleteAction = deletePreset.bind(null, season, division, code);
+
   const men = search.roster.filter((p) => p.gender === "M").length;
   const women = search.roster.filter((p) => p.gender === "F").length;
   const capSummary = lines
@@ -115,6 +137,11 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
         roster={search.roster}
         locks={constraints.locks}
         excluded={constraints.excluded}
+        presets={presets}
+        canEdit={canEdit}
+        basePath={basePath}
+        saveAction={saveAction}
+        deleteAction={deleteAction}
       />
       <main className="flex flex-1 min-w-0 flex-col overflow-hidden bg-background">
         <div className="flex flex-none items-center justify-between gap-2.5 border-b border-border bg-surface px-5 py-[11px]">
@@ -152,6 +179,11 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
               locks={constraints.locks}
               excluded={constraints.excluded}
               variant="drawer"
+              presets={presets}
+              canEdit={canEdit}
+              basePath={basePath}
+              saveAction={saveAction}
+              deleteAction={deleteAction}
             />
           }
           locks={constraints.locks}

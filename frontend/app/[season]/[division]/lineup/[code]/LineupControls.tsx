@@ -1,5 +1,6 @@
-import type { LineupPlayer, RuleLine } from "@/lib/api";
+import type { LineupFilterPreset, LineupPlayer, RuleLine } from "@/lib/api";
 import { playerName } from "@/lib/name";
+import { Presets } from "./Presets";
 
 /** Rank a gender for the select order: men, then women, then unmarked. */
 function genderRank(gender: string | null): number {
@@ -38,6 +39,13 @@ interface LineupControlsProps {
    *  the mobile bottom sheet — full width, no fixed width or right border, and
    *  the sheet owns the scroll. Same fields either way; only the frame differs. */
   variant?: "sidebar" | "drawer";
+  /** Saved presets for this team, rendered above the lock/exclude controls.
+   *  Omitted (undefined) means the block is not shown. */
+  presets?: LineupFilterPreset[];
+  canEdit?: boolean;
+  basePath?: string;
+  saveAction?: (name: string) => Promise<void>;
+  deleteAction?: (id: number) => Promise<void>;
 }
 
 function PlayerSelect({
@@ -106,8 +114,15 @@ export function LineupControls({
   locks,
   excluded,
   variant = "sidebar",
+  presets,
+  canEdit = false,
+  basePath,
+  saveAction,
+  deleteAction,
 }: LineupControlsProps) {
   const excludedSet = new Set(excluded);
+  const hasConstraints =
+    Object.keys(locks).length > 0 || excluded.length > 0;
   // The dropdowns list people by gender then UTR; the exclusion checkboxes
   // below keep the backend order.
   const sortedRoster = orderForSelect(roster);
@@ -126,6 +141,19 @@ export function LineupControls({
       aria-label="锁定与排除"
       className={`flex-col gap-3.5 bg-surface px-[18px] py-4 ${frame}`}
     >
+      {presets !== undefined && basePath ? (
+        <Presets
+          presets={presets}
+          roster={roster}
+          lines={lines}
+          canEdit={canEdit}
+          hasConstraints={hasConstraints}
+          basePath={basePath}
+          saveAction={saveAction}
+          deleteAction={deleteAction}
+        />
+      ) : null}
+
       <div className="flex flex-col gap-[3px]">
         <span className="text-[13px] font-semibold text-foreground">锁定搭档</span>
         <span className="text-[11.5px] leading-relaxed text-muted">

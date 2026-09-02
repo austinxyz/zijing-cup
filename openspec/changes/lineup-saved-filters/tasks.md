@@ -17,7 +17,7 @@
 - [x] 1.8 GREEN — 路由 `routers/lineups.py`：GET 列出 + POST 存 + DELETE 删（写路由靠方法自动受保护，不加前缀、不用依赖式鉴权）
 - [x] 1.9 RED — pytest：name > 60 或每队 > 50 断言被拒
 - [x] 1.10 GREEN — 长度/数量上限校验（DB check + 命令层）
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 前端：已存阵型块（列表/保存/载入/失效）
 
@@ -27,12 +27,12 @@
 - **Code**: D2 失效检查前端比对 `search.roster`：锁定任一位不在→拒载面板，排除不在→静默丢/中性提示。D3 载入=链接/导航写回 query（保持 URL 唯一记录、可分享），存/删走 `lib/admin.ts` server action（in-app 浏览器 `requestSubmit()`）。`lib/api.ts` 加列出类型+fetch。用设计 token（warning 拒载面板、中性档提示、primary 载入、danger 删除），不硬编码 hex。admin 门控只是表层，写权限由后端方法判权。
 - **Threshold**: 70
 
-- [ ] 2.0 CONTRACT — write openspec/changes/lineup-saved-filters/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-02-lineup-saved-filters-mocks.html; note linear tokens (primary 载入、danger 删除/失效、warning 拒载面板、中性档 muted-fg/surface-muted) 与逐字串（「已存阵型」「存为阵型」「这个阵型已过期」「按现有名单重建」等）
-- [ ] 2.2 RED — vitest：给控件传一组 preset，断言渲染名+规模+载入；admin 态见存/删、非 admin 态不见；空约束时保存入口禁用
-- [ ] 2.3 RED — vitest：载入锁定引用不在 roster 的 preset → 断言拒载面板（明说+失效锁与人+删/重建），不渲染候选；排除引用离队球员 → 断言照常载入路径 + 中性提示
-- [ ] 2.4 GREEN — `lib/api.ts` 列出类型/fetch；`lib/admin.ts` 存/删 action；控件里 preset 块 + 载入（写回 URL）+ 失效面板；token 化
-- [ ] 2.5 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); admin 登录（`requestSubmit()`）造 preset，桌面 + 375 对照 mock，量 computed style 确认对比度 ≥4.5、无横向溢出、44px 目标；fix drift
+- [x] 2.0 CONTRACT — write openspec/changes/lineup-saved-filters/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-02-lineup-saved-filters-mocks.html; note linear tokens (primary 载入、danger 删除/失效、warning 拒载面板、中性档 muted-fg/surface-muted) 与逐字串（「已存阵型」「存为阵型」「这个阵型已过期」「按现有名单重建」等）
+- [x] 2.2 RED — vitest：给控件传一组 preset，断言渲染名+规模+载入；admin 态见存/删、非 admin 态不见；空约束时保存入口禁用
+- [x] 2.3 RED — vitest：载入锁定引用不在 roster 的 preset → 断言拒载面板（明说+失效锁与人+删/重建），不渲染候选；排除引用离队球员 → 断言照常载入路径 + 中性提示
+- [x] 2.4 GREEN — `lib/api.ts` 列出类型/fetch；`lib/admin.ts` 存/删 action；控件里 preset 块 + 载入（写回 URL）+ 失效面板；token 化
+- [x] 2.5 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); admin 登录（`requestSubmit()`）造 preset，桌面 + 375 对照 mock，量 computed style 确认对比度 ≥4.5、无横向溢出、44px 目标；fix drift
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 验证与交付

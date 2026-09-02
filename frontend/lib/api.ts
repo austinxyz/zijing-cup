@@ -362,6 +362,20 @@ export interface LineupSearch {
   unresolved_count: number;
 }
 
+/** A saved filter preset: a team's named locks + exclusions. Same shape as the
+ *  URL query params, so loading one just writes those params back. */
+export interface LineupFilterPreset {
+  id: number;
+  name: string;
+  constraints: {
+    /** line code -> the two locked player keys */
+    locks: Record<string, string[]>;
+    excluded: string[];
+  };
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface LineupConstraints {
   /** Line code to the two player keys standing on it. */
   locks?: Record<string, [string, string]>;
@@ -397,6 +411,25 @@ export async function getTeamLineups(
   );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`getTeamLineups failed: ${res.status}`);
+  return res.json();
+}
+
+/** A team's saved filter presets. Read-only; empty list for an unknown team is
+ *  not distinguished from a team with none — neither is a lineup answer. */
+export async function getTeamPresets(
+  year: number | string,
+  code: string,
+  teamCode: string,
+): Promise<LineupFilterPreset[]> {
+  const res = await fetch(
+    backendUrl(
+      `/api/seasons/${year}/divisions/${code}/teams/` +
+        `${encodeURIComponent(teamCode)}/presets`,
+    ),
+    backendRequestInit(),
+  );
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`getTeamPresets failed: ${res.status}`);
   return res.json();
 }
 

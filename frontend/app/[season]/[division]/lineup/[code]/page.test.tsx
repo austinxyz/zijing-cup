@@ -17,13 +17,24 @@ vi.mock("@/lib/api", async (importOriginal) => {
     ...actual,
     getTeamLineups: vi.fn(),
     getDivisionRules: vi.fn(),
+    getTeamPresets: vi.fn(async () => []),
   };
 });
+
+vi.mock("@/lib/admin", () => ({
+  isSignedIn: vi.fn(async () => false),
+}));
+
+vi.mock("./actions", () => ({
+  savePreset: vi.fn(),
+  deletePreset: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 const RULES: DivisionRules = {
