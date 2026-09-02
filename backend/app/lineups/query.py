@@ -92,6 +92,31 @@ class ViolationOut(BaseModel):
     message: str
 
 
+class PlacedPlayerOut(BaseModel):
+    #: A named player and where the input has put them: a line code, or
+    #: "excluded".
+    name: str
+    where: str
+
+
+class InfeasibilityReasonOut(BaseModel):
+    #: "gender_shortage" | "over_cap" | "over_gap" | "eligibility".
+    kind: str
+    message: str
+    #: Named players an exclude or a lock-elsewhere accounts for. Empty for the
+    #: rule/attribute reasons (over_cap / over_gap / eligibility) — not the
+    #: user's doing.
+    attributed: list[PlacedPlayerOut] = []
+
+
+class InfeasibilityOut(BaseModel):
+    #: The line whose candidate pool is empty; equals infeasible_line.
+    line: str
+    #: Why, as facts read off the pool — never a claim about which lock is to
+    #: blame.
+    reasons: list[InfeasibilityReasonOut]
+
+
 class LineupSearchOut(BaseModel):
     candidates: list[CandidateOut]
     ceiling: Optional[Decimal] = None
@@ -110,6 +135,11 @@ class LineupSearchOut(BaseModel):
     #: Set when some line has no legal pair at all. Distinct from an empty
     #: candidate list, which reads as "searched, found nothing worth keeping".
     infeasible_line: Optional[str] = None
+
+    #: The richer form of infeasible_line: why that line's pool is empty, and
+    #: attribution to the user's own excludes/locks where the input shows it.
+    #: null when the search is feasible. line == infeasible_line.
+    infeasibility: Optional[InfeasibilityOut] = None
 
     #: Where each unavailable player is: a line code, or "excluded". Read off
     #: the input — NOT a claim about which lock made the search infeasible.
@@ -356,6 +386,24 @@ def to_output(
         squads_at_ceiling_exact=result.squads_at_ceiling_exact,
         rules_ceiling=rules_ceiling(rules),
         infeasible_line=result.infeasible_line,
+        infeasibility=(
+            InfeasibilityOut(
+                line=result.infeasibility.line,
+                reasons=[
+                    InfeasibilityReasonOut(
+                        kind=reason.kind,
+                        message=reason.message,
+                        attributed=[
+                            PlacedPlayerOut(name=p.name, where=p.where)
+                            for p in reason.attributed
+                        ],
+                    )
+                    for reason in result.infeasibility.reasons
+                ],
+            )
+            if result.infeasibility is not None
+            else None
+        ),
         placements=result.placements,
         truncated=result.truncated,
         borrowed_players_checked=result.borrowed_players_checked,

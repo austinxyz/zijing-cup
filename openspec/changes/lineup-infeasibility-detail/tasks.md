@@ -6,19 +6,19 @@
 - **Code**: D1 独立 `Infeasibility`/`InfeasibilityReason`/`PlacedPlayer` 结构，不复用 `Violation`；`infeasible_line` 保留、`infeasibility.line` 同值。D2 新 `diagnose_line(rules, rule, available, placements)` 用与 `legal_pairs` 相同的 `available` 池与四关判定，一趟 `combinations`、无第二次搜索。D3 归因只挂 `gender_shortage`、只读 `placements` 里 `where != 本线` 的同性别队员；`over_cap`/`over_gap`/`eligibility` 的 `attributed` 恒空、中性措辞。资格判定只报可局部判定的 `restricted_to_lines` 事实。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/lineup-infeasibility-detail/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — pytest：WD 需 2 名女、可用只 1 名的最小场景，断言 `result.infeasibility.reasons` 有一条 `kind=="gender_shortage"`、message 含「需要 2」「可用只 1」
-- [ ] 1.2 GREEN — 加 `Infeasibility`/`InfeasibilityReason`/`PlacedPlayer` dataclass + `SearchResult.infeasibility` 字段；`diagnose_line` 实现 gender_shortage 分支；`search()` 在返回 `infeasible_line` 前组装 `infeasibility`
-- [ ] 1.3 RED — pytest：能凑出组合但每对都超 cap+buffer 的场景，断言有一条 `kind=="over_cap"`、message 含 cap 值
-- [ ] 1.4 GREEN — `diagnose_line` 加「遍历 slot-ok 对、记第一个失败关」逻辑，产出 `over_cap` 原因
-- [ ] 1.5 RED — pytest：每对都超搭档差距的场景，断言有一条 `kind=="over_gap"`
-- [ ] 1.6 GREEN — `diagnose_line` 产出 `over_gap` 原因
-- [ ] 1.7 RED — pytest：够格的人被 `restricted_to_lines` 挡在本线外的场景，断言有一条 `kind=="eligibility"` 且该原因 `attributed == []`（不归因到用户）
-- [ ] 1.8 GREEN — `diagnose_line` 产出 `eligibility` 原因，中性措辞，`attributed` 恒空
-- [ ] 1.9 RED — pytest：WD 缺的女将正是被排除 + 锁进 MD 的人，断言 `gender_shortage.attributed` 点名两人、`where` 分别为 `"excluded"` 与 `"MD"`
-- [ ] 1.10 GREEN — `diagnose_line` 的 gender_shortage 从 `placements` 填 `attributed`（只取 `where != 本线` 的同性别）
-- [ ] 1.11 RED — pytest：无解但非用户造成（人本身对 cap 太强）的场景，断言 `over_cap.attributed == []`；并断言 `diagnose_line` 不调用整解搜索（不出现第二次 `search_lineups`/因果字段）
-- [ ] 1.12 GREEN — 确保 cap/gap/eligibility 三类 `attributed` 恒空；诊断路径只读候选池
+- [x] 1.0 CONTRACT — write openspec/changes/lineup-infeasibility-detail/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — pytest：WD 需 2 名女、可用只 1 名的最小场景，断言 `result.infeasibility.reasons` 有一条 `kind=="gender_shortage"`、message 含「需要 2」「可用只 1」
+- [x] 1.2 GREEN — 加 `Infeasibility`/`InfeasibilityReason`/`PlacedPlayer` dataclass + `SearchResult.infeasibility` 字段；`diagnose_line` 实现 gender_shortage 分支；`search()` 在返回 `infeasible_line` 前组装 `infeasibility`
+- [x] 1.3 RED — pytest：能凑出组合但每对都超 cap+buffer 的场景，断言有一条 `kind=="over_cap"`、message 含 cap 值
+- [x] 1.4 GREEN — `diagnose_line` 加「遍历 slot-ok 对、记第一个失败关」逻辑，产出 `over_cap` 原因
+- [x] 1.5 RED — pytest：每对都超搭档差距的场景，断言有一条 `kind=="over_gap"`
+- [x] 1.6 GREEN — `diagnose_line` 产出 `over_gap` 原因
+- [x] 1.7 RED — pytest：够格的人被 `restricted_to_lines` 挡在本线外的场景，断言有一条 `kind=="eligibility"` 且该原因 `attributed == []`（不归因到用户）
+- [x] 1.8 GREEN — `diagnose_line` 产出 `eligibility` 原因，中性措辞，`attributed` 恒空
+- [x] 1.9 RED — pytest：WD 缺的女将正是被排除 + 锁进 MD 的人，断言 `gender_shortage.attributed` 点名两人、`where` 分别为 `"excluded"` 与 `"MD"`
+- [x] 1.10 GREEN — `diagnose_line` 的 gender_shortage 从 `placements` 填 `attributed`（只取 `where != 本线` 的同性别）
+- [x] 1.11 RED — pytest：无解但非用户造成（人本身对 cap 太强）的场景，断言 `over_cap.attributed == []`；并断言 `diagnose_line` 不调用整解搜索（不出现第二次 `search_lineups`/因果字段）
+- [x] 1.12 GREEN — 确保 cap/gap/eligibility 三类 `attributed` 恒空；诊断路径只读候选池
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 前端：NoSolution 呈现原因 + 归因

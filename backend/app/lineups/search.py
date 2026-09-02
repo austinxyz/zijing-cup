@@ -26,6 +26,7 @@ from typing import Iterable, Optional, Sequence
 
 from app.lineups.rules import (
     Candidate,
+    EligibilityLimit,
     LineRule,
     RuleSet,
     Violation,
@@ -50,6 +51,35 @@ class LineupCandidate:
         return frozenset(p.key for pair in self.lines.values() for p in pair)
 
 
+@dataclass(frozen=True)
+class PlacedPlayer:
+    """A named player and where the current input has put them: a line code
+    (locked onto it) or "excluded". Read straight off placements."""
+    name: str
+    where: str
+
+
+@dataclass(frozen=True)
+class InfeasibilityReason:
+    #: "gender_shortage" | "over_cap" | "over_gap" | "eligibility".
+    kind: str
+    #: Captain-facing Chinese; any number already formatted to a string.
+    message: str
+    #: Named players whose absence a user action explains. Filled only for
+    #: gender_shortage (an exclude or a lock elsewhere took an eligible body).
+    #: Always empty for the rule-or-attribute reasons (over_cap / over_gap /
+    #: eligibility) — those are not something the user did.
+    attributed: list[PlacedPlayer] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class Infeasibility:
+    """Why one line's candidate pool is empty. A read of the pool, never a
+    second search, and never a claim about which lock is to blame."""
+    line: str
+    reasons: list[InfeasibilityReason]
+
+
 @dataclass
 class SearchResult:
     candidates: list[LineupCandidate] = field(default_factory=list)
@@ -63,6 +93,10 @@ class SearchResult:
     #: distinct from "the search found nothing worth keeping", which an empty
     #: list alone cannot say apart.
     infeasible_line: Optional[str] = None
+    #: The richer form of infeasible_line: the reasons that line's candidate
+    #: pool is empty, plus attribution to the user's own excludes/locks when
+    #: that is a fact the input can be read for. line == infeasible_line.
+    infeasibility: Optional[Infeasibility] = None
     #: Where each unavailable player currently is: the line they are locked
     #: onto, or "excluded". Read straight off the input, so it costs nothing.
     #: Deliberately NOT an attribution of blame — naming the lock responsible
@@ -183,13 +217,37 @@ def check_locks(
     return problems
 
 
+def _line_restriction_offenders(
+    rules: RuleSet, rule: LineRule, pair: Pair
+) -> list[tuple[Candidate, "EligibilityLimit"]]:
+    """Players on this pair a high-UTR line restriction bars from this line.
+
+    Restricting a high-UTR player to certain lines is a property of the player
+    and the line — knowable per pair, exactly like check_locks decides it for a
+    locked pair. Only restricted_to_lines is judged here; the per-match count
+    limit is a whole-lineup question the search still owns.
+    """
+    offenders: list[tuple[Candidate, "EligibilityLimit"]] = []
+    for limit in rules.limits:
+        if limit.restricted_to_lines is None:
+            continue
+        if rule.code in set(limit.restricted_to_lines):
+            continue
+        for person in pair:
+            if _limit_gender_for(rule, person) != limit.gender:
+                continue
+            if person.match_utr > limit.utr_above:
+                offenders.append((person, limit))
+    return offenders
+
+
 def legal_pairs(rules: RuleSet, rule: LineRule, pool: Sequence[Candidate]) -> list[Pair]:
     """Every pair that could stand on this line on its own merits.
 
-    Only the per-pair rules are applied here — the gap, the slot's gender, and
-    the ceiling this line could reach if the team spent its whole buffer on it.
-    Whether the team can actually afford that is a question about the lineup as
-    a whole, decided during the search.
+    The per-pair rules are applied here — the slot's gender, the gap, the
+    ceiling this line could reach if the team spent its whole buffer on it, and
+    a high-UTR restriction confining a player to other lines. Whether the team
+    can afford the buffer across all five lines is decided during the search.
     """
     out: list[Pair] = []
     for a, b in combinations(pool, 2):
@@ -201,6 +259,8 @@ def legal_pairs(rules: RuleSet, rule: LineRule, pool: Sequence[Candidate]) -> li
             headroom = min(rules.buffer_per_line, rules.buffer_total)
             if a.match_utr + b.match_utr > rule.cap + headroom:
                 continue
+        if _line_restriction_offenders(rules, rule, (a, b)):
+            continue
         out.append((a, b))
     return out
 
@@ -208,6 +268,143 @@ def _over(rule: LineRule, pair: Pair) -> Decimal:
     if rule.cap is None:
         return Decimal(0)  # an open line cannot overspend a budget
     return max(Decimal(0), pair_total(pair) - rule.cap)
+
+
+def _gender_need(rule: LineRule) -> dict[Optional[str], int]:
+    """How many of each gender this line's slots require.
+
+    Women's doubles is two women, mixed is one of each, men's doubles is any
+    two (women are allowed to fill men's slots), keyed by None.
+    """
+    if rule.kind == "womens_doubles":
+        return {"F": 2}
+    if rule.kind == "mixed_doubles":
+        return {"M": 1, "F": 1}
+    return {None: 2}
+
+
+_GENDER_LABEL = {"F": "女队员", "M": "男队员", None: "队员"}
+
+
+def _attribution(
+    gender: Optional[str],
+    line: str,
+    placements: dict[str, str],
+    names: dict[str, str],
+    roster_gender: dict[str, Optional[str]],
+) -> list[PlacedPlayer]:
+    """Named players of this gender the input has put out of this line's reach.
+
+    Only excludes and locks-elsewhere — a user action the captain can undo.
+    Read straight off placements; never a claim that undoing one yields a
+    solution. Placed players are not in `available`, so their gender is looked
+    up in the full-roster map. A specific-gender shortage counts only that
+    gender; an any-gender (None) shortage counts everyone placed.
+    """
+    out: list[PlacedPlayer] = []
+    for key, where in placements.items():
+        if where == line:
+            continue
+        if gender is not None and roster_gender.get(key) != gender:
+            continue
+        name = names.get(key)
+        if name is None:
+            continue
+        out.append(PlacedPlayer(name=name, where=where))
+    return out
+
+
+def diagnose_line(
+    rules: RuleSet,
+    rule: LineRule,
+    available: Sequence[Candidate],
+    placements: dict[str, str],
+    names: dict[str, str],
+    roster_gender: dict[str, Optional[str]],
+) -> list[InfeasibilityReason]:
+    """Why this line's candidate pool is empty — a read of `available`, the
+    same pool legal_pairs uses, never a second search.
+
+    Reasons can coexist and are all reported; no guess at a "main" one.
+    """
+    reasons: list[InfeasibilityReason] = []
+
+    need = _gender_need(rule)
+    for gender, count in need.items():
+        if gender is None:
+            have = len(available)
+        else:
+            have = sum(1 for p in available if p.gender == gender)
+        if have < count:
+            reasons.append(InfeasibilityReason(
+                kind="gender_shortage",
+                message=(
+                    f"{rule.code} 需要 {count} 名{_GENDER_LABEL[gender]}，"
+                    f"当前可用只有 {have} 名"
+                ),
+                attributed=_attribution(
+                    gender, rule.code, placements, names, roster_gender
+                ),
+            ))
+
+    # Gender allowing, walk the slot-legal pairs and record the first rule each
+    # one trips — the same order legal_pairs applies (gap, then cap). Because
+    # the line is infeasible, no pair clears them all, so every slot-legal pair
+    # lands in one of these buckets.
+    headroom = min(rules.buffer_per_line, rules.buffer_total)
+    over_gap: list[Pair] = []
+    over_cap: list[Pair] = []
+    #: Restricted players (keyed for stable order) seen barring an otherwise-ok
+    #: pair from this line — a rule fact, so named but never attributed to the
+    #: user.
+    restricted: dict[str, tuple[Candidate, EligibilityLimit]] = {}
+    for a, b in combinations(available, 2):
+        if not _slot_ok(rule, a, b):
+            continue
+        if abs(a.match_utr - b.match_utr) > rules.partner_gap_max:
+            over_gap.append((a, b))
+            continue
+        if rule.cap is not None and a.match_utr + b.match_utr > rule.cap + headroom:
+            over_cap.append((a, b))
+            continue
+        offenders = _line_restriction_offenders(rules, rule, (a, b))
+        if offenders:
+            for person, limit in offenders:
+                restricted.setdefault(person.key, (person, limit))
+            continue
+
+    if over_gap:
+        reasons.append(InfeasibilityReason(
+            kind="over_gap",
+            message=(
+                f"{rule.code} 能凑出组合，但每一对的参赛 UTR 差距都超过 "
+                f"上限 {rules.partner_gap_max}"
+            ),
+        ))
+
+    if over_cap:
+        reasons.append(InfeasibilityReason(
+            kind="over_cap",
+            message=(
+                f"{rule.code} 能凑出组合，但每一对的参赛 UTR 之和都超过 "
+                f"cap {rule.cap}（含 buffer {headroom}）"
+            ),
+        ))
+
+    if restricted:
+        who = "、".join(
+            f"{person.name}（参赛 UTR 高于 {limit.utr_above}，"
+            f"按规则只能打 {'/'.join(limit.restricted_to_lines)}）"
+            for person, limit in restricted.values()
+        )
+        reasons.append(InfeasibilityReason(
+            kind="eligibility",
+            message=(
+                f"{rule.code} 够格的队员被上场资格限制挡在本线外：{who}"
+            ),
+        ))
+
+    return reasons
 
 
 def _eligibility_index(rules: RuleSet) -> dict[str, list[tuple]]:
@@ -311,9 +508,16 @@ def search_lineups(
     # which line turns "no lineup exists" into something to act on.
     for rule in rules.lines:
         if not options[rule.code]:
+            placements = _placements(locks, blocked)
+            names = {p.key: p.name for p in roster}
+            roster_gender = {p.key: p.gender for p in roster}
+            reasons = diagnose_line(
+                rules, rule, available, placements, names, roster_gender
+            )
             return SearchResult(
                 infeasible_line=rule.code,
-                placements=_placements(locks, blocked),
+                infeasibility=Infeasibility(line=rule.code, reasons=reasons),
+                placements=placements,
             )
 
     mens_codes = [rule.code for rule in rules.lines if rule.kind == "mens_doubles"]

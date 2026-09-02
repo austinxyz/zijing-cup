@@ -62,6 +62,10 @@ infeasibility: Optional[Infeasibility] = None
 
 一趟 `combinations`，与 `legal_pairs` 同阶，无第二次整解搜索。
 
+**apply 期修正**：原 `legal_pairs` 不看资格（`restricted_to_lines`），所以「某人被限制在别的线」永远不会让本线的 `options` 变空 → `infeasible_line` 不会为资格触发（资格只在搜索递归 `_eligibility_ok` 里事后拒绝）。`restricted_to_lines` 是「队员 × 线」的局部可判事实，`check_locks`（rules.py）对锁定对早就是这么判的。故把同一条局部过滤并入 `legal_pairs`（新 `_line_restriction_offenders`）：更早、更据实地剪枝，SILVER（`restricted_to_lines=None`）不受影响，全套既有测试通过。诊断的资格分支与它对齐。
+
+**API 序列化**：`query.py` 的 `LineupSearchOut` 加 `infeasibility`（`InfeasibilityOut`/`InfeasibilityReasonOut`/`PlacedPlayerOut`），`to_output` 映射；前端经此消费。
+
 ### D3 — 归因边界（钉死）
 
 归因只挂在 `gender_shortage` 上，且只针对**排除 / 锁进别线**：对该性别，遍历 `placements` 里 `where != <本线>` 的同性别队员，取名 + 去向填 `attributed`。

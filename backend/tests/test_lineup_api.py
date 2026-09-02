@@ -493,6 +493,17 @@ class TestUnknownTargetsAndTheAbsenceOfWrites:
         assert body["infeasible_line"] is not None
         assert not body["candidates"]
 
+    def test_an_infeasible_line_carries_structured_reasons(self, client):
+        # LINEUP-B is one man: whichever line runs dry says why, not just which.
+        body = search(client, team="LINEUP-B").json()
+        assert body["infeasibility"] is not None
+        assert body["infeasibility"]["line"] == body["infeasible_line"]
+        reasons = body["infeasibility"]["reasons"]
+        assert reasons, "an infeasible line must carry at least one reason"
+        assert any(r["kind"] == "gender_shortage" for r in reasons)
+        for r in reasons:
+            assert "kind" in r and "message" in r and "attributed" in r
+
     def test_the_lineup_surface_exposes_no_write_method(self):
         # Read app.openapi(), never app.routes: this FastAPI version stores an
         # include_router() call as one opaque entry and does not flatten the
