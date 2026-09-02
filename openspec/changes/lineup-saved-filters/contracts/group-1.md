@@ -1,0 +1,5 @@
+### Contract
+- **Spec**: 系统 SHALL 把每个 preset 存在 `zijing_cup` schema 的表里，按 (赛季,组别,队) 归属，持有名字与一组输入约束（锁定+排除），MUST NOT 存搜索结果或冻结 UTR。同一队内 preset 名 SHALL 唯一，同名保存 SHALL 覆盖，空名 SHALL 被拒。存与删 SHALL 是写操作、MUST 由按 HTTP 方法判权的 admin 中间件保护（无凭据被拒），列出 SHALL 只读、无需凭据；鉴权 MUST NOT 依赖路由前缀或依赖式检查。载入 SHALL 等价于把约束变成 URL query 走与手填完全相同的后端校验，preset MUST NOT 是新信任入口；名字 MUST 参数化入库。
+- **Runtime**: `cd backend && ./.venv-std/Scripts/python.exe -m pytest tests/test_lineup_presets.py tests/test_admin_auth.py`（本机 uv 被 Application Control 拦，用系统 venv；CI 用 `uv run pytest`）→ expected: 存/取/删/同名覆盖/空名拒/无凭据写被拒全通过，无 import 错误
+- **Code**: D1 单表 `zijing_cup.lineup_filter_presets`（`team_id` FK teams on delete cascade、`name` check 长度、`constraints` JSONB、`unique(team_id,name)`、`created_at`/`updated_at`）；同名覆盖用 `on conflict (team_id,name) do update`。SQLModel 时间戳用 `sa_column=Column(..., server_default=func.now(), nullable=False)`，别写 `Optional=None`（否则插显式 NULL 抛错）。D5 存/删是 POST/DELETE 自动受 `WRITE_METHODS` 保护，不加前缀判权、不用依赖式鉴权。D4 name ≤60、每队 ≤50。远程迁移走 Dashboard，本地打本地栈（断言连接串含 127.0.0.1）。
+- **Threshold**: 80

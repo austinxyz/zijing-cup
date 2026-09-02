@@ -6,17 +6,17 @@
 - **Code**: D1 单表 `zijing_cup.lineup_filter_presets`（`team_id` FK teams on delete cascade、`name` check 长度、`constraints` JSONB、`unique(team_id,name)`、`created_at`/`updated_at`）；同名覆盖用 `on conflict (team_id,name) do update`。SQLModel 时间戳用 `sa_column=Column(..., server_default=func.now(), nullable=False)`，别写 `Optional=None`（否则插显式 NULL 抛错）。D5 存/删是 POST/DELETE 自动受 `WRITE_METHODS` 保护，不加前缀判权、不用依赖式鉴权。D4 name ≤60、每队 ≤50。远程迁移走 Dashboard，本地打本地栈（断言连接串含 127.0.0.1）。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/lineup-saved-filters/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — pytest：迁移 SQL 打到本地栈后，存一个 preset（team + name + constraints JSON），断言能按 (队) 列出、内容一致
-- [ ] 1.2 GREEN — 写 migration `zijing_cup.lineup_filter_presets`（打到本地栈）；`app/lineups/presets.py` 模型 + 存命令 + 列出查询；接线到 query/command 层
-- [ ] 1.3 RED — pytest：同名再存断言覆盖（队内该名仍 1 条、内容为新）；空名断言被拒
-- [ ] 1.4 GREEN — 存命令用 `on conflict (team_id,name) do update`；空名校验拒绝
-- [ ] 1.5 RED — pytest：删一个 preset 断言列表里没了；删不存在的 id 优雅处理
-- [ ] 1.6 GREEN — 删命令
-- [ ] 1.7 RED — pytest：路由层——GET 列出无需凭据返回；POST 存 / DELETE 删 无 admin 凭据被拒（沿用 `test_admin_auth.py` 全应用断言：每条写路由拒无凭据）
-- [ ] 1.8 GREEN — 路由 `routers/lineups.py`：GET 列出 + POST 存 + DELETE 删（写路由靠方法自动受保护，不加前缀、不用依赖式鉴权）
-- [ ] 1.9 RED — pytest：name > 60 或每队 > 50 断言被拒
-- [ ] 1.10 GREEN — 长度/数量上限校验（DB check + 命令层）
+- [x] 1.0 CONTRACT — write openspec/changes/lineup-saved-filters/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — pytest：迁移 SQL 打到本地栈后，存一个 preset（team + name + constraints JSON），断言能按 (队) 列出、内容一致
+- [x] 1.2 GREEN — 写 migration `zijing_cup.lineup_filter_presets`（打到本地栈）；`app/lineups/presets.py` 模型 + 存命令 + 列出查询；接线到 query/command 层
+- [x] 1.3 RED — pytest：同名再存断言覆盖（队内该名仍 1 条、内容为新）；空名断言被拒
+- [x] 1.4 GREEN — 存命令用 `on conflict (team_id,name) do update`；空名校验拒绝
+- [x] 1.5 RED — pytest：删一个 preset 断言列表里没了；删不存在的 id 优雅处理
+- [x] 1.6 GREEN — 删命令
+- [x] 1.7 RED — pytest：路由层——GET 列出无需凭据返回；POST 存 / DELETE 删 无 admin 凭据被拒（沿用 `test_admin_auth.py` 全应用断言：每条写路由拒无凭据）
+- [x] 1.8 GREEN — 路由 `routers/lineups.py`：GET 列出 + POST 存 + DELETE 删（写路由靠方法自动受保护，不加前缀、不用依赖式鉴权）
+- [x] 1.9 RED — pytest：name > 60 或每队 > 50 断言被拒
+- [x] 1.10 GREEN — 长度/数量上限校验（DB check + 命令层）
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 前端：已存阵型块（列表/保存/载入/失效）

@@ -10,13 +10,23 @@ returned. No constraint or search logic lives here.
 """
 
 import re
-from typing import Optional
+from datetime import datetime
+from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlmodel import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from pydantic import BaseModel
+from sqlmodel import Session, select
 
 from app.db import get_session
+from app.lineups.presets import (
+    InvalidPreset,
+    PresetLimitExceeded,
+    delete_preset,
+    list_presets,
+    save_preset,
+)
 from app.lineups.query import LineupSearchOut, UnknownReference, search_team_lineups
+from app.models import Team
 
 router = APIRouter(prefix="/api", tags=["lineups"])
 
@@ -96,3 +106,82 @@ def search_lineups_for_team(
         # one has its own field.
         raise HTTPException(status_code=404, detail="team not found")
     return result
+
+
+# --- Saved filter presets ---------------------------------------------------
+#
+# Named locks+exclusions per team. GET is a read (no admin); POST/DELETE are
+# writes, protected by the method-keyed admin middleware without declaring
+# anything here — the same subtractive guarantee the rest of the app relies on.
+
+_PRESETS = "/seasons/{year}/divisions/{code}/teams/{team_code}/presets"
+
+
+class PresetIn(BaseModel):
+    name: str
+    #: {"locks": {"D1": ["p12","p34"], ...}, "excluded": ["p56", ...]}
+    constraints: dict[str, Any]
+
+
+class PresetOut(BaseModel):
+    id: int
+    name: str
+    constraints: dict[str, Any]
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+def _resolve_team(session: Session, year: int, code: str, team_code: str) -> int:
+    team = session.exec(
+        select(Team).where(
+            Team.season_year == year,
+            Team.division_code == code,
+            Team.code == team_code,
+        )
+    ).one_or_none()
+    if team is None:
+        raise HTTPException(status_code=404, detail="team not found")
+    return team.id
+
+
+@router.get(_PRESETS, response_model=list[PresetOut])
+def list_team_presets(
+    year: int, code: str, team_code: str,
+    session: Session = Depends(get_session),
+) -> list[PresetOut]:
+    team_id = _resolve_team(session, year, code, team_code)
+    return [
+        PresetOut(
+            id=p.id, name=p.name, constraints=p.constraints,
+            created_at=p.created_at, updated_at=p.updated_at,
+        )
+        for p in list_presets(session, team_id)
+    ]
+
+
+@router.post(_PRESETS, response_model=PresetOut, status_code=201)
+def save_team_preset(
+    year: int, code: str, team_code: str, body: PresetIn,
+    session: Session = Depends(get_session),
+) -> PresetOut:
+    team_id = _resolve_team(session, year, code, team_code)
+    try:
+        preset = save_preset(session, team_id, body.name, body.constraints)
+    except InvalidPreset as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except PresetLimitExceeded as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return PresetOut(
+        id=preset.id, name=preset.name, constraints=preset.constraints,
+        created_at=preset.created_at, updated_at=preset.updated_at,
+    )
+
+
+@router.delete(_PRESETS + "/{preset_id}", status_code=204)
+def delete_team_preset(
+    year: int, code: str, team_code: str, preset_id: int,
+    session: Session = Depends(get_session),
+) -> Response:
+    team_id = _resolve_team(session, year, code, team_code)
+    delete_preset(session, team_id, preset_id)
+    return Response(status_code=204)

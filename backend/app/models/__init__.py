@@ -7,6 +7,7 @@ from app.models.players import (
     PlayerTeamMembership,
     SeasonLock,
 )
+from app.models.presets import LineupFilterPreset
 from app.models.roster import RosterEntry, Team
 from app.models.rules import (
     Division,
@@ -20,6 +21,7 @@ __all__ = [
     "Division",
     "DivisionEligibilityLimit",
     "DivisionLine",
+    "LineupFilterPreset",
     "Player",
     "PlayerSeasonUtr",
     "PlayerTeamMembership",
