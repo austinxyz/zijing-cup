@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lineup-single-pin — 视觉稿</title>
+<style>
+  body { margin:0; padding:2rem 1.5rem 4rem; background:#f6f4f0; color:#1a1917;
+         font-family:"Inter","Segoe UI",system-ui,sans-serif; line-height:1.6; }
+  h1 { font-size:1.5rem; margin:0 0 .25rem; }
+  h2 { font-size:1.0625rem; margin:2.5rem 0 .5rem; padding-bottom:.35rem; border-bottom:1px solid #e4e0d8; }
+  p,li { font-size:.875rem; }
+  code { font-family:ui-monospace,Consolas,monospace; }
+  .lede { color:#57534e; margin:0 0 1.5rem; font-size:.875rem; max-width:62rem; }
+  .note { color:#57534e; font-size:.8125rem; margin:.5rem 0 1rem; max-width:52rem; }
+  .cap { font-size:12px; color:#57534e; margin:8px 0 0; }
+  .cap b { color:#1a1917; }
+  .row { display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; }
+
+  .panel { background:#fff; border:1px solid #e4e0d8; border-radius:8px; }
+  .sidebar { width:520px; max-width:100%; padding:16px 18px; display:flex; flex-direction:column; gap:9px; }
+  .phone { width:375px; }
+  .sect-h { font-size:13px; font-weight:600; }
+  .sect-sub { font-size:11.5px; color:#6b665d; }
+
+  /* a line row: label + two seats */
+  .line { display:flex; align-items:center; gap:10px; }
+  .line .lab { width:66px; flex:none; display:flex; flex-direction:column; }
+  .line .code { font-size:12.5px; font-weight:500; }
+  .line .cap-m { font-family:ui-monospace,Consolas,monospace; font-size:10px; color:#6b665d; }
+  .seat { flex:1 1 0; min-width:0; height:34px; border:1px solid #e4e0d8; border-radius:6px; background:#fff;
+          display:flex; align-items:center; padding:0 9px; font-size:12.5px; color:#1a1917; justify-content:space-between; }
+  .seat.empty { color:#6b665d; }
+  .seat .chev { color:#6b665d; font-size:10px; }
+  /* a filled seat when its line is a PIN gets a subtle primary edge */
+  .line.pin .seat.filled { border-color:#c9a24a; box-shadow:inset 2px 0 0 #c9a24a; }
+  .line.lock .seat.filled { border-color:#9c3417; box-shadow:inset 2px 0 0 #9c3417; }
+
+  .badge { flex:none; font-family:ui-monospace,Consolas,monospace; font-size:10px; border-radius:4px; padding:1px 6px; }
+  .badge.pin { color:#8a6508; background:#fbf5e6; border:1px solid #ecd9a4; }
+  .badge.lock { color:#9c3417; background:#f7ede9; border:1px solid #e6c9bd; }
+  .hint { font-size:11px; color:#6b665d; margin-left:76px; margin-top:-4px; }
+
+  /* infeasibility panel */
+  .infeas { display:flex; flex-direction:column; gap:12px; padding:14px 16px; }
+  .infeas .t { font-size:15px; font-weight:600; }
+  .infeas .s { font-size:12.5px; line-height:1.55; color:#6b665d; }
+  .infeas .s b { color:#1a1917; }
+  .reason { display:flex; gap:8px; border-left:2px solid #ecd9a4; background:#fbf5e6; border-radius:0 6px 6px 0; padding:8px 10px; }
+  .reason .tx { font-size:12.5px; line-height:1.5; color:#1a1917; }
+  .reason .k { color:#8a6508; font-weight:600; }
+  .pintag { font-family:ui-monospace,Consolas,monospace; font-size:10px; color:#8a6508; }
+</style>
+</head>
+<body>
+
+<h1>lineup-single-pin —— 视觉稿</h1>
+<p class="lede">
+  一条线**只填一个座位 = pin**（把这个人钉在这条线，引擎配搭档、排满其余）；两个座位都填 =
+  现有**硬锁整对**；都不填 = 交给引擎。三种状态在控件里要一眼可分。pin 造成无解时，无解面板
+  点名被钉者与线、并在「含被钉者的对」里给原因。设计体系沿用 <code>linear</code>，不新增 token
+  （pin 用 warning 档描边/角标，硬锁用 primary 档，无解面板复用 NoSolution 的 warning 档）。
+</p>
+
+<h2 id="states">桌面 · 控件里三种线状态</h2>
+<p class="note">同一排锁定控件，三条线分别演示：空线 / pin（半填）/ 硬锁（整对）。pin 那条线的
+已填座位有 warning 边 + 「已钉」角标 + 一行小字「搭档交给引擎」。</p>
+<div class="row">
+<div class="panel sidebar">
+  <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:4px;">
+    <span class="sect-h">锁定搭档</span>
+    <span class="sect-sub">填一个人 = 钉在这条线（引擎配搭档）；填两个 = 锁整对；留空交给引擎。</span>
+  </div>
+
+  <!-- empty line -->
+  <div class="line">
+    <span class="lab"><span class="code">D1</span><span class="cap-m">cap 13.00</span></span>
+    <span class="seat empty">交给引擎<span class="chev">▾</span></span>
+    <span class="seat empty">交给引擎<span class="chev">▾</span></span>
+  </div>
+
+  <!-- pinned line (one seat) -->
+  <div class="line pin">
+    <span class="lab"><span class="code">MD</span><span class="cap-m">cap 10.25</span></span>
+    <span class="seat filled">Zhang Guang · 6.25<span class="chev">▾</span></span>
+    <span class="seat empty">交给引擎<span class="chev">▾</span></span>
+    <span class="badge pin">已钉</span>
+  </div>
+  <div class="hint">已钉 Zhang Guang · 搭档交给引擎（在满足所有规则下选最优）</div>
+
+  <!-- hard-locked line (both seats) -->
+  <div class="line lock">
+    <span class="lab"><span class="code">WD</span><span class="cap-m">cap 9.25</span></span>
+    <span class="seat filled">Shen Jiayi · 5.32<span class="chev">▾</span></span>
+    <span class="seat filled">Xie Yiwen · 4.37<span class="chev">▾</span></span>
+    <span class="badge lock">锁整对</span>
+  </div>
+</div>
+<p class="cap">pin 用 <b>warning 档</b>（描边 <code>#c9a24a</code> + 角标 warning 三件套），硬锁用
+<b>primary 档</b>（描边 <code>#9c3417</code> + primary 角标）。半填不再无声——一行小字点明
+「已钉 X · 搭档交给引擎」，把它和「都不填=交给引擎」「整对锁」区分开。</p>
+</div>
+
+<h2 id="infeas">桌面 · pin 造成无解（诊断懂 pin）</h2>
+<p class="note">被钉的人在这条线配不出合法搭档 → 无解面板点名 pin，并在「含被钉者的对」里给四类
+原因之一（此处：都超搭档差距）。复用 NoSolution 的 warning 档。</p>
+<div class="row">
+<div class="panel infeas" style="width:560px;max-width:100%;">
+  <div>
+    <div class="t">凑不出合法阵容</div>
+    <div class="s">在当前的锁定、pin 与排除下，<b>混双（MD）没有任何合法搭档</b>。</div>
+  </div>
+  <div class="reason">
+    <span class="tx"><span class="pintag">因为 pin</span> 你把 <span class="k">Zhang Guang</span> 钉在 MD，但在 MD 与他能配的女将里，<span class="k">每一对参赛 UTR 差距都超过上限 3.50</span>——没有一对合法。</span>
+  </div>
+  <div class="s">这不是「搜索没找到」——把 Zhang Guang 从 MD 松开，或换一个差距更近的搭档人选进名单。系统只据实读你当前的 pin/锁定/排除，不替你猜该换谁。</div>
+</div>
+<p class="cap">与无 pin 的无解面板同款样式；区别是原因**限定在「含被钉者的对」**里算，并**点名
+被钉者 + 线**（<code>因为 pin</code> 前缀）。四类原因（人手/超cap/超差距/资格）复用 A 的
+<code>diagnose_line</code>，只是多传一个 pin。</p>
+</div>
+
+<h2 id="mobile">手机（375）</h2>
+<p class="note">窄视口下控件在抽屉里：pin 那条线的两个座位竖排也行，角标与小字保留；无解面板结果区打底。</p>
+<div class="row">
+<div class="panel phone" style="padding:14px 16px;display:flex;flex-direction:column;gap:9px;">
+  <span class="sect-h">锁定搭档</span>
+  <div class="line pin" style="flex-wrap:wrap;">
+    <span class="lab"><span class="code">MD</span><span class="cap-m">cap 10.25</span></span>
+    <span class="badge pin">已钉</span>
+    <span class="seat filled" style="flex-basis:100%;">Zhang Guang · 6.25<span class="chev">▾</span></span>
+    <span class="seat empty" style="flex-basis:100%;">交给引擎（配搭档）<span class="chev">▾</span></span>
+  </div>
+  <div class="hint" style="margin-left:0;">已钉 Zhang Guang · 搭档交给引擎</div>
+</div>
+
+<div class="panel infeas phone">
+  <div>
+    <div class="t">凑不出合法阵容</div>
+    <div class="s"><b>混双（MD）没有任何合法搭档</b>。</div>
+  </div>
+  <div class="reason">
+    <span class="tx"><span class="pintag">因为 pin</span> Zhang Guang 钉在 MD，但<span class="k">每对差距都超上限 3.50</span>。</span>
+  </div>
+  <div class="s">松开这个 pin，或换个差距更近的搭档人选。</div>
+</div>
+</div>
+<p class="cap">44px 触摸目标；座位竖排不横向溢出；角标 + 小字在窄视口保留。</p>
+
+<h2>核对清单（实现后逐条量）</h2>
+<ul>
+  <li>三种线状态在控件里一眼可分：空 / pin（半填 + 已钉角标 + 小字）/ 硬锁（整对 + 锁角标）。</li>
+  <li>pin 造成无解：无解面板点名被钉者 + 线，原因限定在「含被钉者的对」里算，不给无关原因。</li>
+  <li>桌面 + 375 都读得清、无横向溢出、对比度 ≥4.5:1（量 computed style）：warning
+      <code>#8a6508</code>/<code>#fbf5e6</code>、primary <code>#9c3417</code>、中性 <code>#6b665d</code>。</li>
+  <li>后端：pin 单/多线可解、pin 无解诊断限定含 pin 的对、同一人钉两线或 pin∩排除被拒、女将钉男双。</li>
+</ul>
+
+</body>
+</html>
