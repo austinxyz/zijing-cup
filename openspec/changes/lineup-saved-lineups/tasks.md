@@ -51,7 +51,7 @@
 - [x] 3.4 RED — vitest：载入把 assignment 编码成五线 `lock=`；含坏 key 走 stale 分支不发搜索
 - [x] 3.5 GREEN — `lib/api.ts`/`lib/admin.ts`；保存入口；`saved/` 页四态 + diff + 载入 + 删除；token 化；error.tsx
 - [x] 3.6 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); admin 登录造已存阵容（含一套改 UTR 变非法、一套离队）导航到 `saved/` 页; 桌面 + 375 对照 mock; 量 computed style 对比度 ≥4.5、无横向溢出、44px; fix drift
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 4. 前端：就地编辑器（互换/替换 + 实时合法性 + 存回）
 
@@ -61,11 +61,11 @@
 - **Code**: D4 编辑器：五线十槽、替换=每槽下拉（整队名单）、互换=选两槽高亮点「互换」对调。改动后调 `POST validate`（`lib/api.ts` 或 `lib/admin.ts`，因 POST 需 admin 走 admin 出口），客户端**防抖 ~300ms** + 「校验中」态，live 合法/卡哪条就近呈现（复用 `Violation` message）。存回 = PUT 覆盖 + 重拍快照（server action）。重复上场靠 check_lineup 报、不前端预拦。用设计 token。前端不做数值比较。
 - **Threshold**: 70
 
-- [ ] 4.0 CONTRACT — write openspec/changes/lineup-saved-lineups/contracts/group-4.md
-- [ ] 4.1 MOCK — open docs/superpowers/specs/mocks/2026-09-03-lineup-saved-lineups-mocks.html（③ 编辑器）；note 选中槽 primary 描边 `#9c3417`、live-ok success 档、live-bad danger 档，逐字串（「互换选中的两人」「实时」「存回」）
-- [ ] 4.2 RED — vitest：编辑器互换两个槽 → assignment 两槽对调；替换一个槽 → 该槽换成所选人（纯 helper 或组件状态）
-- [ ] 4.3 RED — vitest：改动后触发校验请求（mock fetch/action），live 区渲染返回的 violations（卡哪条）或「合法」；防抖只发一次
-- [ ] 4.4 GREEN — 编辑器组件（互换/替换/选中态）；防抖校验调用；live 结果渲染；存回 action；token 化
+- [x] 4.0 CONTRACT — write openspec/changes/lineup-saved-lineups/contracts/group-4.md
+- [x] 4.1 MOCK — open docs/superpowers/specs/mocks/2026-09-03-lineup-saved-lineups-mocks.html（③ 编辑器）；note 选中槽 primary 描边 `#9c3417`、live-ok success 档、live-bad danger 档，逐字串（「互换选中的两人」「实时」「存回」）
+- [x] 4.2 RED — vitest：编辑器互换两个槽 → assignment 两槽对调；替换一个槽 → 该槽换成所选人（纯 helper 或组件状态）
+- [x] 4.3 RED — vitest：改动后触发校验请求（mock fetch/action），live 区渲染返回的 violations（卡哪条）或「合法」；防抖只发一次
+- [x] 4.4 GREEN — 编辑器组件（互换/替换/选中态）；防抖校验调用；live 结果渲染；存回 action；token 化
 - [ ] 4.5 VISUAL DIFF — bring up dev stack; 在 `saved/` 页编辑一套失效阵容（互换修好）; 桌面 + 375 对照 mock; 量对比度 ≥4.5、无横向溢出、44px; fix drift
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 

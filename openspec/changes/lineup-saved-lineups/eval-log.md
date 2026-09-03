@@ -75,3 +75,48 @@ status: PASS
 - Comments explain POST reasoning (admin decision).
 
 ### No Blockers
+
+---
+
+## Group 3 / Attempt 1
+
+**Evaluation Date:** 2026-09-03
+
+### Scores
+
+```yaml
+spec: 100
+runtime: 100
+code: 95
+total: 99
+threshold: 70
+status: PASS
+```
+
+### Findings
+
+**Spec Compliance:**
+- All contract SHALLs met: candidate row shows "保存此阵容" only to admins, requires name, team-unique, same-name overwrites.
+- Saved lineup page lists all four states (valid/utr_moved/illegal/player_gone) with correct badges.
+- UTR diffs point-name movers (X→Y), violations list rules that break, player_gone names departed seats.
+- Legality source verified: SavedLineups.tsx branches on `item.status` (backend field), never re-derives from snapshot. Test (line 414) explicitly asserts status comes from backend, not snapshot comparison.
+- Load encodes assignment to five-line lock= URL (D1a, D1b, etc); stale-ref check prevents bad-key search.
+- Design tokens used throughout: success/danger/warning/muted colors from globals.css, no hardcoded hex in components.
+- Contrast ≥4.5:1: success color darkened from #4c8a63 to #3a6b4d (5.64:1 on white, 4.94:1 on success-surface); globals.contrast.test.ts verifies all badge pairs.
+- Responsive layout: grid-cols-2 sm:grid-cols-5 for lines, gap-2 etc, tested at desktop and expected <768 breakpoints.
+
+**Runtime:**
+- 51 test files, 408 tests pass (npm run test).
+- Covers all required scenarios: SaveLineupButton.test.tsx (admin sees entry, non-admin doesn't, calls action with name+assignment), SavedLineups.test.tsx (four states render, load button encodes correctly, stale refs block load, delete gated to admin), savedLoad.test.ts (candidateAssignment extraction, savedStaleRefs detection, href building).
+- No regressions in existing lineup tests.
+
+**Code Quality:**
+- lib/api.ts: SavedLineup interface with clear comments ("status is the backend's verdict — the front end never re-derives legality from the snapshot"). getSavedLineups() fails gracefully to empty list (table may not exist post-deploy before hand-run migration).
+- SaveLineupButton.tsx: "use client" component, canEdit gate returns null early, calls saveAction with trimmed name and candidateAssignment result.
+- SavedLineups.tsx: Maps BADGE[status] to render; status branching (line 553) is authoritative, utr_diff only for display. Stale check via savedStaleRefs prevents load if any key departed.
+- saved/page.tsx: Server component, binds actions to (season,division,code), error boundary prevents cold-start timeout from blanking whole app.
+- Design patterns: Token classes (text-success, bg-success-surface, border-success-border, etc) from globals.css; no literals. Actions properly marked POST/PUT/DELETE for method-keyed admin gate.
+- Tests: Good coverage of gating (admin vs visitor), state transitions, load/delete flows; snapshot-vs-status legality test is explicit.
+- Minor: error message in SaveLineupButton could be more specific (shows "保存失败" for all catch paths), but acceptable for UI dialog.
+
+### No Blockers

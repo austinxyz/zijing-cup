@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import type { LineupPlayer, SavedLineup } from "@/lib/api";
+import type { LineupPlayer, LineupViolation, SavedLineup } from "@/lib/api";
 import { buildSavedLoadHref, savedStaleRefs } from "./savedLoad";
+import { LineupEditor } from "./LineupEditor";
+
+type Assignment = Record<string, [string, string]>;
 
 interface SavedLineupsProps {
   saved: SavedLineup[];
@@ -12,7 +15,13 @@ interface SavedLineupsProps {
   /** Admin: shows 编辑/删除. UI only — the write routes are method-gated. */
   canEdit: boolean;
   basePath: string;
+  /** Line order (D1…WD) for the editor's rows; from the division rules. */
+  lineOrder?: string[];
   deleteAction?: (id: number) => Promise<void>;
+  /** Judge an edited assignment against current UTRs. Admin only. */
+  validateAction?: (assignment: Assignment) => Promise<LineupViolation[]>;
+  /** Overwrite a saved lineup (by id) with an edited assignment. Admin only. */
+  saveBackAction?: (id: number, assignment: Assignment) => Promise<void>;
 }
 
 /** A status the backend sent that this build does not know. Fail closed: a
@@ -49,10 +58,15 @@ export function SavedLineups({
   roster,
   canEdit,
   basePath,
+  lineOrder,
   deleteAction,
+  validateAction,
+  saveBackAction,
 }: SavedLineupsProps) {
   const router = useRouter();
+  const [editingId, setEditingId] = useState<number | null>(null);
   const byKey = new Map(roster.map((p) => [p.key, p]));
+  const canUseEditor = canEdit && Boolean(validateAction && saveBackAction);
 
   function displayName(key: string): string {
     const p = byKey.get(key);
@@ -170,6 +184,17 @@ export function SavedLineups({
                   载入
                 </button>
               ) : null}
+              {canUseEditor ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEditingId((id) => (id === item.id ? null : item.id))
+                  }
+                  className="min-h-11 flex-none rounded-token border border-border bg-surface-muted px-3 py-2 text-[12px] text-foreground"
+                >
+                  {editingId === item.id ? "收起编辑" : "编辑"}
+                </button>
+              ) : null}
               {canEdit && deleteAction ? (
                 <button
                   type="button"
@@ -180,6 +205,19 @@ export function SavedLineups({
                 </button>
               ) : null}
             </div>
+
+            {canUseEditor && editingId === item.id ? (
+              <LineupEditor
+                saved={item}
+                roster={roster}
+                lineOrder={lineOrder ?? Object.keys(item.assignment)}
+                validateAction={validateAction!}
+                saveBackAction={(assignment) =>
+                  saveBackAction!(item.id, assignment)
+                }
+                onDone={() => setEditingId(null)}
+              />
+            ) : null}
           </article>
         );
       })}

@@ -1,8 +1,12 @@
 import { notFound } from "next/navigation";
 
-import { getSavedLineups, getTeamLineups } from "@/lib/api";
+import { getDivisionRules, getSavedLineups, getTeamLineups } from "@/lib/api";
 import { isSignedIn } from "@/lib/admin";
-import { deleteSavedLineup } from "../actions";
+import {
+  deleteSavedLineup,
+  saveBackLineup,
+  validateAssignment,
+} from "../actions";
 import { SavedLineups } from "../SavedLineups";
 
 interface PageProps {
@@ -21,15 +25,19 @@ export default async function SavedLineupsPage({ params }: PageProps) {
   // names for display, and which keys have left the team. null means no such
   // team — a saved-lineups page for a team that does not exist is a 404, the
   // same answer the search page gives.
-  const [search, saved, canEdit] = await Promise.all([
+  const [search, saved, rules, canEdit] = await Promise.all([
     getTeamLineups(season, division, code),
     getSavedLineups(season, division, code),
+    getDivisionRules(season, division),
     isSignedIn(),
   ]);
   if (search === null) notFound();
 
   const basePath = `/${season}/${division}/lineup/${encodeURIComponent(code)}`;
+  const lineOrder = rules?.lines.map((line) => line.code);
   const deleteAction = deleteSavedLineup.bind(null, season, division, code);
+  const validateAction = validateAssignment.bind(null, season, division, code);
+  const saveBackAction = saveBackLineup.bind(null, season, division, code);
 
   return (
     <main className="flex flex-1 min-w-0 flex-col overflow-hidden bg-background">
@@ -57,7 +65,10 @@ export default async function SavedLineupsPage({ params }: PageProps) {
           roster={search.roster}
           canEdit={canEdit}
           basePath={basePath}
+          lineOrder={lineOrder}
           deleteAction={canEdit ? deleteAction : undefined}
+          validateAction={canEdit ? validateAction : undefined}
+          saveBackAction={canEdit ? saveBackAction : undefined}
         />
       </div>
     </main>

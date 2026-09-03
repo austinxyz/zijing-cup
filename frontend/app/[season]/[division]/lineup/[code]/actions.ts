@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { adminWrite } from "@/lib/admin";
-import type { LineupFilterPreset } from "@/lib/api";
+import type { LineupFilterPreset, LineupViolation } from "@/lib/api";
 
 function presetsPath(season: string, division: string, team: string): string {
   return `/api/seasons/${season}/divisions/${division}/teams/${encodeURIComponent(team)}/presets`;
@@ -82,6 +82,30 @@ export async function saveBackLineup(
     assignment,
   });
   revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
+}
+
+/**
+ * Judge an edited assignment against the CURRENT participation UTRs and return
+ * its violations (empty means legal). The editor calls this after every change.
+ *
+ * A write (POST) so it is admin-gated like the rest of the editor; it reuses
+ * the backend's own `check_lineup`, so the front end never re-implements a
+ * rule. Bound to (season,division,team); the client supplies the assignment.
+ */
+export async function validateAssignment(
+  season: string,
+  division: string,
+  team: string,
+  assignment: Record<string, [string, string]>,
+): Promise<LineupViolation[]> {
+  const result = await adminWrite(
+    "POST",
+    `${savedPath(season, division, team)}/validate`,
+    { assignment },
+  );
+  const violations = (result as { violations?: LineupViolation[] } | null)
+    ?.violations;
+  return violations ?? [];
 }
 
 export async function deleteSavedLineup(

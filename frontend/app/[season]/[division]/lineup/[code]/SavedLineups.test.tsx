@@ -144,6 +144,28 @@ describe("SavedLineups load", () => {
   });
 });
 
+describe("SavedLineups in-place editor", () => {
+  it("shows 编辑 only with the editor actions, and opens the editor on click", () => {
+    // Without validate/saveBack actions, no editor entry even for an admin.
+    const { rerender } = render(
+      <SavedLineups saved={[saved()]} roster={ROSTER} canEdit
+        basePath="/2026/silver/lineup/ZJU-USC" />,
+    );
+    expect(screen.queryByRole("button", { name: /编辑/ })).toBeNull();
+
+    rerender(
+      <SavedLineups saved={[saved()]} roster={ROSTER} canEdit
+        basePath="/2026/silver/lineup/ZJU-USC"
+        lineOrder={["D1", "D2"]}
+        validateAction={vi.fn().mockResolvedValue([])}
+        saveBackAction={vi.fn().mockResolvedValue(undefined)} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^编辑$/ }));
+    // The editor renders a select per seat.
+    expect(screen.getAllByRole("combobox").length).toBeGreaterThan(0);
+  });
+});
+
 describe("SavedLineups admin gating", () => {
   it("shows delete only to an admin", () => {
     const { rerender } = render(
