@@ -67,11 +67,11 @@
 - [x] 4.3 RED — vitest：改动后触发校验请求（mock fetch/action），live 区渲染返回的 violations（卡哪条）或「合法」；防抖只发一次
 - [x] 4.4 GREEN — 编辑器组件（互换/替换/选中态）；防抖校验调用；live 结果渲染；存回 action；token 化
 - [x] 4.5 VISUAL DIFF — bring up dev stack; 在 `saved/` 页编辑一套失效阵容（互换修好）; 桌面 + 375 对照 mock; 量对比度 ≥4.5、无横向溢出、44px; fix drift
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 5. 验证与交付
 
-- [ ] 5.1 Run backend test suite — `cd backend && uv run pytest`（本机用 `backend/.venv-std/Scripts/python.exe -m pytest`）确保无回归
-- [ ] 5.2 Run frontend test suite — `cd frontend && npm run test` 确保无回归
-- [ ] 5.3 `cd frontend && npx tsc --noEmit` — 类型检查（vitest 不校验类型，单列必跑）
-- [ ] 5.4 Run superpowers:verification-before-completion — 跑 test_commands + tsc + `grep -rn console.log frontend/app frontend/lib` + config 的 custom_verification_checks；补种前不再跑 pytest（先测试→补种→视觉核对）；远程迁移记得去 Dashboard 手动执行
+- [x] 5.1 Run backend test suite — `cd backend && uv run pytest`（本机用 `backend/.venv-std/Scripts/python.exe -m pytest`）确保无回归
+- [x] 5.2 Run frontend test suite — `cd frontend && npm run test` 确保无回归
+- [x] 5.3 `cd frontend && npx tsc --noEmit` — 类型检查（vitest 不校验类型，单列必跑）
+- [x] 5.4 Run superpowers:verification-before-completion — 跑 test_commands + tsc + `grep -rn console.log frontend/app frontend/lib` + config 的 custom_verification_checks；补种前不再跑 pytest（先测试→补种→视觉核对）；远程迁移记得去 Dashboard 手动执行

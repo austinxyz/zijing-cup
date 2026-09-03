@@ -120,3 +120,45 @@ status: PASS
 - Minor: error message in SaveLineupButton could be more specific (shows "保存失败" for all catch paths), but acceptable for UI dialog.
 
 ### No Blockers
+
+---
+
+## Group 4 / Attempt 1
+
+**Evaluation Date:** 2026-09-03
+
+### Scores
+
+```yaml
+spec: 100
+runtime: 100
+code: 95
+total: 99
+threshold: 70
+status: PASS
+```
+
+### Findings
+
+**Spec Compliance:**
+- All contract SHALLs met: editor allows admin to swap two seats (cross-line or same-line) and replace a seat from the whole roster.
+- Real-time validation: every edit triggers POST validate (debounced 300ms), shows "校验中" state, displays "实时：这套现在合法。可以存回。" or violations inline.
+- Free editing with backend legality guard: no pre-blocking of duplicates/invalid states; violations surfaced by check_lineup only, never pre-filtered.
+- Save-back: PUT overwrites assignment, backend re-snapshots from current roster, save-back button disabled until legal (disabled={!legal || saving}).
+- Accessibility: all buttons use min-h-11 (44px touch targets), design tokens throughout (success-surface, danger-surface, warning-surface, muted-foreground, border, etc), responsive grid (grid-cols-2 sm:grid-cols-5), no hardcoded hex colors.
+- Admin gate: validateAction and saveBackAction only passed when canEdit=true; both use adminWrite (POST/PUT method-keyed auth).
+
+**Runtime:**
+- 53 test files, 421 tests pass (npm run test).
+- Comprehensive coverage: editor.test.ts (swap/replace change assignment correctly, debounce collapses rapid edits to single call, violations render when illegal, save-back enabled only when legal); LineupEditor.test.tsx (same operations via UI, immutability verification).
+- No regressions; all existing lineup tests pass.
+
+**Code Quality:**
+- Editor helpers (swapSlots, replaceSlot, copy): pure functions properly avoiding mutation; test_do_not_mutate tests explicit.
+- No console.log statements; no hardcoded colors (all design tokens); TypeScript strict (tsc --noEmit passes).
+- Debounce implementation clean: skip on first run (no validation of unchanged initial state), cancelled flag prevents race conditions, cleanup cancels timer if assignment changes before timeout.
+- Component structure: LineupEditor (editor UI + live verdict), SavedLineups (card list + editor mount point), saved/page.tsx (server component binding actions).
+- Live verdict from backend only (violations come from validateAction response), never re-derived front-end.
+- Admin gate properly enforced: actions only bound when canEdit=true; POST validate and PUT save-back auto-gated by adminWrite method check.
+
+### No Blockers
