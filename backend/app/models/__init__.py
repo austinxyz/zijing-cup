@@ -9,6 +9,7 @@ from app.models.players import (
 )
 from app.models.presets import LineupFilterPreset
 from app.models.roster import RosterEntry, Team
+from app.models.saved import SavedLineup
 from app.models.rules import (
     Division,
     DivisionEligibilityLimit,
@@ -28,6 +29,7 @@ __all__ = [
     "RosterEntry",
     "SEASON_UTR_SOURCES",
     "SEASON_UTR_STATUSES",
+    "SavedLineup",
     "Season",
     "SeasonLock",
     "Team",

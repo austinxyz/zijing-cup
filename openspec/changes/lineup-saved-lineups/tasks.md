@@ -6,17 +6,17 @@
 - **Code**: D1 单表 `zijing_cup.saved_lineups`（`assignment` + `utr_snapshot` 两列 JSONB、`unique(team_id,name)`、时间戳 server_default、FK cascade）；同名 upsert。D2 重判在列表 GET 逐套：`load_roster` 当前 key→Candidate 解析 assignment，任一 key 缺→`player_gone` 不跑 check；否则组 lineup 跑 `check_lineup`，`is_legal` + 快照 diff 分「仍合法/动了仍合法」、否则 `illegal`+violations。D5 存/删/存回 POST/DELETE/PUT 自动受保护，name≤60、每队≤50。远程迁移走 Dashboard，本地打本地栈（断言 127.0.0.1）。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/lineup-saved-lineups/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
-- [ ] 1.1 RED — pytest：迁移打本地栈后，存一套阵容（assignment + utr_snapshot），断言按队列出、内容一致
-- [ ] 1.2 GREEN — migration `saved_lineups`（打本地栈）；`app/lineups/saved.py` 模型 + 存命令 + 列出查询
-- [ ] 1.3 RED — pytest：同名再存断言覆盖；空名/超长名/超每队上限被拒
-- [ ] 1.4 GREEN — 存命令 upsert 覆盖 + 名/数量守卫
-- [ ] 1.5 RED — pytest：删一套断言没了；存回（PUT）覆盖 assignment + 重拍快照
-- [ ] 1.6 GREEN — 删命令 + 存回命令（覆盖 + 快照更新）
-- [ ] 1.7 RED — pytest：重判——(a) 快照==当前且合法→「仍合法」；(b) 改某人当前 match_utr 但仍合法→「UTR 动了仍合法」+ 点名 diff；(c) 改到超 cap→「已非法」+ violations 指 D1；(d) 某 key 不在名单→「有人离队」不判合法
-- [ ] 1.8 GREEN — 重判逻辑：`load_roster` 解析、缺 key→player_gone、`check_lineup` 打当前值、快照 diff、四态 + utr_diff 出到响应
-- [ ] 1.9 RED — pytest：快照留存**不回写**——存一套后读该队员当前 match_utr，断言未被改动
-- [ ] 1.10 GREEN — 确认快照只写进 saved_lineups 列、不触碰 player_season_utrs（既有取数不变）
+- [x] 1.0 CONTRACT — write openspec/changes/lineup-saved-lineups/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
+- [x] 1.1 RED — pytest：迁移打本地栈后，存一套阵容（assignment + utr_snapshot），断言按队列出、内容一致
+- [x] 1.2 GREEN — migration `saved_lineups`（打本地栈）；`app/lineups/saved.py` 模型 + 存命令 + 列出查询
+- [x] 1.3 RED — pytest：同名再存断言覆盖；空名/超长名/超每队上限被拒
+- [x] 1.4 GREEN — 存命令 upsert 覆盖 + 名/数量守卫
+- [x] 1.5 RED — pytest：删一套断言没了；存回（PUT）覆盖 assignment + 重拍快照
+- [x] 1.6 GREEN — 删命令 + 存回命令（覆盖 + 快照更新）
+- [x] 1.7 RED — pytest：重判——(a) 快照==当前且合法→「仍合法」；(b) 改某人当前 match_utr 但仍合法→「UTR 动了仍合法」+ 点名 diff；(c) 改到超 cap→「已非法」+ violations 指 D1；(d) 某 key 不在名单→「有人离队」不判合法
+- [x] 1.8 GREEN — 重判逻辑：`load_roster` 解析、缺 key→player_gone、`check_lineup` 打当前值、快照 diff、四态 + utr_diff 出到响应
+- [x] 1.9 RED — pytest：快照留存**不回写**——存一套后读该队员当前 match_utr，断言未被改动
+- [x] 1.10 GREEN — 确认快照只写进 saved_lineups 列、不触碰 player_season_utrs（既有取数不变）
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 后端：校验 assignment 端点（复用 check_lineup）
