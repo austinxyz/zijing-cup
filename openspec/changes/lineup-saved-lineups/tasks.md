@@ -66,7 +66,7 @@
 - [x] 4.2 RED — vitest：编辑器互换两个槽 → assignment 两槽对调；替换一个槽 → 该槽换成所选人（纯 helper 或组件状态）
 - [x] 4.3 RED — vitest：改动后触发校验请求（mock fetch/action），live 区渲染返回的 violations（卡哪条）或「合法」；防抖只发一次
 - [x] 4.4 GREEN — 编辑器组件（互换/替换/选中态）；防抖校验调用；live 结果渲染；存回 action；token 化
-- [ ] 4.5 VISUAL DIFF — bring up dev stack; 在 `saved/` 页编辑一套失效阵容（互换修好）; 桌面 + 375 对照 mock; 量对比度 ≥4.5、无横向溢出、44px; fix drift
+- [x] 4.5 VISUAL DIFF — bring up dev stack; 在 `saved/` 页编辑一套失效阵容（互换修好）; 桌面 + 375 对照 mock; 量对比度 ≥4.5、无横向溢出、44px; fix drift
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 5. 验证与交付
