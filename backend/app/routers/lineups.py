@@ -25,7 +25,15 @@ from app.lineups.presets import (
     list_presets,
     save_preset,
 )
-from app.lineups.query import LineupSearchOut, UnknownReference, search_team_lineups
+from app.lineups.query import (
+    LineupSearchOut,
+    UnknownReference,
+    ViolationOut,
+    load_roster,
+    load_ruleset,
+    search_team_lineups,
+)
+from app.lineups.saved import UnknownAssignmentKey, assignment_violations
 from app.models import Team
 
 router = APIRouter(prefix="/api", tags=["lineups"])
@@ -210,3 +218,53 @@ def delete_team_preset(
     team_id = _resolve_team(session, year, code, team_code)
     delete_preset(session, team_id, preset_id)
     return Response(status_code=204)
+
+
+# --- Saved lineups: validate an assignment ----------------------------------
+#
+# POST (a write method) so the shared-secret admin middleware guards it — the
+# only caller is the admin lineup editor. It reuses the engine's check_lineup
+# against CURRENT participation UTRs; it stores nothing.
+
+_SAVED = "/seasons/{year}/divisions/{code}/teams/{team_code}/saved-lineups"
+
+
+class ValidateAssignmentIn(BaseModel):
+    #: {"D1": ["p12", "p34"], ...}
+    assignment: dict[str, list[str]]
+
+
+class ValidateAssignmentOut(BaseModel):
+    violations: list[ViolationOut]
+
+
+@router.post(_SAVED + "/validate", response_model=ValidateAssignmentOut)
+def validate_saved_assignment(
+    year: int, code: str, team_code: str, body: ValidateAssignmentIn,
+    session: Session = Depends(get_session),
+) -> ValidateAssignmentOut:
+    rules = load_ruleset(session, year, code)
+    if rules is None:
+        raise HTTPException(status_code=404, detail="division not found")
+    loaded = load_roster(session, year, code, team_code)
+    if loaded is None:
+        raise HTTPException(status_code=404, detail="team not found")
+
+    keys = [key for pair in body.assignment.values() for key in pair]
+    try:
+        _reject_old_keys(keys)
+        roster = {c.key: c for c in loaded.candidates}
+        violations = assignment_violations(rules, roster, body.assignment)
+    except UnknownReference as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except UnknownAssignmentKey as error:
+        raise HTTPException(
+            status_code=422, detail=f"unknown player: {error}"
+        ) from error
+
+    return ValidateAssignmentOut(
+        violations=[
+            ViolationOut(code=v.code, line=v.line, amount=v.amount, message=v.message)
+            for v in violations
+        ]
+    )

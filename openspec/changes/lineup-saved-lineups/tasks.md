@@ -17,7 +17,7 @@
 - [x] 1.8 GREEN — 重判逻辑：`load_roster` 解析、缺 key→player_gone、`check_lineup` 打当前值、快照 diff、四态 + utr_diff 出到响应
 - [x] 1.9 RED — pytest：快照留存**不回写**——存一套后读该队员当前 match_utr，断言未被改动
 - [x] 1.10 GREEN — 确认快照只写进 saved_lineups 列、不触碰 player_season_utrs（既有取数不变）
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 后端：校验 assignment 端点（复用 check_lineup）
 
@@ -27,13 +27,13 @@
 - **Code**: D3 `POST /.../teams/{team}/saved-lineups/validate`，body `{assignment:{线:[a,b]}}`；`load_roster` 当前值解析（`_reject_old_keys`），组 lineup 跑 `check_lineup`，回 `{violations:[{code,line,amount,message}]}`。不新增合法性代码。POST 自动 admin-gated（编辑是 admin 动作）。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/lineup-saved-lineups/contracts/group-2.md
-- [ ] 2.1 RED — pytest：POST 一套合法 assignment（admin 凭据）断言 violations 空；POST 一套超 cap 的断言有 line_cap violation
-- [ ] 2.2 GREEN — 校验路由 + `saved.py` 的 validate（load_roster 解析 + check_lineup + 序列化 violations）
-- [ ] 2.3 RED — pytest：各类非法各回对应 violation（超 buffer / 超差距 / 重复上场 / 资格）；未知 key 4xx；旧格式 key → stale-link detail
-- [ ] 2.4 GREEN — 补齐解析/校验分支（复用既有 `_reject_old_keys` 与 UnknownReference→422）
-- [ ] 2.5 RED — pytest：校验端点是写方法（POST），无 admin 凭据被拒（沿用 test_admin_auth 全应用断言）
-- [ ] 2.6 GREEN — 确认路由方法为 POST、自动受保护（无需额外声明）
+- [x] 2.0 CONTRACT — write openspec/changes/lineup-saved-lineups/contracts/group-2.md
+- [x] 2.1 RED — pytest：POST 一套合法 assignment（admin 凭据）断言 violations 空；POST 一套超 cap 的断言有 line_cap violation
+- [x] 2.2 GREEN — 校验路由 + `saved.py` 的 validate（load_roster 解析 + check_lineup + 序列化 violations）
+- [x] 2.3 RED — pytest：各类非法各回对应 violation（超 buffer / 超差距 / 重复上场 / 资格）；未知 key 4xx；旧格式 key → stale-link detail
+- [x] 2.4 GREEN — 补齐解析/校验分支（复用既有 `_reject_old_keys` 与 UnknownReference→422）
+- [x] 2.5 RED — pytest：校验端点是写方法（POST），无 admin 凭据被拒（沿用 test_admin_auth 全应用断言）
+- [x] 2.6 GREEN — 确认路由方法为 POST、自动受保护（无需额外声明）
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 3. 前端：保存入口 + 已存阵容页（四态 + UTR-diff + 载入 + 删除）

@@ -146,6 +146,33 @@ def save_lineup(
     return saved
 
 
+class UnknownAssignmentKey(ValueError):
+    """An assignment names a player key the current roster does not have."""
+
+
+def assignment_violations(
+    rules: RuleSet,
+    roster: dict[str, Candidate],
+    assignment: dict[str, Any],
+) -> list[Violation]:
+    """Legality of a 5-line assignment under the CURRENT participation UTRs.
+
+    Reuses the engine's own `check_lineup` — no second copy of the rules.
+    Conflicts (a player placed twice, over cap, over gap, ...) are reported by
+    check_lineup, never pre-blocked here. A key the roster does not resolve is
+    the caller's to translate into a 4xx.
+    """
+    lineup = {}
+    for line, pair in assignment.items():
+        resolved = []
+        for key in pair:
+            if key not in roster:
+                raise UnknownAssignmentKey(key)
+            resolved.append(roster[key])
+        lineup[line] = (resolved[0], resolved[1])
+    return list(check_lineup(rules, lineup).violations)
+
+
 def delete_saved_lineup(session: Session, team_id: int, saved_id: int) -> None:
     """Remove one saved lineup. Scoped by team_id so an id cannot reach another
     team's lineup; a missing id is a no-op, not an error."""

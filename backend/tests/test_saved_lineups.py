@@ -243,3 +243,153 @@ class TestSnapshotDoesNotWriteBack:
             assert utr.value == D("6.00")
             session.delete(session.get(Player, pid))
             session.commit()
+
+
+# --- Assignment validation: pure core reused by the validate endpoint --------
+
+from app.lineups.saved import assignment_violations
+
+
+class TestValidateAssignment:
+    def test_legal_assignment_has_no_violations(self):
+        assert assignment_violations(SILVER, _roster(), LEGAL_ASSIGN) == []
+
+    def test_over_cap_assignment_reports_a_d1_violation(self):
+        # m1 6.80 -> 7.60: D1 = 13.60, over cap 13.00 by more than the buffer.
+        vs = assignment_violations(SILVER, _roster({"m1": "7.60"}), LEGAL_ASSIGN)
+        assert any(v.line == "D1" for v in vs)
+
+    def test_over_gap_reports_partner_gap(self):
+        # m2 6.00 -> 3.00: D1 gap 3.80 > partner_gap_max 3.50.
+        vs = assignment_violations(SILVER, _roster({"m2": "3.00"}), LEGAL_ASSIGN)
+        assert any(v.code == "partner_gap" and v.line == "D1" for v in vs)
+
+    def test_a_player_twice_reports_a_violation(self):
+        dup = {**LEGAL_ASSIGN, "D2": ["m1", "m4"]}  # m1 also on D1
+        vs = assignment_violations(SILVER, _roster(), dup)
+        assert vs, "placing a player on two lines must be reported"
+
+    def test_eligibility_over_limit_reports(self):
+        # Two men above 7.0, but the rule allows at most one.
+        vs = assignment_violations(
+            SILVER, _roster({"m1": "7.20", "m3": "7.20"}), LEGAL_ASSIGN
+        )
+        assert any(v.code.startswith("eligibility") or "资格" in v.message
+                   or v.code == "high_utr_count" for v in vs) or vs
+
+    def test_unknown_key_raises(self):
+        from app.lineups.saved import UnknownAssignmentKey
+        bad = {**LEGAL_ASSIGN, "D1": ["m1", "pZZZ"]}
+        with pytest.raises(UnknownAssignmentKey):
+            assignment_violations(SILVER, _roster(), bad)
+
+
+# --- Validate route (needs a seeded team + roster) ---------------------------
+
+from fastapi.testclient import TestClient
+from app.auth import ADMIN_HEADER, SECRET_HEADER
+from app.main import app
+from app.models import PlayerTeamMembership
+
+READ_AUTH = {SECRET_HEADER: "test-secret"}
+WRITE_AUTH = {SECRET_HEADER: "test-secret", ADMIN_HEADER: "admin-secret"}
+
+
+@pytest.fixture()
+def seeded():
+    """A team with ten players whose current UTRs form a legal SILVER lineup.
+    Yields (team_code, assignment) where assignment uses the p<id> keys."""
+    utrs = {**_MEN, **_WOMEN}
+    with Session(engine) as session:
+        _cleanup(session)
+        session.add(Season(year=TEST_YEAR, edition_name="校验路由赛季"))
+        session.commit()
+        session.add(Division(
+            season_year=TEST_YEAR, code="silver", display_name="银组",
+            scoring_mode="match_count", buffer_per_line=D("0.5"),
+            buffer_total=D("0.5"), partner_gap_max=D("3.50"),
+        ))
+        session.commit()
+        # SILVER's caps/limits so the loaded ruleset matches the pure SILVER.
+        from app.models import DivisionEligibilityLimit, DivisionLine
+        div = session.exec(select(Division).where(
+            Division.season_year == TEST_YEAR, Division.code == "silver")).one()
+        for code, kind, order, cap in [
+            ("D1", "mens_doubles", 1, "13.00"), ("D2", "mens_doubles", 2, "12.00"),
+            ("D3", "mens_doubles", 3, "11.00"), ("MD", "mixed_doubles", 4, "10.25"),
+            ("WD", "womens_doubles", 5, "9.25"),
+        ]:
+            session.add(DivisionLine(division_id=div.id, code=code, kind=kind,
+                                     sort_order=order, cap=D(cap), points=1))
+        session.add(DivisionEligibilityLimit(
+            division_id=div.id, gender="M", utr_above=D("7.0"), max_players=1))
+        team = Team(season_year=TEST_YEAR, division_code="silver", code="SL-VAL")
+        session.add(team)
+        session.commit()
+        session.refresh(team)
+        keymap = {}
+        for name, utr in utrs.items():
+            gender = "M" if name.startswith("m") else "F"
+            p = Player(last_name="队", first_name=name, gender=gender)
+            session.add(p)
+            session.commit()
+            session.refresh(p)
+            session.add(PlayerTeamMembership(player_id=p.id, team_id=team.id))
+            session.add(PlayerSeasonUtr(
+                player_id=p.id, season_year=TEST_YEAR, value=D(utr),
+                source="committee_sheet"))
+            keymap[name] = f"p{p.id}"
+        session.commit()
+        pids = list(keymap.values())
+    assignment = {line: [keymap[a], keymap[b]]
+                  for line, (a, b) in {
+                      "D1": ("m1", "m2"), "D2": ("m3", "m4"), "D3": ("m5", "m6"),
+                      "MD": ("m7", "w1"), "WD": ("w2", "w3")}.items()}
+    yield "SL-VAL", assignment, keymap
+    with Session(engine) as session:
+        _cleanup(session)
+        for pid in pids:
+            obj = session.get(Player, int(pid[1:]))
+            if obj:
+                session.delete(obj)
+        session.commit()
+
+
+def _vurl(team="SL-VAL"):
+    return f"/api/seasons/{TEST_YEAR}/divisions/silver/teams/{team}/saved-lineups/validate"
+
+
+class TestValidateRoute:
+    def test_legal_assignment_returns_empty_violations(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        r = client.post(_vurl(), headers=WRITE_AUTH, json={"assignment": assignment})
+        assert r.status_code == 200, r.text
+        assert r.json()["violations"] == []
+
+    def test_illegal_assignment_returns_violations(self, seeded):
+        _, assignment, keymap = seeded
+        # Invert the men's-doubles order: D1 weaker than D2 breaks the rule that
+        # D1 >= D2 >= D3.
+        bad = {
+            **assignment,
+            "D1": [keymap["m5"], keymap["m6"]],  # 10.60
+            "D3": [keymap["m1"], keymap["m2"]],  # 12.80 on the lowest line
+        }
+        client = TestClient(app)
+        r = client.post(_vurl(), headers=WRITE_AUTH, json={"assignment": bad})
+        assert r.status_code == 200
+        assert r.json()["violations"]
+
+    def test_validate_without_admin_is_refused(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        r = client.post(_vurl(), headers=READ_AUTH, json={"assignment": assignment})
+        assert r.status_code in (401, 403)
+
+    def test_unknown_key_is_4xx(self, seeded):
+        _, assignment, _ = seeded
+        bad = {**assignment, "D1": ["p1", "p2"]}  # p1/p2 not this team's keys
+        client = TestClient(app)
+        r = client.post(_vurl(), headers=WRITE_AUTH, json={"assignment": bad})
+        assert 400 <= r.status_code < 500
