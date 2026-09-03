@@ -15,6 +15,14 @@ interface SavedLineupsProps {
   deleteAction?: (id: number) => Promise<void>;
 }
 
+/** A status the backend sent that this build does not know. Fail closed: a
+ *  distinct badge, and load is suppressed (see canLoad) — never fall through
+ *  to "仍合法", which would call an unknown state legal. */
+const UNKNOWN_BADGE = {
+  label: "未知状态",
+  className: "text-warning bg-warning-surface border-warning-border",
+};
+
 /** status -> the badge wording and its token colour tier. Legality is the
  *  backend's `status`, never re-derived from the snapshot here. */
 const BADGE: Record<string, { label: string; className: string }> = {
@@ -62,9 +70,12 @@ export function SavedLineups({
   return (
     <div className="flex flex-col gap-4">
       {saved.map((item) => {
-        const badge = BADGE[item.status] ?? BADGE.valid;
+        const known = Object.prototype.hasOwnProperty.call(BADGE, item.status);
+        const badge = known ? BADGE[item.status] : UNKNOWN_BADGE;
         const stale = savedStaleRefs(item, roster);
-        const canLoad = stale.length === 0;
+        // Load only a lineup we both recognise and can honour: an unknown
+        // status is not asserted legal, so it is not loadable either.
+        const canLoad = known && stale.length === 0;
         const movers = Object.values(item.utr_diff);
         return (
           <article
@@ -154,7 +165,7 @@ export function SavedLineups({
                   onClick={() =>
                     router.push(buildSavedLoadHref(basePath, item))
                   }
-                  className="min-h-[36px] flex-none rounded-token bg-primary px-3 py-1.5 text-[12px] text-primary-foreground"
+                  className="min-h-11 flex-none rounded-token bg-primary px-3 py-2 text-[12px] text-primary-foreground"
                 >
                   载入
                 </button>
@@ -163,7 +174,7 @@ export function SavedLineups({
                 <button
                   type="button"
                   onClick={() => void deleteAction(item.id)}
-                  className="min-h-[36px] flex-none rounded-token border border-danger-border bg-danger-surface px-3 py-1.5 text-[12px] text-danger"
+                  className="min-h-11 flex-none rounded-token border border-danger-border bg-danger-surface px-3 py-2 text-[12px] text-danger"
                 >
                   删除
                 </button>

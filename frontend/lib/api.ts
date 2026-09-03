@@ -458,9 +458,10 @@ export interface SavedLineup {
   /** player key -> the participation UTR string captured at save time. Read
    *  only: it is what moved *from*, never written back to a player. */
   utr_snapshot: Record<string, string>;
-  /** "valid" | "utr_moved" | "illegal" | "player_gone". The one field the UI
-   *  colours and branches on. */
-  status: string;
+  /** The backend's verdict, the one field the UI colours and branches on. A
+   *  literal union, not a bare string: a value the backend adds later must
+   *  fail a type check here rather than fall through to "legal" on screen. */
+  status: "valid" | "utr_moved" | "illegal" | "player_gone";
   /** Set when status is "illegal": which rule the current UTRs now break. */
   violations: LineupViolation[];
   /** player key -> {name, snapshot, current}: only the players whose UTR

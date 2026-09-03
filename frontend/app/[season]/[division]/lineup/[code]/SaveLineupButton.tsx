@@ -61,7 +61,7 @@ export function SaveLineupButton({
       <button
         type="button"
         onClick={() => setNaming(true)}
-        className="flex-none rounded-token bg-primary px-2.5 py-1 text-[12px] text-primary-foreground"
+        className="min-h-11 flex-none rounded-token bg-primary px-3 py-2 text-[12px] text-primary-foreground"
       >
         保存此阵容
       </button>
@@ -76,13 +76,13 @@ export function SaveLineupButton({
         onChange={(e) => setName(e.target.value)}
         placeholder="给这套阵容起名"
         maxLength={60}
-        className="h-8 w-40 rounded-token border border-border bg-surface px-2 text-[12px] text-foreground"
+        className="h-11 w-40 rounded-token border border-border bg-surface px-2 text-[12px] text-foreground"
       />
       <button
         type="button"
         onClick={() => void save()}
         disabled={busy || name.trim() === ""}
-        className="rounded-token bg-primary px-2.5 py-1 text-[12px] text-primary-foreground disabled:opacity-50"
+        className="min-h-11 rounded-token bg-primary px-3 py-2 text-[12px] text-primary-foreground disabled:opacity-50"
       >
         保存
       </button>
@@ -92,7 +92,7 @@ export function SaveLineupButton({
           setNaming(false);
           setError(null);
         }}
-        className="rounded-token border border-border bg-surface-muted px-2 py-1 text-[12px] text-foreground"
+        className="min-h-11 rounded-token border border-border bg-surface-muted px-2.5 py-2 text-[12px] text-foreground"
       >
         取消
       </button>

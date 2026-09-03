@@ -96,6 +96,26 @@ describe("SavedLineups four states", () => {
   });
 });
 
+describe("SavedLineups unknown status fails closed", () => {
+  it("shows a distinct 未知状态 badge and refuses to load", () => {
+    push.mockClear();
+    // A status this build does not know (a future backend value). It must not
+    // fall through to 仍合法, and must not be loadable.
+    show([saved({ status: "made_up" as unknown as SavedLineup["status"] })]);
+    expect(screen.getByText("未知状态")).toBeTruthy();
+    expect(screen.queryByText("仍合法")).toBeNull();
+    expect(screen.queryByRole("button", { name: /载入/ })).toBeNull();
+  });
+});
+
+describe("SavedLineups touch targets", () => {
+  it("gives the load control a ≥44px min height", () => {
+    show([saved()]);
+    const load = screen.getByRole("button", { name: /载入/ });
+    expect(load.className).toContain("min-h-11");
+  });
+});
+
 describe("SavedLineups load", () => {
   it("loads a valid lineup by locking five lines into the URL", () => {
     push.mockClear();
