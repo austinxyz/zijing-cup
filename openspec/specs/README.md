@@ -154,6 +154,17 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **lineup-results-redesign（2026-09-01）**: 候选阵容从 20 张叠卡改成**桌面对比表**（真 `<table>`+`table-fixed`：行=候选、列=名次/总和/buffer + 五线；列对齐可竖扫「谁在 D1」，同分不同搭配一眼分辨；名字不换行截断带 `title`，表头滚动钉住，表体自带滚动）与**手机紧凑行**（名次+总和+D1 签名+代价角标，点开展开五线纵向 + buffer）。既有合法性信号不丢，但密集视图里逐字「估算」改成紧凑角标（数字 `˟`、整套「估」badge / 含估算 flag），完整句「含 N 个估算值，合法性待总表确认」挪到图例/悬停/手机展开态保留一处——标记不省略、整句不删只挪（spec MODIFIED 放宽了这一条）。判定 helper 抽 `candidate.ts` 两套 DOM 共用，`CandidateCard` 退役；不重排候选（`keep=20`）。纯前端，不动后端。另：锁定搭档的下拉选人改成先按性别（男→女→未填）、组内按 UTR 从高到低（`orderForSelect`，数值比非字符串比；排除 checkbox 仍按后端序）。
 
+**lineup-saved-filters（2026-09-02）**: 排阵控件新增「已存阵型」块（桌面 + 手机抽屉）：列出该队 preset（名 + `锁 N · 排 M` 规模）、一键**载入**（把锁定/排除写回 URL 参数，页面从 URL 重渲染——搜索路径不变）。管理员另见「存为阵型」输入行（空约束禁用）与每条删除；非管理员只见列表 + 载入（读页面不登录）。载入失效分两档：preset 的**锁定**引用了已不在 `search.roster` 的球员 → warning 拒载面板（点名线 + 编号 + 重建/删除，不猜替补、不渲染候选）；**排除**引用离队球员 → 照常载入（那条排除已无意义，静默丢）。前端比对 `search.roster` 做失效检查、零额外请求；载入的 `getTeamPresets` 任何失败降级空列表（表未建/出错不能拖垮排阵页）。存/删走 `lib/admin.ts` server action，读经 `lib/api.ts`。存取契约见 `lineup-filter-presets`。
+
+---
+
+### `lineup-filter-presets` ✅ 已实现 · 🌐 待远程迁移
+**用户故事**: 作为队长，我常用几套固定阵型（主力、缺主力备案、打某对手的针对阵），想给它们各起名存下来，下次直接点开，不用每次重勾或翻聊天记录找链接。
+**覆盖需求**: docs/superpowers/specs/2026-09-02-lineup-saved-filters-requirements.md（按队命名存输入约束、名唯一 + 同名覆盖、存删限 admin·列出开放、preset 不是新信任入口）
+**后台**: `zijing_cup.lineup_filter_presets` 单表（`team_id` FK teams on delete cascade、`name` check 长度、`constraints` JSONB = 那批 URL query 参数、`unique(team_id,name)`、`created_at`/`updated_at` server_default）。`app/lineups/presets.py`：`save_preset`（同名走 UPDATE 覆盖、空名/长度/每队≤50 守卫）、`list_presets`、`delete_preset`（按 team_id 作用域，删不存在是 no-op）。路由挂在 `routers/lineups.py`：GET 列出（开放）+ POST 存 + DELETE 删（写路由靠 `WRITE_METHODS` admin 中间件自动受保护，不加前缀、不用依赖式鉴权）。
+**前台**: 无独立页面；呈现在 `lineup-ui` 的「已存阵型」块。
+**验收标准**: 存/取/删/同名覆盖/空名拒/长度与数量上限/无 admin 凭据写被拒 全绿；载入等价于把约束变成 URL query 走与手填完全相同的后端校验，不能注入裸 URL 注入不了的东西。**远程共享 Supabase 需去 Dashboard SQL Editor 手动执行 `20260902120000_create_lineup_filter_presets.sql` 后功能才生效**（前端有降级：表未建时列表为空、排阵页不 500）。
+
 ---
 
 ### `player-registry` ✅ 已实现 · 🌐 已上线
