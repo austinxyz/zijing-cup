@@ -34,11 +34,11 @@
 - [x] 2.4 RED — vitest：`NoSolution` 传带 pin 点名的 `infeasibility`（reason message 含「因为 pin」/被钉者/线），断言渲染点名与原因、不猜替补
 - [x] 2.5 GREEN — `constraintsFromQuery` 三态；`lib/api.ts` pins 编码；控件三态渲染（token 化）；pin 无解经既有 `NoSolution`
 - [x] 2.6 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); 造 pin 场景（ZJU-USC 每线一人）+ pin 无解场景导航到排阵页; 桌面 + 375 对照 mock; 量 computed style 确认对比度 ≥4.5、无横向溢出、44px; fix drift
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 验证与交付
 
-- [ ] 3.1 Run backend test suite — `cd backend && uv run pytest`（本机用 `backend/.venv-std/Scripts/python.exe -m pytest`）确保无回归
-- [ ] 3.2 Run frontend test suite — `cd frontend && npm run test` 确保无回归
-- [ ] 3.3 `cd frontend && npx tsc --noEmit` — 类型检查（vitest 不校验类型，单列必跑）
-- [ ] 3.4 Run superpowers:verification-before-completion — 跑 test_commands + tsc + `grep -rn console.log frontend/app frontend/lib` + config 的 custom_verification_checks；补种前不再跑 pytest（先测试→补种→视觉核对）
+- [x] 3.1 Run backend test suite — `cd backend && uv run pytest`（本机用 `backend/.venv-std/Scripts/python.exe -m pytest`）确保无回归
+- [x] 3.2 Run frontend test suite — `cd frontend && npm run test` 确保无回归
+- [x] 3.3 `cd frontend && npx tsc --noEmit` — 类型检查（vitest 不校验类型，单列必跑）
+- [x] 3.4 Run superpowers:verification-before-completion — 跑 test_commands + tsc + `grep -rn console.log frontend/app frontend/lib` + config 的 custom_verification_checks；补种前不再跑 pytest（先测试→补种→视觉核对）
