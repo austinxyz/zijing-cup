@@ -50,7 +50,7 @@
 - [x] 3.3 RED — vitest：已存阵容页对四态各渲染对应徽标 + 点名（UTR 动了点名 X→Y、已非法点名卡哪条、离队点名缺谁）；断言合法性来自后端 status 不来自快照
 - [x] 3.4 RED — vitest：载入把 assignment 编码成五线 `lock=`；含坏 key 走 stale 分支不发搜索
 - [x] 3.5 GREEN — `lib/api.ts`/`lib/admin.ts`；保存入口；`saved/` 页四态 + diff + 载入 + 删除；token 化；error.tsx
-- [ ] 3.6 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); admin 登录造已存阵容（含一套改 UTR 变非法、一套离队）导航到 `saved/` 页; 桌面 + 375 对照 mock; 量 computed style 对比度 ≥4.5、无横向溢出、44px; fix drift
+- [x] 3.6 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); admin 登录造已存阵容（含一套改 UTR 变非法、一套离队）导航到 `saved/` 页; 桌面 + 375 对照 mock; 量 computed style 对比度 ≥4.5、无横向溢出、44px; fix drift
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 4. 前端：就地编辑器（互换/替换 + 实时合法性 + 存回）

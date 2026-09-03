@@ -5,6 +5,14 @@ import { useState } from "react";
 import type { LineupCandidate } from "@/lib/api";
 import { candidateAssignment } from "./savedLoad";
 
+/** The save server action, bound to (season,division,team) by the page; the
+ *  client supplies name + assignment. A server action, so it may cross the
+ *  server→client boundary as a prop. */
+export type SaveLineupAction = (
+  name: string,
+  assignment: Record<string, [string, string]>,
+) => Promise<void>;
+
 interface SaveLineupButtonProps {
   candidate: LineupCandidate;
   /** Admin: shows the entry. UI only — the real gate is the method-keyed
@@ -12,10 +20,7 @@ interface SaveLineupButtonProps {
   canEdit: boolean;
   /** Bound to (season,division,team) by the page. Absent in isolation
    *  (tests render the button without wiring); the control still renders. */
-  saveAction?: (
-    name: string,
-    assignment: Record<string, [string, string]>,
-  ) => Promise<void>;
+  saveAction?: SaveLineupAction;
 }
 
 /**

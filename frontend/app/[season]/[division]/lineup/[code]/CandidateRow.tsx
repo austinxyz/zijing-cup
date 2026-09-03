@@ -1,9 +1,10 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useId, useState } from "react";
 
 import type { LineupCandidate, LineupPlayer } from "@/lib/api";
 import { playerName } from "@/lib/name";
+import { SaveLineupButton, type SaveLineupAction } from "./SaveLineupButton";
 import {
   GENDER_LABEL,
   estimateSentence,
@@ -29,13 +30,15 @@ export function CandidateRows({
   candidates,
   bufferTotal,
   lineOrder,
-  saveEntry,
+  canEdit,
+  saveAction,
 }: {
   candidates: LineupCandidate[];
   bufferTotal: string;
   lineOrder: string[];
-  /** Admin save control, shown inside the expanded row; absent for a visitor. */
-  saveEntry?: (candidate: LineupCandidate) => ReactNode;
+  /** Admin: shows a save control in the expanded row; absent for a visitor. */
+  canEdit?: boolean;
+  saveAction?: SaveLineupAction;
 }) {
   return (
     <ul
@@ -50,7 +53,8 @@ export function CandidateRows({
           rank={index + 1}
           bufferTotal={bufferTotal}
           lineOrder={lineOrder}
-          saveEntry={saveEntry}
+          canEdit={canEdit}
+          saveAction={saveAction}
         />
       ))}
     </ul>
@@ -62,13 +66,15 @@ function Row({
   rank,
   bufferTotal,
   lineOrder,
-  saveEntry,
+  canEdit,
+  saveAction,
 }: {
   candidate: LineupCandidate;
   rank: number;
   bufferTotal: string;
   lineOrder: string[];
-  saveEntry?: (candidate: LineupCandidate) => ReactNode;
+  canEdit?: boolean;
+  saveAction?: SaveLineupAction;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -170,8 +176,14 @@ function Row({
               {estimateSentence(estimates)}
             </p>
           ) : null}
-          {saveEntry ? (
-            <div className="mt-2 flex justify-end">{saveEntry(candidate)}</div>
+          {canEdit ? (
+            <div className="mt-2 flex justify-end">
+              <SaveLineupButton
+                candidate={candidate}
+                canEdit
+                saveAction={saveAction}
+              />
+            </div>
           ) : null}
         </div>
       ) : null}

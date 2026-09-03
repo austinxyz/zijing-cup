@@ -1,7 +1,6 @@
-import type { ReactNode } from "react";
-
 import type { LineupCandidate, LineupPlayer } from "@/lib/api";
 import { playerName } from "@/lib/name";
+import { SaveLineupButton, type SaveLineupAction } from "./SaveLineupButton";
 import {
   GENDER_LABEL,
   estimateSentence,
@@ -29,15 +28,18 @@ export function CandidateTable({
   candidates,
   bufferTotal,
   lineOrder,
-  saveEntry,
+  canEdit,
+  saveAction,
 }: {
   candidates: LineupCandidate[];
   bufferTotal: string;
   lineOrder: string[];
-  /** Admin save control per row; absent for a visitor (no column shown). */
-  saveEntry?: (candidate: LineupCandidate) => ReactNode;
+  /** Admin: adds a trailing save column. Absent for a visitor (no column). */
+  canEdit?: boolean;
+  saveAction?: SaveLineupAction;
 }) {
   const anyEstimate = candidates.some((c) => estimatesIn(c) > 0);
+  const showSave = Boolean(canEdit);
 
   return (
     <div className="hidden min-h-0 flex-1 flex-col overflow-hidden md:flex">
@@ -50,7 +52,7 @@ export function CandidateTable({
             {lineOrder.map((code) => (
               <col key={code} />
             ))}
-            {saveEntry ? <col className="w-[128px]" /> : null}
+            {showSave ? <col className="w-[128px]" /> : null}
           </colgroup>
           <thead>
             <tr>
@@ -60,7 +62,7 @@ export function CandidateTable({
               {lineOrder.map((code) => (
                 <Th key={code}>{code}</Th>
               ))}
-              {saveEntry ? <Th className="text-right">保存</Th> : null}
+              {showSave ? <Th className="text-right">保存</Th> : null}
             </tr>
           </thead>
           <tbody>
@@ -109,9 +111,13 @@ export function CandidateTable({
                       </Td>
                     );
                   })}
-                  {saveEntry ? (
+                  {showSave ? (
                     <td className="h-10 overflow-visible border-b border-border px-2.5 text-right align-middle">
-                      {saveEntry(candidate)}
+                      <SaveLineupButton
+                        candidate={candidate}
+                        canEdit
+                        saveAction={saveAction}
+                      />
                     </td>
                   ) : null}
                 </tr>

@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
-
-import type { LineupCandidate, LineupSearch, RuleLine } from "@/lib/api";
+import type { LineupSearch, RuleLine } from "@/lib/api";
+import type { SaveLineupAction } from "./SaveLineupButton";
 import {
   BorrowedPlayersNotice,
   InvalidLocks,
@@ -28,11 +27,14 @@ interface LineupResultsProps {
   /** The ceiling with nothing locked or excluded, when this search has
    *  constraints. What the locks cost is otherwise invisible. */
   unconstrainedCeiling?: string | null;
-  /** Per-candidate save affordance, rendered by the page (which holds admin
-   *  state and the bound action). Absent for a visitor — the button is then
-   *  simply not there. Kept as a render prop so the tables stay unaware of
-   *  admin/actions. */
-  saveEntry?: (candidate: LineupCandidate) => ReactNode;
+  /** Admin: enables the per-candidate 「保存此阵容」 entry. UI only — the write
+   *  route is method-gated. */
+  canEdit?: boolean;
+  /** Server action bound to (season,division,team); a candidate row supplies
+   *  the name and assignment. A server action is serializable across the
+   *  server→client boundary — a plain render function is NOT, which is why the
+   *  tables build the button from data rather than being handed a node. */
+  saveAction?: SaveLineupAction;
 }
 
 function difference(a: string | null, b: string | null): string | null {
@@ -56,7 +58,8 @@ export function LineupResults({
   bufferTotal,
   lineOrder,
   unconstrainedCeiling,
-  saveEntry,
+  canEdit,
+  saveAction,
 }: LineupResultsProps) {
   const gapToRules = difference(search.ceiling, search.rules_ceiling);
   const costOfLocks = difference(search.ceiling, unconstrainedCeiling ?? null);
@@ -162,14 +165,16 @@ export function LineupResults({
         candidates={search.candidates}
         bufferTotal={bufferTotal}
         lineOrder={lineOrder}
-        saveEntry={saveEntry}
+        canEdit={canEdit}
+        saveAction={saveAction}
       />
       {/* Narrow viewport: the same candidates as a compact, tappable list. */}
       <CandidateRows
         candidates={search.candidates}
         bufferTotal={bufferTotal}
         lineOrder={lineOrder}
-        saveEntry={saveEntry}
+        canEdit={canEdit}
+        saveAction={saveAction}
       />
 
       <BorrowedPlayersNotice />
