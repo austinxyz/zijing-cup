@@ -123,6 +123,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **infeasibility-detail（2026-09-01）**: `infeasible_line` 旁新增结构化诊断 `infeasibility`（`line` + `reasons[]`），说清那条线的候选池**为什么**空——四类客观原因：性别人手不足 / 都超 cap / 都超搭档差距 / 资格线限制，多因并存全列。可直接读出时归因到用户动作（被排除、锁进别线），点名队员及去向；`over_cap`/`over_gap`/`eligibility` 是规则或队员自身属性，`attributed` 恒空、中性措辞、**不**点名成用户造成。诊断只读候选池、一趟 `combinations`、不触发第二次整解搜索，也不声称哪条锁「该负责」——守住既有免责边界。同期把局部可判的 `restricted_to_lines`（资格挡线）并入 `legal_pairs`：它是「队员×线」的可判事实（`check_locks` 早就这么判锁定对），据实提前剪枝，资格才能让某线 pool 真正为空；SILVER（无 restriction）不受影响。
 
+**single-pin（2026-09-03）**: `search_lineups` 收 `pins`（line→被钉者）——把一名队员钉在一条线、引擎配搭档。被钉线的 `options[L]` = 「含被钉者的合法对」（把被钉者临时并回池子跑 `legal_pairs` 再筛），被钉者从其它线的 `available` 剔除、搭档现选、递归 used 集兜底；strongest/scarcest 排序不变。硬锁整对语义不变，pin/硬锁/排除可组合，女将可钉男双。`diagnose_line` 加 `pinned` 参数：pin 那条线无解时只在「含被钉者的对」里跑四关分类、message 点名被钉者与线（`你把 X 钉在 L…`），不报无关的整池「本可行」原因。冲突输入（同一人钉两线 / pin∩排除 / pin∩硬锁成员 / 一线两座同人）在 `search_team_lineups` 抛 `UnknownReference`→422。端点新增可重复 `pin=LINE:key`（不重载 `lock=`）。触发起因：队长「每线只点一个人、系统算不出」其实是这个功能缺口，半填以前被无声丢弃。
+
 **验收标准**: 2025 全部 24 支真实球队（金 6 + 银 18）各搜一次，全部返回完整结果、0 截断，开发机最坏 0.09s（2025 两组 buffer 均为 0.00，可行空间小；2026 开了 buffer 会变慢，Render 免费实例的真实耗时仍需部署后实测）；小名单上穷举全部合法阵容，最大值等于报告的上限；锁定被遵守、排除被遵守、换线不算两套；未知球队 404，格式非法的 query 返回 4xx 而非 500；OpenAPI 中仍不存在 POST/PUT/PATCH/DELETE。
 
 ---
@@ -155,6 +157,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **lineup-results-redesign（2026-09-01）**: 候选阵容从 20 张叠卡改成**桌面对比表**（真 `<table>`+`table-fixed`：行=候选、列=名次/总和/buffer + 五线；列对齐可竖扫「谁在 D1」，同分不同搭配一眼分辨；名字不换行截断带 `title`，表头滚动钉住，表体自带滚动）与**手机紧凑行**（名次+总和+D1 签名+代价角标，点开展开五线纵向 + buffer）。既有合法性信号不丢，但密集视图里逐字「估算」改成紧凑角标（数字 `˟`、整套「估」badge / 含估算 flag），完整句「含 N 个估算值，合法性待总表确认」挪到图例/悬停/手机展开态保留一处——标记不省略、整句不删只挪（spec MODIFIED 放宽了这一条）。判定 helper 抽 `candidate.ts` 两套 DOM 共用，`CandidateCard` 退役；不重排候选（`keep=20`）。纯前端，不动后端。另：锁定搭档的下拉选人改成先按性别（男→女→未填）、组内按 UTR 从高到低（`orderForSelect`，数值比非字符串比；排除 checkbox 仍按后端序）。
 
 **lineup-saved-filters（2026-09-02）**: 排阵控件新增「已存阵型」块（桌面 + 手机抽屉）：列出该队 preset（名 + `锁 N · 排 M` 规模）、一键**载入**（把锁定/排除写回 URL 参数，页面从 URL 重渲染——搜索路径不变）。管理员另见「存为阵型」输入行（空约束禁用）与每条删除；非管理员只见列表 + 载入（读页面不登录）。载入失效分两档：preset 的**锁定**引用了已不在 `search.roster` 的球员 → warning 拒载面板（点名线 + 编号 + 重建/删除，不猜替补、不渲染候选）；**排除**引用离队球员 → 照常载入（那条排除已无意义，静默丢）。前端比对 `search.roster` 做失效检查、零额外请求；载入的 `getTeamPresets` 任何失败降级空列表（表未建/出错不能拖垮排阵页）。存/删走 `lib/admin.ts` server action，读经 `lib/api.ts`。存取契约见 `lineup-filter-presets`。
+
+**single-pin（2026-09-03）**: 一条线的三态由已填座位数决定——填**恰好一个**=pin（「已钉」warning 角标 + 「搭档交给引擎」小字）、两个=硬锁整对（「锁整对」primary 角标）、零=交给引擎。`constraintsFromQuery` 分出 `{locks, pins, excluded}`（同人填两座=无约束）；`lib/api.ts` 编码 `pin=LINE:key`；`hasStaleKeys` 也扫 pins。pin 造成某线无解走既有 `NoSolution`（后端 message 已含「你把 X 钉在 L」点名，前端无需新面板）。修了 pin 显示名的 tab 拼接（`last first`）。触发起因见 `lineup-search` 的同名条目：半填以前被无声丢弃、意图丢失。
 
 ---
 
