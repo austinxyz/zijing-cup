@@ -292,6 +292,12 @@ LINE_KIND_LABEL = {
 }
 
 
+def _display_name(raw: str) -> str:
+    """Candidate.name joins the sheet's last/first columns with a tab; the
+    display form drops the separator, matching the frontend's playerName."""
+    return " ".join(part for part in raw.split("\t") if part)
+
+
 def _attribution(
     gender: Optional[str],
     line: str,
@@ -335,12 +341,13 @@ def _diagnose_pinned(
     can field — so the diagnosis names the pin and never reports a reason that
     would hold only for a pair the pin is not part of.
     """
-    prefix = f"你把 {pinned.name} 钉在 {rule.code}，但"
+    name = _display_name(pinned.name)
+    prefix = f"你把 {name} 钉在 {rule.code}，但"
     slot_partners = [o for o in available if _slot_ok(rule, pinned, o)]
     if not slot_partners:
         return [InfeasibilityReason(
             kind="gender_shortage",
-            message=f"{prefix}没有能与 {pinned.name} 组成合法{LINE_KIND_LABEL.get(rule.kind, rule.code)}的搭档",
+            message=f"{prefix}没有能与 {name} 组成合法{LINE_KIND_LABEL.get(rule.kind, rule.code)}的搭档",
         )]
 
     reasons: list[InfeasibilityReason] = []
@@ -362,12 +369,12 @@ def _diagnose_pinned(
     if over_gap:
         reasons.append(InfeasibilityReason(
             kind="over_gap",
-            message=f"{prefix}与 {pinned.name} 能配的每个搭档，参赛 UTR 差距都超过上限 {rules.partner_gap_max}",
+            message=f"{prefix}与 {name} 能配的每个搭档，参赛 UTR 差距都超过上限 {rules.partner_gap_max}",
         ))
     if over_cap:
         reasons.append(InfeasibilityReason(
             kind="over_cap",
-            message=f"{prefix}与 {pinned.name} 能配的每个搭档，两人参赛 UTR 之和都超过 cap {rule.cap}（含 buffer {headroom}）",
+            message=f"{prefix}与 {name} 能配的每个搭档，两人参赛 UTR 之和都超过 cap {rule.cap}（含 buffer {headroom}）",
         ))
     if restricted:
         who = "、".join(

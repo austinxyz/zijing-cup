@@ -379,6 +379,8 @@ export interface LineupFilterPreset {
 export interface LineupConstraints {
   /** Line code to the two player keys standing on it. */
   locks?: Record<string, [string, string]>;
+  /** Line code to one pinned player key; the engine chooses the partner. */
+  pins?: Record<string, string>;
   excluded?: string[];
 }
 
@@ -398,6 +400,9 @@ export async function getTeamLineups(
   const params = new URLSearchParams();
   for (const [line, pair] of Object.entries(constraints.locks ?? {})) {
     params.append("lock", `${line}:${pair[0]},${pair[1]}`);
+  }
+  for (const [line, key] of Object.entries(constraints.pins ?? {})) {
+    params.append("pin", `${line}:${key}`);
   }
   for (const key of constraints.excluded ?? []) params.append("exclude", key);
   const query = params.toString();

@@ -26,10 +26,12 @@ const OLD_KEY = /^\d+$/;
  */
 export function hasStaleKeys(constraints: {
   locks: Record<string, [string, string]>;
+  pins?: Record<string, string>;
   excluded: string[];
 }): boolean {
   const keys = [
     ...Object.values(constraints.locks).flat(),
+    ...Object.values(constraints.pins ?? {}),
     ...constraints.excluded,
   ];
   return keys.some((key) => OLD_KEY.test(key));
@@ -60,14 +62,26 @@ function many(value: string | string[] | undefined): string[] {
 export function constraintsFromQuery(
   lines: RuleLine[],
   query: Record<string, string | string[] | undefined>,
-): { locks: Record<string, [string, string]>; excluded: string[] } {
+): {
+  locks: Record<string, [string, string]>;
+  pins: Record<string, string>;
+  excluded: string[];
+} {
   const locks: Record<string, [string, string]> = {};
+  const pins: Record<string, string> = {};
   for (const line of lines) {
     const first = one(query[`${line.code}a`]);
     const second = one(query[`${line.code}b`]);
-    if (first && second && first !== second) locks[line.code] = [first, second];
+    if (first && second) {
+      // Both seats: a hard lock — unless they name the same person, which is
+      // neither a legal pair nor a pin, so it constrains nothing.
+      if (first !== second) locks[line.code] = [first, second];
+    } else if (first || second) {
+      // Exactly one seat: a pin. Either seat counts; the pair is unordered.
+      pins[line.code] = first || second;
+    }
   }
-  return { locks, excluded: many(query.ex) };
+  return { locks, pins, excluded: many(query.ex) };
 }
 
 export default async function LineupPage({ params, searchParams }: PageProps) {
@@ -91,7 +105,9 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   // instance is slow enough that doing them in sequence risks the request
   // timing out before either answer arrives.
   const constrained =
-    Object.keys(constraints.locks).length > 0 || constraints.excluded.length > 0;
+    Object.keys(constraints.locks).length > 0 ||
+    Object.keys(constraints.pins).length > 0 ||
+    constraints.excluded.length > 0;
   const stale = hasStaleKeys(constraints);
   // A stale link is answered without asking for a search at all: running one
   // and dropping the locks would produce a full, healthy-looking candidate
@@ -136,6 +152,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
         lines={lines}
         roster={search.roster}
         locks={constraints.locks}
+        pins={constraints.pins}
         excluded={constraints.excluded}
         presets={presets}
         canEdit={canEdit}
@@ -177,6 +194,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
               lines={lines}
               roster={search.roster}
               locks={constraints.locks}
+              pins={constraints.pins}
               excluded={constraints.excluded}
               variant="drawer"
               presets={presets}

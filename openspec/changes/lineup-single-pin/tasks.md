@@ -17,7 +17,7 @@
 - [x] 1.8 GREEN — 路由 `pin` query 参数 + 解析；`search_team_lineups` 解析 pin key 成 Candidate、校验四类冲突抛 `UnknownReference`；`_reject_old_keys` 扫 pin key；透传 `pins` 给引擎
 - [x] 1.9 RED — pytest：女将钉男双线 → 断言引擎为她配出合法男双搭档（女性可填男双座位）
 - [x] 1.10 GREEN — 确认（既有性别判定已允许；补齐若有缺）
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 前端：半填=pin 三态呈现 + pin 无解面板
 
@@ -27,13 +27,13 @@
 - **Code**: D1 `constraintsFromQuery` 分出 `{locks, pins, excluded}`：恰好一座位=pin、两座位=lock、两座同人=非法（不发约束）。`lib/api.ts` 的 `LineupConstraints` 加 `pins`，query 构造发 `pin=LINE:key`。D5 控件按每线座位数渲染三态（mock：pin warning 描边 `#c9a24a` + warning 角标 + 小字；硬锁 primary 描边 + 角标），用设计 token 不硬编码。pin 无解复用 `NoSolution`，读带 pin 点名的 `infeasibility`。pin/锁/排任一非空即「有约束」→ baseline 并发照跑。前端不做数值比较。
 - **Threshold**: 70
 
-- [ ] 2.0 CONTRACT — write openspec/changes/lineup-single-pin/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-02-lineup-single-pin-mocks.html; note linear tokens (pin warning `#8a6508`/`#fbf5e6`/`#ecd9a4`、硬锁 primary `#9c3417`、中性 `#6b665d`) 与逐字串（「已钉」「搭档交给引擎」「锁整对」「凑不出合法阵容」「因为 pin」）
-- [ ] 2.2 RED — vitest：`constraintsFromQuery` 对「一线一座位」返回 pins、「一线两座位」返回 locks、「两座同人」不产约束；`lib/api.ts` 把 pins 编码成 `pin=LINE:key`
-- [ ] 2.3 RED — vitest：控件对 pin 线渲染「已钉」标识 + 「搭档交给引擎」小字 + warning token，对硬锁线渲染 primary「锁整对」，空线两者都无；三态可辨
-- [ ] 2.4 RED — vitest：`NoSolution` 传带 pin 点名的 `infeasibility`（reason message 含「因为 pin」/被钉者/线），断言渲染点名与原因、不猜替补
-- [ ] 2.5 GREEN — `constraintsFromQuery` 三态；`lib/api.ts` pins 编码；控件三态渲染（token 化）；pin 无解经既有 `NoSolution`
-- [ ] 2.6 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); 造 pin 场景（ZJU-USC 每线一人）+ pin 无解场景导航到排阵页; 桌面 + 375 对照 mock; 量 computed style 确认对比度 ≥4.5、无横向溢出、44px; fix drift
+- [x] 2.0 CONTRACT — write openspec/changes/lineup-single-pin/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-02-lineup-single-pin-mocks.html; note linear tokens (pin warning `#8a6508`/`#fbf5e6`/`#ecd9a4`、硬锁 primary `#9c3417`、中性 `#6b665d`) 与逐字串（「已钉」「搭档交给引擎」「锁整对」「凑不出合法阵容」「因为 pin」）
+- [x] 2.2 RED — vitest：`constraintsFromQuery` 对「一线一座位」返回 pins、「一线两座位」返回 locks、「两座同人」不产约束；`lib/api.ts` 把 pins 编码成 `pin=LINE:key`
+- [x] 2.3 RED — vitest：控件对 pin 线渲染「已钉」标识 + 「搭档交给引擎」小字 + warning token，对硬锁线渲染 primary「锁整对」，空线两者都无；三态可辨
+- [x] 2.4 RED — vitest：`NoSolution` 传带 pin 点名的 `infeasibility`（reason message 含「因为 pin」/被钉者/线），断言渲染点名与原因、不猜替补
+- [x] 2.5 GREEN — `constraintsFromQuery` 三态；`lib/api.ts` pins 编码；控件三态渲染（token 化）；pin 无解经既有 `NoSolution`
+- [x] 2.6 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); 造 pin 场景（ZJU-USC 每线一人）+ pin 无解场景导航到排阵页; 桌面 + 375 对照 mock; 量 computed style 确认对比度 ≥4.5、无横向溢出、44px; fix drift
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 验证与交付

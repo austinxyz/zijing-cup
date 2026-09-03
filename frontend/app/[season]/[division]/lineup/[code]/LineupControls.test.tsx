@@ -127,3 +127,29 @@ describe("orderForSelect", () => {
     expect(input.map((x) => x.key)).toEqual(before);
   });
 });
+
+describe("three line states: empty / pin / hard lock", () => {
+  it("marks a pinned line (one seat) as 已钉 with an engine-fills hint", () => {
+    render(
+      <LineupControls
+        lines={LINES}
+        roster={roster(6)}
+        locks={{ WD: ["p2", "p3"] }}
+        pins={{ D1: "p1" }}
+        excluded={[]}
+      />,
+    );
+    expect(screen.getByText("已钉")).toBeTruthy();
+    expect(screen.getByText(/搭档交给引擎/)).toBeTruthy();
+    // the hard-locked line reads as a full lock, not a pin
+    expect(screen.getByText("锁整对")).toBeTruthy();
+  });
+
+  it("shows neither badge when nothing is pinned or locked", () => {
+    render(
+      <LineupControls lines={LINES} roster={roster(6)} locks={{}} pins={{}} excluded={[]} />,
+    );
+    expect(screen.queryByText("已钉")).toBeNull();
+    expect(screen.queryByText("锁整对")).toBeNull();
+  });
+});

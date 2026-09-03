@@ -9,7 +9,7 @@ import {
   type LineupPlayer,
   type LineupSearch,
 } from "@/lib/api";
-import Page, { hasStaleKeys } from "./page";
+import Page, { constraintsFromQuery, hasStaleKeys } from "./page";
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
@@ -437,5 +437,39 @@ describe("links built before the keys changed shape", () => {
 
   it("accepts a request with no constraints at all", () => {
     expect(hasStaleKeys({ locks: {}, excluded: [] })).toBe(false);
+  });
+});
+
+describe("constraintsFromQuery: three states per line", () => {
+  const LINES2 = [
+    { code: "D1", kind: "mens_doubles", sort_order: 1, cap: "13.00", points: 1 },
+    { code: "MD", kind: "mixed_doubles", sort_order: 4, cap: "10.25", points: 1 },
+    { code: "WD", kind: "womens_doubles", sort_order: 5, cap: "9.25", points: 1 },
+  ] as const;
+
+  it("both seats filled → a lock", () => {
+    const c = constraintsFromQuery([...LINES2], { D1a: "p1", D1b: "p2" });
+    expect(c.locks.D1).toEqual(["p1", "p2"]);
+    expect(c.pins).toEqual({});
+  });
+
+  it("exactly one seat filled → a pin (either seat)", () => {
+    const a = constraintsFromQuery([...LINES2], { MD: undefined, MDa: "p9" });
+    expect(a.pins.MD).toBe("p9");
+    expect(a.locks).toEqual({});
+    const b = constraintsFromQuery([...LINES2], { WDb: "p7" });
+    expect(b.pins.WD).toBe("p7");
+  });
+
+  it("same player in both seats → neither lock nor pin", () => {
+    const c = constraintsFromQuery([...LINES2], { D1a: "p1", D1b: "p1" });
+    expect(c.locks).toEqual({});
+    expect(c.pins).toEqual({});
+  });
+
+  it("no seats filled → nothing", () => {
+    const c = constraintsFromQuery([...LINES2], {});
+    expect(c.locks).toEqual({});
+    expect(c.pins).toEqual({});
   });
 });

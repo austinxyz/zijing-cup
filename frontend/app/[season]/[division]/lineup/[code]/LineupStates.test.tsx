@@ -119,3 +119,29 @@ describe("NoSolution reasons", () => {
     expect(reason!.textContent ?? "").not.toContain("你");
   });
 });
+
+describe("NoSolution: pin-caused infeasibility", () => {
+  it("renders the pin-named reason message", () => {
+    render(
+      <NoSolution
+        search={search({
+          infeasible_line: "MD",
+          infeasibility: {
+            line: "MD",
+            reasons: [
+              {
+                kind: "over_cap",
+                message:
+                  "你把 陈嘉禾 钉在 MD，但与 陈嘉禾 能配的每个搭档，两人参赛 UTR 之和都超过 cap 10.25（含 buffer 0.5）",
+                attributed: [],
+              },
+            ],
+          },
+        })}
+        lines={LINES}
+      />,
+    );
+    expect(screen.getByText(/你把 陈嘉禾 钉在 MD/)).toBeTruthy();
+    expect(screen.getByText(/都超过 cap 10\.25/)).toBeTruthy();
+  });
+});

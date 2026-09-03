@@ -34,6 +34,9 @@ interface LineupControlsProps {
   /** Read from the query string, never held as state: the address bar is the
    *  only record of what was locked, so a link reproduces the same search. */
   locks: Record<string, [string, string]>;
+  /** Line code to one pinned player key: one seat chosen, engine fills the
+   *  partner. Read from the query string like locks. */
+  pins?: Record<string, string>;
   excluded: string[];
   /** "sidebar" is the desktop left column; "drawer" is the same form inside
    *  the mobile bottom sheet — full width, no fixed width or right border, and
@@ -112,6 +115,7 @@ export function LineupControls({
   lines,
   roster,
   locks,
+  pins,
   excluded,
   variant = "sidebar",
   presets,
@@ -122,7 +126,9 @@ export function LineupControls({
 }: LineupControlsProps) {
   const excludedSet = new Set(excluded);
   const hasConstraints =
-    Object.keys(locks).length > 0 || excluded.length > 0;
+    Object.keys(locks).length > 0 ||
+    Object.keys(pins ?? {}).length > 0 ||
+    excluded.length > 0;
   // The dropdowns list people by gender then UTR; the exclusion checkboxes
   // below keep the backend order.
   const sortedRoster = orderForSelect(roster);
@@ -163,34 +169,57 @@ export function LineupControls({
 
       <div className="flex flex-col gap-[7px]">
         {lines.map((line) => {
-          const pair = locks[line.code] ?? ["", ""];
+          const locked = locks[line.code];
+          const pinned = pins?.[line.code];
+          // Seat values: a lock fills both, a pin fills the first, otherwise
+          // both are open. The engine treats either seat as the pin, so writing
+          // it to the first is a display choice only.
+          const pair: [string, string] = locked
+            ? locked
+            : [pinned ?? "", ""];
           return (
-            <div key={line.code} className="flex items-center gap-2.5">
-              <span className="flex w-[62px] flex-none flex-col gap-px">
-                <span className="text-[12.5px] font-medium text-foreground">
-                  {line.code}
+            <div key={line.code} className="flex flex-col gap-px">
+              <div className="flex items-center gap-2.5">
+                <span className="flex w-[62px] flex-none flex-col gap-px">
+                  <span className="text-[12.5px] font-medium text-foreground">
+                    {line.code}
+                  </span>
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    {/* An open line has no ceiling at all — saying "cap ∞" or a
+                        large number would invite a comparison that has no
+                        meaning. */}
+                    {line.cap === null ? "无上限" : `cap ${line.cap}`}
+                  </span>
                 </span>
-                <span className="font-mono text-[10px] text-muted-foreground">
-                  {/* An open line has no ceiling at all — saying "cap ∞" or a
-                      large number would invite a comparison that has no
-                      meaning. */}
-                  {line.cap === null ? "无上限" : `cap ${line.cap}`}
+                <PlayerSelect
+                  name={`${line.code}a`}
+                  label={`${line.code} 第一位`}
+                  roster={sortedRoster}
+                  value={pair[0]}
+                  tall={variant === "drawer"}
+                />
+                <PlayerSelect
+                  name={`${line.code}b`}
+                  label={`${line.code} 第二位`}
+                  roster={sortedRoster}
+                  value={pair[1]}
+                  tall={variant === "drawer"}
+                />
+                {locked ? (
+                  <span className="flex-none rounded border border-border bg-surface-muted px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                    锁整对
+                  </span>
+                ) : pinned ? (
+                  <span className="flex-none rounded border border-warning-border bg-warning-surface px-1.5 py-0.5 font-mono text-[10px] text-warning">
+                    已钉
+                  </span>
+                ) : null}
+              </div>
+              {pinned && !locked ? (
+                <span className="ml-[72px] text-[10.5px] leading-snug text-muted">
+                  已钉一人 · 搭档交给引擎（在满足所有规则下选最优）
                 </span>
-              </span>
-              <PlayerSelect
-                name={`${line.code}a`}
-                label={`${line.code} 第一位`}
-                roster={sortedRoster}
-                value={pair[0]}
-                tall={variant === "drawer"}
-              />
-              <PlayerSelect
-                name={`${line.code}b`}
-                label={`${line.code} 第二位`}
-                roster={sortedRoster}
-                value={pair[1]}
-                tall={variant === "drawer"}
-              />
+              ) : null}
             </div>
           );
         })}

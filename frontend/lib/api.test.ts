@@ -1,7 +1,12 @@
 // frontend/lib/api.test.ts
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getDivisionTeams, getHealth, getTeamRoster } from "./api";
+import {
+  getDivisionTeams,
+  getHealth,
+  getTeamLineups,
+  getTeamRoster,
+} from "./api";
 
 describe("getHealth", () => {
   afterEach(() => {
@@ -177,5 +182,34 @@ describe("getTeamRoster", () => {
       "http://backend.test/api/seasons/2025/divisions/silver/teams/A%2FB/roster",
       expect.anything(),
     );
+  });
+});
+
+describe("getTeamLineups pin encoding", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("encodes pins as pin=LINE:key alongside lock and exclude", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({}),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getTeamLineups(2026, "silver", "ZJU-USC", {
+      locks: { D1: ["p1", "p2"] },
+      pins: { MD: "p9" },
+      excluded: ["p3"],
+    });
+
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("pin=MD%3Ap9");
+    expect(url).toContain("lock=D1%3Ap1%2Cp2");
+    expect(url).toContain("exclude=p3");
   });
 });
