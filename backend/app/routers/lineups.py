@@ -33,7 +33,16 @@ from app.lineups.query import (
     load_ruleset,
     search_team_lineups,
 )
-from app.lineups.saved import UnknownAssignmentKey, assignment_violations
+from app.lineups.saved import (
+    InvalidSavedLineup,
+    SavedLineupLimitExceeded,
+    UnknownAssignmentKey,
+    assignment_violations,
+    delete_saved_lineup,
+    list_saved_lineups,
+    revalidate_saved,
+    save_lineup,
+)
 from app.models import Team
 
 router = APIRouter(prefix="/api", tags=["lineups"])
@@ -268,3 +277,136 @@ def validate_saved_assignment(
             for v in violations
         ]
     )
+
+
+# --- Saved lineups: CRUD + server-side revalidation --------------------------
+#
+# GET lists and re-judges each saved lineup against the CURRENT participation
+# UTRs (open, no admin). POST/PUT/DELETE are writes the admin middleware guards.
+# The snapshot is built server-side at save time and never written back to a UTR.
+
+
+class SavedLineupIn(BaseModel):
+    name: str
+    assignment: dict[str, list[str]]
+
+
+class SaveBackIn(BaseModel):
+    assignment: dict[str, list[str]]
+
+
+class SavedLineupOut(BaseModel):
+    id: int
+    name: str
+    assignment: dict[str, list[str]]
+    utr_snapshot: dict[str, str]
+    #: "valid" | "utr_moved" | "illegal" | "player_gone"
+    status: str
+    violations: list[ViolationOut] = []
+    #: key -> {"name","snapshot","current"} for players whose UTR changed
+    utr_diff: dict[str, dict[str, str]] = {}
+    missing: list[str] = []
+
+
+def _current_roster(session: Session, year: int, code: str, team_code: str):
+    """(rules, {key: Candidate}) for the team's current participation UTRs, or
+    (None, None) when the division or team is unknown."""
+    rules = load_ruleset(session, year, code)
+    if rules is None:
+        return None, None
+    loaded = load_roster(session, year, code, team_code)
+    if loaded is None:
+        return None, None
+    return rules, {c.key: c for c in loaded.candidates}
+
+
+def _snapshot_for(assignment: dict[str, list[str]], roster) -> dict[str, str]:
+    """Each named player's current participation UTR, as a string. Read-only
+    history — never written back to a player."""
+    snap: dict[str, str] = {}
+    for pair in assignment.values():
+        for key in pair:
+            if key in roster:
+                snap[key] = str(roster[key].match_utr)
+    return snap
+
+
+@router.get(_SAVED, response_model=list[SavedLineupOut])
+def list_team_saved_lineups(
+    year: int, code: str, team_code: str,
+    session: Session = Depends(get_session),
+) -> list[SavedLineupOut]:
+    team_id = _resolve_team(session, year, code, team_code)
+    rules, roster = _current_roster(session, year, code, team_code)
+    out: list[SavedLineupOut] = []
+    for s in list_saved_lineups(session, team_id):
+        status = revalidate_saved(rules, roster, s.assignment, s.utr_snapshot)
+        out.append(SavedLineupOut(
+            id=s.id, name=s.name, assignment=s.assignment,
+            utr_snapshot=s.utr_snapshot, status=status.status,
+            violations=[
+                ViolationOut(code=v.code, line=v.line, amount=v.amount, message=v.message)
+                for v in status.violations
+            ],
+            utr_diff=status.utr_diff, missing=status.missing,
+        ))
+    return out
+
+
+def _saved_out(session, year, code, team_code, s) -> SavedLineupOut:
+    rules, roster = _current_roster(session, year, code, team_code)
+    status = revalidate_saved(rules, roster, s.assignment, s.utr_snapshot)
+    return SavedLineupOut(
+        id=s.id, name=s.name, assignment=s.assignment,
+        utr_snapshot=s.utr_snapshot, status=status.status,
+        violations=[
+            ViolationOut(code=v.code, line=v.line, amount=v.amount, message=v.message)
+            for v in status.violations
+        ],
+        utr_diff=status.utr_diff, missing=status.missing,
+    )
+
+
+@router.post(_SAVED, response_model=SavedLineupOut, status_code=201)
+def save_team_lineup(
+    year: int, code: str, team_code: str, body: SavedLineupIn,
+    session: Session = Depends(get_session),
+) -> SavedLineupOut:
+    team_id = _resolve_team(session, year, code, team_code)
+    _, roster = _current_roster(session, year, code, team_code)
+    snapshot = _snapshot_for(body.assignment, roster or {})
+    try:
+        saved = save_lineup(session, team_id, body.name, body.assignment, snapshot)
+    except InvalidSavedLineup as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except SavedLineupLimitExceeded as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return _saved_out(session, year, code, team_code, saved)
+
+
+@router.put(_SAVED + "/{saved_id}", response_model=SavedLineupOut)
+def save_back_team_lineup(
+    year: int, code: str, team_code: str, saved_id: int, body: SaveBackIn,
+    session: Session = Depends(get_session),
+) -> SavedLineupOut:
+    team_id = _resolve_team(session, year, code, team_code)
+    existing = next(
+        (s for s in list_saved_lineups(session, team_id) if s.id == saved_id), None
+    )
+    if existing is None:
+        raise HTTPException(status_code=404, detail="saved lineup not found")
+    _, roster = _current_roster(session, year, code, team_code)
+    snapshot = _snapshot_for(body.assignment, roster or {})
+    # Same name overwrites in place, re-snapshotting to the current UTRs.
+    saved = save_lineup(session, team_id, existing.name, body.assignment, snapshot)
+    return _saved_out(session, year, code, team_code, saved)
+
+
+@router.delete(_SAVED + "/{saved_id}", status_code=204)
+def delete_team_saved_lineup(
+    year: int, code: str, team_code: str, saved_id: int,
+    session: Session = Depends(get_session),
+) -> Response:
+    team_id = _resolve_team(session, year, code, team_code)
+    delete_saved_lineup(session, team_id, saved_id)
+    return Response(status_code=204)

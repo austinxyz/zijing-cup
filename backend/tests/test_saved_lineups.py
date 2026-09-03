@@ -393,3 +393,66 @@ class TestValidateRoute:
         client = TestClient(app)
         r = client.post(_vurl(), headers=WRITE_AUTH, json={"assignment": bad})
         assert 400 <= r.status_code < 500
+
+
+def _surl(team="SL-VAL"):
+    return f"/api/seasons/{TEST_YEAR}/divisions/silver/teams/{team}/saved-lineups"
+
+
+class TestSavedRoutes:
+    def test_save_then_list_revalidates_as_valid(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        created = client.post(_surl(), headers=WRITE_AUTH,
+                              json={"name": "主力", "assignment": assignment})
+        assert created.status_code == 201, created.text
+        listed = client.get(_surl(), headers=READ_AUTH)
+        assert listed.status_code == 200
+        rows = listed.json()
+        assert len(rows) == 1
+        assert rows[0]["name"] == "主力"
+        assert rows[0]["status"] == "valid"
+        # snapshot was built server-side from current UTRs
+        assert rows[0]["utr_snapshot"], "server built a snapshot"
+
+    def test_list_marks_utr_moved_when_a_utr_changed(self, seeded):
+        _, assignment, keymap = seeded
+        client = TestClient(app)
+        client.post(_surl(), headers=WRITE_AUTH,
+                    json={"name": "主力", "assignment": assignment})
+        # bump one player's current participation UTR (still legal)
+        with Session(engine) as session:
+            pid = int(keymap["m2"][1:])
+            u = session.exec(select(PlayerSeasonUtr).where(
+                PlayerSeasonUtr.player_id == pid,
+                PlayerSeasonUtr.season_year == TEST_YEAR)).one()
+            u.value = D("6.10")
+            session.add(u)
+            session.commit()
+        rows = client.get(_surl(), headers=READ_AUTH).json()
+        assert rows[0]["status"] == "utr_moved"
+        assert keymap["m2"] in rows[0]["utr_diff"]
+
+    def test_save_without_admin_is_refused(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        r = client.post(_surl(), headers=READ_AUTH,
+                        json={"name": "x", "assignment": assignment})
+        assert r.status_code in (401, 403)
+        assert client.get(_surl(), headers=READ_AUTH).json() == []
+
+    def test_save_back_overwrites_and_delete(self, seeded):
+        _, assignment, keymap = seeded
+        client = TestClient(app)
+        created = client.post(_surl(), headers=WRITE_AUTH,
+                             json={"name": "主力", "assignment": assignment}).json()
+        sid = created["id"]
+        edited = {**assignment, "WD": [keymap["w3"], keymap["w2"]]}
+        put = client.put(f"{_surl()}/{sid}", headers=WRITE_AUTH,
+                         json={"assignment": edited})
+        assert put.status_code == 200, put.text
+        rows = client.get(_surl(), headers=READ_AUTH).json()
+        assert rows[0]["assignment"]["WD"] == [keymap["w3"], keymap["w2"]]
+        d = client.request("DELETE", f"{_surl()}/{sid}", headers=WRITE_AUTH)
+        assert d.status_code == 204
+        assert client.get(_surl(), headers=READ_AUTH).json() == []
