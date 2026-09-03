@@ -429,6 +429,7 @@ def search_team_lineups(
     locks: Optional[dict[str, tuple[str, str]]] = None,
     excluded: Optional[list[str]] = None,
     keep: int = 20,
+    pins: Optional[dict[str, str]] = None,
 ) -> Optional[LineupSearchOut]:
     """The search for one team, or None when the division or team is unknown."""
     rules = load_ruleset(session, year, code)
@@ -457,7 +458,28 @@ def search_team_lineups(
         if key not in by_key:
             raise UnknownReference(f"unknown player: {key}")
 
+    resolved_pins: dict[str, Candidate] = {}
+    excluded_set = set(excluded or [])
+    locked_members = {p.key for pair in resolved.values() for p in pair}
+    seen_pins: set[str] = set()
+    for line_code, key in (pins or {}).items():
+        if line_code not in line_codes:
+            raise UnknownReference(f"unknown line: {line_code}")
+        if key not in by_key:
+            raise UnknownReference(f"unknown player: {key}")
+        # A pin says "must play here"; conflicts with the opposite claims are
+        # rejected rather than silently resolved one way.
+        if key in seen_pins:
+            raise UnknownReference(f"a player cannot be pinned to two lines: {key}")
+        if key in excluded_set:
+            raise UnknownReference(f"a player cannot be both pinned and excluded: {key}")
+        if key in locked_members:
+            raise UnknownReference(f"a player cannot be both pinned and locked: {key}")
+        seen_pins.add(key)
+        resolved_pins[line_code] = by_key[key]
+
     result = search_lineups(
-        rules, roster, locks=resolved, excluded=excluded or (), keep=keep
+        rules, roster, locks=resolved, excluded=excluded or (), keep=keep,
+        pins=resolved_pins,
     )
     return to_output(rules, loaded, result)

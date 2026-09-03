@@ -1,0 +1,5 @@
+### Contract
+- **Spec**: 系统 SHALL 支持单座位 pin——把一名队员钉在一条具体线，引擎只在**含被钉者的合法对**里为该线选搭档、排满其余、总和最大，被钉者 MUST NOT 出现在其它线；硬锁整对语义不变；pin/硬锁/排除可组合；女将可钉男双、MD/WD 的 pin 性别由既有每线判定负责。系统 MUST 拒绝矛盾输入（同一人钉两线 / pin 与排除同指一人 / pin 与硬锁成员同指一人 / 一线两座同一人）返回 4xx。被钉线无解时 SHALL 点名被钉者与线，诊断只在含被钉者的对里按四类原因给出，MUST NOT 报无关的整池「本可行」原因，MUST NOT 触发第二次整解搜索。
+- **Runtime**: `cd backend && ./.venv-std/Scripts/python.exe -m pytest tests/test_lineup_search.py tests/test_lineup_infeasibility.py tests/test_lineup_api.py`（本机 uv 被 Application Control 拦，用系统 venv；CI 用 `uv run pytest`）→ expected: pin 单/多线可解、被钉者不现于它线、冲突各类被拒、pin 无解诊断限定含 pin 的对、既有 lineup 测试无回归
+- **Code**: D2 `search_lineups` 加 `pins: dict[str,Candidate]`；`committed` 含被钉者、搭档不预剔；被钉线 `options[L]=[pair for pair in legal_pairs(available+[pin]) if pin in pair]`，strongest-first 与 scarcest-first 不变。D3 `diagnose_line` 加 `pinned: Optional[Candidate]`，非 None 时只遍历含被钉者的对、message 点名 X+L；search 在被钉线 options 空时以 `pinned=pin` 调它。D4 冲突校验放 `search_team_lineups`（与既有 key 解析同处、抛 `UnknownReference`→422）；路由 `_reject_old_keys` 也扫 pin key。编码 `pin=LINE:key`，不重载 `lock=`。
+- **Threshold**: 80

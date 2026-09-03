@@ -285,6 +285,12 @@ def _gender_need(rule: LineRule) -> dict[Optional[str], int]:
 
 _GENDER_LABEL = {"F": "女队员", "M": "男队员", None: "队员"}
 
+LINE_KIND_LABEL = {
+    "mens_doubles": "男双",
+    "womens_doubles": "女双",
+    "mixed_doubles": "混双",
+}
+
 
 def _attribution(
     gender: Optional[str],
@@ -317,6 +323,64 @@ def _attribution(
     return out
 
 
+def _diagnose_pinned(
+    rules: RuleSet,
+    rule: LineRule,
+    available: Sequence[Candidate],
+    pinned: Candidate,
+) -> list[InfeasibilityReason]:
+    """Why a pinned line is empty: the reasons no partner completes the pin.
+
+    Scoped to pairs that include the pinned player — the only pairs that line
+    can field — so the diagnosis names the pin and never reports a reason that
+    would hold only for a pair the pin is not part of.
+    """
+    prefix = f"你把 {pinned.name} 钉在 {rule.code}，但"
+    slot_partners = [o for o in available if _slot_ok(rule, pinned, o)]
+    if not slot_partners:
+        return [InfeasibilityReason(
+            kind="gender_shortage",
+            message=f"{prefix}没有能与 {pinned.name} 组成合法{LINE_KIND_LABEL.get(rule.kind, rule.code)}的搭档",
+        )]
+
+    reasons: list[InfeasibilityReason] = []
+    headroom = min(rules.buffer_per_line, rules.buffer_total)
+    over_gap: list[Pair] = []
+    over_cap: list[Pair] = []
+    restricted: dict[str, tuple[Candidate, EligibilityLimit]] = {}
+    for other in slot_partners:
+        pair = (pinned, other)
+        if abs(pinned.match_utr - other.match_utr) > rules.partner_gap_max:
+            over_gap.append(pair)
+            continue
+        if rule.cap is not None and pinned.match_utr + other.match_utr > rule.cap + headroom:
+            over_cap.append(pair)
+            continue
+        for person, limit in _line_restriction_offenders(rules, rule, pair):
+            restricted.setdefault(person.key, (person, limit))
+
+    if over_gap:
+        reasons.append(InfeasibilityReason(
+            kind="over_gap",
+            message=f"{prefix}与 {pinned.name} 能配的每个搭档，参赛 UTR 差距都超过上限 {rules.partner_gap_max}",
+        ))
+    if over_cap:
+        reasons.append(InfeasibilityReason(
+            kind="over_cap",
+            message=f"{prefix}与 {pinned.name} 能配的每个搭档，两人参赛 UTR 之和都超过 cap {rule.cap}（含 buffer {headroom}）",
+        ))
+    if restricted:
+        who = "、".join(
+            f"{person.name}（参赛 UTR 高于 {limit.utr_above}，只能打 {'/'.join(limit.restricted_to_lines)}）"
+            for person, limit in restricted.values()
+        )
+        reasons.append(InfeasibilityReason(
+            kind="eligibility",
+            message=f"{prefix}够格的搭档被上场资格限制挡在本线外：{who}",
+        ))
+    return reasons
+
+
 def diagnose_line(
     rules: RuleSet,
     rule: LineRule,
@@ -324,12 +388,18 @@ def diagnose_line(
     placements: dict[str, str],
     names: dict[str, str],
     roster_gender: dict[str, Optional[str]],
+    pinned: Optional[Candidate] = None,
 ) -> list[InfeasibilityReason]:
     """Why this line's candidate pool is empty — a read of `available`, the
     same pool legal_pairs uses, never a second search.
 
-    Reasons can coexist and are all reported; no guess at a "main" one.
+    Reasons can coexist and are all reported; no guess at a "main" one. When
+    the line is a pin, the reasons are scoped to pairs including the pinned
+    player (see _diagnose_pinned).
     """
+    if pinned is not None:
+        return _diagnose_pinned(rules, rule, available, pinned)
+
     reasons: list[InfeasibilityReason] = []
 
     need = _gender_need(rule)
@@ -466,14 +536,22 @@ def search_lineups(
     excluded: Iterable[str] = (),
     keep: int = 20,
     node_budget: int = 5_000_000,
+    pins: Optional[dict[str, Candidate]] = None,
 ) -> SearchResult:
     """Every legal lineup worth keeping, strongest first.
 
     Lines are tried scarcest-first — women's doubles has the fewest legal pairs
     because women are the scarce half of a roster — so the branches that cannot
     go anywhere die at the top of the tree rather than the bottom.
+
+    A `pin` fixes one player to a line and lets the engine choose the partner:
+    that line's options are the legal pairs that include the pinned player, and
+    the pinned player is taken out of every other line's pool. Conflicts (a
+    player pinned twice, pinned and excluded, pinned and locked) are the
+    caller's to reject before here.
     """
     locks = dict(locks or {})
+    pins = dict(pins or {})
     blocked = set(excluded)
 
     # Before anything else: a lock the rules forbid is a different answer from
@@ -494,12 +572,28 @@ def search_lineups(
     # line whose pairs all needed a locked player is empty, and that is the
     # thing worth reporting.
     committed = {p.key for pair in locks.values() for p in pair}
+    # A pinned player is spoken for on their line, so the other lines never had
+    # them either — take them out of the shared pool. Their partner is NOT
+    # pre-committed; it is chosen from `available` during pairing.
+    committed |= {person.key for person in pins.values()}
     available = [p for p in pool if p.key not in committed]
 
     options: dict[str, list[Pair]] = {}
     for rule in rules.lines:
         if rule.code in locks:
             options[rule.code] = [locks[rule.code]]
+            continue
+        if rule.code in pins:
+            pin = pins[rule.code]
+            # Bring the pinned player back into the pool just for this line, so
+            # legal_pairs can pair them with the others, then keep only the
+            # pairs that actually include them.
+            pairs = [
+                pair for pair in legal_pairs(rules, rule, [pin, *available])
+                if pin.key in {p.key for p in pair}
+            ]
+            pairs.sort(key=lambda pair: -pair_total(pair))
+            options[rule.code] = pairs
             continue
         pairs = legal_pairs(rules, rule, available)
         # Strongest first: the objective is a maximum, so a good branch early
@@ -515,7 +609,8 @@ def search_lineups(
             names = {p.key: p.name for p in roster}
             roster_gender = {p.key: p.gender for p in roster}
             reasons = diagnose_line(
-                rules, rule, available, placements, names, roster_gender
+                rules, rule, available, placements, names, roster_gender,
+                pinned=pins.get(rule.code),
             )
             return SearchResult(
                 infeasible_line=rule.code,

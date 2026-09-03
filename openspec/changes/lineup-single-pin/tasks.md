@@ -6,17 +6,17 @@
 - **Code**: D2 `search_lineups` 加 `pins: dict[str,Candidate]`；`committed` 含被钉者、搭档不预剔；被钉线 `options[L]=[pair for pair in legal_pairs(available+[pin]) if pin in pair]`，strongest-first 与 scarcest-first 不变。D3 `diagnose_line` 加 `pinned: Optional[str]`，非 None 时 `combinations` 只遍历含被钉者的对、message 点名 X+L；search 在被钉线 options 空时以 `pinned=pin` 调它。D4 冲突校验放 `search_team_lineups`（与既有 key 解析同处、抛 `UnknownReference`→422）；路由 `_reject_old_keys` 也扫 pin key。编码 `pin=LINE:key`，不重载 `lock=`。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/lineup-single-pin/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — pytest：`search_lineups` 传 `pins={"MD": cand}`，断言结果 MD 含该被钉者 + 一名合法搭档、被钉者不现于其它线（用手造小 roster）
-- [ ] 1.2 GREEN — `search_lineups` 加 `pins` 参数：`committed` 并入被钉者，被钉线 `options[L]` 过滤到含 pin 的合法对；递归/排序不变
-- [ ] 1.3 RED — pytest：多线 pin 联合可解，断言每个 pin 都被满足、各被钉者只在其线
-- [ ] 1.4 GREEN — 确认多 pin 正确（committed 汇总所有被钉者；每条被钉线各自过滤）
-- [ ] 1.5 RED — pytest：被钉者在该线配不出合法搭档（如都超差距）→ 断言 `infeasible_line==L`、`infeasibility` 点名被钉者、原因 kind 属四类之一且来自含 pin 的对；另断言不含无关「本可行」原因
-- [ ] 1.6 GREEN — `diagnose_line` 加 `pinned` 参数，含被钉者的对上跑四关分类 + message 点名；`search` 被钉线空时以 `pinned` 调用
-- [ ] 1.7 RED — pytest（API/query 层）：`pin=LINE:key` 参数被解析并生效；冲突各类（同一人钉两线 / pin∩排除 / pin∩硬锁成员 / 一线两座同人）各返回 4xx；未知 pin key 4xx
-- [ ] 1.8 GREEN — 路由 `pin` query 参数 + 解析；`search_team_lineups` 解析 pin key 成 Candidate、校验四类冲突抛 `UnknownReference`；`_reject_old_keys` 扫 pin key；透传 `pins` 给引擎
-- [ ] 1.9 RED — pytest：女将钉男双线 → 断言引擎为她配出合法男双搭档（女性可填男双座位）
-- [ ] 1.10 GREEN — 确认（既有性别判定已允许；补齐若有缺）
+- [x] 1.0 CONTRACT — write openspec/changes/lineup-single-pin/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — pytest：`search_lineups` 传 `pins={"MD": cand}`，断言结果 MD 含该被钉者 + 一名合法搭档、被钉者不现于其它线（用手造小 roster）
+- [x] 1.2 GREEN — `search_lineups` 加 `pins` 参数：`committed` 并入被钉者，被钉线 `options[L]` 过滤到含 pin 的合法对；递归/排序不变
+- [x] 1.3 RED — pytest：多线 pin 联合可解，断言每个 pin 都被满足、各被钉者只在其线
+- [x] 1.4 GREEN — 确认多 pin 正确（committed 汇总所有被钉者；每条被钉线各自过滤）
+- [x] 1.5 RED — pytest：被钉者在该线配不出合法搭档（如都超差距）→ 断言 `infeasible_line==L`、`infeasibility` 点名被钉者、原因 kind 属四类之一且来自含 pin 的对；另断言不含无关「本可行」原因
+- [x] 1.6 GREEN — `diagnose_line` 加 `pinned` 参数，含被钉者的对上跑四关分类 + message 点名；`search` 被钉线空时以 `pinned` 调用
+- [x] 1.7 RED — pytest（API/query 层）：`pin=LINE:key` 参数被解析并生效；冲突各类（同一人钉两线 / pin∩排除 / pin∩硬锁成员 / 一线两座同人）各返回 4xx；未知 pin key 4xx
+- [x] 1.8 GREEN — 路由 `pin` query 参数 + 解析；`search_team_lineups` 解析 pin key 成 Candidate、校验四类冲突抛 `UnknownReference`；`_reject_old_keys` 扫 pin key；透传 `pins` 给引擎
+- [x] 1.9 RED — pytest：女将钉男双线 → 断言引擎为她配出合法男双搭档（女性可填男双座位）
+- [x] 1.10 GREEN — 确认（既有性别判定已允许；补齐若有缺）
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 前端：半填=pin 三态呈现 + pin 无解面板

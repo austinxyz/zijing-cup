@@ -246,6 +246,47 @@ def keys_by_name(client: TestClient) -> dict[str, str]:
     return found
 
 
+def _roster_keys_by_gender(client: TestClient) -> dict[str, list[str]]:
+    body = search(client).json()
+    out: dict[str, list[str]] = {"M": [], "F": []}
+    for player in body["roster"]:
+        g = player.get("gender")
+        if g in out:
+            out[g].append(player["key"])
+    return out
+
+
+class TestPins:
+    def test_pin_param_is_honored(self, client):
+        men = _roster_keys_by_gender(client)["M"]
+        # A man who would NOT naturally land on D1 (D1 takes the strongest), so
+        # this only passes if the pin actually takes effect.
+        pin_key = men[-1]
+        body = search(client, pin=[f"D1:{pin_key}"]).json()
+        # feasible, and the pinned man is on D1 in every candidate
+        assert body["infeasible_line"] is None
+        for candidate in body["candidates"]:
+            d1 = {p["key"] for p in candidate["lines"]["D1"]}
+            assert pin_key in d1
+            for code in ("D2", "D3", "MD", "WD"):
+                assert pin_key not in {p["key"] for p in candidate["lines"][code]}
+
+    def test_same_player_pinned_twice_is_rejected(self, client):
+        men = _roster_keys_by_gender(client)["M"]
+        resp = search(client, pin=[f"D1:{men[0]}", f"D2:{men[0]}"])
+        assert 400 <= resp.status_code < 500
+
+    def test_pin_and_exclude_same_player_is_rejected(self, client):
+        men = _roster_keys_by_gender(client)["M"]
+        resp = search(client, pin=[f"D1:{men[0]}"], exclude=[men[0]])
+        assert 400 <= resp.status_code < 500
+
+    def test_pin_and_lock_member_same_player_is_rejected(self, client):
+        men = _roster_keys_by_gender(client)["M"]
+        resp = search(client, pin=[f"D1:{men[0]}"], lock=[f"D2:{men[0]},{men[1]}"])
+        assert 400 <= resp.status_code < 500
+
+
 class TestPlayerKeys:
     def test_keys_are_prefixed_so_the_old_bare_integers_cannot_parse(self, client):
         # The old keys were roster_entries ids: bare integers, the same shape

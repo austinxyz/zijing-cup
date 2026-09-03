@@ -50,6 +50,25 @@ def _reject_old_keys(keys: list[str]) -> None:
         raise UnknownReference(STALE_LINK_DETAIL)
 
 
+def _parse_pins(raw: list[str]) -> dict[str, str]:
+    """One `LINE:playerKey` per pinned line — a single key, not a pair.
+
+    Kept separate from lock parsing on purpose: `_parse_locks` treats anything
+    that is not exactly two keys as malformed, and overloading it would blur a
+    mistyped lock with a deliberate pin.
+    """
+    pins: dict[str, str] = {}
+    for item in raw:
+        line, separator, key = item.partition(":")
+        if not line or not separator or not key or "," in key:
+            raise UnknownReference(f"malformed pin: {item}")
+        if line in pins:
+            raise UnknownReference(f"line pinned twice: {line}")
+        _reject_old_keys([key])
+        pins[line] = key
+    return pins
+
+
 def _parse_locks(raw: list[str]) -> dict[str, tuple[str, str]]:
     """One `LINE:playerKey,playerKey` per locked line.
 
@@ -85,6 +104,11 @@ def search_lineups_for_team(
         default=None,
         description="A player key unavailable for this match. Repeatable.",
     ),
+    pin: Optional[list[str]] = Query(
+        default=None,
+        description="A player pinned to a line, as LINE:playerKey. The engine "
+        "chooses the partner. Repeatable, one per line.",
+    ),
     session: Session = Depends(get_session),
 ) -> LineupSearchOut:
     try:
@@ -96,6 +120,7 @@ def search_lineups_for_team(
             team_code,
             locks=_parse_locks(lock or []),
             excluded=list(exclude or []),
+            pins=_parse_pins(pin or []),
         )
     except UnknownReference as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
