@@ -415,22 +415,31 @@ export async function getTeamLineups(
 }
 
 /** A team's saved filter presets. Read-only; empty list for an unknown team is
- *  not distinguished from a team with none — neither is a lineup answer. */
+ *  not distinguished from a team with none — neither is a lineup answer.
+ *
+ *  Degrades to an empty list on ANY failure rather than throwing: presets are
+ *  an enhancement bolted onto the lineup page, and their store may not exist
+ *  yet (the migration is applied to the shared database by hand, after deploy).
+ *  A missing or erroring preset store must not take the whole lineup page down
+ *  with it — the search is the thing that matters. */
 export async function getTeamPresets(
   year: number | string,
   code: string,
   teamCode: string,
 ): Promise<LineupFilterPreset[]> {
-  const res = await fetch(
-    backendUrl(
-      `/api/seasons/${year}/divisions/${code}/teams/` +
-        `${encodeURIComponent(teamCode)}/presets`,
-    ),
-    backendRequestInit(),
-  );
-  if (res.status === 404) return [];
-  if (!res.ok) throw new Error(`getTeamPresets failed: ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetch(
+      backendUrl(
+        `/api/seasons/${year}/divisions/${code}/teams/` +
+          `${encodeURIComponent(teamCode)}/presets`,
+      ),
+      backendRequestInit(),
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 export interface PlayerSeasonUtr {
