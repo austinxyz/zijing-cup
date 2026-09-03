@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 import type { LineupCandidate, LineupPlayer } from "@/lib/api";
 import { playerName } from "@/lib/name";
@@ -29,10 +29,13 @@ export function CandidateRows({
   candidates,
   bufferTotal,
   lineOrder,
+  saveEntry,
 }: {
   candidates: LineupCandidate[];
   bufferTotal: string;
   lineOrder: string[];
+  /** Admin save control, shown inside the expanded row; absent for a visitor. */
+  saveEntry?: (candidate: LineupCandidate) => ReactNode;
 }) {
   return (
     <ul
@@ -47,6 +50,7 @@ export function CandidateRows({
           rank={index + 1}
           bufferTotal={bufferTotal}
           lineOrder={lineOrder}
+          saveEntry={saveEntry}
         />
       ))}
     </ul>
@@ -58,11 +62,13 @@ function Row({
   rank,
   bufferTotal,
   lineOrder,
+  saveEntry,
 }: {
   candidate: LineupCandidate;
   rank: number;
   bufferTotal: string;
   lineOrder: string[];
+  saveEntry?: (candidate: LineupCandidate) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -163,6 +169,9 @@ function Row({
             <p className="mt-2 rounded-token border border-warning-border bg-warning-surface px-2 py-1 text-[11px] leading-snug text-warning">
               {estimateSentence(estimates)}
             </p>
+          ) : null}
+          {saveEntry ? (
+            <div className="mt-2 flex justify-end">{saveEntry(candidate)}</div>
           ) : null}
         </div>
       ) : null}

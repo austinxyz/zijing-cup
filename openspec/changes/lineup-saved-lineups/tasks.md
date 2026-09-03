@@ -34,7 +34,7 @@
 - [x] 2.4 GREEN — 补齐解析/校验分支（复用既有 `_reject_old_keys` 与 UnknownReference→422）
 - [x] 2.5 RED — pytest：校验端点是写方法（POST），无 admin 凭据被拒（沿用 test_admin_auth 全应用断言）
 - [x] 2.6 GREEN — 确认路由方法为 POST、自动受保护（无需额外声明）
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 3. 前端：保存入口 + 已存阵容页（四态 + UTR-diff + 载入 + 删除）
 
@@ -44,12 +44,12 @@
 - **Code**: `lib/api.ts` 加类型 + 列出/重判 fetch（失败降级空列表，不拖垮）；`lib/admin.ts` 存/删 action。候选行保存入口（`LineupResults`/`CandidateTable`/`CandidateRow`，admin 门控只是表层）。新路由 `lineup/[code]/saved/`（`page.tsx` + `error.tsx`），四态用设计 token 着色（success/中性/danger/warning，不硬编码 hex），状态来自后端重判、diff 来自 utr_diff。载入 = assignment→五线 `lock=` 写 URL（复用 B/pin 载入），坏 key 走 stale。前端不做数值比较。
 - **Threshold**: 70
 
-- [ ] 3.0 CONTRACT — write openspec/changes/lineup-saved-lineups/contracts/group-3.md
-- [ ] 3.1 MOCK — open docs/superpowers/specs/mocks/2026-09-03-lineup-saved-lineups-mocks.html（① 保存入口、② 四态列表）；note tokens（success `#4c8a63`/`#eef4f0`、中性 `#706a61`/`#f2efe9`、danger `#b3261e`/`#fbf0ee`、warning `#8a6508`/`#fbf5e6`）与逐字串（「保存此阵容」「仍合法」「UTR 动了」「已非法」「有人离队」）
-- [ ] 3.2 RED — vitest：候选行 admin 见「保存此阵容」、非 admin 不见
-- [ ] 3.3 RED — vitest：已存阵容页对四态各渲染对应徽标 + 点名（UTR 动了点名 X→Y、已非法点名卡哪条、离队点名缺谁）；断言合法性来自后端 status 不来自快照
-- [ ] 3.4 RED — vitest：载入把 assignment 编码成五线 `lock=`；含坏 key 走 stale 分支不发搜索
-- [ ] 3.5 GREEN — `lib/api.ts`/`lib/admin.ts`；保存入口；`saved/` 页四态 + diff + 载入 + 删除；token 化；error.tsx
+- [x] 3.0 CONTRACT — write openspec/changes/lineup-saved-lineups/contracts/group-3.md
+- [x] 3.1 MOCK — open docs/superpowers/specs/mocks/2026-09-03-lineup-saved-lineups-mocks.html（① 保存入口、② 四态列表）；note tokens（success `#4c8a63`/`#eef4f0`、中性 `#706a61`/`#f2efe9`、danger `#b3261e`/`#fbf0ee`、warning `#8a6508`/`#fbf5e6`）与逐字串（「保存此阵容」「仍合法」「UTR 动了」「已非法」「有人离队」）
+- [x] 3.2 RED — vitest：候选行 admin 见「保存此阵容」、非 admin 不见
+- [x] 3.3 RED — vitest：已存阵容页对四态各渲染对应徽标 + 点名（UTR 动了点名 X→Y、已非法点名卡哪条、离队点名缺谁）；断言合法性来自后端 status 不来自快照
+- [x] 3.4 RED — vitest：载入把 assignment 编码成五线 `lock=`；含坏 key 走 stale 分支不发搜索
+- [x] 3.5 GREEN — `lib/api.ts`/`lib/admin.ts`；保存入口；`saved/` 页四态 + diff + 载入 + 删除；token 化；error.tsx
 - [ ] 3.6 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`); admin 登录造已存阵容（含一套改 UTR 变非法、一套离队）导航到 `saved/` 页; 桌面 + 375 对照 mock; 量 computed style 对比度 ≥4.5、无横向溢出、44px; fix drift
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 

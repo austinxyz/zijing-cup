@@ -7,10 +7,11 @@ import {
   type RuleLine,
 } from "@/lib/api";
 import { isSignedIn } from "@/lib/admin";
-import { savePreset, deletePreset } from "./actions";
+import { savePreset, deletePreset, saveLineup } from "./actions";
 import { LineupControls } from "./LineupControls";
 import { LineupMobileControls } from "./LineupMobileControls";
 import { LineupResults } from "./LineupResults";
+import { SaveLineupButton } from "./SaveLineupButton";
 import { StaleLink } from "./LineupStates";
 
 /** A key from before the read-path switch: a bare `roster_entries` id. */
@@ -139,6 +140,19 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
     excluded: constraints.excluded,
   });
   const deleteAction = deletePreset.bind(null, season, division, code);
+  // Saving a specific candidate: the client sends only the name + assignment;
+  // (season,division,team) ride the binding, the UTR snapshot is built on the
+  // server. Rendered per candidate row, admin only.
+  const saveLineupAction = saveLineup.bind(null, season, division, code);
+  const saveEntry = canEdit
+    ? (candidate: (typeof search.candidates)[number]) => (
+        <SaveLineupButton
+          candidate={candidate}
+          canEdit={canEdit}
+          saveAction={saveLineupAction}
+        />
+      )
+    : undefined;
 
   const men = search.roster.filter((p) => p.gender === "M").length;
   const women = search.roster.filter((p) => p.gender === "F").length;
@@ -168,6 +182,12 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
               <span className="text-[12.5px] text-muted-foreground">
                 {search.roster.length} 人 · {men} 男 · {women} 女
               </span>
+              <a
+                href={`${basePath}/saved`}
+                className="text-[12px] text-primary underline-offset-2 hover:underline"
+              >
+                已存阵容 →
+              </a>
             </div>
             {/* The rule values in force, from the database. They differ by
                 season and division, so a captain checking a lineup by eye
@@ -222,6 +242,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
           bufferTotal={rules.division.buffer_total}
           lineOrder={lines.map((line) => line.code)}
           unconstrainedCeiling={baseline?.ceiling ?? null}
+          saveEntry={saveEntry}
         />
         )}
       </main>

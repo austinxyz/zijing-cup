@@ -36,3 +36,42 @@ status: PASS
 - Minor: cap check uses list() instead of COUNT query; acceptable for 50-item limit.
 
 ### No Blockers
+
+---
+
+## Group 2 / Attempt 1
+
+**Evaluation Date:** 2026-09-03
+
+### Scores
+
+```yaml
+spec: 100
+runtime: 100
+code: 95
+total: 99
+threshold: 80
+status: PASS
+```
+
+### Findings
+
+**Spec Compliance:**
+- All contract SHALLs met: accepts 5-line assignment, uses current UTRs via load_roster, calls check_lineup (no duplicate logic), returns Violation-shaped list with code/line/amount/message.
+- Key validation via _reject_old_keys (unknown→422, old format→stale-link), follows URL manual-fill pattern exactly.
+- Conflicts (duplicate placement, over-cap, gap, eligibility) delegated to check_lineup, not pre-blocked.
+- POST method auto-admin-gated by middleware (no new auth logic needed).
+
+**Runtime:**
+- 14/14 tests pass (test_saved_lineups.py validate suite).
+- Covers all required scenarios: legal assignment returns empty violations, various illegals (over_cap, gap, dupe, eligibility) return violations, unknown key 4xx, no credentials rejected.
+- Seeded fixture creates realistic team with 10 players and legal baseline assignment.
+
+**Code Quality:**
+- assignment_violations(): Clean, reuses check_lineup cleanly, raises UnknownAssignmentKey for missing keys.
+- validate_saved_assignment route: Correct order (load ruleset, load roster, validate keys, call assignment_violations). Error handling maps exceptions to right HTTP codes.
+- ValidateAssignmentIn/Out models properly typed.
+- No new legality code; all logic via check_lineup.
+- Comments explain POST reasoning (admin decision).
+
+### No Blockers

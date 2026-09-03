@@ -28,6 +28,8 @@ vi.mock("@/lib/admin", () => ({
 vi.mock("./actions", () => ({
   savePreset: vi.fn(),
   deletePreset: vi.fn(),
+  saveLineup: vi.fn(),
+  deleteSavedLineup: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({

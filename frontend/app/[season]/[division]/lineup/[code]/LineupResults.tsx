@@ -1,4 +1,6 @@
-import type { LineupSearch, RuleLine } from "@/lib/api";
+import type { ReactNode } from "react";
+
+import type { LineupCandidate, LineupSearch, RuleLine } from "@/lib/api";
 import {
   BorrowedPlayersNotice,
   InvalidLocks,
@@ -26,6 +28,11 @@ interface LineupResultsProps {
   /** The ceiling with nothing locked or excluded, when this search has
    *  constraints. What the locks cost is otherwise invisible. */
   unconstrainedCeiling?: string | null;
+  /** Per-candidate save affordance, rendered by the page (which holds admin
+   *  state and the bound action). Absent for a visitor — the button is then
+   *  simply not there. Kept as a render prop so the tables stay unaware of
+   *  admin/actions. */
+  saveEntry?: (candidate: LineupCandidate) => ReactNode;
 }
 
 function difference(a: string | null, b: string | null): string | null {
@@ -49,6 +56,7 @@ export function LineupResults({
   bufferTotal,
   lineOrder,
   unconstrainedCeiling,
+  saveEntry,
 }: LineupResultsProps) {
   const gapToRules = difference(search.ceiling, search.rules_ceiling);
   const costOfLocks = difference(search.ceiling, unconstrainedCeiling ?? null);
@@ -154,12 +162,14 @@ export function LineupResults({
         candidates={search.candidates}
         bufferTotal={bufferTotal}
         lineOrder={lineOrder}
+        saveEntry={saveEntry}
       />
       {/* Narrow viewport: the same candidates as a compact, tappable list. */}
       <CandidateRows
         candidates={search.candidates}
         bufferTotal={bufferTotal}
         lineOrder={lineOrder}
+        saveEntry={saveEntry}
       />
 
       <BorrowedPlayersNotice />

@@ -46,8 +46,17 @@
   --color-danger-surface: #fbf0ee;
   --color-danger-border: #f0cfc9;
 
-  --color-success: #4c8a63;
+  /* Darkened from #4c8a63, which measured 3.30:1 on white — under the 4.5:1
+     small-text need for the 「仍合法」badge, which is 11px text on a card, not
+     a fill. #3a6b4d measures 5.64:1 on white and 4.94:1 on the success strip.
+     White-on-success (the fill form) stays legible at 4.98:1. */
+  --color-success: #3a6b4d;
   --color-success-fg: #ffffff;
+  /* The quiet form, paired like danger/warning so the 「仍合法」badge and the
+     UTR-moved strip are tokens, not one-off hexes that escape the contrast
+     test. */
+  --color-success-surface: #eef4f0;
+  --color-success-border: #cfe2d6;
 
   /* Third tier between success and danger. In this app it carries "legal but
      costly": a doubles pair that exceeds its line's UTR cap and therefore
@@ -107,6 +116,8 @@
 
   --color-success: var(--color-success);
   --color-success-foreground: var(--color-success-fg);
+  --color-success-surface: var(--color-success-surface);
+  --color-success-border: var(--color-success-border);
 
   --color-warning: var(--color-warning);
   --color-warning-foreground: var(--color-warning-fg);

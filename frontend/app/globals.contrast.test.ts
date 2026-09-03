@@ -44,6 +44,13 @@ const PAIRS: Array<{ text: string; on: string[] }> = [
   { text: "muted", on: ["surface", "bg", "surface-muted"] },
   { text: "muted-fg", on: ["surface", "bg", "surface-muted"] },
   { text: "fg", on: ["surface", "bg", "surface-muted"] },
+  // Status badges are small text on a tinted strip, not fills — the same
+  // measure-don't-eyeball rule applies, and a hard-coded pair would slip past
+  // this test entirely. Each badge sits on its own surface; the success badge
+  // also appears bare on a white card.
+  { text: "danger", on: ["danger-surface"] },
+  { text: "warning", on: ["warning-surface"] },
+  { text: "success", on: ["success-surface", "surface"] },
   // The sidebar is its own page chrome with its own ground and its own
   // recessed well; content-area tokens are not valid here and vice versa.
   { text: "sidebar-fg", on: ["sidebar", "sidebar-well", "sidebar-active"] },

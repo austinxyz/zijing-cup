@@ -42,3 +42,54 @@ export async function deletePreset(
   );
   revalidatePath(`/${season}/${division}/lineup/${team}`);
 }
+
+function savedPath(season: string, division: string, team: string): string {
+  return `/api/seasons/${season}/divisions/${division}/teams/${encodeURIComponent(team)}/saved-lineups`;
+}
+
+/**
+ * Save a specific ten-player line assignment as a named lineup for this team.
+ *
+ * Bound by the page to (season, division, team); the client supplies the name
+ * and the assignment (from the candidate row). The UTR snapshot is built
+ * server-side from the current roster — never sent from the browser, never
+ * written back to a player.
+ */
+export async function saveLineup(
+  season: string,
+  division: string,
+  team: string,
+  name: string,
+  assignment: Record<string, [string, string]>,
+): Promise<void> {
+  await adminWrite("POST", savedPath(season, division, team), {
+    name,
+    assignment,
+  });
+  revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
+}
+
+/** Overwrite a saved lineup's assignment in place and re-snapshot its UTRs.
+ *  The edit is a PUT; the backend re-snapshots from the current roster. */
+export async function saveBackLineup(
+  season: string,
+  division: string,
+  team: string,
+  id: number,
+  assignment: Record<string, [string, string]>,
+): Promise<void> {
+  await adminWrite("PUT", `${savedPath(season, division, team)}/${id}`, {
+    assignment,
+  });
+  revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
+}
+
+export async function deleteSavedLineup(
+  season: string,
+  division: string,
+  team: string,
+  id: number,
+): Promise<void> {
+  await adminWrite("DELETE", `${savedPath(season, division, team)}/${id}`);
+  revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
+}

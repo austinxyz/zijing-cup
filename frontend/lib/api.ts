@@ -447,6 +447,54 @@ export async function getTeamPresets(
   }
 }
 
+/** One saved lineup, re-judged by the backend against the CURRENT
+ *  participation UTRs. `status` is the backend's verdict — the front end never
+ *  re-derives legality from the snapshot. */
+export interface SavedLineup {
+  id: number;
+  name: string;
+  /** line code -> the two player keys standing on it. */
+  assignment: Record<string, string[]>;
+  /** player key -> the participation UTR string captured at save time. Read
+   *  only: it is what moved *from*, never written back to a player. */
+  utr_snapshot: Record<string, string>;
+  /** "valid" | "utr_moved" | "illegal" | "player_gone". The one field the UI
+   *  colours and branches on. */
+  status: string;
+  /** Set when status is "illegal": which rule the current UTRs now break. */
+  violations: LineupViolation[];
+  /** player key -> {name, snapshot, current}: only the players whose UTR
+   *  changed since save. Names who moved and by how much. */
+  utr_diff: Record<string, { name: string; snapshot: string; current: string }>;
+  /** player keys no longer on the roster; non-empty only for "player_gone". */
+  missing: string[];
+}
+
+/** A team's saved lineups, each re-judged against current UTRs by the backend.
+ *
+ *  Degrades to an empty list on ANY failure, exactly like getTeamPresets: the
+ *  saved-lineup store is applied to the shared database by hand after deploy,
+ *  so a missing table must not take the page down. */
+export async function getSavedLineups(
+  year: number | string,
+  code: string,
+  teamCode: string,
+): Promise<SavedLineup[]> {
+  try {
+    const res = await fetch(
+      backendUrl(
+        `/api/seasons/${year}/divisions/${code}/teams/` +
+          `${encodeURIComponent(teamCode)}/saved-lineups`,
+      ),
+      backendRequestInit(),
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 export interface PlayerSeasonUtr {
   season_year: number;
   /** What gets read. While a conflict is unresolved this is the LARGER of the
