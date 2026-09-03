@@ -213,6 +213,28 @@ class TestRevalidate:
         assert r.status == "player_gone"
         assert "w3" in r.missing
 
+    def test_carries_line_totals_and_buffer_spent(self):
+        r = revalidate_saved(SILVER, _roster(), LEGAL_ASSIGN, _snap())
+        # D1 = m1 6.80 + m2 6.00 = 12.80, cap 13.00, nothing over.
+        assert r.line_totals["D1"].total == D("12.80")
+        assert r.line_totals["D1"].cap == D("13.00")
+        assert r.line_totals["D1"].over == D("0")
+        # legal lineup spends no buffer.
+        assert r.buffer_spent == D("0")
+
+    def test_over_cap_line_total_and_buffer_reflect_the_overage(self):
+        # m1 6.80 -> 7.10: D1 = 13.10, over cap 13.00 by 0.10 (within buffer).
+        r = revalidate_saved(SILVER, _roster({"m1": "7.10"}), LEGAL_ASSIGN, _snap())
+        assert r.line_totals["D1"].total == D("13.10")
+        assert r.line_totals["D1"].over == D("0.10")
+        assert r.buffer_spent == D("0.10")
+
+    def test_player_gone_has_no_totals(self):
+        roster = _roster()
+        del roster["w3"]
+        r = revalidate_saved(SILVER, roster, LEGAL_ASSIGN, _snap())
+        assert r.line_totals == {}
+
 
 class TestSnapshotDoesNotWriteBack:
     def test_saving_a_lineup_leaves_participation_utr_untouched(self, team_id):
@@ -414,6 +436,10 @@ class TestSavedRoutes:
         assert rows[0]["status"] == "valid"
         # snapshot was built server-side from current UTRs
         assert rows[0]["utr_snapshot"], "server built a snapshot"
+        # per-line totals + team buffer accompany the row for display
+        assert rows[0]["line_totals"], "line totals present"
+        assert "total" in next(iter(rows[0]["line_totals"].values()))
+        assert "buffer_spent" in rows[0] and "buffer_total" in rows[0]
 
     def test_list_marks_utr_moved_when_a_utr_changed(self, seeded):
         _, assignment, keymap = seeded

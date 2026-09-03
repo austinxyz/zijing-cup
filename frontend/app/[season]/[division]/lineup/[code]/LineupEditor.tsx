@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { LineupPlayer, LineupViolation, SavedLineup } from "@/lib/api";
 import { replaceSlot, swapSlots, type Slot } from "./editor";
+import { GENDER_LABEL, money } from "./candidate";
 
 type Assignment = Record<string, [string, string]>;
 
@@ -71,9 +72,11 @@ export function LineupEditor({
     () => new Map(roster.map((p) => [p.key, p])),
     [roster],
   );
-  function displayName(key: string): string {
+  function optionLabel(key: string): string {
     const p = byKey.get(key);
-    return p ? `${p.last_name}${p.first_name}` : key;
+    if (!p) return key;
+    const gender = p.gender ? GENDER_LABEL[p.gender] ?? p.gender : "";
+    return `${p.last_name}${p.first_name} · ${money(p.match_utr)}${gender}`;
   }
 
   const lines = lineOrder.filter((line) => assignment[line]);
@@ -180,7 +183,7 @@ export function LineupEditor({
                   >
                     {roster.map((p) => (
                       <option key={p.key} value={p.key}>
-                        {displayName(p.key)}
+                        {optionLabel(p.key)}
                       </option>
                     ))}
                   </select>

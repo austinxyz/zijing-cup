@@ -469,6 +469,14 @@ export interface SavedLineup {
   utr_diff: Record<string, { name: string; snapshot: string; current: string }>;
   /** player keys no longer on the roster; non-empty only for "player_gone". */
   missing: string[];
+  /** line code -> current sum/cap/over, for display. Empty for a "player_gone"
+   *  lineup (it cannot be totalled). Per-player UTR/gender are read from the
+   *  page's roster, not repeated here. */
+  line_totals?: Record<string, LineTotal>;
+  /** How much team buffer the current overages spend, and the whole allowance;
+   *  both strings (Decimal end to end). */
+  buffer_spent?: string;
+  buffer_total?: string;
 }
 
 /** A team's saved lineups, each re-judged against current UTRs by the backend.

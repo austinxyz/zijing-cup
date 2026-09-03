@@ -42,3 +42,7 @@ frontend/test-output.log
 
 # stray root node_modules (vitest run from repo root)
 /node_modules/
+
+# stray test output dumps
+frontend/test-output.txt
+frontend/vitest-output.txt

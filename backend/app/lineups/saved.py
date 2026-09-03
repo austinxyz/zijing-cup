@@ -11,13 +11,32 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from decimal import Decimal
+from typing import Optional
+
 from sqlmodel import Session, select
 
-from app.lineups.rules import Candidate, RuleSet, Violation, check_lineup
+from app.lineups.rules import (
+    Candidate,
+    RuleSet,
+    Violation,
+    check_lineup,
+    pair_total,
+)
 from app.models import SavedLineup
 
 MAX_NAME_LENGTH = 60
 MAX_SAVED_PER_TEAM = 50
+
+
+@dataclass(frozen=True)
+class LineTotal:
+    """A saved line's participation-UTR sum against its cap, for display. `over`
+    is 0 on an open line or one within cap; the cap judgement itself is the
+    engine's, this only reports the arithmetic behind it."""
+    total: Decimal
+    cap: Optional[Decimal]
+    over: Decimal
 
 
 @dataclass(frozen=True)
@@ -36,6 +55,12 @@ class SavedStatus:
     #: key -> {"name": str, "snapshot": str, "current": str}
     utr_diff: dict[str, dict[str, str]] = field(default_factory=dict)
     missing: list[str] = field(default_factory=list)
+    #: line code -> its current sum, cap, overage. Empty when a player is gone
+    #: (the lineup cannot be totalled), computed from current UTRs otherwise.
+    line_totals: dict[str, LineTotal] = field(default_factory=dict)
+    #: How much of the team buffer the current overages spend, for display next
+    #: to the whole-team allowance.
+    buffer_spent: Decimal = Decimal(0)
 
 
 def revalidate_saved(
@@ -61,6 +86,22 @@ def revalidate_saved(
     }
     report = check_lineup(rules, lineup)
 
+    # Per-line sums against caps, and the buffer they spend — the same
+    # arithmetic the engine uses (pair_total + cap), surfaced for display so
+    # the card can show each line's total and the team's buffer use.
+    line_totals: dict[str, LineTotal] = {}
+    buffer_spent = Decimal(0)
+    for rule in rules.lines:
+        pair = lineup.get(rule.code)
+        if pair is None:
+            continue
+        total = pair_total(pair)
+        over = total - rule.cap if rule.cap is not None else Decimal(0)
+        if over < 0:
+            over = Decimal(0)
+        line_totals[rule.code] = LineTotal(total=total, cap=rule.cap, over=over)
+        buffer_spent += over
+
     utr_diff: dict[str, dict[str, str]] = {}
     for key in keys:
         current = str(roster[key].match_utr)
@@ -78,6 +119,7 @@ def revalidate_saved(
         status = "valid"
     return SavedStatus(
         status=status, violations=list(report.violations), utr_diff=utr_diff,
+        line_totals=line_totals, buffer_spent=buffer_spent,
     )
 
 

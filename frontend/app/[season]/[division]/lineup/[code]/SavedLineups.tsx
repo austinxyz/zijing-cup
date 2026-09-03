@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import type { LineupPlayer, LineupViolation, SavedLineup } from "@/lib/api";
 import { buildSavedLoadHref, savedStaleRefs } from "./savedLoad";
+import { GENDER_LABEL, money, overOf } from "./candidate";
 import { LineupEditor } from "./LineupEditor";
 
 type Assignment = Record<string, [string, string]>;
@@ -71,6 +72,15 @@ export function SavedLineups({
   function displayName(key: string): string {
     const p = byKey.get(key);
     return p ? `${p.last_name}${p.first_name}` : key;
+  }
+
+  /** "名字 6.00男" for a present player, or just the key when gone. Display
+   *  only — the numbers are the backend's, shown verbatim. */
+  function playerLine(key: string): string {
+    const p = byKey.get(key);
+    if (!p) return key;
+    const gender = p.gender ? GENDER_LABEL[p.gender] ?? p.gender : "";
+    return `${p.last_name}${p.first_name} ${money(p.match_utr)}${gender}`;
   }
 
   if (saved.length === 0) {
@@ -152,25 +162,51 @@ export function SavedLineups({
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
               {Object.entries(item.assignment).map(([line, pair]) => {
                 const missing = pair.some((k) => item.missing.includes(k));
+                const lt = item.line_totals?.[line];
+                const over = lt ? overOf(lt.over) : null;
                 return (
                   <div
                     key={line}
-                    className={`flex min-w-0 flex-col gap-0.5 rounded-token border px-2 py-1.5 ${
+                    className={`flex min-w-0 flex-col gap-1 rounded-token border px-2 py-1.5 ${
                       missing
                         ? "border-warning-border bg-warning-surface"
-                        : "border-border"
+                        : over
+                          ? "border-danger-border bg-danger-surface"
+                          : "border-border"
                     }`}
                   >
-                    <span className="font-mono text-[9.5px] text-muted">
-                      {line}
-                    </span>
-                    <span className="truncate text-[11.5px] text-foreground">
-                      {pair.map((k) => displayName(k)).join("·")}
-                    </span>
+                    <div className="flex items-baseline justify-between gap-1">
+                      <span className="font-mono text-[9.5px] text-muted">
+                        {line}
+                      </span>
+                      {lt ? (
+                        <span className="font-mono text-[9.5px] text-muted-foreground">
+                          {money(lt.total)}
+                          {over ? (
+                            <span className="text-danger"> 超 {money(over)}</span>
+                          ) : null}
+                        </span>
+                      ) : null}
+                    </div>
+                    {pair.map((k, i) => (
+                      <span
+                        key={i}
+                        className="truncate text-[11px] text-foreground"
+                      >
+                        {playerLine(k)}
+                      </span>
+                    ))}
                   </div>
                 );
               })}
             </div>
+
+            {item.buffer_total !== undefined && item.status !== "player_gone" ? (
+              <span className="font-mono text-[10.5px] text-muted-foreground">
+                全队 buffer {money(item.buffer_spent ?? "0")} /{" "}
+                {money(item.buffer_total)}
+              </span>
+            ) : null}
 
             <div className="flex flex-wrap gap-2">
               {canLoad ? (

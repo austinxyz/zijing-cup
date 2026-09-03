@@ -26,6 +26,7 @@ from app.lineups.presets import (
     save_preset,
 )
 from app.lineups.query import (
+    LineTotalOut,
     LineupSearchOut,
     UnknownReference,
     ViolationOut,
@@ -306,6 +307,33 @@ class SavedLineupOut(BaseModel):
     #: key -> {"name","snapshot","current"} for players whose UTR changed
     utr_diff: dict[str, dict[str, str]] = {}
     missing: list[str] = []
+    #: line code -> current sum/cap/over, for display. Empty when a player is
+    #: gone (the lineup cannot be totalled). Per-player UTR and gender are not
+    #: repeated here — the page already holds the roster and reads them there.
+    line_totals: dict[str, LineTotalOut] = {}
+    #: buffer the current overages spend, and the whole-team allowance.
+    buffer_spent: str = "0"
+    buffer_total: str = "0"
+
+
+def _serialize_saved(status, saved, rules) -> SavedLineupOut:
+    """One place both the list and single-item paths build the response, so a
+    new field is never added to one and forgotten in the other."""
+    return SavedLineupOut(
+        id=saved.id, name=saved.name, assignment=saved.assignment,
+        utr_snapshot=saved.utr_snapshot, status=status.status,
+        violations=[
+            ViolationOut(code=v.code, line=v.line, amount=v.amount, message=v.message)
+            for v in status.violations
+        ],
+        utr_diff=status.utr_diff, missing=status.missing,
+        line_totals={
+            line: LineTotalOut(total=lt.total, cap=lt.cap, over=lt.over)
+            for line, lt in status.line_totals.items()
+        },
+        buffer_spent=str(status.buffer_spent),
+        buffer_total=str(rules.buffer_total) if rules is not None else "0",
+    )
 
 
 def _current_roster(session: Session, year: int, code: str, team_code: str):
@@ -341,30 +369,14 @@ def list_team_saved_lineups(
     out: list[SavedLineupOut] = []
     for s in list_saved_lineups(session, team_id):
         status = revalidate_saved(rules, roster, s.assignment, s.utr_snapshot)
-        out.append(SavedLineupOut(
-            id=s.id, name=s.name, assignment=s.assignment,
-            utr_snapshot=s.utr_snapshot, status=status.status,
-            violations=[
-                ViolationOut(code=v.code, line=v.line, amount=v.amount, message=v.message)
-                for v in status.violations
-            ],
-            utr_diff=status.utr_diff, missing=status.missing,
-        ))
+        out.append(_serialize_saved(status, s, rules))
     return out
 
 
 def _saved_out(session, year, code, team_code, s) -> SavedLineupOut:
     rules, roster = _current_roster(session, year, code, team_code)
     status = revalidate_saved(rules, roster, s.assignment, s.utr_snapshot)
-    return SavedLineupOut(
-        id=s.id, name=s.name, assignment=s.assignment,
-        utr_snapshot=s.utr_snapshot, status=status.status,
-        violations=[
-            ViolationOut(code=v.code, line=v.line, amount=v.amount, message=v.message)
-            for v in status.violations
-        ],
-        utr_diff=status.utr_diff, missing=status.missing,
-    )
+    return _serialize_saved(status, s, rules)
 
 
 @router.post(_SAVED, response_model=SavedLineupOut, status_code=201)

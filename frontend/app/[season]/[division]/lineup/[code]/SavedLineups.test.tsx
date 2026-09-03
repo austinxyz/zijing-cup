@@ -44,6 +44,29 @@ function show(list: SavedLineup[], canEdit = false) {
   );
 }
 
+describe("SavedLineups per-line detail", () => {
+  it("shows each player's UTR and gender, the line total, and team buffer", () => {
+    show([
+      saved({
+        line_totals: {
+          D1: { total: "12.80", cap: "13.00", over: "0" },
+          D2: { total: "13.40", cap: "12.00", over: "1.40" },
+        },
+        buffer_spent: "1.40",
+        buffer_total: "0.50",
+      }),
+    ]);
+    // a player's current UTR (roster match_utr is 6.00) is shown
+    expect(screen.getAllByText(/6\.00/).length).toBeGreaterThan(0);
+    // the D1 line total
+    expect(screen.getByText(/12\.80/)).toBeTruthy();
+    // over-cap amount on D2
+    expect(screen.getByText(/超\s*1\.40/)).toBeTruthy();
+    // team buffer usage
+    expect(screen.getByText(/1\.40\s*\/\s*0\.50/)).toBeTruthy();
+  });
+});
+
 describe("SavedLineups four states", () => {
   it("renders 仍合法 for a valid lineup", () => {
     show([saved()]);
