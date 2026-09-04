@@ -23,13 +23,13 @@
 - **Code**: D3 新 server 写路由（中间件自动保护）：(a) membership 三字段（与五字段端点分开，后端兜底 borrowed/wildcard 为真时 representing_school 应空）；(b) school_count 写；(c) 批量当前双打 UTR，逐条套 saveCurrentUtr 的「未锁季覆盖参赛值」。Decimal 全程。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/team-roster-editing/contracts/group-2.md
-- [ ] 2.1 RED — pytest：写 membership 外援/外卡/学校 → 读回新值；无管理员凭据 403
-- [ ] 2.2 GREEN — membership 写路由 + command
-- [ ] 2.3 RED — pytest：写 school_count → 读回；borrowed/wildcard 为真时 representing_school 被后端清空/拒
-- [ ] 2.4 GREEN — school_count 写 + representing_school 条件兜底
-- [ ] 2.5 RED — pytest：批量双打 UTR，未锁季覆盖参赛值 / 已锁季不覆盖
-- [ ] 2.6 GREEN — 批量双打 UTR 写（复用 saveCurrentUtr 覆盖逻辑）
+- [x] 2.0 CONTRACT — write openspec/changes/team-roster-editing/contracts/group-2.md
+- [x] 2.1 RED — pytest：写 membership 外援/外卡/学校 → 读回新值；无管理员凭据 403
+- [x] 2.2 GREEN — membership 写路由 + command
+- [x] 2.3 RED — pytest：写 school_count → 读回；borrowed/wildcard 为真时 representing_school 被后端清空/拒
+- [x] 2.4 GREEN — school_count 写 + representing_school 条件兜底
+- [x] 2.5 RED — pytest：批量双打 UTR，未锁季覆盖参赛值 / 已锁季不覆盖
+- [x] 2.6 GREEN — 批量双打 UTR 写（复用 saveCurrentUtr 覆盖逻辑）
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS; <80 FIX+retry
 
 ## 3. 引擎：外援上场校验 + borrowed_over_limit 归因

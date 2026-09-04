@@ -121,6 +121,14 @@ class RosterPlayerOut(BaseModel):
     #: match, so the distinction decides whether a lineup was really checked.
     is_borrowed_player: Optional[bool] = None
 
+    #: Not the same as borrowed: from a non-current school, needs committee
+    #: approval, does NOT affect eligibility. Shown/edited on the team page.
+    is_wildcard: Optional[bool] = None
+
+    #: The home school this player represents (null for borrowed/wildcard, who
+    #: have none). Editable on the team page for regular players.
+    representing_school: Optional[str] = None
+
     utr_profile_id: Optional[str] = None
 
 
@@ -132,6 +140,9 @@ class TeamRosterOut(BaseModel):
     #: also overwrites the participation UTR, and the editor says so; once
     #: locked, the backend refuses that write, so the warning must not show.
     locked: bool
+    #: How many schools this (联队) team combines, or null if unset. Drives the
+    #: per-match borrowed ceiling; the edit UI shows the caps derived from it.
+    school_count: Optional[int] = None
 
 
 def _division_exists(session: Session, year: int, code: str) -> bool:
@@ -270,6 +281,8 @@ def get_team_roster(
                 doubles_utr=player.doubles_utr,
                 doubles_status=player.doubles_status,
                 is_borrowed_player=membership.is_borrowed_player,
+                is_wildcard=membership.is_wildcard,
+                representing_school=membership.representing_school,
                 utr_profile_id=player.utr_profile_id,
             )
         )
@@ -291,4 +304,5 @@ def get_team_roster(
         ),
         players=players,
         locked=session.get(SeasonLock, year) is not None,
+        school_count=team.school_count,
     )

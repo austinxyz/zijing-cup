@@ -45,11 +45,31 @@ class SeasonLocked(PermissionError):
     """
 
 
+#: Distinguishes "field not passed" from "field set to None". `None` is a real,
+#: meaningful value for these nullable fields (clear the school; unmark a flag),
+#: so absence needs its own token.
+_UNSET = object()
+
+
 def _require_player(session: Session, player_id: int) -> Player:
     player = session.get(Player, player_id)
     if player is None:
         raise NotFound(f"no player {player_id}")
     return player
+
+
+def set_team_school_count(
+    session: Session, team_id: int, school_count: Optional[int]
+) -> Team:
+    """Set how many schools a (联队) team combines. None clears it (unset)."""
+    team = session.get(Team, team_id)
+    if team is None:
+        raise NotFound(f"no team {team_id}")
+    team.school_count = school_count
+    session.add(team)
+    session.commit()
+    session.refresh(team)
+    return team
 
 
 def _assert_season_open(session: Session, season_year: int) -> None:
@@ -166,6 +186,49 @@ def add_membership(
         is_borrowed_player=is_borrowed_player,
         is_wildcard=is_wildcard,
     )
+    session.add(membership)
+    session.commit()
+    session.refresh(membership)
+    return membership
+
+
+def update_membership(
+    session: Session,
+    player_id: int,
+    team_id: int,
+    *,
+    is_borrowed_player: Optional[bool] = _UNSET,
+    is_wildcard: Optional[bool] = _UNSET,
+    representing_school: Optional[str] = _UNSET,
+) -> PlayerTeamMembership:
+    """Change the team-level identity fields on an existing membership, located
+    by (player, team). Only the fields actually passed are touched.
+
+    A borrowed or wildcard player has no home school to represent, so marking
+    either true clears representing_school here — the backend does not trust the
+    caller to keep those consistent (the UI disables the school control, but a
+    direct API call must not be able to leave a borrowed player with a school).
+    """
+    membership = session.exec(
+        select(PlayerTeamMembership).where(
+            PlayerTeamMembership.player_id == player_id,
+            PlayerTeamMembership.team_id == team_id,
+        )
+    ).one_or_none()
+    if membership is None:
+        raise NotFound(f"no membership for player {player_id} on team {team_id}")
+
+    if is_borrowed_player is not _UNSET:
+        membership.is_borrowed_player = is_borrowed_player
+    if is_wildcard is not _UNSET:
+        membership.is_wildcard = is_wildcard
+    if representing_school is not _UNSET:
+        membership.representing_school = representing_school
+
+    # External players (borrowed OR wildcard) do not represent a home school.
+    if membership.is_borrowed_player or membership.is_wildcard:
+        membership.representing_school = None
+
     session.add(membership)
     session.commit()
     session.refresh(membership)

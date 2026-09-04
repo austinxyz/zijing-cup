@@ -63,6 +63,17 @@ class MembershipIn(BaseModel):
     is_wildcard: Optional[bool] = None
 
 
+class MembershipPatch(BaseModel):
+    """Change an existing membership's team-level identity fields, located by
+    (player, team). Absent field = leave alone (exclude_unset separates that
+    from an explicit null)."""
+
+    team_id: int
+    representing_school: Optional[str] = None
+    is_borrowed_player: Optional[bool] = None
+    is_wildcard: Optional[bool] = None
+
+
 class SeasonUtrIn(BaseModel):
     value: Decimal
     source: str
@@ -195,6 +206,25 @@ def add_membership(
     except command.SeasonLocked as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     return {"id": membership.id}
+
+
+@router.patch("/{player_id}/memberships")
+def update_membership(
+    player_id: int, payload: MembershipPatch, session: Session = Depends(get_session)
+):
+    fields = payload.model_dump(exclude_unset=True, exclude={"team_id"})
+    try:
+        membership = command.update_membership(
+            session, player_id, payload.team_id, **fields
+        )
+    except command.NotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return {
+        "id": membership.id,
+        "is_borrowed_player": membership.is_borrowed_player,
+        "is_wildcard": membership.is_wildcard,
+        "representing_school": membership.representing_school,
+    }
 
 
 @router.delete("/{player_id}/memberships/{membership_id}", status_code=204)
