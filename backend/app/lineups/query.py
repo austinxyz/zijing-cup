@@ -74,6 +74,14 @@ class PlayerOut(BaseModel):
     #: line blocks can mark them. True only for a confirmed borrowed player.
     is_borrowed_player: bool = False
 
+    #: Career win/loss, for display only (a hot-hand marker + hover detail on
+    #: the line blocks). Both null = never imported — NOT 0-0. The engine never
+    #: reads these; they ride on the roster PlayerOut so candidate AND saved
+    #: line blocks (which look players up by key in this same roster) can show
+    #: them without a second endpoint.
+    wins: Optional[int] = None
+    losses: Optional[int] = None
+
 
 class LineTotalOut(BaseModel):
     total: Decimal
@@ -255,6 +263,12 @@ class LoadedRoster:
     #: has no business carrying provenance through the search.
     provenance: dict[str, ResolvedUtr] = field(default_factory=dict)
 
+    #: Player key -> (wins, losses). Display-only, kept beside the candidates
+    #: like provenance rather than on the pure engine `Candidate`.
+    win_loss: dict[str, tuple[Optional[int], Optional[int]]] = field(
+        default_factory=dict
+    )
+
     #: How many schools this team combines, or None if unset. Drives the
     #: per-match borrowed cap; None means the cap is not enforced.
     school_count: Optional[int] = None
@@ -301,6 +315,7 @@ def load_roster(
 
     candidates: list[Candidate] = []
     provenance: dict[str, ResolvedUtr] = {}
+    win_loss: dict[str, tuple[Optional[int], Optional[int]]] = {}
     missing = estimated = unresolved = 0
     for membership, player in memberships:
         resolved = resolve_match_utr(
@@ -320,6 +335,7 @@ def load_roster(
         if resolved.is_unresolved:
             unresolved += 1
         provenance[f"{KEY_PREFIX}{player.id}"] = resolved
+        win_loss[f"{KEY_PREFIX}{player.id}"] = (player.wins, player.losses)
         candidates.append(
             Candidate(
                 key=f"{KEY_PREFIX}{player.id}",
@@ -343,12 +359,15 @@ def load_roster(
         estimated_count=estimated,
         unresolved_count=unresolved,
         provenance=provenance,
+        win_loss=win_loss,
         school_count=team.school_count,
     )
 
 
 def _player_out(
-    candidate: Candidate, provenance: dict[str, ResolvedUtr]
+    candidate: Candidate,
+    provenance: dict[str, ResolvedUtr],
+    win_loss: dict[str, tuple[Optional[int], Optional[int]]],
 ) -> PlayerOut:
     last, _, first = candidate.name.partition("\t")
     # Indexed, not `.get` with a default: every candidate came out of
@@ -366,6 +385,8 @@ def _player_out(
         origin_year=resolved.origin_year,
         is_unresolved=resolved.is_unresolved,
         is_borrowed_player=candidate.borrowed,
+        wins=win_loss.get(candidate.key, (None, None))[0],
+        losses=win_loss.get(candidate.key, (None, None))[1],
     )
 
 
@@ -402,8 +423,8 @@ def to_output(
                 buffer_spent=candidate.buffer_spent,
                 lines={
                     code: (
-                        _player_out(pair[0], loaded.provenance),
-                        _player_out(pair[1], loaded.provenance),
+                        _player_out(pair[0], loaded.provenance, loaded.win_loss),
+                        _player_out(pair[1], loaded.provenance, loaded.win_loss),
                     )
                     for code, pair in candidate.lines.items()
                 },
@@ -453,7 +474,7 @@ def to_output(
             for v in result.invalid_locks
         ],
         roster=[
-            _player_out(player, loaded.provenance)
+            _player_out(player, loaded.provenance, loaded.win_loss)
             for player in loaded.candidates
         ],
         missing_utr_count=loaded.missing_utr_count,

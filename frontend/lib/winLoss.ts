@@ -30,3 +30,27 @@ export function formatWinLoss(
   }
   return { record: `${wins}-${losses}`, rate: `${Math.round((wins / total) * 100)}%` };
 }
+
+/** The win percentage as a number, or null when there is no rate to compute
+ *  (never imported, or a real 0-0 with no games). Same null/undefined and
+ *  divide-by-zero guards as formatWinLoss. */
+export function winRate(
+  wins: number | null,
+  losses: number | null,
+): number | null {
+  if (wins == null || losses == null) return null;
+  const total = wins + losses;
+  if (total === 0) return null;
+  return (wins / total) * 100;
+}
+
+/** A "hot hand": a real win rate at or above the threshold (default 60%). null
+ *  records (never imported) and 0-0 are not hot — absence is not a low score. */
+export function isHotHand(
+  wins: number | null | undefined,
+  losses: number | null | undefined,
+  threshold = 60,
+): boolean {
+  const rate = winRate(wins ?? null, losses ?? null);
+  return rate !== null && rate >= threshold;
+}

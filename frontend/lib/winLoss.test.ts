@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatWinLoss } from "./winLoss";
+import { formatWinLoss, isHotHand, winRate } from "./winLoss";
 
 describe("formatWinLoss", () => {
   it("shows record and rounded percentage for a real record", () => {
@@ -26,6 +26,24 @@ describe("formatWinLoss", () => {
 
   it("handles a real 0 losses as 100%", () => {
     expect(formatWinLoss(5, 0)).toEqual({ record: "5-0", rate: "100%" });
+  });
+
+  it("winRate returns the percentage or null (never divides by zero)", () => {
+    expect(winRate(67, 20)).toBeCloseTo(77.01, 1);
+    expect(winRate(3, 1)).toBe(75);
+    expect(winRate(null, null)).toBeNull();
+    expect(winRate(0, 0)).toBeNull();
+  });
+
+  it("isHotHand is true only for a real rate ≥ threshold", () => {
+    expect(isHotHand(3, 1)).toBe(true); // 75%
+    expect(isHotHand(3, 2)).toBe(true); // 60% exactly
+    expect(isHotHand(1, 1)).toBe(false); // 50%
+    expect(isHotHand(6, 4)).toBe(true); // 60%
+    // Never imported and a real 0-0 are NOT hot — absence is not a low score.
+    expect(isHotHand(null, null)).toBe(false);
+    expect(isHotHand(undefined, undefined)).toBe(false);
+    expect(isHotHand(0, 0)).toBe(false);
   });
 
   it("treats an absent field (undefined) like never-imported, not NaN", () => {

@@ -21,5 +21,7 @@ export function rosterFromTeam(team: TeamRoster): LineupPlayer[] {
     origin_year: p.origin_year,
     is_unresolved: p.is_unresolved,
     is_borrowed_player: p.is_borrowed_player === true,
+    wins: p.wins,
+    losses: p.losses,
   }));
 }

@@ -1,3 +1,5 @@
+import { formatWinLoss, isHotHand } from "@/lib/winLoss";
+
 import { money, overOf } from "./candidate";
 
 /** One seat in a line block: a player's display name, gender, participation
@@ -11,6 +13,10 @@ export interface LineSeat {
   /** A borrowed ("外援") player — marked distinctly so the on-court borrowed
    *  count is visible at a glance. */
   borrowed?: boolean;
+  /** Career win/loss. Display only: a hot-hand marker (win rate ≥ 60%) plus a
+   *  win-rate hover on every seat. null/absent = never imported (NOT 0-0). */
+  wins?: number | null;
+  losses?: number | null;
 }
 
 interface LineBlockProps {
@@ -46,32 +52,48 @@ export function LineBlock({ line, total, over, seats }: LineBlockProps) {
           </span>
         ) : null}
       </div>
-      {seats.map((s, i) => (
-        <div
-          key={i}
-          className={`flex items-baseline gap-1.5 border-t border-border/60 px-2 py-1 text-[11.5px] ${
-            s.borrowed ? "bg-borrowed-surface" : ""
-          }`}
-        >
-          <GenderMark gender={s.gender} />
-          <span title={s.name} className="min-w-0 flex-1 truncate text-foreground">
-            {s.name}
-            {s.borrowed ? (
-              <span title="外援" className="ml-0.5 text-borrowed">
-                外
-              </span>
-            ) : null}
-            {s.estimate ? (
-              <span title="估算值" className="ml-0.5 text-warning">
-                估
-              </span>
-            ) : null}
-          </span>
-          <span className="flex-none font-mono text-[10.5px] text-muted-foreground">
-            {s.utr ? money(s.utr) : ""}
-          </span>
-        </div>
-      ))}
+      {seats.map((s, i) => {
+        const wl = formatWinLoss(s.wins ?? null, s.losses ?? null);
+        const hot = isHotHand(s.wins, s.losses);
+        // Every seat gets a win-rate hover; the record already reads "—" when
+        // never imported, so it is never a blank or a misleading 0-0/0%.
+        const winTip = `胜率 ${wl.record}${wl.rate ? ` · ${wl.rate}` : ""}`;
+        return (
+          <div
+            key={i}
+            title={winTip}
+            className={`flex items-baseline gap-1.5 border-t border-border/60 px-2 py-1 text-[11.5px] ${
+              s.borrowed ? "bg-borrowed-surface" : ""
+            }`}
+          >
+            <GenderMark gender={s.gender} />
+            <span className="min-w-0 flex-1 truncate text-foreground">
+              {s.name}
+              {s.borrowed ? (
+                <span title="外援" className="ml-0.5 text-borrowed">
+                  外
+                </span>
+              ) : null}
+              {hot ? (
+                // A hot hand: win rate ≥ 60%. `text-success` green ▲, distinct
+                // from the borrowed 外 and the estimate 估. The record is on the
+                // row hover; this is the at-a-glance mark.
+                <span title={`状态好 · ${winTip}`} className="ml-0.5 text-success">
+                  ▲
+                </span>
+              ) : null}
+              {s.estimate ? (
+                <span title="估算值" className="ml-0.5 text-warning">
+                  估
+                </span>
+              ) : null}
+            </span>
+            <span className="flex-none font-mono text-[10.5px] text-muted-foreground">
+              {s.utr ? money(s.utr) : ""}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

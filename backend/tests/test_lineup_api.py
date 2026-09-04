@@ -395,6 +395,44 @@ class TestPerPlayerProvenance:
         assert derived > 0, "the derived player stands in at least one candidate"
 
 
+class TestWinLoss:
+    def _set_win_loss(self, first: str, wins, losses) -> None:
+        with Session(engine) as session:
+            player = session.exec(
+                select(Player).where(Player.first_name == first)
+            ).one()
+            player.wins, player.losses = wins, losses
+            session.add(player)
+            session.commit()
+
+    def test_roster_players_carry_win_loss(self, client):
+        # The lineup page reads per-player display (name/UTR/borrowed/win-loss)
+        # from the search roster, keyed by player key — for candidates AND for
+        # saved lineups. So win/loss must ride on the roster PlayerOut.
+        self._set_win_loss("m1", 61, 20)
+        body = search(client).json()
+        by_name = {p["first_name"]: p for p in body["roster"]}
+
+        assert by_name["m1"]["wins"] == 61
+        assert by_name["m1"]["losses"] == 20
+        # Never imported → null, not 0 (0 is a real, different record).
+        assert by_name["m2"]["wins"] is None
+        assert by_name["m2"]["losses"] is None
+
+    def test_players_inside_a_candidate_carry_win_loss(self, client):
+        self._set_win_loss("m1", 61, 20)
+        body = search(client).json()
+        seen = False
+        for candidate in body["candidates"]:
+            for pair in candidate["lines"].values():
+                for player in pair:
+                    if player["first_name"] == "m1":
+                        seen = True
+                        assert player["wins"] == 61
+                        assert player["losses"] == 20
+        assert seen, "m1 appears on court in at least one candidate"
+
+
 class TestStaleLinks:
     def test_a_bare_integer_lock_is_reported_as_an_old_link(self, client):
         # Not a generic 4xx: the reader has to know the link is stale rather

@@ -19,6 +19,8 @@ function seatOf(player: LineupCandidate["lines"][string][number]): LineSeat {
     utr: player.match_utr,
     estimate: isEstimate(player),
     borrowed: player.is_borrowed_player === true,
+    wins: player.wins ?? null,
+    losses: player.losses ?? null,
   };
 }
 

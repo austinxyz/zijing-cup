@@ -50,6 +50,44 @@ describe("LineBlock", () => {
     expect(within(regularRow).queryByText("外")).toBeNull();
   });
 
+  it("marks a hot hand (win rate ≥ 60%) and gives every seat a win-rate hover", () => {
+    render(
+      <LineBlock
+        line="D4"
+        seats={[
+          { name: "热手甲", gender: "M", utr: "6.0", estimate: false, wins: 67, losses: 20 },
+          { name: "平手乙", gender: "M", utr: "5.8", estimate: false, wins: 1, losses: 1 },
+        ]}
+      />,
+    );
+    const block = screen.getByLabelText("D4");
+    // hot-hand row is marked; the 50% row is not
+    const hotRow = within(block).getByText("热手甲").closest("div")!;
+    expect(hotRow.getAttribute("title")).toMatch(/67-20/);
+    expect(hotRow.getAttribute("title")).toMatch(/77%/);
+    expect(within(hotRow).getByText("▲")).toBeTruthy();
+    const coldRow = within(block).getByText("平手乙").closest("div")!;
+    expect(within(coldRow).queryByText("▲")).toBeNull();
+    // but the cold row still shows its record on hover
+    expect(coldRow.getAttribute("title")).toMatch(/1-1/);
+  });
+
+  it("gives a seat with no record a neutral win-rate hover and no marker", () => {
+    render(
+      <LineBlock
+        line="D5"
+        seats={[
+          { name: "无战绩甲", gender: "M", utr: "6.0", estimate: false, wins: null, losses: null },
+          { name: "乙", gender: "M", utr: "5.8", estimate: false },
+        ]}
+      />,
+    );
+    const block = screen.getByLabelText("D5");
+    const row = within(block).getByText("无战绩甲").closest("div")!;
+    expect(within(row).queryByText("▲")).toBeNull();
+    expect(row.getAttribute("title")).toMatch(/胜率\s*—/);
+  });
+
   it("marks an estimated UTR and blanks a missing one", () => {
     render(
       <LineBlock

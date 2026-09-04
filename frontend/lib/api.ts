@@ -300,6 +300,10 @@ export interface LineupPlayer {
    *  line blocks mark them. Optional: the draft roster path (getTeamRoster
    *  mapping) may omit it, in which case treat as not borrowed. */
   is_borrowed_player?: boolean;
+  /** Career win/loss, display only — a hot-hand marker (≥60%) + hover detail
+   *  on the line blocks. null/absent = never imported (NOT 0-0). */
+  wins?: number | null;
+  losses?: number | null;
 }
 
 export interface LineTotal {

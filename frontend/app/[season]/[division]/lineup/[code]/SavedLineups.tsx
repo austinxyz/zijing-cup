@@ -87,6 +87,8 @@ export function SavedLineups({
       utr: p?.match_utr ?? "",
       estimate: false,
       borrowed: p?.is_borrowed_player === true,
+      wins: p?.wins ?? null,
+      losses: p?.losses ?? null,
     };
   }
 
