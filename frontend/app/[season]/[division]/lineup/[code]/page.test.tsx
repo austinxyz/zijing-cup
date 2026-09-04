@@ -124,6 +124,7 @@ const SEARCH: LineupSearch = {
   placements: {},
   truncated: false,
   borrowed_players_checked: false,
+    borrowed_over_limit: null,
   invalid_locks: [],
   roster: ROSTER,
   missing_utr_count: 0,
