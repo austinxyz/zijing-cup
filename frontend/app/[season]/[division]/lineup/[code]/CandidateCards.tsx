@@ -18,6 +18,7 @@ function seatOf(player: LineupCandidate["lines"][string][number]): LineSeat {
     gender: player.gender,
     utr: player.match_utr,
     estimate: isEstimate(player),
+    borrowed: player.is_borrowed_player === true,
   };
 }
 

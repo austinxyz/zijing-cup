@@ -44,6 +44,7 @@ function search(overrides: Partial<LineupSearch> = {}): LineupSearch {
     placements: {},
     truncated: false,
     borrowed_players_checked: false,
+    borrowed_over_limit: null,
     invalid_locks: [],
     roster: [a, b],
     missing_utr_count: 0,
@@ -269,5 +270,31 @@ describe("candidate cards (3-row line blocks)", () => {
   it("puts no estimate badge on an all-frozen candidate", () => {
     show();
     expect(cards().queryByText("含估算")).toBeNull();
+  });
+});
+
+describe("borrowed players", () => {
+  it("marks a borrowed player in a candidate line block", () => {
+    const borrowed = person({ key: "p2", first_name: "方朔", is_borrowed_player: true });
+    show({
+      candidates: [{
+        total: "13.00", buffer_spent: "0.00",
+        lines: { D1: [person(), borrowed] },
+        line_totals: { D1: { total: "13.00", cap: "13.00", over: "0.00" } },
+      }],
+    });
+    const block = within(screen.getByTestId("candidate-cards")).getByLabelText("D1");
+    const row = within(block).getByText("南 方朔").closest("div")!;
+    expect(within(row).getByText("外")).toBeTruthy();
+  });
+
+  it("explains an over-the-borrowed-limit team with names and caps", () => {
+    show({
+      candidates: [],
+      borrowed_over_limit: { names: ["南 方朔", "南 子墨"], on_court: 2, cap: 1 },
+    });
+    expect(screen.getByText(/凑不出合法阵容/)).toBeTruthy();
+    expect(screen.getByText(/南 方朔、南 子墨/)).toBeTruthy();
+    expect(screen.getByText("2")).toBeTruthy();
   });
 });

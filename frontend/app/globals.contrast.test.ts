@@ -55,6 +55,9 @@ const PAIRS: Array<{ text: string; on: string[] }> = [
   // header strip. Small symbols, so both must clear 4.5:1.
   { text: "male", on: ["surface", "surface-muted"] },
   { text: "female", on: ["surface", "surface-muted"] },
+  // Borrowed ("外援") mark: on the white card, the muted strip, and its own
+  // tint (the borrowed row/seat background).
+  { text: "borrowed", on: ["surface", "surface-muted", "borrowed-surface"] },
   // The sidebar is its own page chrome with its own ground and its own
   // recessed well; content-area tokens are not valid here and vice versa.
   { text: "sidebar-fg", on: ["sidebar", "sidebar-well", "sidebar-active"] },

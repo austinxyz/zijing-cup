@@ -70,6 +70,10 @@ class PlayerOut(BaseModel):
     origin_year: Optional[int] = None
     is_unresolved: bool = False
 
+    #: Whether this player is a borrowed ("外援") player, so candidate and saved
+    #: line blocks can mark them. True only for a confirmed borrowed player.
+    is_borrowed_player: bool = False
+
 
 class LineTotalOut(BaseModel):
     total: Decimal
@@ -361,6 +365,7 @@ def _player_out(
         origin=resolved.origin,
         origin_year=resolved.origin_year,
         is_unresolved=resolved.is_unresolved,
+        is_borrowed_player=candidate.borrowed,
     )
 
 

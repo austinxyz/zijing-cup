@@ -32,6 +32,24 @@ describe("LineBlock", () => {
     expect(container.querySelector(".border-danger-border, .bg-danger-surface")).toBeTruthy();
   });
 
+  it("marks a borrowed player distinctly, and leaves a regular one unmarked", () => {
+    render(
+      <LineBlock
+        line="D3"
+        seats={[
+          { name: "外援甲", gender: "M", utr: "6.00", estimate: false, borrowed: true },
+          { name: "本校乙", gender: "M", utr: "5.80", estimate: false },
+        ]}
+      />,
+    );
+    const block = screen.getByLabelText("D3");
+    // the borrowed player carries a 外 mark; the regular one does not
+    const borrowedRow = within(block).getByText("外援甲").closest("div")!;
+    expect(within(borrowedRow).getByText("外")).toBeTruthy();
+    const regularRow = within(block).getByText("本校乙").closest("div")!;
+    expect(within(regularRow).queryByText("外")).toBeNull();
+  });
+
   it("marks an estimated UTR and blanks a missing one", () => {
     render(
       <LineBlock

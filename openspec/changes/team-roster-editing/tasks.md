@@ -92,15 +92,15 @@
 - **Code**: D5 `LineBlock` seat 加 `borrowed`，外援 seat 用新 token（`--color-borrowed-surface` 等，量 ≥4.5:1 进 globals.contrast.test.ts）；`CandidateCards`/`SavedLineups` seat 构造传后端 borrowed；`lib/api.ts` 候选/已存阵容 per-player 加 `is_borrowed_player`、`borrowed_over_limit` 收进 infeasibility literal union。
 - **Threshold**: 70
 
-- [ ] 5.0 CONTRACT — write openspec/changes/team-roster-editing/contracts/group-5.md
-- [ ] 5.1 RED — vitest：LineBlock 外援 seat 带可辨标记（class/角标），普通 seat 无
-- [ ] 5.2 GREEN — LineBlock borrowed seat + token
-- [ ] 5.3 RED — vitest：候选（CandidateCards）与已存阵容（SavedLineups）把后端 borrowed 传进 seat
-- [ ] 5.4 GREEN — 两处 seat 构造传 borrowed
-- [ ] 5.5 RED — vitest：globals.contrast.test.ts 外援 token 对其底色 ≥4.5:1
-- [ ] 5.6 GREEN — 调外援 token 至达标
-- [ ] 5.7 MOCK — open mock（② 三行块外援标记）；note 底色条/角标、与 ♂/♀·估算不撞
-- [ ] 5.8 VISUAL DIFF — dev stack；搜出含外援候选 + 已存阵容，对照 mock 外援标记；桌面 + 375；量对比度 ≥4.5、无横向溢出；fix drift
+- [x] 5.0 CONTRACT — write openspec/changes/team-roster-editing/contracts/group-5.md
+- [x] 5.1 RED — vitest：LineBlock 外援 seat 带可辨标记（class/角标），普通 seat 无
+- [x] 5.2 GREEN — LineBlock borrowed seat + token
+- [x] 5.3 RED — vitest：候选（CandidateCards）与已存阵容（SavedLineups）把后端 borrowed 传进 seat
+- [x] 5.4 GREEN — 两处 seat 构造传 borrowed
+- [x] 5.5 RED — vitest：globals.contrast.test.ts 外援 token 对其底色 ≥4.5:1
+- [x] 5.6 GREEN — 调外援 token 至达标
+- [x] 5.7 MOCK — open mock（② 三行块外援标记）；note 底色条/角标、与 ♂/♀·估算不撞
+- [x] 5.8 VISUAL DIFF — dev stack；搜出含外援候选 + 已存阵容，对照 mock 外援标记；桌面 + 375；量对比度 ≥4.5、无横向溢出；fix drift
 - [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥70 PASS; <70 FIX+retry
 
 ## 6. 验证与交付

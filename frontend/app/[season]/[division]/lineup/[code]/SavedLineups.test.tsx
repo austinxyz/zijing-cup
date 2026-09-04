@@ -44,6 +44,22 @@ function show(list: SavedLineup[], canEdit = false) {
   );
 }
 
+describe("SavedLineups borrowed marking", () => {
+  it("marks a borrowed roster player in the saved line block", () => {
+    const borrowedRoster = [
+      { ...player("p1", "甲"), is_borrowed_player: true },
+      player("p2", "乙"), player("p3", "丙"), player("p4", "丁"),
+    ];
+    render(
+      <SavedLineups saved={[saved()]} roster={borrowedRoster} canEdit={false}
+        basePath="/2026/silver/lineup/T" />,
+    );
+    const block = screen.getByLabelText("D1");
+    const row = within(block).getByText("南 甲").closest("div")!;
+    expect(within(row).getByText("外")).toBeTruthy();
+  });
+});
+
 describe("SavedLineups per-line detail", () => {
   it("shows each player's UTR and gender, the line total, and team buffer", () => {
     show([

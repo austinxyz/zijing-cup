@@ -84,6 +84,22 @@ export function LineupResults({
     );
   }
 
+  if (search.borrowed_over_limit !== null) {
+    const b = search.borrowed_over_limit;
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="rounded-token border border-danger-border bg-danger-surface px-4 py-3 text-[13px] leading-relaxed text-foreground">
+          <span className="font-semibold text-danger">凑不出合法阵容 </span>
+          ——按当前锁定，上场十人里外援有 <b>{b.on_court}</b> 名，超过每场上限{" "}
+          <b>{b.cap}</b>。涉及外援：
+          <b className="text-borrowed">{b.names.join("、")}</b>
+          。松开其一或减少上场外援。
+        </div>
+        <BorrowedPlayersNotice />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <UnresolvedNotice count={search.unresolved_count} />

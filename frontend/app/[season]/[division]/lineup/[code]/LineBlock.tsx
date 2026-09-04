@@ -8,6 +8,9 @@ export interface LineSeat {
   gender: string | null;
   utr: string;
   estimate: boolean;
+  /** A borrowed ("外援") player — marked distinctly so the on-court borrowed
+   *  count is visible at a glance. */
+  borrowed?: boolean;
 }
 
 interface LineBlockProps {
@@ -46,11 +49,18 @@ export function LineBlock({ line, total, over, seats }: LineBlockProps) {
       {seats.map((s, i) => (
         <div
           key={i}
-          className="flex items-baseline gap-1.5 border-t border-border/60 px-2 py-1 text-[11.5px]"
+          className={`flex items-baseline gap-1.5 border-t border-border/60 px-2 py-1 text-[11.5px] ${
+            s.borrowed ? "bg-borrowed-surface" : ""
+          }`}
         >
           <GenderMark gender={s.gender} />
           <span title={s.name} className="min-w-0 flex-1 truncate text-foreground">
             {s.name}
+            {s.borrowed ? (
+              <span title="外援" className="ml-0.5 text-borrowed">
+                外
+              </span>
+            ) : null}
             {s.estimate ? (
               <span title="估算值" className="ml-0.5 text-warning">
                 估

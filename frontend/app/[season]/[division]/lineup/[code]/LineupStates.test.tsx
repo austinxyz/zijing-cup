@@ -36,6 +36,7 @@ function search(overrides: Partial<LineupSearch> = {}): LineupSearch {
     placements: {},
     truncated: false,
     borrowed_players_checked: false,
+    borrowed_over_limit: null,
     invalid_locks: [],
     roster: [person()],
     missing_utr_count: 0,

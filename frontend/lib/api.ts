@@ -291,6 +291,10 @@ export interface LineupPlayer {
   /** The season value has two candidates and nobody has ruled; the larger is
    *  the one in play. */
   is_unresolved: boolean;
+  /** Whether this player is a borrowed ("外援") player — candidate and saved
+   *  line blocks mark them. Optional: the draft roster path (getTeamRoster
+   *  mapping) may omit it, in which case treat as not borrowed. */
+  is_borrowed_player?: boolean;
 }
 
 export interface LineTotal {
@@ -362,9 +366,16 @@ export interface LineupSearch {
    *  the request — never a claim about which lock caused the dead end. */
   placements: Record<string, string>;
   truncated: boolean;
-  /** Always false. The per-match borrowed-player ceiling depends on how many
-   *  schools a team combines, which the system does not know. */
+  /** Whether the per-match borrowed ceiling was enforced (true when the team's
+   *  school_count is set and a rule exists). False = not enforced. */
   borrowed_players_checked: boolean;
+  /** Set only when the borrowed cap is what makes the team infeasible: no line
+   *  is empty, but every lineup exceeds the on-court borrowed ceiling. */
+  borrowed_over_limit: {
+    names: string[];
+    on_court: number;
+    cap: number;
+  } | null;
   invalid_locks: LineupViolation[];
   roster: LineupPlayer[];
   /** On the team but with no derivable participation UTR, so not in the
