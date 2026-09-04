@@ -16,6 +16,8 @@ import {
   deletePreset,
   saveLineup,
   deleteSavedLineup,
+  saveBackLineup,
+  validateAssignment,
 } from "./actions";
 import { CollapsibleSaved } from "./CollapsibleSaved";
 import { EditModeToggle } from "./EditModeToggle";
@@ -172,6 +174,10 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   // action crosses to a client component, a render function would not.
   const saveLineupAction = saveLineup.bind(null, season, division, code);
   const deleteSavedAction = deleteSavedLineup.bind(null, season, division, code);
+  // Editing a saved lineup in place: validate a candidate assignment, then save
+  // it back. Same bindings the standalone /saved page uses.
+  const validateSavedAction = validateAssignment.bind(null, season, division, code);
+  const saveBackSavedAction = saveBackLineup.bind(null, season, division, code);
 
   const men = roster.filter((p) => p.gender === "M").length;
   const women = roster.filter((p) => p.gender === "F").length;
@@ -273,6 +279,8 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
               basePath={basePath}
               lineOrder={lines.map((line) => line.code)}
               deleteAction={canEdit ? deleteSavedAction : undefined}
+              validateAction={canEdit ? validateSavedAction : undefined}
+              saveBackAction={canEdit ? saveBackSavedAction : undefined}
             />
           </CollapsibleSaved>
 

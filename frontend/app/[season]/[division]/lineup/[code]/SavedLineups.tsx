@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import type { LineupPlayer, LineupViolation, SavedLineup } from "@/lib/api";
-import { buildSavedLoadHref, savedStaleRefs } from "./savedLoad";
+import { savedStaleRefs } from "./savedLoad";
 import { money } from "./candidate";
 import { LineBlock, type LineSeat } from "./LineBlock";
 import { LineupEditor } from "./LineupEditor";
@@ -65,7 +64,6 @@ export function SavedLineups({
   validateAction,
   saveBackAction,
 }: SavedLineupsProps) {
-  const router = useRouter();
   const [editingId, setEditingId] = useState<number | null>(null);
   const byKey = new Map(roster.map((p) => [p.key, p]));
   const canUseEditor = canEdit && Boolean(validateAction && saveBackAction);
@@ -103,9 +101,6 @@ export function SavedLineups({
         const known = Object.prototype.hasOwnProperty.call(BADGE, item.status);
         const badge = known ? BADGE[item.status] : UNKNOWN_BADGE;
         const stale = savedStaleRefs(item, roster);
-        // Load only a lineup we both recognise and can honour: an unknown
-        // status is not asserted legal, so it is not loadable either.
-        const canLoad = known && stale.length === 0;
         const movers = Object.values(item.utr_diff);
         return (
           <article
@@ -189,17 +184,6 @@ export function SavedLineups({
             ) : null}
 
             <div className="flex flex-wrap gap-2">
-              {canLoad ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(buildSavedLoadHref(basePath, item))
-                  }
-                  className="min-h-11 flex-none rounded-token bg-primary px-3 py-2 text-[12px] text-primary-foreground"
-                >
-                  载入
-                </button>
-              ) : null}
               {canUseEditor ? (
                 <button
                   type="button"

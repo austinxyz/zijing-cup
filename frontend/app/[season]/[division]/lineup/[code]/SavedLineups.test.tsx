@@ -122,50 +122,26 @@ describe("SavedLineups four states", () => {
 });
 
 describe("SavedLineups unknown status fails closed", () => {
-  it("shows a distinct 未知状态 badge and refuses to load", () => {
-    push.mockClear();
+  it("shows a distinct 未知状态 badge, not 仍合法", () => {
     // A status this build does not know (a future backend value). It must not
-    // fall through to 仍合法, and must not be loadable.
+    // fall through to 仍合法.
     show([saved({ status: "made_up" as unknown as SavedLineup["status"] })]);
     expect(screen.getByText("未知状态")).toBeTruthy();
     expect(screen.queryByText("仍合法")).toBeNull();
-    expect(screen.queryByRole("button", { name: /载入/ })).toBeNull();
   });
 });
 
 describe("SavedLineups touch targets", () => {
-  it("gives the load control a ≥44px min height", () => {
-    show([saved()]);
-    const load = screen.getByRole("button", { name: /载入/ });
-    expect(load.className).toContain("min-h-11");
-  });
-});
-
-describe("SavedLineups load", () => {
-  it("loads a valid lineup by locking five lines into the URL", () => {
-    push.mockClear();
-    show([saved()]);
-    fireEvent.click(screen.getByRole("button", { name: /载入/ }));
-    expect(push).toHaveBeenCalledOnce();
-    const href = push.mock.calls[0][0] as string;
-    const params = new URLSearchParams(href.split("?")[1]);
-    expect(params.get("D1a")).toBe("p1");
-    expect(params.get("D2b")).toBe("p4");
-  });
-
-  it("refuses to load a lineup with a departed player — no search fired", () => {
-    push.mockClear();
-    show([
-      saved({
-        status: "player_gone",
-        assignment: { D1: ["p1", "p9"] },
-        missing: ["p9"],
-      }),
-    ]);
-    const load = screen.queryByRole("button", { name: /载入/ });
-    // Either no load control, or clicking it does not navigate.
-    if (load) fireEvent.click(load);
-    expect(push).not.toHaveBeenCalled();
+  it("gives the edit control a ≥44px min height", () => {
+    render(
+      <SavedLineups saved={[saved()]} roster={ROSTER} canEdit
+        basePath="/2026/silver/lineup/ZJU-USC"
+        lineOrder={["D1", "D2"]}
+        validateAction={vi.fn().mockResolvedValue([])}
+        saveBackAction={vi.fn().mockResolvedValue(undefined)} />,
+    );
+    const edit = screen.getByRole("button", { name: /^编辑$/ });
+    expect(edit.className).toContain("min-h-11");
   });
 });
 
