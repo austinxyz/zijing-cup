@@ -224,11 +224,13 @@ def apply_sheet(
     return AppliedOut(updated=len(result.changes))
 
 
-def _typed(field: str, value: Optional[str]) -> Union[Decimal, str, None]:
+def _typed(field: str, value: Optional[str]) -> Union[Decimal, int, str, None]:
     if value is None:
         return None
     if field in {"singles_utr", "doubles_utr"}:
         return Decimal(value)
+    if field in {"wins", "losses"}:
+        return int(value)
     return value
 
 
@@ -258,6 +260,8 @@ def _diff_for(
             doubles_utr=person.doubles_utr,
             doubles_status=person.doubles_status,
             utr_profile_id=person.utr_profile_id,
+            wins=person.wins,
+            losses=person.losses,
         )
         for person in ordered
     ]

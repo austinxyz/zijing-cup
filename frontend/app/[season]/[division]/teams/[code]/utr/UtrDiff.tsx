@@ -8,6 +8,8 @@ const FIELD_LABEL: Record<string, string> = {
   doubles_utr: "双",
   doubles_status: "双状态",
   utr_profile_id: "链接",
+  wins: "胜",
+  losses: "负",
 };
 
 /** The order the tally reads in, matching the sheet's own column order. */
@@ -17,6 +19,8 @@ const TALLY_FIELDS = [
   ["doubles_utr", "当前双打"],
   ["doubles_status", "双打状态"],
   ["utr_profile_id", "UTR 链接"],
+  ["wins", "胜"],
+  ["losses", "负"],
 ] as const;
 
 function playerLabel(change: PlayerChange): string {

@@ -62,6 +62,14 @@ class SheetRow:
     doubles_status: str = ""
     utr_link: str = ""
 
+    #: Career win/loss, from the committee export's 胜/负 columns. Kept as
+    #: written for the same reason the UTRs are: "" (blank, leave alone) and
+    #: "-" (clear it) are different claims. The system's own eight-column
+    #: export has no such cells, so its rows carry "" here and the round trip
+    #: touches no record.
+    wins: str = ""
+    losses: str = ""
+
 
 def parse_sheet(text: str) -> list[SheetRow]:
     """Split a pasted block or an uploaded file into rows.
@@ -99,6 +107,8 @@ class PlayerView:
     doubles_utr: Optional[Decimal] = None
     doubles_status: Optional[str] = None
     utr_profile_id: Optional[str] = None
+    wins: Optional[int] = None
+    losses: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -132,6 +142,8 @@ FIELDS = [
     "doubles_utr",
     "doubles_status",
     "utr_profile_id",
+    "wins",
+    "losses",
 ]
 
 
@@ -244,6 +256,7 @@ def diff_sheet(
         row_errors = (
             _pairing_errors(row)
             + _numeric_errors(row)
+            + _winloss_errors(row)
             + _status_errors(row)
             + _link_errors(row)
         )
@@ -302,6 +315,8 @@ def _is_blank(row: SheetRow) -> bool:
             row.doubles_utr,
             row.doubles_status,
             row.utr_link,
+            row.wins,
+            row.losses,
         ]
     )
 
@@ -424,6 +439,8 @@ def _changed_fields(row: SheetRow, person: PlayerView) -> list[FieldChange]:
         ("doubles_utr", row.doubles_utr, person.doubles_utr),
         ("doubles_status", _normalised_status(row.doubles_status), person.doubles_status),
         ("utr_profile_id", _normalised_link(row.utr_link), person.utr_profile_id),
+        ("wins", row.wins, person.wins),
+        ("losses", row.losses, person.losses),
     ]
 
     fields: list[FieldChange] = []
@@ -486,6 +503,30 @@ def _numeric_errors(row: SheetRow) -> list[SheetError]:
     return errors
 
 
+def _winloss_errors(row: SheetRow) -> list[SheetError]:
+    """Wins and losses are non-negative whole match counts.
+
+    Refused rather than coerced, like the UTRs: a "7.5" or "-3" that silently
+    became something else would land a wrong record on a real player, and the
+    roster page would show it like any other. `-` (clear) and blank (leave
+    alone) are not values and pass through here.
+    """
+    errors: list[SheetError] = []
+    for label, written in [("胜", row.wins), ("负", row.losses)]:
+        if not written or written == CLEAR:
+            continue
+        # int() rejects "7.5" and "abc"; the leading-minus check rejects "-5"
+        # (isdigit already excludes it, but be explicit about the intent).
+        if not written.isdigit():
+            errors.append(
+                SheetError(
+                    row.line_number,
+                    f"{label} 不是一个非负整数：「{written}」",
+                )
+            )
+    return errors
+
+
 def _delimiter_of(header: str) -> str:
     """Read the separator off the header rather than guessing per line.
 
@@ -510,4 +551,8 @@ def _row_from_cells(line_number: int, cells: list[str]) -> SheetRow:
         doubles_utr=cell(5),
         doubles_status=cell(6),
         utr_link=cell(7),
+        # 总场次 sits at cell(8) and 胜率 at cell(11); both are derived and
+        # never read. Only 胜(9)/负(10) are stored.
+        wins=cell(9),
+        losses=cell(10),
     )

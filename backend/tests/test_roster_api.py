@@ -175,6 +175,8 @@ def client():
         borrowed.singles_status = "rated"
         borrowed.doubles_utr = Decimal("6.72")
         borrowed.doubles_status = "projected"
+        borrowed.wins = 67
+        borrowed.losses = 20
         session.add(borrowed)
         membership = session.exec(
             select(PlayerTeamMembership).where(
@@ -385,6 +387,22 @@ class TestRoster:
         # Not False: nobody has marked this one. Downstream must be able to
         # tell "unmarked" from "confirmed not a borrowed player".
         assert by_name["门吹雪"]["is_borrowed_player"] is None
+
+    def test_win_loss_travels_with_the_roster(self, client):
+        body = client.get(roster_url(), headers=AUTH).json()
+        by_name = {p["first_name"]: p for p in body["players"]}
+
+        assert by_name["望舒"]["wins"] == 67
+        assert by_name["望舒"]["losses"] == 20
+
+    def test_win_loss_is_null_when_never_imported(self, client):
+        # null ≠ 0: nobody has imported a record for her, which is a different
+        # claim from "0 wins, 0 losses".
+        body = client.get(roster_url(), headers=AUTH).json()
+        by_name = {p["first_name"]: p for p in body["players"]}
+
+        assert by_name["门吹雪"]["wins"] is None
+        assert by_name["门吹雪"]["losses"] is None
 
     def test_profile_id_is_exposed_when_set(self, client):
         body = client.get(roster_url(), headers=AUTH).json()

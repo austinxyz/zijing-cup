@@ -148,6 +148,66 @@ class TestPlayer:
         session.delete(player)
         session.commit()
 
+    def test_wins_and_losses_default_to_none(self, session):
+        from app.models import Player
+
+        # null ≠ 0: a player nobody has imported a record for has NO record,
+        # which is a different claim from "0 wins, 0 losses".
+        player = Player(last_name="东", first_name="邪")
+        session.add(player)
+        session.commit()
+        session.refresh(player)
+
+        assert player.wins is None
+        assert player.losses is None
+
+        session.delete(player)
+        session.commit()
+
+    def test_wins_and_losses_store_integers(self, session):
+        from app.models import Player
+
+        player = Player(last_name="西", first_name="毒", wins=67, losses=20)
+        session.add(player)
+        session.commit()
+        session.refresh(player)
+
+        assert player.wins == 67
+        assert player.losses == 20
+
+        session.delete(player)
+        session.commit()
+
+    def test_win_loss_columns_are_nullable(self, session):
+        # The DB column, not just the model attribute: null is the "never
+        # imported" state and the migration must permit it.
+        cols = _columns(session, "players")
+        assert cols.get("wins") == "YES"
+        assert cols.get("losses") == "YES"
+
+    def test_win_loss_migration_is_schema_safe(self):
+        # Shared Supabase project: DDL run as postgres uses its own search_path,
+        # so the migration must set it to zijing_cup or the columns land in
+        # public (the other app's namespace). Guards the CLAUDE.md rule.
+        import pathlib
+
+        sql = (
+            pathlib.Path(__file__).parents[2]
+            / "supabase"
+            / "migrations"
+            / "20260904140000_add_player_win_loss.sql"
+        ).read_text(encoding="utf-8")
+        assert "set search_path to zijing_cup" in sql.lower()
+        assert "add column wins int" in sql.lower()
+        assert "add column losses int" in sql.lower()
+        # No NOT NULL / DEFAULT in the DDL (comments may mention them): null
+        # must stay distinct from 0.
+        ddl = " ".join(
+            line for line in sql.lower().splitlines() if not line.strip().startswith("--")
+        )
+        assert "not null" not in ddl
+        assert "default" not in ddl
+
 
 class TestSeasonUtr:
     def test_one_row_per_player_and_season(self, session):

@@ -135,6 +135,12 @@ class RosterPlayerOut(BaseModel):
 
     utr_profile_id: Optional[str] = None
 
+    #: Career win/loss, imported from the committee's current-UTR sheet. Both
+    #: null means no record has ever been imported — NOT 0-0 (a real 0 wins is
+    #: a legal, different claim). Win rate is derived on display, never here.
+    wins: Optional[int] = None
+    losses: Optional[int] = None
+
 
 class TeamRosterOut(BaseModel):
     team: TeamOut
@@ -293,6 +299,8 @@ def get_team_roster(
                 is_wildcard=membership.is_wildcard,
                 representing_school=membership.representing_school,
                 utr_profile_id=player.utr_profile_id,
+                wins=player.wins,
+                losses=player.losses,
             )
         )
 

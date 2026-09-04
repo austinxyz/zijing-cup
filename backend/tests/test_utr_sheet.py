@@ -76,7 +76,13 @@ def player(
         doubles_utr=current.get("doubles_utr"),
         doubles_status=current.get("doubles_status"),
         utr_profile_id=current.get("utr_profile_id"),
+        wins=current.get("wins"),
+        losses=current.get("losses"),
     )
+
+
+#: The committee's real export appends 总场次,胜,负,胜率 after the eight columns.
+WIN_HEADER = HEADER + "\t总场次\t胜\t负\t胜率"
 
 
 def sheet(*body: str) -> str:
@@ -389,3 +395,95 @@ def test_a_sheet_with_any_error_produces_no_changes_at_all() -> None:
 
     assert result.errors != []
     assert result.applicable is False
+
+
+# --- win/loss (总场次/胜/负/胜率) ---------------------------------------------
+
+
+def test_parses_win_and_loss_columns() -> None:
+    # 总场次(col 8) and 胜率(col 11) are derived and ignored; only 胜(9)/负(10)
+    # are read.
+    text = "\n".join(
+        [
+            WIN_HEADER,
+            "1042\t南\t望舒\t6.90\trated\t6.72\tprojected\t880077\t87\t67\t20\t77%",
+        ]
+    )
+
+    rows = parse_sheet(text)
+
+    assert rows[0].wins == "67"
+    assert rows[0].losses == "20"
+
+
+def test_an_eight_column_row_has_no_win_loss() -> None:
+    # The system's own export is eight columns. Those rows carry no record, so
+    # the round trip touches nothing.
+    text = "\n".join([HEADER, "1042\t南\t望舒\t6.90\trated\t\t\t"])
+
+    rows = parse_sheet(text)
+
+    assert rows[0].wins == ""
+    assert rows[0].losses == ""
+
+
+def test_a_changed_win_loss_is_a_counted_change() -> None:
+    people = [player(wins=40, losses=10)]
+    text = "\n".join(
+        [WIN_HEADER, "1042\t南\t望舒\t\t\t\t\t\t87\t67\t20\t77%"]
+    )
+
+    result = diff_sheet(parse_sheet(text), people)
+
+    fields = {f.field: f for f in result.changes[0].fields}
+    assert fields["wins"].old == "40"
+    assert fields["wins"].new == "67"
+    assert fields["losses"].new == "20"
+    assert result.counts["wins"] == 1
+    assert result.counts["losses"] == 1
+
+
+def test_the_same_win_loss_is_not_a_change() -> None:
+    # DB holds int 67; sheet holds text "67". Same record, no change.
+    people = [player(wins=67, losses=20)]
+    text = "\n".join(
+        [WIN_HEADER, "1042\t南\t望舒\t\t\t\t\t\t87\t67\t20\t77%"]
+    )
+
+    result = diff_sheet(parse_sheet(text), people)
+
+    assert result.changes == []
+
+
+def test_a_blank_win_loss_leaves_the_record_alone() -> None:
+    # Eight-column export → no 胜/负 cells → 0 changes to the record. The
+    # round-trip floor must still hold for players who have a record.
+    people = [player(wins=67, losses=20)]
+    text = sheet("1042\t南\t望舒\t\t\t\t\t")
+
+    result = diff_sheet(parse_sheet(text), people)
+
+    assert result.changes == []
+
+
+def test_a_dash_clears_the_win_loss() -> None:
+    people = [player(wins=67, losses=20)]
+    text = "\n".join([WIN_HEADER, "1042\t南\t望舒\t\t\t\t\t\t\t-\t-\t"])
+
+    result = diff_sheet(parse_sheet(text), people)
+
+    fields = {f.field: f for f in result.changes[0].fields}
+    assert fields["wins"].old == "67"
+    assert fields["wins"].new is None
+    assert fields["losses"].new is None
+
+
+def test_a_non_integer_win_is_rejected() -> None:
+    for bad in ("abc", "7.5", "-5"):
+        text = "\n".join(
+            [WIN_HEADER, f"1042\t南\t望舒\t\t\t\t\t\t\t{bad}\t20\t"]
+        )
+        result = diff_sheet(parse_sheet(text), [player()])
+        assert result.changes == []
+        assert len(result.errors) == 1
+        assert result.applicable is False

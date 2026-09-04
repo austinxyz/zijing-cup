@@ -58,6 +58,14 @@ class Player(SQLModel, table=True):
     #: row has one, which is why identity starts as a name-based guess.
     utr_profile_id: Optional[str] = None
 
+    #: Career win/loss record, imported from the committee's current-UTR sheet.
+    #: Nullable and NOT defaulted: null means "no record has ever been
+    #: imported", which is a different claim from 0 (a real 0 wins or 0 losses).
+    #: Total matches (wins + losses) and win rate are derived on display, never
+    #: stored — a second source of truth would drift from these two.
+    wins: Optional[int] = None
+    losses: Optional[int] = None
+
 
 class PlayerSeasonUtr(SQLModel, table=True):
     __tablename__ = "player_season_utrs"

@@ -16,12 +16,12 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
   public;` 开头；本地打 127.0.0.1、远程 Dashboard 手工执行、禁 CLI push。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/player-win-loss/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
-- [ ] 1.1 RED — test: 新建 Player 默认 `wins is None`、`losses is None`；赋 67/20 存取回来相等（backend/tests/players/）
-- [ ] 1.2 GREEN — `app/models/players.py`：Player 加 `wins: Optional[int] = None`、`losses: Optional[int] = None`；写 `supabase/migrations/<ts>_player_win_loss.sql`（search_path + add column wins/losses int 可空）；本地断言 127.0.0.1 后打到本地栈
-- [ ] 1.3 RED — test: migration SQL 含 `zijing_cup` 限定/search_path 且两列可空（读文件断言，或迁移后查列可空）
-- [ ] 1.4 GREEN — 调整 migration 至通过
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
+- [x] 1.0 CONTRACT — write openspec/changes/player-win-loss/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
+- [x] 1.1 RED — test: 新建 Player 默认 `wins is None`、`losses is None`；赋 67/20 存取回来相等（backend/tests/players/）
+- [x] 1.2 GREEN — `app/models/players.py`：Player 加 `wins: Optional[int] = None`、`losses: Optional[int] = None`；写 `supabase/migrations/<ts>_player_win_loss.sql`（search_path + add column wins/losses int 可空）；本地断言 127.0.0.1 后打到本地栈
+- [x] 1.3 RED — test: migration SQL 含 `zijing_cup` 限定/search_path 且两列可空（读文件断言，或迁移后查列可空）
+- [x] 1.4 GREEN — 调整 migration 至通过
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 2. 导入读胜/负（parse + diff + apply）
 
@@ -39,16 +39,16 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
   `PlayerView`/`_diff_for` 带 wins/losses；`_is_blank` 纳入两列。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/player-win-loss/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — test: `parse_sheet` 读 12 列一行 → `SheetRow.wins=="67"`、`losses=="20"`；8 列行 → 两者 `""`
-- [ ] 2.2 GREEN — `SheetRow` 加 `wins/losses`；`_row_from_cells` 读 cell(9)/cell(10)；`_is_blank` 纳入
-- [ ] 2.3 RED — test: `diff_sheet` 对 `wins` 变化产生 `FieldChange(field="wins")` 且 `counts["wins"]==1`；未变不产生；`str` 整数判等（person.wins=67 vs "67" 无改动）
-- [ ] 2.4 GREEN — `FIELDS` 加 wins/losses；`_changed_fields` 加两 pairs；`PlayerView` 加两字段
-- [ ] 2.5 RED — test: 胜/负为 `abc`/`-5`/`7.5` → 行级 SheetError、`applicable` False（整批回滚）；`-` → 清成 None
-- [ ] 2.6 GREEN — `_winloss_errors`（非负整数校验）接进 `diff_sheet` 的 row_errors；`_typed` int 分支
-- [ ] 2.7 RED — test: `apply_sheet` 写 12 列表后 person.wins/losses 落库；只带 8 列的表往返 → 战绩 0 改动
-- [ ] 2.8 GREEN — `_diff_for` 的 `PlayerView` 带 wins/losses；确认 apply setattr 循环覆盖（无需专门分支）
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
+- [x] 2.0 CONTRACT — write openspec/changes/player-win-loss/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 RED — test: `parse_sheet` 读 12 列一行 → `SheetRow.wins=="67"`、`losses=="20"`；8 列行 → 两者 `""`
+- [x] 2.2 GREEN — `SheetRow` 加 `wins/losses`；`_row_from_cells` 读 cell(9)/cell(10)；`_is_blank` 纳入
+- [x] 2.3 RED — test: `diff_sheet` 对 `wins` 变化产生 `FieldChange(field="wins")` 且 `counts["wins"]==1`；未变不产生；`str` 整数判等（person.wins=67 vs "67" 无改动）
+- [x] 2.4 GREEN — `FIELDS` 加 wins/losses；`_changed_fields` 加两 pairs；`PlayerView` 加两字段
+- [x] 2.5 RED — test: 胜/负为 `abc`/`-5`/`7.5` → 行级 SheetError、`applicable` False（整批回滚）；`-` → 清成 None
+- [x] 2.6 GREEN — `_winloss_errors`（非负整数校验）接进 `diff_sheet` 的 row_errors；`_typed` int 分支
+- [x] 2.7 RED — test: `apply_sheet` 写 12 列表后 person.wins/losses 落库；只带 8 列的表往返 → 战绩 0 改动
+- [x] 2.8 GREEN — `_diff_for` 的 `PlayerView` 带 wins/losses；确认 apply setattr 循环覆盖（无需专门分支）
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 3. 花名册响应带胜/负
 
@@ -61,10 +61,11 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
 - **Code**: D4 —— `RosterPlayerOut` + `get_team_roster` 加 `Optional[int]` 两字段；后端不算胜率。
 - **Threshold**: 80
 
-- [ ] 3.0 CONTRACT — write openspec/changes/player-win-loss/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 RED — test: `get_team_roster` 某队员 wins=67/losses=20 → 响应带这两个整数；未导入队员 → 两者 null（backend/tests/rosters/）
-- [ ] 3.2 GREEN — `app/rosters/query.py`：`RosterPlayerOut` 加 wins/losses；`get_team_roster` 从 player 带出
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
+- [x] 3.0 CONTRACT — write openspec/changes/player-win-loss/contracts/group-3.md with the ### Contract block above
+- [x] 3.1 RED — test: `get_team_roster` 某队员 wins=67/losses=20 → 响应带这两个整数；未导入队员 → 两者 null（backend/tests/rosters/）
+- [x] 3.2 GREEN — `app/rosters/query.py`：`RosterPlayerOut` 加 wins/losses；`get_team_roster` 从 player 带出
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
+- [x] 3.F1 FIX — `frontend/lib/api.ts` RosterPlayer interface 加 wins/losses 两字段：`wins: number | null;` 和 `losses: number | null;`（置于 utr_profile_id 之后，维护 schema 对应），使后端字段漂移能被 tsc 检测
 
 ## 4. 队伍页胜率列 + 类型 + 导入预览标签
 
@@ -81,14 +82,14 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
   标签补 `wins`→「胜」`losses`→「负」，否则预览显示原始字段名。
 - **Threshold**: 80
 
-- [ ] 4.0 CONTRACT — write openspec/changes/player-win-loss/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 RED — test: RosterTable 某队员 67/20 → 出现 `67-20` 与 `77%`；null/null → `—`；0/0 → `0-0` 且百分比 `—`（frontend，jsdom）
-- [ ] 4.2 GREEN — `lib/api.ts` `RosterPlayer` 加 wins/losses；`RosterTable.tsx` 桌面表 + 手机卡片加胜率列 + 显示 helper
-- [ ] 4.3 RED — test: 导入预览把 `wins`/`losses` 字段名显示成「胜」「负」（若预览标签有测试点）
-- [ ] 4.4 GREEN — 补预览 field→中文标签 map 的 wins/losses 项
-- [ ] 4.5 VISUAL DIFF — 起 dev stack，开队伍页（补种后有战绩的队），核对胜率列在桌面 + 375 均显示、缺失 `—`、不横向溢出
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
+- [x] 4.0 CONTRACT — write openspec/changes/player-win-loss/contracts/group-4.md with the ### Contract block above
+- [x] 4.1 RED — test: RosterTable 某队员 67/20 → 出现 `67-20` 与 `77%`；null/null → `—`；0/0 → `0-0` 且百分比 `—`（frontend，jsdom）
+- [x] 4.2 GREEN — `lib/api.ts` `RosterPlayer` 加 wins/losses；`RosterTable.tsx` 桌面表 + 手机卡片加胜率列 + 显示 helper
+- [x] 4.3 RED — test: 导入预览把 `wins`/`losses` 字段名显示成「胜」「负」（若预览标签有测试点）
+- [x] 4.4 GREEN — 补预览 field→中文标签 map 的 wins/losses 项
+- [x] 4.5 VISUAL DIFF — 起 dev stack，开队伍页（补种后有战绩的队），核对胜率列在桌面 + 375 均显示、缺失 `—`、不横向溢出
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 5. 验证
 
-- [ ] 5.1 Run superpowers:verification-before-completion — 跑后端 pytest（`.venv-std`）+ 前端 `npm run test` + `npx tsc --noEmit`；审计无 console.log；确认导入真跑一遍（curl apply）落库、队伍页真渲染胜率列。注意 CLAUDE.md：跑完 pytest 本地库会空，视觉核对前先补种，顺序=先测试→再补种→再视觉。
+- [x] 5.1 Run superpowers:verification-before-completion — 跑后端 pytest（`.venv-std`）+ 前端 `npm run test` + `npx tsc --noEmit`；审计无 console.log；确认导入真跑一遍（curl apply）落库、队伍页真渲染胜率列。注意 CLAUDE.md：跑完 pytest 本地库会空，视觉核对前先补种，顺序=先测试→再补种→再视觉。

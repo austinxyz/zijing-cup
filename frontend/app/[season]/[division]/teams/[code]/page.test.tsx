@@ -55,6 +55,8 @@ const ROSTER: TeamRoster = {
       is_wildcard: null,
       representing_school: null,
       utr_profile_id: null,
+      wins: null,
+      losses: null,
     },
     {
       player_id: 2,
@@ -78,6 +80,8 @@ const ROSTER: TeamRoster = {
       is_wildcard: null,
       representing_school: null,
       utr_profile_id: null,
+      wins: null,
+      losses: null,
     },
   ],
   locked: false,

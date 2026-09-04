@@ -74,6 +74,16 @@ describe("the per-field tally", () => {
     expect(within(tally).getAllByText("12").length).toBe(2);
     expect(within(tally).getAllByText("1").length).toBe(2);
   });
+
+  it("tallies win and loss changes under 胜/负 labels", () => {
+    // Without their own tally entry a whole 胜/负 column pasted one place over
+    // would be invisible here — the very signal this tally exists for.
+    show({ counts: { ...diff().counts, wins: 5, losses: 5 } });
+
+    const tally = screen.getByLabelText("按字段的改动数");
+    expect(within(tally).getByText("胜")).toBeTruthy();
+    expect(within(tally).getByText("负")).toBeTruthy();
+  });
 });
 
 describe("the confirm button", () => {

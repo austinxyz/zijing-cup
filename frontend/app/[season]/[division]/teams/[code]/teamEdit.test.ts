@@ -17,6 +17,7 @@ function player(id: number, borrowed: boolean | null): RosterPlayer {
     daily_utrs: [], singles_utr: null, singles_status: null, doubles_utr: null,
     doubles_status: null, is_borrowed_player: borrowed, is_wildcard: null,
     representing_school: null, utr_profile_id: null,
+    wins: null, losses: null,
   };
 }
 

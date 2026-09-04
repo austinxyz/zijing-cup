@@ -160,6 +160,8 @@ const TEAM_ROSTER: TeamRoster = {
     is_wildcard: null,
     representing_school: null,
     utr_profile_id: null,
+    wins: null,
+    losses: null,
   })),
 };
 

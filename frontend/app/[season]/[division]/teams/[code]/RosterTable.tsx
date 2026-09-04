@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui";
 import type { RosterPlayer } from "@/lib/api";
 import { playerName } from "@/lib/name";
 import { profileUrl } from "@/lib/utr";
+import { formatWinLoss } from "@/lib/winLoss";
 
 /** The committee's own class for a participation value.
  *
@@ -139,6 +140,13 @@ export function RosterTable({
                   ) : null}
                 </div>
               ) : null}
+              {/* Always shown, even when there is no record: an absent row here
+                  would read as "no win/loss column" rather than "not imported".
+                  Same helper as the table, so the two cannot disagree. */}
+              <div className="flex items-center gap-1 text-[11px] text-muted">
+                <span>胜率</span>
+                <WinLossCell player={player} />
+              </div>
             </div>
             <div className="flex-none pt-0.5 text-right font-mono text-[15px] font-medium text-foreground">
               <UtrCell player={player} />
@@ -201,6 +209,7 @@ export function RosterTable({
           <Th>外援</Th>
           <Th>外卡</Th>
           <Th>代表学校</Th>
+          <Th>胜率</Th>
           {canEdit ? <Th> </Th> : null}
         </tr>
       </thead>
@@ -285,6 +294,9 @@ export function RosterTable({
             </Td>
             <Td className="text-[12.5px] text-muted">
               {player.representing_school || "—"}
+            </Td>
+            <Td className="text-[12.5px]">
+              <WinLossCell player={player} />
             </Td>
           </tr>
         ))}
@@ -652,6 +664,30 @@ function CurrentUtrCell({
         </span>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * The career win/loss record: `胜-负` and a win percentage.
+ *
+ * Three states, from the shared `formatWinLoss` helper: never imported shows a
+ * single em dash (not 0-0/0%, which would assert a real 0 record); a real 0-0
+ * shows "0-0" with no percentage (no divide-by-zero); otherwise the record and
+ * a whole-number percentage. Used by both the table and the card list so the
+ * judgement cannot drift between them.
+ */
+function WinLossCell({ player }: { player: RosterPlayer }) {
+  const { record, rate } = formatWinLoss(player.wins, player.losses);
+  if (rate === null) {
+    // Either "—" (never imported) or "0-0" (a real empty record). `text-muted`
+    // for adequate contrast on the surface — a dash/record is the whole cell.
+    return <span className="text-muted">{record}</span>;
+  }
+  return (
+    <span className="flex min-w-0 items-center gap-1.5">
+      <span className="flex-none font-mono text-foreground">{record}</span>
+      <span className="truncate text-[10.5px] text-muted-foreground">{rate}</span>
+    </span>
   );
 }
 

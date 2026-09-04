@@ -171,6 +171,90 @@ def ids_by_name(client) -> dict[str, int]:
     return {r["first_name"]: r["player_id"] for r in client.get(sheet_url(), headers=READ).json()}
 
 
+def apply_url(team: str = "UTR-A") -> str:
+    return sheet_url(team) + "/apply"
+
+
+_WIN_HEADER = "id\t姓\t名\t当前单打\t单打状态\t当前双打\t双打状态\tUTR链接\t总场次\t胜\t负\t胜率"
+
+
+class TestApplyWinLoss:
+    def test_apply_writes_win_loss_to_the_player(self, client):
+        ids = ids_by_name(client)
+        text = "\n".join(
+            [
+                _WIN_HEADER,
+                f"{ids['望舒']}\t南\t望舒\t\t\t\t\t\t87\t67\t20\t77%",
+            ]
+        )
+        response = client.post(apply_url(), headers=WRITE, json={"text": text})
+        assert response.status_code == 200
+
+        with Session(engine) as session:
+            person = session.exec(
+                select(Player).where(Player.first_name == "望舒")
+            ).one()
+            assert person.wins == 67
+            assert person.losses == 20
+
+    def test_preview_reports_no_change_when_win_loss_already_match(self, client):
+        # _diff_for must read the player's existing win/loss into the diff's
+        # view, or every import reports 胜/负 as changed even when identical —
+        # inflating the preview and rewriting the same record each time.
+        ids = ids_by_name(client)
+        with Session(engine) as session:
+            person = session.exec(
+                select(Player).where(Player.first_name == "望舒")
+            ).one()
+            person.wins, person.losses = 67, 20
+            session.add(person)
+            session.commit()
+
+        text = "\n".join(
+            [
+                _WIN_HEADER,
+                f"{ids['望舒']}\t南\t望舒\t\t\t\t\t\t87\t67\t20\t77%",
+            ]
+        )
+        preview = client.post(
+            apply_url().replace("/apply", "/preview"),
+            headers=WRITE,
+            json={"text": text},
+        ).json()
+
+        assert preview["counts"]["wins"] == 0
+        assert preview["counts"]["losses"] == 0
+        assert preview["changes"] == []
+
+    def test_eight_column_sheet_leaves_an_existing_record_untouched(self, client):
+        # The system's own export is eight columns. Re-importing it must not
+        # touch a player's win/loss record — the round-trip-is-inert floor.
+        ids = ids_by_name(client)
+        with Session(engine) as session:
+            person = session.exec(
+                select(Player).where(Player.first_name == "望舒")
+            ).one()
+            person.wins, person.losses = 40, 10
+            session.add(person)
+            session.commit()
+
+        text = "\n".join(
+            [
+                "id\t姓\t名\t当前单打\t单打状态\t当前双打\t双打状态\tUTR链接",
+                f"{ids['望舒']}\t南\t望舒\t\t\t\t\t",
+            ]
+        )
+        response = client.post(apply_url(), headers=WRITE, json={"text": text})
+        assert response.status_code == 200
+
+        with Session(engine) as session:
+            person = session.exec(
+                select(Player).where(Player.first_name == "望舒")
+            ).one()
+            assert person.wins == 40
+            assert person.losses == 10
+
+
 class TestBatchWrite:
     def test_writes_every_change_in_the_batch(self, client):
         ids = ids_by_name(client)

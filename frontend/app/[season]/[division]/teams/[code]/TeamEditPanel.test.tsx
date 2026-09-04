@@ -23,7 +23,7 @@ function player(id: number, over: Partial<RosterPlayer> = {}): RosterPlayer {
     under_appeal: false, dutr_status: null, rating_class: null, source_note: null,
     daily_utrs: [], singles_utr: null, singles_status: null, doubles_utr: null,
     doubles_status: null, is_borrowed_player: null, is_wildcard: null,
-    representing_school: null, utr_profile_id: null, ...over,
+    representing_school: null, utr_profile_id: null, wins: null, losses: null, ...over,
   };
 }
 

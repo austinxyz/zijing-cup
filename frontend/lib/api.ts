@@ -189,6 +189,11 @@ export interface RosterPlayer {
    *  have none). Editable on the team page for regular players. */
   representing_school: string | null;
   utr_profile_id: string | null;
+  /** Career win/loss, imported from the committee's current-UTR sheet. Both
+   *  null means no record has ever been imported — NOT 0-0 (a real 0 wins is a
+   *  legal, different claim). Win rate is derived on display, never stored. */
+  wins: number | null;
+  losses: number | null;
 }
 
 export interface UtrSheetRow {

@@ -27,6 +27,8 @@ function player(overrides: Partial<RosterPlayer> = {}): RosterPlayer {
     is_wildcard: null,
     representing_school: null,
     utr_profile_id: null,
+    wins: null,
+    losses: null,
     ...overrides,
   };
 }
@@ -572,5 +574,33 @@ describe("RosterTable edit drawer semantics", () => {
     expect(
       (screen.getByLabelText("当前单打") as HTMLInputElement).type,
     ).toBe("number");
+  });
+})
+
+describe("RosterTable win/loss column", () => {
+  it("has a 胜率 header", () => {
+    render(<RosterTable players={[player()]} />);
+    // Appears twice: the desktop table header and the mobile card label.
+    expect(screen.getAllByText("胜率").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows record and percentage for a real record (desktop + mobile)", () => {
+    render(<RosterTable players={[player({ wins: 67, losses: 20 })]} />);
+    // Both the table and the card list render it — hence getAllByText.
+    expect(screen.getAllByText("67-20").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/77%/).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows an em dash when the record was never imported", () => {
+    render(<RosterTable players={[player({ wins: null, losses: null })]} />);
+    // No 0-0 and no 0%: unknown must not read as a real 0 record.
+    expect(screen.queryByText("0-0")).toBeNull();
+    expect(screen.queryByText(/0%/)).toBeNull();
+  });
+
+  it("shows 0-0 without a percentage for a real 0-0 record", () => {
+    render(<RosterTable players={[player({ wins: 0, losses: 0 })]} />);
+    expect(screen.getAllByText("0-0").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText(/0%/)).toBeNull();
   });
 })
