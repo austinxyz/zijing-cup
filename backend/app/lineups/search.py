@@ -118,10 +118,11 @@ class SearchResult:
     #: True when the search stopped at its node budget, so the results are a
     #: sample rather than the whole answer.
     truncated: bool = False
-    #: Whether the per-match borrowed-player ceiling was enforced. True when the
-    #: team's school_count is set (so a cap is known); False when it is unset —
-    #: unknown is not zero, and silence would read as "checked". Stated so the UI
-    #: can still say the limit was not applied.
+    #: Whether the per-match borrowed-player ceiling was enforced — True exactly
+    #: when a cap was passed in (borrowed_cap is not None). The caller resolves
+    #: the cap from the team's school_count and the division rule, so an unset
+    #: school_count or a missing rule row arrives here as None → not enforced.
+    #: Stated rather than left silent, because silence reads as "checked".
     borrowed_players_checked: bool = False
     #: Set only when the borrowed cap is what makes the team infeasible: no line
     #: is empty, but every lineup exceeds the on-court borrowed ceiling. Names

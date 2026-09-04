@@ -155,9 +155,10 @@ class LineupSearchOut(BaseModel):
 
     truncated: bool = False
 
-    #: Whether the per-match borrowed ceiling was enforced. True when the team's
-    #: school_count is set (a cap is known); false when unset — silence would
-    #: read as "checked".
+    #: Whether the per-match borrowed ceiling was enforced. True when a cap was
+    #: resolved — the team's school_count is set AND a division_borrowed_limits
+    #: row exists for that count. False otherwise (school_count unset, or no rule
+    #: row for it): silence would read as "checked".
     borrowed_players_checked: bool = False
 
     #: Set only when the borrowed cap is what makes the team infeasible: no line
@@ -321,7 +322,14 @@ def load_roster(
                 name=f"{player.last_name}	{player.first_name}",
                 gender=player.gender,
                 match_utr=resolved.value,
-                borrowed=bool(membership.is_borrowed_player),
+                # Only a CONFIRMED borrowed player (True) counts toward the
+                # on-court cap. None ("unmarked") and False ("confirmed not")
+                # both mean "not a known borrowed player" here — counting None
+                # as borrowed would make a team that has marked nobody read as
+                # ten borrowed and therefore always infeasible, which is worse
+                # than under-counting an admin's un-entered data. The None/False
+                # distinction is kept for display (group 5), not for the count.
+                borrowed=(membership.is_borrowed_player is True),
             )
         )
 

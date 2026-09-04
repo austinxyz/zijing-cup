@@ -15,6 +15,7 @@ os.environ.setdefault(
 os.environ.setdefault("BACKEND_SECRET", "test-secret")
 
 import shutil
+from decimal import Decimal
 
 import pytest
 from sqlmodel import Session, delete, select
@@ -97,6 +98,45 @@ def test_on_court_cap_loader_reads_seeded_rule(session, seed_dir):
     # Unset school_count → None (do not enforce); unknown count → None.
     assert _borrowed_on_court_cap(session, 2026, "silver", None) is None
     assert _borrowed_on_court_cap(session, 2026, "silver", 9) is None
+
+
+def test_load_roster_counts_only_confirmed_borrowed(session, seed_dir):
+    # DB → Candidate.borrowed: only is_borrowed_player IS True counts. None
+    # (unmarked) and False (confirmed not) both become borrowed=False, so a team
+    # nobody has marked is not read as all-borrowed.
+    from app.lineups.query import load_roster
+    from app.models import Player, PlayerSeasonUtr, PlayerTeamMembership, Team
+
+    load_rules(session, seed_dir)
+    team = Team(season_year=2026, division_code="silver", code="BRW-联队")
+    session.add(team)
+    session.commit()
+    session.refresh(team)
+
+    marks = {"甲": True, "乙": None, "丙": False}
+    for first, flag in marks.items():
+        p = Player(last_name="援", first_name=first, gender="M")
+        session.add(p)
+        session.commit()
+        session.refresh(p)
+        session.add(PlayerSeasonUtr(player_id=p.id, season_year=2026, value=Decimal("6.00"), source="committee_sheet"))
+        session.add(PlayerTeamMembership(player_id=p.id, team_id=team.id, is_borrowed_player=flag))
+        session.commit()
+
+    loaded = load_roster(session, 2026, "silver", "BRW-联队")
+    by_name = {c.name.split("\t")[1]: c.borrowed for c in loaded.candidates}
+    assert by_name == {"甲": True, "乙": False, "丙": False}
+
+    # cleanup
+    for c in loaded.candidates:
+        pid = int(c.key[1:])
+        session.execute(delete(PlayerSeasonUtr).where(PlayerSeasonUtr.player_id == pid))
+        session.execute(delete(PlayerTeamMembership).where(PlayerTeamMembership.player_id == pid))
+    session.commit()
+    for p in session.exec(select(Player).where(Player.last_name == "援")).all():
+        session.delete(p)
+    session.delete(team)
+    session.commit()
 
 
 def test_check_detects_borrowed_limit_drift(session, seed_dir):
