@@ -5,9 +5,11 @@ import { notFound } from "next/navigation";
 import {
   getDivisionRules,
   getTeamLineups,
+  getTeamRoster,
   type DivisionRules,
   type LineupPlayer,
   type LineupSearch,
+  type TeamRoster,
 } from "@/lib/api";
 import Page, { constraintsFromQuery, hasStaleKeys } from "./page";
 
@@ -18,6 +20,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
     getTeamLineups: vi.fn(),
     getDivisionRules: vi.fn(),
     getTeamPresets: vi.fn(async () => []),
+    getTeamRoster: vi.fn(),
+    getSavedLineups: vi.fn(async () => []),
   };
 });
 
@@ -125,6 +129,35 @@ const SEARCH: LineupSearch = {
   unresolved_count: 0,
 };
 
+// The light default-view source: the team roster with no candidate solve.
+const TEAM_ROSTER: TeamRoster = {
+  team: { code: "PKU", display_name: null, season_year: 2026, division_code: "silver" },
+  locked: false,
+  players: ROSTER.map((p) => ({
+    player_id: Number(p.key.slice(1)),
+    last_name: p.last_name,
+    first_name: p.first_name,
+    gender: p.gender,
+    match_utr: p.match_utr,
+    origin: p.origin,
+    origin_year: p.origin_year,
+    is_unresolved: p.is_unresolved,
+    under_appeal: false,
+    dutr_status: null,
+    rating_class: null,
+    source_note: null,
+    daily_utrs: [],
+    singles_utr: null,
+    singles_status: null,
+    doubles_utr: null,
+    doubles_status: null,
+    is_borrowed_player: null,
+    utr_profile_id: null,
+  })),
+};
+
+// The candidate-search path is now gated on `go`; these tests exercise that
+// path, so renderPage supplies go by default. A query may still override it.
 function renderPage(query: Record<string, string | string[]> = {}) {
   return Page({
     params: Promise.resolve({
@@ -132,6 +165,14 @@ function renderPage(query: Record<string, string | string[]> = {}) {
       division: "silver",
       code: "PKU",
     }),
+    searchParams: Promise.resolve({ go: "1", ...query }),
+  });
+}
+
+// The default (no-go) draft view: no candidate search.
+function renderDraft(query: Record<string, string | string[]> = {}) {
+  return Page({
+    params: Promise.resolve({ season: "2026", division: "silver", code: "PKU" }),
     searchParams: Promise.resolve(query),
   });
 }
@@ -140,12 +181,23 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe("the lineup page reads its locks and exclusions from the URL", () => {
-  it("passes the locked pairs and excluded players in the URL to the search", async () => {
+describe("the lineup page gates the candidate search on go", () => {
+  it("does NOT run a candidate search without go; reads the roster + saved instead", async () => {
+    vi.mocked(getDivisionRules).mockResolvedValue(RULES);
+    vi.mocked(getTeamRoster).mockResolvedValue(TEAM_ROSTER);
+
+    // Constraints present in the URL, but no `go` — this is a draft, not a search.
+    render(await renderDraft({ D1a: "p1", D1b: "p2" }));
+
+    expect(getTeamLineups).not.toHaveBeenCalled();
+    expect(getTeamRoster).toHaveBeenCalledWith("2026", "silver", "PKU");
+  });
+
+  it("runs the candidate search when go=1 is present", async () => {
     vi.mocked(getDivisionRules).mockResolvedValue(RULES);
     vi.mocked(getTeamLineups).mockResolvedValue(SEARCH);
 
-    render(await renderPage({ D1a: "p1", D1b: "p2", ex: ["p9"] }));
+    render(await renderPage({ D1a: "p1", D1b: "p2", ex: ["p9"], go: "1" }));
 
     expect(getTeamLineups).toHaveBeenCalledWith(
       "2026",

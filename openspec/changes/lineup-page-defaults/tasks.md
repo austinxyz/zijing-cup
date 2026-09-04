@@ -6,15 +6,15 @@
 - **Code**: D1 `page.tsx` 读 `searchParams.go`：无 go 不调 `getTeamLineups(constraints)`（候选空），仍读 `getSavedLineups`+rules 渲染右栏上半与控件；有 go 走现状（并发候选 + 无约束基线）。`go` 不进 `constraintsFromQuery`，只做开关。D2 右栏 `main` 两段：上段可折叠 `SavedLineups`、下段候选或空态；壳 overflow-hidden，两段各自可滚。
 - **Threshold**: 70
 
-- [ ] 1.0 CONTRACT — write openspec/changes/lineup-page-defaults/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
-- [ ] 1.1 RED — vitest：`page.tsx` 门控——无 `go`（带锁定参数）不调用 `getTeamLineups(带约束)`、候选区不渲染；断言走 mock 的 api
-- [ ] 1.2 GREEN — `page.tsx` 加 `go` 门控：无 go 跳过候选取数、渲染右栏上半+控件+空态
-- [ ] 1.3 RED — vitest：带 `go=1` 时调用 `getTeamLineups(约束)` 并渲染候选区
-- [ ] 1.4 GREEN — 有 go 走现状（候选 + 无约束基线并发）；「搜索阵容」按钮提交控件 + `go=1`
-- [ ] 1.5 RED — vitest：右栏上半折叠组件——点击折叠/展开切换已存阵容可见性（客户端 state）
-- [ ] 1.6 GREEN — 折叠组件 + 右栏两段组装（上 SavedLineups 可折叠、下候选/空态）
-- [ ] 1.7 MOCK — open docs/superpowers/specs/mocks/2026-09-03-lineup-page-defaults-mocks.html（① 两栏布局：左控件、右上折叠已存阵容、右下候选默认空）；note 空态串「点搜索阵容计算」与折叠交互
-- [ ] 1.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；无 go 进排阵页对照 mock ①（左控件/右上已存阵容可折叠/右下空态、无候选请求）；桌面 + 375；量对比度 ≥4.5、无横向溢出、44px；fix drift
+- [x] 1.0 CONTRACT — write openspec/changes/lineup-page-defaults/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
+- [x] 1.1 RED — vitest：`page.tsx` 门控——无 `go`（带锁定参数）不调用 `getTeamLineups(带约束)`、候选区不渲染；断言走 mock 的 api
+- [x] 1.2 GREEN — `page.tsx` 加 `go` 门控：无 go 跳过候选取数、渲染右栏上半+控件+空态
+- [x] 1.3 RED — vitest：带 `go=1` 时调用 `getTeamLineups(约束)` 并渲染候选区
+- [x] 1.4 GREEN — 有 go 走现状（候选 + 无约束基线并发）；「搜索阵容」按钮提交控件 + `go=1`
+- [x] 1.5 RED — vitest：右栏上半折叠组件——点击折叠/展开切换已存阵容可见性（客户端 state）
+- [x] 1.6 GREEN — 折叠组件 + 右栏两段组装（上 SavedLineups 可折叠、下候选/空态）
+- [x] 1.7 MOCK — open docs/superpowers/specs/mocks/2026-09-03-lineup-page-defaults-mocks.html（① 两栏布局：左控件、右上折叠已存阵容、右下候选默认空）；note 空态串「点搜索阵容计算」与折叠交互
+- [x] 1.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；无 go 进排阵页对照 mock ①（左控件/右上已存阵容可折叠/右下空态、无候选请求）；桌面 + 375；量对比度 ≥4.5、无横向溢出、44px；fix drift
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 统一「每条线 3 行块」（候选 + 已存阵容，性别符号 ♂/♀ + UTR）

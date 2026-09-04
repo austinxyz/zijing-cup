@@ -147,6 +147,11 @@ export function LineupControls({
       aria-label="锁定与排除"
       className={`flex-col gap-3.5 bg-surface px-[18px] py-4 ${frame}`}
     >
+      {/* Submitting the controls IS the search: the page only computes
+          candidates when `go` is present, so the button carries it. Loading a
+          preset writes the lock/exclude params WITHOUT go (a draft), so this is
+          the one place that turns a draft into an actual search. */}
+      <input type="hidden" name="go" value="1" />
       {presets !== undefined && basePath ? (
         <Presets
           presets={presets}

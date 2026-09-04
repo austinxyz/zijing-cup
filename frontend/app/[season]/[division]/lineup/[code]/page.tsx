@@ -2,16 +2,28 @@ import { notFound } from "next/navigation";
 
 import {
   getDivisionRules,
+  getSavedLineups,
   getTeamLineups,
   getTeamPresets,
+  getTeamRoster,
+  type LineupPlayer,
+  type LineupSearch,
   type RuleLine,
 } from "@/lib/api";
 import { isSignedIn } from "@/lib/admin";
-import { savePreset, deletePreset, saveLineup } from "./actions";
+import {
+  savePreset,
+  deletePreset,
+  saveLineup,
+  deleteSavedLineup,
+} from "./actions";
+import { CollapsibleSaved } from "./CollapsibleSaved";
 import { LineupControls } from "./LineupControls";
 import { LineupMobileControls } from "./LineupMobileControls";
 import { LineupResults } from "./LineupResults";
+import { SavedLineups } from "./SavedLineups";
 import { StaleLink } from "./LineupStates";
+import { rosterFromTeam } from "./roster";
 
 /** A key from before the read-path switch: a bare `roster_entries` id. */
 const OLD_KEY = /^\d+$/;
@@ -96,41 +108,55 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   const lines = rules.lines;
   const constraints = constraintsFromQuery(lines, query);
 
-  // The second, unconstrained search exists so the page can say what the
-  // locks cost; without it the ceiling reads as this team's ceiling rather
-  // than the ceiling of the question that was asked. It runs only when
-  // something is actually constrained — with nothing locked it is the same
-  // search twice — and it runs *alongside* the real one rather than after it:
-  // neither depends on the other, and a full solve on a cold free-tier
-  // instance is slow enough that doing them in sequence risks the request
-  // timing out before either answer arrives.
+  // The candidate search runs only when the request asks for it with `go`. A
+  // full solve is the slowest thing this app does; the default view is meant to
+  // show the saved lineups without paying for it. `go` is a switch, never a
+  // constraint — it does not enter constraintsFromQuery. Checked on the server
+  // so a directly-visited draft URL cannot slip a solve through the client.
+  const go = one(query.go) === "1";
   const constrained =
     Object.keys(constraints.locks).length > 0 ||
     Object.keys(constraints.pins).length > 0 ||
     constraints.excluded.length > 0;
   const stale = hasStaleKeys(constraints);
-  // A stale link is answered without asking for a search at all: running one
-  // and dropping the locks would produce a full, healthy-looking candidate
-  // list for a question nobody asked.
-  const [search, baseline] = stale
-    ? [await getTeamLineups(season, division, code), null]
-    : await Promise.all([
-        getTeamLineups(season, division, code, constraints),
-        constrained
-          ? getTeamLineups(season, division, code)
-          : Promise.resolve(null),
-      ]);
 
-  // Not an empty result: that would claim this team can field nothing, which
-  // is a different and false statement about a team that does not exist.
-  if (search === null) notFound();
-
-  // Presets and admin state for the saved-filter block. Read in parallel with
-  // nothing that depends on them; the block is read-only for a visitor.
-  const [presets, canEdit] = await Promise.all([
+  // Everything the page needs regardless of go: the saved lineups (re-judged
+  // server-side), the presets, and whether the viewer is an admin.
+  const [saved, presets, canEdit] = await Promise.all([
+    getSavedLineups(season, division, code),
     getTeamPresets(season, division, code),
     isSignedIn(),
   ]);
+
+  // The roster the controls and saved cards read. With `go` it comes free with
+  // the search; without `go` it is fetched on its own — `getTeamRoster` carries
+  // the derived participation UTR and runs no solve.
+  let search: LineupSearch | null = null;
+  let baseline: LineupSearch | null = null;
+  let roster: LineupPlayer[];
+  if (go) {
+    // The second, unconstrained search says what the locks cost, and runs
+    // alongside the real one (never in sequence — two full solves on a cold
+    // free-tier instance risks a timeout). A stale link is answered without a
+    // constrained search at all.
+    [search, baseline] = stale
+      ? [await getTeamLineups(season, division, code), null]
+      : await Promise.all([
+          getTeamLineups(season, division, code, constraints),
+          constrained
+            ? getTeamLineups(season, division, code)
+            : Promise.resolve(null),
+        ]);
+    // Not an empty result: that would claim this team can field nothing, a
+    // different and false statement about a team that does not exist.
+    if (search === null) notFound();
+    roster = search.roster;
+  } else {
+    const team = await getTeamRoster(season, division, code);
+    if (team === null) notFound();
+    roster = rosterFromTeam(team);
+  }
+
   const basePath = `/${season}/${division}/lineup/${encodeURIComponent(code)}`;
   // Bound server actions: the client supplies only the name / id. The current
   // locks and exclusions travel with the save, captured here on the server.
@@ -144,9 +170,10 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   // server. The tables build the button from these props — a bound server
   // action crosses to a client component, a render function would not.
   const saveLineupAction = saveLineup.bind(null, season, division, code);
+  const deleteSavedAction = deleteSavedLineup.bind(null, season, division, code);
 
-  const men = search.roster.filter((p) => p.gender === "M").length;
-  const women = search.roster.filter((p) => p.gender === "F").length;
+  const men = roster.filter((p) => p.gender === "M").length;
+  const women = roster.filter((p) => p.gender === "F").length;
   const capSummary = lines
     .map((line) => (line.cap === null ? "开放" : line.cap))
     .join(" / ");
@@ -155,7 +182,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
     <div className="flex flex-1 min-h-0">
       <LineupControls
         lines={lines}
-        roster={search.roster}
+        roster={roster}
         locks={constraints.locks}
         pins={constraints.pins}
         excluded={constraints.excluded}
@@ -171,14 +198,8 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
             <div className="flex items-baseline gap-2.5">
               <span className="text-base font-semibold text-foreground">{code}</span>
               <span className="text-[12.5px] text-muted-foreground">
-                {search.roster.length} 人 · {men} 男 · {women} 女
+                {roster.length} 人 · {men} 男 · {women} 女
               </span>
-              <a
-                href={`${basePath}/saved`}
-                className="text-[12px] text-primary underline-offset-2 hover:underline"
-              >
-                已存阵容 →
-              </a>
             </div>
             {/* The rule values in force, from the database. They differ by
                 season and division, so a captain checking a lineup by eye
@@ -203,7 +224,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
           controls={
             <LineupControls
               lines={lines}
-              roster={search.roster}
+              roster={roster}
               locks={constraints.locks}
               pins={constraints.pins}
               excluded={constraints.excluded}
@@ -217,26 +238,47 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
           }
           locks={constraints.locks}
           excluded={constraints.excluded}
-          roster={search.roster}
+          roster={roster}
         />
 
-        {stale ? (
-          <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-5 py-4">
-            <StaleLink
-              resetHref={`/${season}/${division}/lineup/${encodeURIComponent(code)}`}
+        <div className="flex flex-1 min-h-0 flex-col overflow-y-auto">
+          {/* Top: the team's saved lineups, re-judged server-side, collapsible.
+              This is what the default (no-go) view leads with — the search is
+              not run until the reader asks for it. */}
+          <CollapsibleSaved count={saved.length}>
+            <SavedLineups
+              saved={saved}
+              roster={roster}
+              canEdit={canEdit}
+              basePath={basePath}
+              lineOrder={lines.map((line) => line.code)}
+              deleteAction={canEdit ? deleteSavedAction : undefined}
             />
+          </CollapsibleSaved>
+
+          {/* Bottom: the candidate search — only when go asked for it. */}
+          <div className="flex min-h-0 flex-col gap-3 px-5 py-4">
+            {!go ? (
+              <div className="rounded-token border border-dashed border-border px-4 py-8 text-center text-[13px] text-muted-foreground">
+                还没有搜索候选。左栏设好锁定/排除后点「搜索阵容」，结果显示在这里。
+              </div>
+            ) : stale ? (
+              <StaleLink
+                resetHref={`/${season}/${division}/lineup/${encodeURIComponent(code)}`}
+              />
+            ) : search ? (
+              <LineupResults
+                search={search}
+                lines={lines}
+                bufferTotal={rules.division.buffer_total}
+                lineOrder={lines.map((line) => line.code)}
+                unconstrainedCeiling={baseline?.ceiling ?? null}
+                canEdit={canEdit}
+                saveAction={saveLineupAction}
+              />
+            ) : null}
           </div>
-        ) : (
-        <LineupResults
-          search={search}
-          lines={lines}
-          bufferTotal={rules.division.buffer_total}
-          lineOrder={lines.map((line) => line.code)}
-          unconstrainedCeiling={baseline?.ceiling ?? null}
-          canEdit={canEdit}
-          saveAction={saveLineupAction}
-        />
-        )}
+        </div>
       </main>
     </div>
   );

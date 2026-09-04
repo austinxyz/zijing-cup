@@ -23,6 +23,15 @@ function roster(count: number): LineupPlayer[] {
 }
 
 describe("the lock and exclude panel", () => {
+  it("carries a hidden go=1 so submitting the controls runs the search", () => {
+    const { container } = render(
+      <LineupControls lines={LINES} roster={roster(6)} locks={{}} excluded={[]} />,
+    );
+    const go = container.querySelector('input[name="go"]') as HTMLInputElement;
+    expect(go).toBeTruthy();
+    expect(go.value).toBe("1");
+  });
+
   it("is wide enough that a full roster's chips do not need scrolling", () => {
     const { container } = render(
       <LineupControls lines={LINES} roster={roster(26)} locks={{}} excluded={[]} />,
