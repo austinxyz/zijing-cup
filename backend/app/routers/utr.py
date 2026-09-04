@@ -211,11 +211,19 @@ def apply_sheet(
         session.add(person)
 
         # Same rule as the inline edit reaches through the batch endpoint:
-        # two ways in, one meaning for "I filled in a doubles UTR".
+        # two ways in, one meaning for "I filled in a doubles UTR". A projected
+        # or unrated doubles UTR is not a settled rating, so it must NOT become
+        # the participation UTR a lineup is checked against — only a rated (or
+        # unmarked) value mirrors. `person.doubles_status` is already the new
+        # status here (the setattr loop above ran first).
         doubles = next(
             (f for f in change.fields if f.field == "doubles_utr"), None
         )
-        if doubles is not None and doubles.new is not None:
+        if (
+            doubles is not None
+            and doubles.new is not None
+            and person.doubles_status not in _NON_MIRRORING_STATUSES
+        ):
             _mirror_participation(
                 session, person.id, year, Decimal(doubles.new)
             )

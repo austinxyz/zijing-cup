@@ -692,3 +692,44 @@ class TestParticipationMirror:
         client.post(f"{sheet_url()}/apply", headers=WRITE, json={"text": text})
 
         assert self._season_utr(gao["player_id"]).value == Decimal("6.05")
+
+    def test_the_sheet_route_does_not_mirror_a_projected_doubles(self, client):
+        # A projected (or unrated) doubles UTR is not a settled rating — the
+        # sheet route must not push it into the participation UTR a lineup is
+        # checked against, exactly as the inline/batch edit refuses to. 冥子
+        # has a committee value of 6.10; a projected import must leave it.
+        rows = client.get(sheet_url(), headers=READ).json()
+        gao = next(r for r in rows if r["first_name"] == "冥子")
+        before = self._season_utr(gao["player_id"])
+        assert before is not None and before.value == Decimal("6.10")
+
+        header = "id\t姓\t名\t当前单打\t单打状态\t当前双打\t双打状态\tUTR链接"
+        text = "\n".join(
+            [
+                header,
+                "\t".join(
+                    [
+                        str(gao["player_id"]),
+                        gao["last_name"],
+                        gao["first_name"],
+                        "",
+                        "",
+                        "6.05",
+                        "projected",
+                        "",
+                    ]
+                ),
+            ]
+        )
+
+        response = client.post(
+            f"{sheet_url()}/apply", headers=WRITE, json={"text": text}
+        )
+        assert response.status_code == 200
+
+        # The current doubles UTR still lands…
+        after = {r["first_name"]: r for r in client.get(sheet_url(), headers=READ).json()}
+        assert after["冥子"]["doubles_utr"] == "6.05"
+        assert after["冥子"]["doubles_status"] == "projected"
+        # …but the participation UTR is untouched.
+        assert self._season_utr(gao["player_id"]).value == Decimal("6.10")
