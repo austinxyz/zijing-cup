@@ -53,9 +53,9 @@
   - **Result**: RETRY (60/100: Spec 40, Runtime 100, Code 20)
   - **Finding**: [CRITICAL] bool(membership.is_borrowed_player) collapse silently defeats cap enforcement for unmarked members; [LOW] docstring overstates borrowed_players_checked trigger
   - **Fix Tasks**:
-    - [ ] 3.F1 FIX — Change bool(membership.is_borrowed_player) to `membership.is_borrowed_player is not False` in query.py:324 (fail closed: count unmarked toward cap, matching "unknown is not zero" pattern elsewhere)
-    - [ ] 3.F2 FIX — Add load_roster integration test in test_lineup_borrowed.py: roster with is_borrowed_player=None, search result borrowed_players_checked=true, cap enforcement counts unmarked correctly
-    - [ ] 3.F3 FIX — Update docstring for borrowed_players_checked in search.py:121-124 and query.py:158-161: clarify trigger is "cap was resolved" not just "school_count is set"
+    - [x] 3.F1 FIX — Change bool(membership.is_borrowed_player) to `membership.is_borrowed_player is not False` in query.py:324 (fail closed: count unmarked toward cap, matching "unknown is not zero" pattern elsewhere)
+    - [x] 3.F2 FIX — Add load_roster integration test in test_lineup_borrowed.py: roster with is_borrowed_player=None, search result borrowed_players_checked=true, cap enforcement counts unmarked correctly
+    - [x] 3.F3 FIX — Update docstring for borrowed_players_checked in search.py:121-124 and query.py:158-161: clarify trigger is "cap was resolved" not just "school_count is set"
 
 ## 4. 队伍页编辑模式 + 批量双打 UTR + 外援/外卡/学校/学校数
 
@@ -78,11 +78,11 @@
   - **Result**: BLOCK (90/100 if calculated: Spec 95, Runtime 100, Code 60)
   - **Findings**: [HIGH] empty doubles_utr field causes 422 blocking batch save; [HIGH] save() has no error handling; [MEDIUM] representing_school is text input not dropdown; [MEDIUM] RosterEditor.tsx orphaned; [LOW] sequential membership PATCHes
   - **Fix Tasks**:
-    - [ ] 4.F1 FIX — Normalize empty doubles UTR input to null in TeamEditPanel.tsx:302-305. Change `doubles_utr: v,` to `doubles_utr: v === "" ? null : v,` to match RosterTable pattern and prevent 422 Decimal parse errors.
-    - [ ] 4.F2 FIX — Add error handling to save() in TeamEditPanel.tsx:324-332. Wrap saveTeamEdits in try/catch, surface user-visible error message in alert, only call reset() on success. UI should not hang on failed write.
-    - [ ] 4.F3 FIX — Change representing_school input to dropdown. If no canonical school list available, confirm this is intentional deviation from contract and document it. Otherwise populate dropdown from available schools.
-    - [ ] 4.F4 DELETE — Remove orphaned RosterEditor.tsx file. No longer imported after page.tsx switched to TeamEditPanel.
-    - [ ] 4.F5 OPT — Parallelize membership PATCHes in actions.ts:62-68 using Promise.all for better latency on Render cold starts (not critical, low-priority optimization).
+    - [x] 4.F1 FIX — Normalize empty doubles UTR input to null in TeamEditPanel.tsx:302-305. Change `doubles_utr: v,` to `doubles_utr: v === "" ? null : v,` to match RosterTable pattern and prevent 422 Decimal parse errors.
+    - [x] 4.F2 FIX — Add error handling to save() in TeamEditPanel.tsx:324-332. Wrap saveTeamEdits in try/catch, surface user-visible error message in alert, only call reset() on success. UI should not hang on failed write.
+    - [x] 4.F3 FIX — Change representing_school input to dropdown. If no canonical school list available, confirm this is intentional deviation from contract and document it. Otherwise populate dropdown from available schools.
+    - [x] 4.F4 DELETE — Remove orphaned RosterEditor.tsx file. No longer imported after page.tsx switched to TeamEditPanel.
+    - [x] 4.F5 OPT — Parallelize membership PATCHes in actions.ts:62-68 using Promise.all for better latency on Render cold starts (not critical, low-priority optimization).
 
 ## 5. 候选/已存阵容外援配色
 
@@ -105,6 +105,6 @@
 
 ## 6. 验证与交付
 
-- [ ] 6.1 Run backend + frontend test suites — `cd backend && ./.venv-std/Scripts/python.exe -m pytest` 与 `cd frontend && npm run test` 无回归
-- [ ] 6.2 `cd frontend && npx tsc --noEmit` — 类型检查（vitest 不校验类型，单列必跑）
-- [ ] 6.3 Run superpowers:verification-before-completion — test_commands + tsc + `grep -rn console.log frontend/app frontend/lib` + config custom_verification_checks；migration 本地已打、远程 Dashboard 待手工（记进交付说明）；顺序：先测试→补种→视觉核对，中途不插 pytest
+- [x] 6.1 Run backend + frontend test suites — `cd backend && ./.venv-std/Scripts/python.exe -m pytest` 与 `cd frontend && npm run test` 无回归
+- [x] 6.2 `cd frontend && npx tsc --noEmit` — 类型检查（vitest 不校验类型，单列必跑）
+- [x] 6.3 Run superpowers:verification-before-completion — test_commands + tsc + `grep -rn console.log frontend/app frontend/lib` + config custom_verification_checks；migration 本地已打、远程 Dashboard 待手工（记进交付说明）；顺序：先测试→补种→视觉核对，中途不插 pytest
