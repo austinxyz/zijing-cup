@@ -74,6 +74,6 @@
 
 ## 5. 验证与交付
 
-- [ ] 5.1 Run frontend test suite — `cd frontend && npm run test` 确保无回归
-- [ ] 5.2 `cd frontend && npx tsc --noEmit` — 类型检查（vitest 不校验类型，单列必跑）
-- [ ] 5.3 Run superpowers:verification-before-completion — 跑 test_commands + tsc + `grep -rn console.log frontend/app frontend/lib` + config 的 custom_verification_checks；先测试→补种→视觉核对，中途不插 pytest；无 migration、无远程步骤
+- [x] 5.1 Run frontend test suite — `cd frontend && npm run test` 确保无回归
+- [x] 5.2 `cd frontend && npx tsc --noEmit` — 类型检查（vitest 不校验类型，单列必跑）
+- [x] 5.3 Run superpowers:verification-before-completion — 跑 test_commands + tsc + `grep -rn console.log frontend/app frontend/lib` + config 的 custom_verification_checks；先测试→补种→视觉核对，中途不插 pytest；无 migration、无远程步骤
