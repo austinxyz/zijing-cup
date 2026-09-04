@@ -17,7 +17,7 @@
   .cap b { color:#1a1917; }
   .row { display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; }
 
-  .frame { background:#fff; border:1px solid #e4e0d8; border-radius:10px; overflow:hidden; width:720px; max-width:100%; }
+  .frame { background:#fff; border:1px solid #e4e0d8; border-radius:10px; overflow:hidden; width:940px; max-width:100%; }
   .frame.phone { width:375px; }
   .bar { display:flex; align-items:center; gap:10px; border-bottom:1px solid #e4e0d8; background:#fff; padding:10px 14px; }
   .bar .code { font-size:15px; font-weight:600; }
@@ -40,7 +40,7 @@
   .b-gone { color:#8a6508; background:#fbf5e6; border-color:#ecd9a4; }
 
   /* 每条线 3 行块：header + 两名队员一人一行 */
-  .blocks { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .blocks { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
   .blk { border:1px solid #e4e0d8; border-radius:6px; overflow:hidden; }
   .blk .h { display:flex; justify-content:space-between; align-items:baseline; background:#f2efe9; padding:4px 9px; font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#6b665d; }
   .blk .h .sum { color:#1a1917; }
@@ -59,9 +59,17 @@
 
   .controls { border:1px solid #e4e0d8; border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; background:#faf9f6; }
   .controls .hd { font-size:12.5px; font-weight:600; }
-  .lockrow { display:flex; align-items:center; gap:8px; }
-  .lockrow .lc { width:30px; font-family:ui-monospace,Consolas,monospace; font-size:11px; color:#6b665d; }
-  .pill { flex:1; height:36px; border:1px solid #e4e0d8; border-radius:6px; background:#fff; display:flex; align-items:center; padding:0 9px; font-size:12px; }
+  .selrow { display:flex; align-items:center; gap:8px; }
+  .selrow .lc { width:30px; font-family:ui-monospace,Consolas,monospace; font-size:11px; color:#6b665d; }
+  .sel { flex:1; height:44px; border:1px solid #e4e0d8; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:space-between; padding:0 10px; font-size:12.5px; }
+  .sel .chev { color:#6b665d; font-size:10px; }
+  .sel .tag { font-family:ui-monospace,Consolas,monospace; font-size:9.5px; padding:1px 5px; border-radius:4px; margin-left:6px; }
+  .sel .tag.lock { color:#9c3417; background:#faf0ea; }
+  .sel .tag.pin { color:#8a6508; background:#fbf5e6; }
+  .sel .tag.eng { color:#6b665d; background:#f2efe9; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { border:1px solid #e4e0d8; border-radius:999px; padding:5px 11px; font-size:12px; min-height:32px; display:inline-flex; align-items:center; gap:5px; background:#fff; }
+  .chip.on { background:#fbf0ee; border-color:#f0cfc9; color:#b3261e; }
   .edit-note { font-size:12px; color:#8a6508; background:#fbf5e6; border:1px solid #ecd9a4; border-radius:6px; padding:7px 10px; }
 
   .editbar { display:flex; align-items:center; gap:10px; border:1px dashed #cbb6a6; border-radius:8px; padding:10px 12px; background:#fffdf8; flex-wrap:wrap; }
@@ -147,19 +155,26 @@
 无已存阵容 = 空态 + 控件 + 同一按钮，也不自动搜。</p>
 </div>
 
-<h2 id="loadedit">② 载入阵型 → 可编辑态（改后搜、也能存）</h2>
-<p class="note">载入把该套锁定/排除写进控件并进入编辑：可继续改，点「搜索阵容」才算；改过的也能保存（覆盖/另存）。</p>
+<h2 id="loadedit">② 载入阵型 = 填进现有排阵控件（可编辑，改后搜、也能存）</h2>
+<p class="note">载入不是另开界面，是把该套锁定/排除**填进和常规排阵一样的控件**：每线一个下拉——选两人=锁定、选一人=pin 交给引擎配、都不选=整条交给引擎；外加「本场不能上」勾选。只是预填，随后可改、点搜索才算、也能存。</p>
 <div class="row">
 <div class="frame">
   <div class="bar"><span class="code">SJTU</span><span class="sub">已载入「缺主力备案」· 编辑中</span><span class="spacer"></span><button class="btn btn-p btn-lg">搜索阵容</button></div>
   <div class="body">
-    <div class="edit-note">已把这套的锁定/排除填进控件，还没算候选。改完点「搜索阵容」；这套改动也可直接保存。</div>
+    <div class="edit-note">已把这套阵型填进控件，**尚未计算**候选。改完点「搜索阵容」才算；这套也可直接保存。</div>
     <div class="controls">
-      <div class="hd">锁定搭档</div>
-      <div class="lockrow"><span class="lc">D1</span><span class="pill">陈嘉禾 · 吴普强</span></div>
-      <div class="lockrow"><span class="lc">D2</span><span class="pill">明轩 · 交给引擎（改这里…）</span></div>
-      <div class="hd" style="margin-top:6px;">本场不能上</div>
-      <div class="lockrow"><span class="pill">周乐言</span></div>
+      <div class="hd">每条线（下拉选搭档 / 交给引擎）</div>
+      <div class="selrow"><span class="lc">D1</span><span class="sel">陈嘉禾 · 吴普强 <span><span class="tag lock">锁定</span><span class="chev">▾</span></span></span></div>
+      <div class="selrow"><span class="lc">D2</span><span class="sel">明轩 · <span style="color:#6b665d;">交给引擎配</span> <span><span class="tag pin">pin</span><span class="chev">▾</span></span></span></div>
+      <div class="selrow"><span class="lc">D3</span><span class="sel"><span style="color:#6b665d;">交给引擎</span> <span><span class="tag eng">引擎</span><span class="chev">▾</span></span></span></div>
+      <div class="selrow"><span class="lc">MD</span><span class="sel"><span style="color:#6b665d;">交给引擎</span> <span><span class="tag eng">引擎</span><span class="chev">▾</span></span></span></div>
+      <div class="selrow"><span class="lc">WD</span><span class="sel"><span style="color:#6b665d;">交给引擎</span> <span><span class="tag eng">引擎</span><span class="chev">▾</span></span></span></div>
+      <div class="hd" style="margin-top:6px;">本场不能上（勾选排除）</div>
+      <div class="chips">
+        <span class="chip on">周乐言 ✕</span>
+        <span class="chip">陈嘉禾</span><span class="chip">吴普强</span><span class="chip">明轩</span>
+        <span class="chip">一鸣</span><span class="chip">秦朗</span><span class="chip">…</span>
+      </div>
     </div>
     <div class="acts">
       <button class="btn btn-p btn-lg">搜索阵容</button>
@@ -168,8 +183,9 @@
     </div>
   </div>
 </div>
-<p class="cap">URL 为草稿（无 <code>go</code>）；保存走 <code>lineup-filter-presets</code> 的存/覆盖，不要求先搜出候选。
-（保存的是「阵型」= 锁定/排除这套输入；「已存阵容」= 具体十人五线，两者不同。）</p>
+<p class="cap">这就是现在排阵页的那套控件，只是被阵型预填了。三态：<b>选两人</b>=锁定、<b>选一人</b>=pin（引擎配另一半）、
+<b>不选</b>=整条交给引擎。URL 是草稿（无 <code>go</code>），点搜索才加 <code>go=1</code> 计算。
+保存的是「阵型」=这套输入（`lineup-filter-presets`）；「已存阵容」=具体十人五线，是另一回事。</p>
 </div>
 
 <h2 id="cands">③ 候选（<code>go=1</code>）—— 同款 3 行块</h2>
