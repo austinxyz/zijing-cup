@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { isSignedIn } from "@/lib/admin";
 import { getTeamRoster } from "@/lib/api";
 import { TeamEditPanel } from "./TeamEditPanel";
+import { TeamEditProvider } from "./TeamEditContext";
+import { TeamEditHeaderControl } from "./TeamEditHeaderControl";
 
 interface PageProps {
   params: Promise<{ season: string; division: string; code: string }>;
@@ -26,7 +28,7 @@ export default async function TeamRosterPage({ params }: PageProps) {
   const women = roster.players.filter((p) => p.gender === "F").length;
 
   return (
-    <>
+    <TeamEditProvider canEdit={canEdit}>
       {/* Narrow viewport only: the list and the roster are separate screens
           there, so this is the way back to pick another team. Desktop keeps
           both columns, so it is md:hidden — in the DOM, hidden by the
@@ -85,9 +87,11 @@ export default async function TeamRosterPage({ params }: PageProps) {
           ) : null}
           {/* The number in the table is not a live rating. A captain checking
               it against the UTR site needs to know which one this is. */}
-          <span className="font-mono text-[11.5px] text-muted-foreground">
+          <span className="hidden font-mono text-[11.5px] text-muted-foreground sm:inline">
             参赛 UTR · 赛前冻结
           </span>
+          {/* Far right, on the team-name row: the unlock / edit-view toggle. */}
+          <TeamEditHeaderControl />
         </div>
       </div>
 
@@ -95,11 +99,10 @@ export default async function TeamRosterPage({ params }: PageProps) {
           view; the toggle/caps bar and the Save bar pin, the table scrolls. */}
       <TeamEditPanel
         roster={roster}
-        canEdit={canEdit}
         season={season}
         division={division}
         teamCode={code}
       />
-    </>
+    </TeamEditProvider>
   );
 }

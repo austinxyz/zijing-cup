@@ -14,6 +14,7 @@ vi.mock("@/app/[season]/[division]/lineup/[code]/EditModeToggle", () => ({
 }));
 
 import { TeamEditPanel } from "./TeamEditPanel";
+import { TeamEditProvider } from "./TeamEditContext";
 
 function player(id: number, over: Partial<RosterPlayer> = {}): RosterPlayer {
   return {
@@ -39,17 +40,27 @@ function roster(over: Partial<TeamRoster> = {}): TeamRoster {
 
 afterEach(() => vi.clearAllMocks());
 
-function show(props: Partial<Parameters<typeof TeamEditPanel>[0]> = {}) {
+function show(props: { roster?: TeamRoster } = {}) {
   render(
-    <TeamEditPanel roster={roster()} canEdit season="2026" division="silver" teamCode="T" {...props} />,
+    <TeamEditProvider canEdit initialEditing>
+      <TeamEditPanel
+        roster={props.roster ?? roster()}
+        season="2026"
+        division="silver"
+        teamCode="T"
+      />
+    </TeamEditProvider>,
   );
 }
 
 describe("TeamEditPanel", () => {
-  it("read-only when not unlocked: no editable inputs", () => {
-    render(<TeamEditPanel roster={roster()} canEdit={false} season="2026" division="silver" teamCode="T" />);
+  it("read-only when not editing: no editable inputs", () => {
+    render(
+      <TeamEditProvider canEdit={false}>
+        <TeamEditPanel roster={roster()} season="2026" division="silver" teamCode="T" />
+      </TeamEditProvider>,
+    );
     expect(screen.queryByLabelText(/当前双打 /)).toBeNull();
-    expect(screen.getByTestId("edit-toggle").textContent).toBe("编辑模式");
   });
 
   it("batches multiple doubles edits into one save", async () => {

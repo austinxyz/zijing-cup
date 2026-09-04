@@ -124,6 +124,21 @@ export function RosterTable({
                 ratingClass={player.rating_class}
                 underAppeal={player.under_appeal}
               />
+              {player.is_borrowed_player === true ||
+              player.is_wildcard === true ||
+              player.representing_school ? (
+                <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                  {player.is_borrowed_player === true ? (
+                    <span className="text-borrowed">外援</span>
+                  ) : null}
+                  {player.is_wildcard === true ? (
+                    <span className="text-success">外卡</span>
+                  ) : null}
+                  {player.representing_school ? (
+                    <span className="text-muted">{player.representing_school}</span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <div className="flex-none pt-0.5 text-right font-mono text-[15px] font-medium text-foreground">
               <UtrCell player={player} />
@@ -183,6 +198,9 @@ export function RosterTable({
           <Th>UTR 来源</Th>
           <Th>当前单打</Th>
           <Th>当前双打</Th>
+          <Th>外援</Th>
+          <Th>外卡</Th>
+          <Th>代表学校</Th>
           {canEdit ? <Th> </Th> : null}
         </tr>
       </thead>
@@ -251,6 +269,23 @@ export function RosterTable({
                 ) : null}
               </>
             )}
+            <Td className="text-[12.5px]">
+              {player.is_borrowed_player === true ? (
+                <span className="text-borrowed">外</span>
+              ) : (
+                <span className="text-muted">—</span>
+              )}
+            </Td>
+            <Td className="text-[12.5px]">
+              {player.is_wildcard === true ? (
+                <span className="text-success">卡</span>
+              ) : (
+                <span className="text-muted">—</span>
+              )}
+            </Td>
+            <Td className="text-[12.5px] text-muted">
+              {player.representing_school || "—"}
+            </Td>
           </tr>
         ))}
       </tbody>

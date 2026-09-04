@@ -3,14 +3,13 @@
 import { useState, useTransition } from "react";
 
 import type { RosterPlayer, TeamRoster } from "@/lib/api";
-import { EditModeToggle } from "@/app/[season]/[division]/lineup/[code]/EditModeToggle";
 import { RosterTable } from "./RosterTable";
 import { saveTeamEdits } from "./actions";
 import { capsFor, borrowedCountWith, rosterOverCap } from "./teamEdit";
+import { useTeamEdit } from "./TeamEditContext";
 
 interface Props {
   roster: TeamRoster;
-  canEdit: boolean;
   season: string;
   division: string;
   teamCode: string;
@@ -21,7 +20,8 @@ function displayName(p: RosterPlayer): string {
   return `${p.last_name} ${p.first_name}`;
 }
 
-export function TeamEditPanel({ roster, canEdit, season, division, teamCode }: Props) {
+export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
+  const { canEdit, editing } = useTeamEdit();
   const players = roster.players;
   const [pending, startTransition] = useTransition();
 
@@ -103,27 +103,34 @@ export function TeamEditPanel({ roster, canEdit, season, division, teamCode }: P
     });
   }
 
-  // Not unlocked: the existing read-only table, plus the unlock control.
-  if (!canEdit) {
+  // Read view: not unlocked, or unlocked but not currently editing. The unlock /
+  // edit-view toggle lives in the team-name header (TeamEditHeaderControl). The
+  // read table now also shows 外援 / 外卡 / 代表学校.
+  if (!canEdit || !editing) {
     return (
-      <>
-        <div className="flex flex-none items-center gap-3 border-b border-border bg-surface px-[22px] py-2">
-          <EditModeToggle signedIn={false} />
-          {roster.school_count != null ? (
+      <div className="flex min-h-0 flex-1 flex-col">
+        {roster.school_count != null ? (
+          <div className="flex flex-none items-center gap-3 border-b border-border bg-surface px-[22px] py-1.5">
             <span className="font-mono text-[11.5px] text-muted-foreground">
               学校数 {roster.school_count}
             </span>
-          ) : null}
+            {caps ? (
+              <span className="font-mono text-[11.5px] text-muted">
+                外援：名单 ≤{caps.roster_cap} · 每场 ≤{caps.on_court_cap}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        <div className="min-h-0 flex-1 overflow-auto">
+          <RosterTable players={players} canEdit={false} locked={roster.locked} />
         </div>
-        <RosterTable players={players} canEdit={false} locked={roster.locked} />
-      </>
+      </div>
     );
   }
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="flex flex-none flex-wrap items-center gap-3 border-b border-border bg-surface px-[22px] py-2">
-        <EditModeToggle signedIn={true} />
         <label className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
           学校数
           <input
