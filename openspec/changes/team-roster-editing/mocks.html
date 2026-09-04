@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>team-roster-editing — 视觉稿</title>
+<style>
+  body { margin:0; padding:2rem 1.5rem 4rem; background:#f6f4f0; color:#1a1917;
+         font-family:"Inter","Segoe UI",system-ui,sans-serif; line-height:1.6; }
+  h1 { font-size:1.5rem; margin:0 0 .25rem; }
+  h2 { font-size:1.0625rem; margin:2.5rem 0 .5rem; padding-bottom:.35rem; border-bottom:1px solid #e4e0d8; }
+  p,li { font-size:.875rem; }
+  code { font-family:ui-monospace,Consolas,monospace; }
+  .lede { color:#57534e; margin:0 0 1.5rem; font-size:.875rem; max-width:64rem; }
+  .cap { font-size:12px; color:#57534e; margin:8px 0 0; }
+  .cap b { color:#1a1917; }
+  .row { display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; }
+
+  .frame { background:#fff; border:1px solid #e4e0d8; border-radius:10px; overflow:hidden; width:960px; max-width:100%; }
+  .frame.phone { width:375px; }
+  .bar { display:flex; align-items:center; gap:10px; border-bottom:1px solid #e4e0d8; background:#fff; padding:10px 14px; }
+  .bar .code { font-size:15px; font-weight:600; }
+  .bar .sub { font-size:12.5px; color:#57534e; }
+  .bar .spacer { flex:1; }
+  .btn { border-radius:7px; font-size:12.5px; padding:8px 12px; border:1px solid #e4e0d8; background:#f2efe9; color:#1a1917; cursor:pointer; min-height:36px; }
+  .btn-p { background:#9c3417; color:#fff; border-color:#9c3417; }
+  .btn-lg { min-height:44px; padding:10px 16px; font-weight:600; }
+  .toggle { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; }
+  .body { padding:0; }
+
+  table { border-collapse:collapse; width:100%; font-size:12.5px; }
+  th { position:sticky; top:0; height:34px; border-bottom:1px solid #e4e0d8; background:#f2efe9; padding:0 12px; text-align:left; font-family:ui-monospace,Consolas,monospace; font-size:11px; font-weight:500; color:#6b665d; white-space:nowrap; }
+  td { border-bottom:1px solid #efece6; padding:7px 12px; white-space:nowrap; }
+  td .u { font-family:ui-monospace,Consolas,monospace; font-size:11.5px; color:#6b665d; }
+  .est { color:#8a6508; font-size:10px; margin-left:4px; }
+  .inp { height:32px; width:66px; border:1px solid #cbb6a6; border-radius:6px; padding:0 8px; font-family:ui-monospace,Consolas,monospace; font-size:12px; background:#fffdf8; }
+  .inp.changed { border-color:#9c3417; background:#faf0ea; }
+  .chk { width:16px; height:16px; accent-color:#9c3417; }
+  .schoolsel { height:32px; border:1px solid #cbb6a6; border-radius:6px; padding:0 6px; font-size:12px; background:#fffdf8; }
+  .schoolsel:disabled { background:#f2efe9; color:#b8b2a8; border-color:#e4e0d8; }
+
+  .m { color:#1f5fd0; } .f { color:#ab237f; }
+  /* 外援配色候选：底色条 + 角标（token 待 Phase 4 定；这里给两种候选） */
+  tr.borrowed td:first-child { box-shadow: inset 3px 0 0 #b3540e; }
+  .brw { display:inline-block; margin-left:6px; font-size:9.5px; padding:1px 5px; border-radius:4px; color:#8a3d06; background:#f7e6d6; border:1px solid #ecc9a4; }
+  .wc { display:inline-block; margin-left:4px; font-size:9.5px; padding:1px 5px; border-radius:4px; color:#3a6b4d; background:#eef4f0; border:1px solid #cfe2d6; }
+
+  .savebar { display:flex; align-items:center; gap:12px; border-top:1px solid #e4e0d8; background:#fffdf8; padding:10px 14px; }
+  .savebar .n { font-size:12.5px; color:#8a6508; }
+  .locknote { font-size:12px; color:#8a6508; background:#fbf5e6; border:1px solid #ecd9a4; border-radius:6px; padding:7px 10px; margin:10px 14px 0; }
+  .teammeta { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid #efece6; background:#faf9f6; font-size:12.5px; }
+  .teammeta .lbl { color:#57534e; }
+  .cnt { height:32px; width:56px; border:1px solid #cbb6a6; border-radius:6px; padding:0 8px; font-size:12.5px; background:#fffdf8; }
+
+  /* 三行块（沿用阵容页） */
+  .blocks { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; padding:12px 14px; }
+  .blk { border:1px solid #e4e0d8; border-radius:6px; overflow:hidden; }
+  .blk .h { display:flex; justify-content:space-between; background:#f2efe9; padding:4px 9px; font-family:ui-monospace,Consolas,monospace; font-size:10px; color:#6b665d; }
+  .blk .p { display:flex; align-items:baseline; gap:6px; padding:5px 9px; font-size:12px; border-top:1px solid #efece6; }
+  .blk .p.brwrow { background:#fbf1e7; }
+  .blk .p .g { width:12px; text-align:center; font-size:11px; }
+  .blk .p .who { flex:1; overflow:hidden; text-overflow:ellipsis; }
+  .blk .p .uu { font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#6b665d; }
+  .brwdot { color:#b3540e; font-weight:700; margin-left:3px; }
+
+  .editbar { display:flex; align-items:center; gap:10px; border:1px dashed #cbb6a6; border-radius:8px; padding:10px 12px; background:#fffdf8; flex-wrap:wrap; margin:0 14px; }
+  .editbar input { height:44px; border:1px solid #e4e0d8; border-radius:6px; padding:0 10px; font-family:ui-monospace,Consolas,monospace; font-size:12.5px; width:180px; }
+  .noflow { border:1px solid #f0cfc9; background:#fbf0ee; color:#b3261e; border-radius:8px; padding:10px 12px; margin:12px 14px; font-size:12.5px; }
+</style>
+</head>
+<body>
+
+<h1>team-roster-editing —— 视觉稿</h1>
+<p class="lede">
+  队伍页 <code>teams/[code]</code> 加就地编辑（复用阵容页口令解锁）：批量改双打 UTR 一次
+  Save、勾选外援/外卡、本校队员选代表学校（外援/外卡不选，该行禁用）、填队伍学校数；外援上场限制进引擎，候选/已存阵容标出外援。
+  风格 <code>linear</code>。外援配色 token 留待浏览器里定，这里给候选方案。
+</p>
+
+<h2 id="edit">① 队伍页编辑模式：解锁 → 批量改双打 UTR / 外援·外卡 / 代表学校(条件) → 一次 Save</h2>
+<div class="row">
+<div class="frame">
+  <div class="bar">
+    <span class="code">ZJU-USC</span><span class="sub">30 人 · 19 男 · 11 女</span>
+    <span class="spacer"></span>
+    <span class="toggle"><input type="checkbox" checked> 编辑模式</span>
+    <span class="sub" style="color:#3a6b4d;">✓ 已解锁</span>
+    <button class="btn">登出</button>
+  </div>
+
+  <div class="teammeta">
+    <span class="lbl">本队由几所学校组成（联队学校数）：</span>
+    <input class="cnt" value="2">
+    <span class="cap" style="margin:0;">→ 外援：名单 ≤2、每场上场 ≤1（规则随赛事，2026 银组）</span>
+  </div>
+
+  <div class="locknote">赛季**未锁**：保存当前双打 UTR 会一并覆盖本赛季参赛 UTR（含组委会导入值）。赛季锁上后只改当前 UTR、不动参赛值。</div>
+
+  <div style="overflow-x:auto;">
+  <table>
+    <thead><tr>
+      <th>队员</th><th>性别</th><th>参赛 UTR</th><th>来源</th><th>当前单打</th><th>当前双打</th>
+      <th>外援</th><th>外卡</th><th>代表学校</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td>南 望舒</td><td><span class="m">♂</span></td>
+        <td class="u">6.98</td><td class="u">冻结</td>
+        <td><input class="inp" value="6.90"></td>
+        <td><input class="inp changed" value="7.02"></td>
+        <td style="text-align:center;"><input type="checkbox" class="chk"></td>
+        <td style="text-align:center;"><input type="checkbox" class="chk"></td>
+        <td><select class="schoolsel"><option selected>ZJU</option><option>USC</option></select></td>
+      </tr>
+      <tr class="borrowed">
+        <td>南 方朔 <span class="brw">外援</span></td><td><span class="m">♂</span></td>
+        <td class="u">6.41 <span class="est">估算·当前</span></td><td class="u">当前双打</td>
+        <td><input class="inp" value="6.10"></td>
+        <td><input class="inp changed" value="6.55"></td>
+        <td style="text-align:center;"><input type="checkbox" class="chk" checked></td>
+        <td style="text-align:center;"><input type="checkbox" class="chk"></td>
+        <td><select class="schoolsel" disabled><option>—</option></select></td>
+      </tr>
+      <tr>
+        <td>南 一鸣 <span class="wc">外卡</span></td><td><span class="m">♂</span></td>
+        <td class="u">5.93</td><td class="u">冻结</td>
+        <td><input class="inp" value="5.80"></td>
+        <td><input class="inp" value="5.93"></td>
+        <td style="text-align:center;"><input type="checkbox" class="chk"></td>
+        <td style="text-align:center;"><input type="checkbox" class="chk" checked></td>
+        <td><select class="schoolsel" disabled><option>—</option></select></td>
+      </tr>
+      <tr>
+        <td>南 雨萌</td><td><span class="f">♀</span></td>
+        <td class="u">4.60</td><td class="u">冻结</td>
+        <td><input class="inp" value="4.55"></td>
+        <td><input class="inp changed" value="4.70"></td>
+        <td style="text-align:center;"><input type="checkbox" class="chk"></td>
+        <td style="text-align:center;"><input type="checkbox" class="chk"></td>
+        <td><select class="schoolsel"><option selected>ZJU</option><option>USC</option></select></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="savebar">
+    <button class="btn btn-p btn-lg">保存 3 处改动</button>
+    <span class="n">3 处未保存（2 双打 + 1 双打）· 改动的格子高亮</span>
+    <span class="spacer"></span>
+    <button class="btn">撤销</button>
+  </div>
+</div>
+<p class="cap">编辑态才出输入框/勾选/学校下拉与 Save 条；只读用户看到的是纯文本表（无这些控件）。批量：改多格→一个 Save 全提交。
+代表学校**按条件**：勾了外援或外卡的行学校下拉禁用（外部球员无本校可代表）；本校队员必须选。
+外援勾选变动即时反映到规则提示（名单超 <code>roster_cap</code> 时 Save 条转黄「超名单外援上限」，仍可存）。</p>
+</div>
+
+<h2 id="unlock">① 未解锁态（只读用户 / 未输口令）</h2>
+<div class="row">
+<div class="frame">
+  <div class="bar"><span class="code">ZJU-USC</span><span class="spacer"></span><span class="toggle"><input type="checkbox"> 编辑模式</span></div>
+  <div class="editbar"><span class="toggle"><input type="checkbox" checked> 编辑模式</span><input type="password" placeholder="管理员口令" value="••••••"><button class="btn btn-p btn-lg">解锁</button><span class="cap" style="margin:0;">口令错：同登录反馈，还可试 N 次。</span></div>
+  <p class="cap" style="padding:0 14px 12px;">解锁前表是纯文本、无输入框、无 Save；解锁走 <code>unlockAdmin</code>（阵容页同款），成功 <code>router.refresh</code> 就地出控件。会话 httpOnly cookie；写路由仍方法判权。</p>
+</div>
+</div>
+
+<h2 id="cand">② 候选 / 已存阵容：外援配色标记（三行块）</h2>
+<div class="row">
+<div class="frame">
+  <div class="bar"><span class="code">ZJU-USC</span><span class="sub">候选 · #1 · 总和 54.91</span></div>
+  <div class="blocks">
+    <div class="blk">
+      <div class="h"><span>D1</span><span>和 13.21</span></div>
+      <div class="p"><span class="g m">♂</span><span class="who">南 望舒</span><span class="uu">7.02</span></div>
+      <div class="p brwrow"><span class="g m">♂</span><span class="who">南 方朔<span class="brwdot">◆</span></span><span class="uu">6.55</span></div>
+    </div>
+    <div class="blk">
+      <div class="h"><span>D2</span><span>和 11.93</span></div>
+      <div class="p"><span class="g m">♂</span><span class="who">南 明轩</span><span class="uu">6.00</span></div>
+      <div class="p"><span class="g m">♂</span><span class="who">南 一鸣</span><span class="uu">5.93</span></div>
+    </div>
+    <div class="blk">
+      <div class="h"><span>D3</span><span>和 10.60</span></div>
+      <div class="p"><span class="g m">♂</span><span class="who">南 秦朗</span><span class="uu">5.40</span></div>
+      <div class="p"><span class="g m">♂</span><span class="who">南 冠宇</span><span class="uu">5.20</span></div>
+    </div>
+    <div class="blk">
+      <div class="h"><span>MD</span><span>和 10.10</span></div>
+      <div class="p"><span class="g m">♂</span><span class="who">南 周乐言</span><span class="uu">5.50</span></div>
+      <div class="p"><span class="g f">♀</span><span class="who">南 雨萌</span><span class="uu">4.60</span></div>
+    </div>
+    <div class="blk">
+      <div class="h"><span>WD</span><span>和 8.98</span></div>
+      <div class="p"><span class="g f">♀</span><span class="who">南 佳怡</span><span class="uu">4.55</span></div>
+      <div class="p"><span class="g f">♀</span><span class="who">南 可欣</span><span class="uu">4.43</span></div>
+    </div>
+  </div>
+  <p class="cap" style="padding:0 14px 12px;">外援行：底色条 <b>#fbf1e7</b> + 名字后 <b>◆</b> 标（候选方案，Phase 4 在浏览器里量对比度定 token）。这套上场 1 名外援 ≤ 每场上限 1（2 校）→ 合法。已存阵容同款标记。</p>
+</div>
+</div>
+
+<h2 id="noflow">② 上场外援超限 → 无解归因（新原因类型）</h2>
+<div class="row">
+<div class="frame">
+  <div class="bar"><span class="code">JNU-联队</span><span class="sub">候选 · 无解</span></div>
+  <div class="noflow">
+    <b>D2 凑不出合法搭档</b>——按当前锁定，上场十人里外援有 <b>2</b> 名，超过每场上限 <b>1</b>（本队 2 校）。
+    涉及外援：<b>南 方朔</b>、<b>南 子墨</b>。松开其一或减少上场外援。
+    <div class="cap" style="margin-top:4px;">新原因类型 <code>borrowed_over_limit</code>，点名外援+超出量，沿用既有原因/归因结构与配色。</div>
+  </div>
+</div>
+</div>
+
+<h2 id="mobile">③ 手机（375）：编辑卡 + 外援块单列</h2>
+<div class="row">
+<div class="frame phone">
+  <div class="bar"><span class="code">ZJU-USC</span><span class="spacer"></span><span class="toggle"><input type="checkbox" checked>编辑</span></div>
+  <div class="teammeta" style="flex-wrap:wrap;"><span class="lbl">学校数</span><input class="cnt" value="2"><span class="cap" style="margin:0;">名单≤2 / 每场≤1</span></div>
+  <div style="padding:10px 12px; display:flex; flex-direction:column; gap:10px;">
+    <div style="border:1px solid #e4e0d8; border-radius:8px; padding:10px; box-shadow:inset 3px 0 0 #b3540e;">
+      <div style="font-weight:600; font-size:13px;">南 方朔 <span class="brw">外援</span> <span class="m">♂</span></div>
+      <div style="display:flex; gap:8px; margin-top:6px; align-items:center;">
+        <span class="cap" style="margin:0;">双打</span><input class="inp changed" value="6.55">
+        <label class="cap" style="margin:0;"><input type="checkbox" class="chk" checked> 外援</label>
+        <label class="cap" style="margin:0;"><input type="checkbox" class="chk"> 外卡</label>
+      </div>
+    </div>
+  </div>
+  <div class="savebar"><button class="btn btn-p btn-lg">保存改动</button></div>
+</div>
+</div>
+
+<h2>核对清单</h2>
+<ul>
+  <li>编辑模式：解锁走 <code>unlockAdmin</code>，只读态无输入框/无 Save；44px 目标。</li>
+  <li>批量双打 UTR：多格改动高亮，一个 Save 全提交；未锁季覆盖参赛值提示、已锁季只改当前。</li>
+  <li>外援/外卡/代表学校可改；学校数在队伍信息处填，即时算名单/上场上限并显示。</li>
+  <li>名单超外援上限 → Save 条转黄警告仍可存；上场超限 → 引擎判非法 + <code>borrowed_over_limit</code> 归因。</li>
+  <li>候选/已存阵容外援可辨标记：底色条 + 角标，桌面与 375 对比度 ≥4.5、不横向溢出（表格 <code>overflow-x</code> 容器）。</li>
+</ul>
+
+</body>
+</html>
