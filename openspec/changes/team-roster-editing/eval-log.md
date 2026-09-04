@@ -92,3 +92,20 @@
     - "Contract SHALLs verified: EditModeToggle reused; read-only when not unlocked; batch doubles with dirty marking; borrowed/wildcard flags with representing_school disabled; school_count input showing caps; warning when over-cap, save still enabled; lock-season overwrite semantics preserved"
     - "Spec coverage: 95/100 (all contract items implemented, minor deduction for MEDIUM transactionality note); Runtime: 100/100 (tests + types clean); Code: 90/100 (APPROVE from reviewer, minor deduction for MEDIUM note)"
     - "Total = 95×0.4 + 100×0.4 + 90×0.2 = 96. Status: PASS (threshold 70)"
+
+- group: 5
+  attempt: 1
+  scores: {spec: 100, runtime: 100, code: 100}
+  total: 100
+  status: PASS
+  findings: []
+  notes:
+    - "Contract requirements all met: borrowed players marked with distinguishable color + 外 mark in candidate & saved line blocks; no confusion with ♂/♀ or 估 marks; ≥4.5:1 contrast on all surfaces; derived from backend, displayed frontend-only"
+    - "Backend flow verified: load_roster uses `borrowed=(membership.is_borrowed_player is True)` (line 336) with explicit comment explaining fail-open rationale; PlayerOut.is_borrowed_player set from candidate.borrowed (line 368)"
+    - "Frontend flow verified: CandidateCards & SavedLineups extract is_borrowed_player from API, construct LineSeat with `borrowed: player.is_borrowed_player === true` (boolean check, not truthy)"
+    - "Token definitions verified: --color-borrowed (#9a4410) + --color-borrowed-surface (#fbf1e7) in globals.css with @theme inline for Tailwind; measured contrast: 6.55:1 on surface, 5.70:1 on surface-muted, 5.87:1 on borrowed-surface — all well above 4.5:1 minimum"
+    - "Mark rendering verified: LineBlock outputs [GenderMark] [Name] [外 if borrowed] [估 if estimate] [UTR]; separate tokens ensure no visual confusion; title attributes clear (title=\"外援\" vs title=\"估算值\")"
+    - "Runtime: npm run test → 457 tests PASSED (60 files), including LineBlock.test.tsx borrowed marking test, LineupResults.test.tsx borrowed-over-limit explanation test, SavedLineups.test.tsx borrowed in saved blocks test; globals.contrast.test.ts borrowed token test passes; npx tsc --noEmit → 0 errors"
+    - "Code review findings: 0 CRITICAL, 0 HIGH, 0 MEDIUM. Verified: borrowed boolean safety via === true checks; Tailwind class generation (bg-borrowed-surface, text-borrowed) properly defined; API types match (LineupPlayer.is_borrowed_player optional, LineupSearch.borrowed_over_limit in proper shape); no hardcoded colors; mark placement unambiguous"
+    - "Test coverage for borrowed: LineBlock.test marks borrowed distinctly, regular player unmarked; LineupResults.test shows borrowed-over-limit message with names, counts, and cap; SavedLineups.test marks borrowed in saved blocks; contrast test includes borrowed on all required backgrounds"
+    - "No issues found. Spec/Runtime/Code all 100%: Total = 100×0.4 + 100×0.4 + 100×0.2 = 100. Status: PASS (threshold 70)"

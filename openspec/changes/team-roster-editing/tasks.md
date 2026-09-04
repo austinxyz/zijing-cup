@@ -101,7 +101,7 @@
 - [x] 5.6 GREEN — 调外援 token 至达标
 - [x] 5.7 MOCK — open mock（② 三行块外援标记）；note 底色条/角标、与 ♂/♀·估算不撞
 - [x] 5.8 VISUAL DIFF — dev stack；搜出含外援候选 + 已存阵容，对照 mock 外援标记；桌面 + 375；量对比度 ≥4.5、无横向溢出；fix drift
-- [ ] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥70 PASS; <70 FIX+retry
+- [x] 5.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-5.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥70 PASS; <70 FIX+retry
 
 ## 6. 验证与交付
 
