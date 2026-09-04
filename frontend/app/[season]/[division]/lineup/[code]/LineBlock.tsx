@@ -49,10 +49,10 @@ export function LineBlock({ line, total, over, seats }: LineBlockProps) {
           className="flex items-baseline gap-1.5 border-t border-border/60 px-2 py-1 text-[11.5px]"
         >
           <GenderMark gender={s.gender} />
-          <span className="min-w-0 flex-1 truncate text-foreground">
+          <span title={s.name} className="min-w-0 flex-1 truncate text-foreground">
             {s.name}
             {s.estimate ? (
-              <span title="估算值，合法性待总表确认" className="ml-0.5 text-warning">
+              <span title="估算值" className="ml-0.5 text-warning">
                 估
               </span>
             ) : null}

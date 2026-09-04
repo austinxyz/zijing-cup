@@ -8,8 +8,7 @@ import {
   Truncated,
   UnresolvedNotice,
 } from "./LineupStates";
-import { CandidateTable } from "./CandidateTable";
-import { CandidateRows } from "./CandidateRow";
+import { CandidateCards } from "./CandidateCards";
 import { estimatesIn } from "./candidate";
 
 interface LineupResultsProps {
@@ -161,15 +160,10 @@ export function LineupResults({
       {/* Wide viewport: a comparison table (candidates as rows, lines as
           aligned columns). Each surface owns its own scroll — the shell is
           overflow-hidden, so a long list without it is silently cut off. */}
-      <CandidateTable
-        candidates={search.candidates}
-        bufferTotal={bufferTotal}
-        lineOrder={lineOrder}
-        canEdit={canEdit}
-        saveAction={saveAction}
-      />
-      {/* Narrow viewport: the same candidates as a compact, tappable list. */}
-      <CandidateRows
+      {/* Candidates as cards — each set's five lines as the shared 3-row block,
+          the same format the saved-lineups list uses. Blocks fold to two
+          columns on a phone; no separate mobile DOM. */}
+      <CandidateCards
         candidates={search.candidates}
         bufferTotal={bufferTotal}
         lineOrder={lineOrder}

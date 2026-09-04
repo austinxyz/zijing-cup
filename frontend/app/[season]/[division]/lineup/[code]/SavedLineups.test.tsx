@@ -58,6 +58,8 @@ describe("SavedLineups per-line detail", () => {
     ]);
     // a player's current UTR (roster match_utr is 6.00) is shown
     expect(screen.getAllByText(/6\.00/).length).toBeGreaterThan(0);
+    // gender shows as a symbol (shared LineBlock), not a 男/女 word
+    expect(screen.getAllByText("♂").length).toBeGreaterThan(0);
     // the D1 line total
     expect(screen.getByText(/12\.80/)).toBeTruthy();
     // over-cap amount on D2

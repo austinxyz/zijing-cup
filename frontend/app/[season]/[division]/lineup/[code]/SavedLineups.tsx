@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 
 import type { LineupPlayer, LineupViolation, SavedLineup } from "@/lib/api";
 import { buildSavedLoadHref, savedStaleRefs } from "./savedLoad";
-import { GENDER_LABEL, money, overOf } from "./candidate";
+import { money } from "./candidate";
+import { LineBlock, type LineSeat } from "./LineBlock";
 import { LineupEditor } from "./LineupEditor";
 
 type Assignment = Record<string, [string, string]>;
@@ -74,13 +75,18 @@ export function SavedLineups({
     return p ? `${p.last_name}${p.first_name}` : key;
   }
 
-  /** "名字 6.00男" for a present player, or just the key when gone. Display
-   *  only — the numbers are the backend's, shown verbatim. */
-  function playerLine(key: string): string {
+  /** A seat for the shared LineBlock: name + gender + current UTR from the
+   *  roster. A departed player (not on the roster) shows their key with no
+   *  gender/UTR rather than crashing. Estimate marking is left off here — the
+   *  saved card's four-state status already carries legality. */
+  function seatOf(key: string): LineSeat {
     const p = byKey.get(key);
-    if (!p) return key;
-    const gender = p.gender ? GENDER_LABEL[p.gender] ?? p.gender : "";
-    return `${p.last_name}${p.first_name} ${money(p.match_utr)}${gender}`;
+    return {
+      name: displayName(key),
+      gender: p?.gender ?? null,
+      utr: p?.match_utr ?? "",
+      estimate: false,
+    };
   }
 
   if (saved.length === 0) {
@@ -161,42 +167,16 @@ export function SavedLineups({
 
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
               {Object.entries(item.assignment).map(([line, pair]) => {
-                const missing = pair.some((k) => item.missing.includes(k));
                 const lt = item.line_totals?.[line];
-                const over = lt ? overOf(lt.over) : null;
                 return (
-                  <div
+                  <LineBlock
                     key={line}
-                    className={`flex min-w-0 flex-col gap-1 rounded-token border px-2 py-1.5 ${
-                      missing
-                        ? "border-warning-border bg-warning-surface"
-                        : over
-                          ? "border-danger-border bg-danger-surface"
-                          : "border-border"
-                    }`}
-                  >
-                    <div className="flex items-baseline justify-between gap-1">
-                      <span className="font-mono text-[9.5px] text-muted">
-                        {line}
-                      </span>
-                      {lt ? (
-                        <span className="font-mono text-[9.5px] text-muted-foreground">
-                          {money(lt.total)}
-                          {over ? (
-                            <span className="text-danger"> 超 {money(over)}</span>
-                          ) : null}
-                        </span>
-                      ) : null}
-                    </div>
-                    {pair.map((k, i) => (
-                      <span
-                        key={i}
-                        className="truncate text-[11px] text-foreground"
-                      >
-                        {playerLine(k)}
-                      </span>
-                    ))}
-                  </div>
+                    line={line}
+                    total={lt?.total}
+                    cap={lt?.cap}
+                    over={lt?.over}
+                    seats={[seatOf(pair[0]), seatOf(pair[1])]}
+                  />
                 );
               })}
             </div>

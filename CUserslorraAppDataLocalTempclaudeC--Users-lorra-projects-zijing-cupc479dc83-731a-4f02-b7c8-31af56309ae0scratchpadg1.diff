@@ -1,0 +1,537 @@
+diff --git a/frontend/app/[season]/[division]/lineup/[code]/CollapsibleSaved.test.tsx b/frontend/app/[season]/[division]/lineup/[code]/CollapsibleSaved.test.tsx
+new file mode 100644
+index 0000000..bf9082c
+--- /dev/null
++++ b/frontend/app/[season]/[division]/lineup/[code]/CollapsibleSaved.test.tsx
+@@ -0,0 +1,33 @@
++import { fireEvent, render, screen } from "@testing-library/react";
++import { describe, expect, it } from "vitest";
++
++import { CollapsibleSaved } from "./CollapsibleSaved";
++
++describe("CollapsibleSaved", () => {
++  it("starts expanded and folds/expands on click", () => {
++    render(
++      <CollapsibleSaved count={2}>
++        <div>saved body</div>
++      </CollapsibleSaved>,
++    );
++    // expanded by default
++    expect(screen.getByText("saved body")).toBeTruthy();
++    const toggle = screen.getByRole("button");
++    fireEvent.click(toggle);
++    expect(screen.queryByText("saved body")).toBeNull();
++    fireEvent.click(toggle);
++    expect(screen.getByText("saved body")).toBeTruthy();
++  });
++
++  it("shows an empty header and cannot expand when there are none", () => {
++    render(
++      <CollapsibleSaved count={0}>
++        <div>saved body</div>
++      </CollapsibleSaved>,
++    );
++    expect(screen.getByText(/还没有保存的阵容/)).toBeTruthy();
++    expect(screen.queryByText("saved body")).toBeNull();
++    // the header button is disabled — nothing to fold
++    expect(screen.getByRole("button")).toHaveProperty("disabled", true);
++  });
++});
+diff --git a/frontend/app/[season]/[division]/lineup/[code]/CollapsibleSaved.tsx b/frontend/app/[season]/[division]/lineup/[code]/CollapsibleSaved.tsx
+new file mode 100644
+index 0000000..0919d86
+--- /dev/null
++++ b/frontend/app/[season]/[division]/lineup/[code]/CollapsibleSaved.tsx
+@@ -0,0 +1,54 @@
++"use client";
++
++import { useState, type ReactNode } from "react";
++
++interface CollapsibleSavedProps {
++  /** How many saved lineups the section holds — shown in the header so the
++   *  reader knows what folding hides. */
++  count: number;
++  children: ReactNode;
++}
++
++/**
++ * The right pane's top section: the team's saved lineups, collapsible. Starts
++ * expanded — the default view is meant to lead with these — and folds to a
++ * single header row so a reader who wants the search below can push it up.
++ * When the team has none, the header says so and there is nothing to expand.
++ */
++export function CollapsibleSaved({ count, children }: CollapsibleSavedProps) {
++  const [open, setOpen] = useState(true);
++  const has = count > 0;
++
++  return (
++    <section
++      aria-label="已存阵容"
++      className="flex-none border-b border-border"
++    >
++      <button
++        type="button"
++        onClick={() => has && setOpen((v) => !v)}
++        aria-expanded={has ? open : undefined}
++        disabled={!has}
++        className="flex min-h-11 w-full items-center gap-2 px-5 py-2.5 text-left disabled:cursor-default"
++      >
++        {has ? (
++          <svg
++            viewBox="0 0 16 16" width="13" height="13" fill="none"
++            stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
++            aria-hidden="true"
++            className={`flex-none text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`}
++          >
++            <path d="M6 3.5L10.5 8L6 12.5" />
++          </svg>
++        ) : (
++          <span className="w-[13px] flex-none" />
++        )}
++        <span className="text-[13px] font-semibold text-foreground">已存阵容</span>
++        <span className="text-[12px] text-muted-foreground">
++          {has ? `${count} 套` : "还没有保存的阵容"}
++        </span>
++      </button>
++      {has && open ? <div className="px-5 pb-4">{children}</div> : null}
++    </section>
++  );
++}
+diff --git a/frontend/app/[season]/[division]/lineup/[code]/LineupControls.test.tsx b/frontend/app/[season]/[division]/lineup/[code]/LineupControls.test.tsx
+index 2d6e786..583d5f9 100644
+--- a/frontend/app/[season]/[division]/lineup/[code]/LineupControls.test.tsx
++++ b/frontend/app/[season]/[division]/lineup/[code]/LineupControls.test.tsx
+@@ -23,6 +23,15 @@ function roster(count: number): LineupPlayer[] {
+ }
+ 
+ describe("the lock and exclude panel", () => {
++  it("carries a hidden go=1 so submitting the controls runs the search", () => {
++    const { container } = render(
++      <LineupControls lines={LINES} roster={roster(6)} locks={{}} excluded={[]} />,
++    );
++    const go = container.querySelector('input[name="go"]') as HTMLInputElement;
++    expect(go).toBeTruthy();
++    expect(go.value).toBe("1");
++  });
++
+   it("is wide enough that a full roster's chips do not need scrolling", () => {
+     const { container } = render(
+       <LineupControls lines={LINES} roster={roster(26)} locks={{}} excluded={[]} />,
+diff --git a/frontend/app/[season]/[division]/lineup/[code]/LineupControls.tsx b/frontend/app/[season]/[division]/lineup/[code]/LineupControls.tsx
+index 39c4ebd..5cf48c1 100644
+--- a/frontend/app/[season]/[division]/lineup/[code]/LineupControls.tsx
++++ b/frontend/app/[season]/[division]/lineup/[code]/LineupControls.tsx
+@@ -147,6 +147,11 @@ export function LineupControls({
+       aria-label="锁定与排除"
+       className={`flex-col gap-3.5 bg-surface px-[18px] py-4 ${frame}`}
+     >
++      {/* Submitting the controls IS the search: the page only computes
++          candidates when `go` is present, so the button carries it. Loading a
++          preset writes the lock/exclude params WITHOUT go (a draft), so this is
++          the one place that turns a draft into an actual search. */}
++      <input type="hidden" name="go" value="1" />
+       {presets !== undefined && basePath ? (
+         <Presets
+           presets={presets}
+diff --git a/frontend/app/[season]/[division]/lineup/[code]/page.test.tsx b/frontend/app/[season]/[division]/lineup/[code]/page.test.tsx
+index 291b924..92de3e1 100644
+--- a/frontend/app/[season]/[division]/lineup/[code]/page.test.tsx
++++ b/frontend/app/[season]/[division]/lineup/[code]/page.test.tsx
+@@ -5,9 +5,11 @@ import { notFound } from "next/navigation";
+ import {
+   getDivisionRules,
+   getTeamLineups,
++  getTeamRoster,
+   type DivisionRules,
+   type LineupPlayer,
+   type LineupSearch,
++  type TeamRoster,
+ } from "@/lib/api";
+ import Page, { constraintsFromQuery, hasStaleKeys } from "./page";
+ 
+@@ -18,6 +20,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
+     getTeamLineups: vi.fn(),
+     getDivisionRules: vi.fn(),
+     getTeamPresets: vi.fn(async () => []),
++    getTeamRoster: vi.fn(),
++    getSavedLineups: vi.fn(async () => []),
+   };
+ });
+ 
+@@ -125,6 +129,35 @@ const SEARCH: LineupSearch = {
+   unresolved_count: 0,
+ };
+ 
++// The light default-view source: the team roster with no candidate solve.
++const TEAM_ROSTER: TeamRoster = {
++  team: { code: "PKU", display_name: null, season_year: 2026, division_code: "silver" },
++  locked: false,
++  players: ROSTER.map((p) => ({
++    player_id: Number(p.key.slice(1)),
++    last_name: p.last_name,
++    first_name: p.first_name,
++    gender: p.gender,
++    match_utr: p.match_utr,
++    origin: p.origin,
++    origin_year: p.origin_year,
++    is_unresolved: p.is_unresolved,
++    under_appeal: false,
++    dutr_status: null,
++    rating_class: null,
++    source_note: null,
++    daily_utrs: [],
++    singles_utr: null,
++    singles_status: null,
++    doubles_utr: null,
++    doubles_status: null,
++    is_borrowed_player: null,
++    utr_profile_id: null,
++  })),
++};
++
++// The candidate-search path is now gated on `go`; these tests exercise that
++// path, so renderPage supplies go by default. A query may still override it.
+ function renderPage(query: Record<string, string | string[]> = {}) {
+   return Page({
+     params: Promise.resolve({
+@@ -132,6 +165,14 @@ function renderPage(query: Record<string, string | string[]> = {}) {
+       division: "silver",
+       code: "PKU",
+     }),
++    searchParams: Promise.resolve({ go: "1", ...query }),
++  });
++}
++
++// The default (no-go) draft view: no candidate search.
++function renderDraft(query: Record<string, string | string[]> = {}) {
++  return Page({
++    params: Promise.resolve({ season: "2026", division: "silver", code: "PKU" }),
+     searchParams: Promise.resolve(query),
+   });
+ }
+@@ -140,12 +181,23 @@ afterEach(() => {
+   vi.clearAllMocks();
+ });
+ 
+-describe("the lineup page reads its locks and exclusions from the URL", () => {
+-  it("passes the locked pairs and excluded players in the URL to the search", async () => {
++describe("the lineup page gates the candidate search on go", () => {
++  it("does NOT run a candidate search without go; reads the roster + saved instead", async () => {
++    vi.mocked(getDivisionRules).mockResolvedValue(RULES);
++    vi.mocked(getTeamRoster).mockResolvedValue(TEAM_ROSTER);
++
++    // Constraints present in the URL, but no `go` — this is a draft, not a search.
++    render(await renderDraft({ D1a: "p1", D1b: "p2" }));
++
++    expect(getTeamLineups).not.toHaveBeenCalled();
++    expect(getTeamRoster).toHaveBeenCalledWith("2026", "silver", "PKU");
++  });
++
++  it("runs the candidate search when go=1 is present", async () => {
+     vi.mocked(getDivisionRules).mockResolvedValue(RULES);
+     vi.mocked(getTeamLineups).mockResolvedValue(SEARCH);
+ 
+-    render(await renderPage({ D1a: "p1", D1b: "p2", ex: ["p9"] }));
++    render(await renderPage({ D1a: "p1", D1b: "p2", ex: ["p9"], go: "1" }));
+ 
+     expect(getTeamLineups).toHaveBeenCalledWith(
+       "2026",
+diff --git a/frontend/app/[season]/[division]/lineup/[code]/page.tsx b/frontend/app/[season]/[division]/lineup/[code]/page.tsx
+index d77279d..5523f27 100644
+--- a/frontend/app/[season]/[division]/lineup/[code]/page.tsx
++++ b/frontend/app/[season]/[division]/lineup/[code]/page.tsx
+@@ -2,16 +2,28 @@ import { notFound } from "next/navigation";
+ 
+ import {
+   getDivisionRules,
++  getSavedLineups,
+   getTeamLineups,
+   getTeamPresets,
++  getTeamRoster,
++  type LineupPlayer,
++  type LineupSearch,
+   type RuleLine,
+ } from "@/lib/api";
+ import { isSignedIn } from "@/lib/admin";
+-import { savePreset, deletePreset, saveLineup } from "./actions";
++import {
++  savePreset,
++  deletePreset,
++  saveLineup,
++  deleteSavedLineup,
++} from "./actions";
++import { CollapsibleSaved } from "./CollapsibleSaved";
+ import { LineupControls } from "./LineupControls";
+ import { LineupMobileControls } from "./LineupMobileControls";
+ import { LineupResults } from "./LineupResults";
++import { SavedLineups } from "./SavedLineups";
+ import { StaleLink } from "./LineupStates";
++import { rosterFromTeam } from "./roster";
+ 
+ /** A key from before the read-path switch: a bare `roster_entries` id. */
+ const OLD_KEY = /^\d+$/;
+@@ -96,41 +108,55 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
+   const lines = rules.lines;
+   const constraints = constraintsFromQuery(lines, query);
+ 
+-  // The second, unconstrained search exists so the page can say what the
+-  // locks cost; without it the ceiling reads as this team's ceiling rather
+-  // than the ceiling of the question that was asked. It runs only when
+-  // something is actually constrained — with nothing locked it is the same
+-  // search twice — and it runs *alongside* the real one rather than after it:
+-  // neither depends on the other, and a full solve on a cold free-tier
+-  // instance is slow enough that doing them in sequence risks the request
+-  // timing out before either answer arrives.
++  // The candidate search runs only when the request asks for it with `go`. A
++  // full solve is the slowest thing this app does; the default view is meant to
++  // show the saved lineups without paying for it. `go` is a switch, never a
++  // constraint — it does not enter constraintsFromQuery. Checked on the server
++  // so a directly-visited draft URL cannot slip a solve through the client.
++  const go = one(query.go) === "1";
+   const constrained =
+     Object.keys(constraints.locks).length > 0 ||
+     Object.keys(constraints.pins).length > 0 ||
+     constraints.excluded.length > 0;
+   const stale = hasStaleKeys(constraints);
+-  // A stale link is answered without asking for a search at all: running one
+-  // and dropping the locks would produce a full, healthy-looking candidate
+-  // list for a question nobody asked.
+-  const [search, baseline] = stale
+-    ? [await getTeamLineups(season, division, code), null]
+-    : await Promise.all([
+-        getTeamLineups(season, division, code, constraints),
+-        constrained
+-          ? getTeamLineups(season, division, code)
+-          : Promise.resolve(null),
+-      ]);
+-
+-  // Not an empty result: that would claim this team can field nothing, which
+-  // is a different and false statement about a team that does not exist.
+-  if (search === null) notFound();
+-
+-  // Presets and admin state for the saved-filter block. Read in parallel with
+-  // nothing that depends on them; the block is read-only for a visitor.
+-  const [presets, canEdit] = await Promise.all([
++
++  // Everything the page needs regardless of go: the saved lineups (re-judged
++  // server-side), the presets, and whether the viewer is an admin.
++  const [saved, presets, canEdit] = await Promise.all([
++    getSavedLineups(season, division, code),
+     getTeamPresets(season, division, code),
+     isSignedIn(),
+   ]);
++
++  // The roster the controls and saved cards read. With `go` it comes free with
++  // the search; without `go` it is fetched on its own — `getTeamRoster` carries
++  // the derived participation UTR and runs no solve.
++  let search: LineupSearch | null = null;
++  let baseline: LineupSearch | null = null;
++  let roster: LineupPlayer[];
++  if (go) {
++    // The second, unconstrained search says what the locks cost, and runs
++    // alongside the real one (never in sequence — two full solves on a cold
++    // free-tier instance risks a timeout). A stale link is answered without a
++    // constrained search at all.
++    [search, baseline] = stale
++      ? [await getTeamLineups(season, division, code), null]
++      : await Promise.all([
++          getTeamLineups(season, division, code, constraints),
++          constrained
++            ? getTeamLineups(season, division, code)
++            : Promise.resolve(null),
++        ]);
++    // Not an empty result: that would claim this team can field nothing, a
++    // different and false statement about a team that does not exist.
++    if (search === null) notFound();
++    roster = search.roster;
++  } else {
++    const team = await getTeamRoster(season, division, code);
++    if (team === null) notFound();
++    roster = rosterFromTeam(team);
++  }
++
+   const basePath = `/${season}/${division}/lineup/${encodeURIComponent(code)}`;
+   // Bound server actions: the client supplies only the name / id. The current
+   // locks and exclusions travel with the save, captured here on the server.
+@@ -144,9 +170,10 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
+   // server. The tables build the button from these props — a bound server
+   // action crosses to a client component, a render function would not.
+   const saveLineupAction = saveLineup.bind(null, season, division, code);
++  const deleteSavedAction = deleteSavedLineup.bind(null, season, division, code);
+ 
+-  const men = search.roster.filter((p) => p.gender === "M").length;
+-  const women = search.roster.filter((p) => p.gender === "F").length;
++  const men = roster.filter((p) => p.gender === "M").length;
++  const women = roster.filter((p) => p.gender === "F").length;
+   const capSummary = lines
+     .map((line) => (line.cap === null ? "开放" : line.cap))
+     .join(" / ");
+@@ -155,7 +182,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
+     <div className="flex flex-1 min-h-0">
+       <LineupControls
+         lines={lines}
+-        roster={search.roster}
++        roster={roster}
+         locks={constraints.locks}
+         pins={constraints.pins}
+         excluded={constraints.excluded}
+@@ -171,14 +198,8 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
+             <div className="flex items-baseline gap-2.5">
+               <span className="text-base font-semibold text-foreground">{code}</span>
+               <span className="text-[12.5px] text-muted-foreground">
+-                {search.roster.length} 人 · {men} 男 · {women} 女
++                {roster.length} 人 · {men} 男 · {women} 女
+               </span>
+-              <a
+-                href={`${basePath}/saved`}
+-                className="text-[12px] text-primary underline-offset-2 hover:underline"
+-              >
+-                已存阵容 →
+-              </a>
+             </div>
+             {/* The rule values in force, from the database. They differ by
+                 season and division, so a captain checking a lineup by eye
+@@ -203,7 +224,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
+           controls={
+             <LineupControls
+               lines={lines}
+-              roster={search.roster}
++              roster={roster}
+               locks={constraints.locks}
+               pins={constraints.pins}
+               excluded={constraints.excluded}
+@@ -217,26 +238,47 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
+           }
+           locks={constraints.locks}
+           excluded={constraints.excluded}
+-          roster={search.roster}
++          roster={roster}
+         />
+ 
+-        {stale ? (
+-          <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-5 py-4">
+-            <StaleLink
+-              resetHref={`/${season}/${division}/lineup/${encodeURIComponent(code)}`}
++        <div className="flex flex-1 min-h-0 flex-col overflow-y-auto">
++          {/* Top: the team's saved lineups, re-judged server-side, collapsible.
++              This is what the default (no-go) view leads with — the search is
++              not run until the reader asks for it. */}
++          <CollapsibleSaved count={saved.length}>
++            <SavedLineups
++              saved={saved}
++              roster={roster}
++              canEdit={canEdit}
++              basePath={basePath}
++              lineOrder={lines.map((line) => line.code)}
++              deleteAction={canEdit ? deleteSavedAction : undefined}
+             />
++          </CollapsibleSaved>
++
++          {/* Bottom: the candidate search — only when go asked for it. */}
++          <div className="flex min-h-0 flex-col gap-3 px-5 py-4">
++            {!go ? (
++              <div className="rounded-token border border-dashed border-border px-4 py-8 text-center text-[13px] text-muted-foreground">
++                还没有搜索候选。左栏设好锁定/排除后点「搜索阵容」，结果显示在这里。
++              </div>
++            ) : stale ? (
++              <StaleLink
++                resetHref={`/${season}/${division}/lineup/${encodeURIComponent(code)}`}
++              />
++            ) : search ? (
++              <LineupResults
++                search={search}
++                lines={lines}
++                bufferTotal={rules.division.buffer_total}
++                lineOrder={lines.map((line) => line.code)}
++                unconstrainedCeiling={baseline?.ceiling ?? null}
++                canEdit={canEdit}
++                saveAction={saveLineupAction}
++              />
++            ) : null}
+           </div>
+-        ) : (
+-        <LineupResults
+-          search={search}
+-          lines={lines}
+-          bufferTotal={rules.division.buffer_total}
+-          lineOrder={lines.map((line) => line.code)}
+-          unconstrainedCeiling={baseline?.ceiling ?? null}
+-          canEdit={canEdit}
+-          saveAction={saveLineupAction}
+-        />
+-        )}
++        </div>
+       </main>
+     </div>
+   );
+diff --git a/frontend/app/[season]/[division]/lineup/[code]/roster.ts b/frontend/app/[season]/[division]/lineup/[code]/roster.ts
+new file mode 100644
+index 0000000..a08012c
+--- /dev/null
++++ b/frontend/app/[season]/[division]/lineup/[code]/roster.ts
+@@ -0,0 +1,24 @@
++import type { LineupPlayer, TeamRoster } from "@/lib/api";
++
++/**
++ * The team roster shaped as the lineup controls expect it, WITHOUT running a
++ * candidate solve. `getTeamRoster` already carries each player's derived
++ * participation UTR, gender and origin; the only gap is the key form — the
++ * search speaks `p<id>` while the roster endpoint gives a bare `player_id`.
++ *
++ * A player with no derivable participation UTR comes back with `match_utr:
++ * null`; here that becomes an empty string, which the display helpers render as
++ * blank rather than as a number (never 0 — 0 is a legal UTR).
++ */
++export function rosterFromTeam(team: TeamRoster): LineupPlayer[] {
++  return team.players.map((p) => ({
++    key: `p${p.player_id}`,
++    last_name: p.last_name,
++    first_name: p.first_name,
++    gender: p.gender,
++    match_utr: p.match_utr ?? "",
++    origin: p.origin ?? "",
++    origin_year: p.origin_year,
++    is_unresolved: p.is_unresolved,
++  }));
++}
+diff --git a/openspec/changes/lineup-page-defaults/contracts/group-1.md b/openspec/changes/lineup-page-defaults/contracts/group-1.md
+new file mode 100644
+index 0000000..330d351
+--- /dev/null
++++ b/openspec/changes/lineup-page-defaults/contracts/group-1.md
+@@ -0,0 +1,6 @@
++# Contract — Group 1
++
++- **Spec**: 排阵页 SHALL 保留左右两栏；右栏**上半** SHALL 呈现该队已存阵容且 SHALL 可折叠收起，右栏**下半**为候选区；首次打开（无搜索请求）时下半 SHALL 不含候选，且页面 SHALL NOT 触发候选搜索。候选 SHALL 仅在请求带 `go` 时计算；不带 `go` 的 URL 为草稿（回显控件与已存阵容、SHALL NOT 整解）；带 `go` 的 URL 直接访问 SHALL 得到同一套候选；门控 SHALL 在服务端判定。
++- **Runtime**: `cd frontend && npm run test` → expected: page 门控测试（无 go 不取候选 / 有 go 取候选）、既有 lineup page 测试无回归 全通过
++- **Code**: D1 `page.tsx` 读 `searchParams.go`：无 go 不调 `getTeamLineups(constraints)`（候选空），仍读 `getSavedLineups`+rules 渲染右栏上半与控件；有 go 走现状（并发候选 + 无约束基线）。`go` 不进 `constraintsFromQuery`，只做开关。D2 右栏 `main` 两段：上段可折叠 `SavedLineups`、下段候选或空态；壳 overflow-hidden，两段各自可滚。
++- **Threshold**: 70
+diff --git a/openspec/changes/lineup-page-defaults/tasks.md b/openspec/changes/lineup-page-defaults/tasks.md
+index 5ff7b9a..ac901a4 100644
+--- a/openspec/changes/lineup-page-defaults/tasks.md
++++ b/openspec/changes/lineup-page-defaults/tasks.md
+@@ -6,15 +6,15 @@
+ - **Code**: D1 `page.tsx` 读 `searchParams.go`：无 go 不调 `getTeamLineups(constraints)`（候选空），仍读 `getSavedLineups`+rules 渲染右栏上半与控件；有 go 走现状（并发候选 + 无约束基线）。`go` 不进 `constraintsFromQuery`，只做开关。D2 右栏 `main` 两段：上段可折叠 `SavedLineups`、下段候选或空态；壳 overflow-hidden，两段各自可滚。
+ - **Threshold**: 70
+ 
+-- [ ] 1.0 CONTRACT — write openspec/changes/lineup-page-defaults/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
+-- [ ] 1.1 RED — vitest：`page.tsx` 门控——无 `go`（带锁定参数）不调用 `getTeamLineups(带约束)`、候选区不渲染；断言走 mock 的 api
+-- [ ] 1.2 GREEN — `page.tsx` 加 `go` 门控：无 go 跳过候选取数、渲染右栏上半+控件+空态
+-- [ ] 1.3 RED — vitest：带 `go=1` 时调用 `getTeamLineups(约束)` 并渲染候选区
+-- [ ] 1.4 GREEN — 有 go 走现状（候选 + 无约束基线并发）；「搜索阵容」按钮提交控件 + `go=1`
+-- [ ] 1.5 RED — vitest：右栏上半折叠组件——点击折叠/展开切换已存阵容可见性（客户端 state）
+-- [ ] 1.6 GREEN — 折叠组件 + 右栏两段组装（上 SavedLineups 可折叠、下候选/空态）
+-- [ ] 1.7 MOCK — open docs/superpowers/specs/mocks/2026-09-03-lineup-page-defaults-mocks.html（① 两栏布局：左控件、右上折叠已存阵容、右下候选默认空）；note 空态串「点搜索阵容计算」与折叠交互
+-- [ ] 1.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；无 go 进排阵页对照 mock ①（左控件/右上已存阵容可折叠/右下空态、无候选请求）；桌面 + 375；量对比度 ≥4.5、无横向溢出、44px；fix drift
++- [x] 1.0 CONTRACT — write openspec/changes/lineup-page-defaults/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
++- [x] 1.1 RED — vitest：`page.tsx` 门控——无 `go`（带锁定参数）不调用 `getTeamLineups(带约束)`、候选区不渲染；断言走 mock 的 api
++- [x] 1.2 GREEN — `page.tsx` 加 `go` 门控：无 go 跳过候选取数、渲染右栏上半+控件+空态
++- [x] 1.3 RED — vitest：带 `go=1` 时调用 `getTeamLineups(约束)` 并渲染候选区
++- [x] 1.4 GREEN — 有 go 走现状（候选 + 无约束基线并发）；「搜索阵容」按钮提交控件 + `go=1`
++- [x] 1.5 RED — vitest：右栏上半折叠组件——点击折叠/展开切换已存阵容可见性（客户端 state）
++- [x] 1.6 GREEN — 折叠组件 + 右栏两段组装（上 SavedLineups 可折叠、下候选/空态）
++- [x] 1.7 MOCK — open docs/superpowers/specs/mocks/2026-09-03-lineup-page-defaults-mocks.html（① 两栏布局：左控件、右上折叠已存阵容、右下候选默认空）；note 空态串「点搜索阵容计算」与折叠交互
++- [x] 1.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；无 go 进排阵页对照 mock ①（左控件/右上已存阵容可折叠/右下空态、无候选请求）；桌面 + 375；量对比度 ≥4.5、无横向溢出、44px；fix drift
+ - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+ 
+ ## 2. 统一「每条线 3 行块」（候选 + 已存阵容，性别符号 ♂/♀ + UTR）

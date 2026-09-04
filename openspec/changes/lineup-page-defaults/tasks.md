@@ -25,17 +25,17 @@
 - **Code**: D3 抽共用 `LineBlock`（线名+和+buffer 占用；两名队员各一行 姓名+`GenderMark`(♂/♀)+UTR）；`CandidateTable`/`CandidateRow` 与 `SavedLineups` 改用它、五块 `grid-cols-5` 窄屏折。`GenderMark` 颜色新增 token 对，♂/♀ 在各自底色 ≥4.5:1，进 `globals.contrast.test.ts`。前端只显示后端字符串。
 - **Threshold**: 70
 
-- [ ] 2.0 CONTRACT — write openspec/changes/lineup-page-defaults/contracts/group-2.md
-- [ ] 2.1 RED — vitest：`LineBlock` 渲染一条线三行（线名+和+buffer；两人各一行 姓名+♂/♀+UTR），超 cap 标 danger
-- [ ] 2.2 GREEN — `LineBlock` + `GenderMark`；globals.css 加 ♂/♀ token（若与现有 success/danger 不同则新增）
-- [ ] 2.3 RED — vitest：候选（`CandidateTable`/`CandidateRow`）用 `LineBlock` 渲染，每套五块；断言两人 UTR+性别可见
-- [ ] 2.4 GREEN — 候选改用 `LineBlock`，五块横排
-- [ ] 2.5 RED — vitest：已存阵容用同款 `LineBlock`；合法性来自后端 status 不来自快照（沿用既有断言）
-- [ ] 2.6 GREEN — `SavedLineups` 改用 `LineBlock` 对齐候选
-- [ ] 2.7 RED — vitest：`globals.contrast.test.ts` 加 ♂/♀ 文本对其底色 ≥4.5:1
-- [ ] 2.8 GREEN — 调 ♂/♀ token 值至达标
-- [ ] 2.9 MOCK — open mock（① 已存阵容三行块、③ 候选三行块）；note ♂ 蓝/♀ 粉、行1「和 X · buf Y」、超 cap 标红
-- [ ] 2.10 VISUAL DIFF — dev stack；造已存阵容 + 搜出候选，对照 mock 三行块（五块横排、♂/♀、UTR、超 cap）；桌面 + 375；量对比度 ≥4.5、无横向溢出；fix drift
+- [x] 2.0 CONTRACT — write openspec/changes/lineup-page-defaults/contracts/group-2.md
+- [x] 2.1 RED — vitest：`LineBlock` 渲染一条线三行（线名+和+buffer；两人各一行 姓名+♂/♀+UTR），超 cap 标 danger
+- [x] 2.2 GREEN — `LineBlock` + `GenderMark`；globals.css 加 ♂/♀ token（若与现有 success/danger 不同则新增）
+- [x] 2.3 RED — vitest：候选（`CandidateTable`/`CandidateRow`）用 `LineBlock` 渲染，每套五块；断言两人 UTR+性别可见
+- [x] 2.4 GREEN — 候选改用 `LineBlock`，五块横排
+- [x] 2.5 RED — vitest：已存阵容用同款 `LineBlock`；合法性来自后端 status 不来自快照（沿用既有断言）
+- [x] 2.6 GREEN — `SavedLineups` 改用 `LineBlock` 对齐候选
+- [x] 2.7 RED — vitest：`globals.contrast.test.ts` 加 ♂/♀ 文本对其底色 ≥4.5:1
+- [x] 2.8 GREEN — 调 ♂/♀ token 值至达标
+- [x] 2.9 MOCK — open mock（① 已存阵容三行块、③ 候选三行块）；note ♂ 蓝/♀ 粉、行1「和 X · buf Y」、超 cap 标红
+- [x] 2.10 VISUAL DIFF — dev stack；造已存阵容 + 搜出候选，对照 mock 三行块（五块横排、♂/♀、UTR、超 cap）；桌面 + 375；量对比度 ≥4.5、无横向溢出；fix drift
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 3. 载入阵型：预填现有控件、不即搜、可保存（覆盖/另存）
