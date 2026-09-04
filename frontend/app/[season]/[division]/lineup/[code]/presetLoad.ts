@@ -6,13 +6,17 @@ export interface StaleLockRef {
   key: string;
 }
 
-/** Counts shown on a preset row: how many lines it locks, how many it excludes. */
+/** Counts shown on a preset row: how many lines it constrains (locks + pins),
+ *  how many it excludes. A pin constrains a line just as a lock does, so a
+ *  pin-only preset must not read as "锁 0". */
 export function presetSize(preset: LineupFilterPreset): {
   locks: number;
   excluded: number;
 } {
   return {
-    locks: Object.keys(preset.constraints.locks ?? {}).length,
+    locks:
+      Object.keys(preset.constraints.locks ?? {}).length +
+      Object.keys(preset.constraints.pins ?? {}).length,
     excluded: (preset.constraints.excluded ?? []).length,
   };
 }
@@ -32,6 +36,11 @@ export function staleLockRefs(
     for (const key of pair) {
       if (!present.has(key)) refs.push({ line, key });
     }
+  }
+  // A pinned player who has left the roster is stale for the same reason a
+  // locked one is: the preset names someone who can no longer play there.
+  for (const [line, key] of Object.entries(preset.constraints.pins ?? {})) {
+    if (!present.has(key)) refs.push({ line, key });
   }
   return refs;
 }
@@ -53,6 +62,11 @@ export function buildLoadHref(
   for (const [line, pair] of Object.entries(preset.constraints.locks ?? {})) {
     params.set(`${line}a`, pair[0]);
     params.set(`${line}b`, pair[1]);
+  }
+  // A pin loads to the same `pin=LINE:key` param the controls write; the
+  // partner seat is left for the engine, exactly as when it was pinned by hand.
+  for (const [line, key] of Object.entries(preset.constraints.pins ?? {})) {
+    if (present.has(key)) params.append("pin", `${line}:${key}`);
   }
   for (const key of preset.constraints.excluded ?? []) {
     if (present.has(key)) params.append("ex", key);

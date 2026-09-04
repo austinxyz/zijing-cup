@@ -396,6 +396,9 @@ export interface LineupFilterPreset {
   constraints: {
     /** line code -> the two locked player keys */
     locks: Record<string, string[]>;
+    /** line code -> the single pinned player key (partner left to the engine).
+     *  Optional: presets saved before single-pin have none. */
+    pins?: Record<string, string>;
     excluded: string[];
   };
   created_at?: string | null;

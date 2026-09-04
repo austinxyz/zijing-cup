@@ -31,6 +31,17 @@ describe("buildLoadHref (loading a preset is a draft, not a search)", () => {
     expect(params.get("go")).toBeNull();
   });
 
+  it("carries pins (a single pinned player per line) as pin=LINE:key", () => {
+    const href = buildLoadHref(
+      "/2026/silver/lineup/PKU",
+      preset({ constraints: { locks: {}, pins: { D2: "p4" }, excluded: [] } }),
+      ROSTER,
+    );
+    const params = new URLSearchParams(href.split("?")[1]);
+    expect(params.getAll("pin")).toContain("D2:p4");
+    expect(params.get("go")).toBeNull();
+  });
+
   it("drops an excluded player who has left the roster", () => {
     const href = buildLoadHref(
       "/2026/silver/lineup/PKU",

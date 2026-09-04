@@ -165,6 +165,9 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   // locks and exclusions travel with the save, captured here on the server.
   const saveAction = savePreset.bind(null, season, division, code, {
     locks: constraints.locks,
+    // Pins were dropped here before, so a draft with only single-pins (no full
+    // lock) saved as an empty preset — nothing to load back. Carry them.
+    pins: constraints.pins,
     excluded: constraints.excluded,
   });
   const deleteAction = deletePreset.bind(null, season, division, code);
