@@ -179,9 +179,22 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
     .map((line) => (line.cap === null ? "开放" : line.cap))
     .join(" / ");
 
+  // The controls are uncontrolled (defaultValue / defaultChecked), so a soft
+  // navigation — loading a preset or a saved lineup pushes a new URL without a
+  // full reload — re-renders the tree but reuses the existing <select>/<input>
+  // DOM nodes, and defaultValue only applies on mount. Keying the controls on
+  // the constraints forces a remount when they change, so a loaded preset
+  // actually fills the dropdowns instead of only changing the address bar.
+  const controlsKey = JSON.stringify([
+    constraints.locks,
+    constraints.pins,
+    constraints.excluded,
+  ]);
+
   return (
     <div className="flex flex-1 min-h-0">
       <LineupControls
+        key={controlsKey}
         lines={lines}
         roster={roster}
         locks={constraints.locks}
@@ -229,6 +242,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
         <LineupMobileControls
           controls={
             <LineupControls
+              key={controlsKey}
               lines={lines}
               roster={roster}
               locks={constraints.locks}
