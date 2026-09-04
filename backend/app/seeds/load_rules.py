@@ -415,6 +415,23 @@ def _field_differences(desired: DivisionSpec, current: DivisionSpec) -> list[str
                 if w != h:
                     out.append(f"{label}: {name}: {field}: {h!r} -> {w!r}")
 
+    want_borrowed = {b.school_count: b for b in desired.borrowed_limits}
+    have_borrowed = {b.school_count: b for b in current.borrowed_limits}
+    for key in sorted(want_borrowed.keys() | have_borrowed.keys()):
+        want, have = want_borrowed.get(key), have_borrowed.get(key)
+        if want == have:
+            continue
+        name = f"borrowed {key}-school"
+        if have is None:
+            out.append(f"{label}: {name}: added")
+        elif want is None:
+            out.append(f"{label}: {name}: removed")
+        else:
+            for field in ("roster_cap", "on_court_cap"):
+                w, h = getattr(want, field), getattr(have, field)
+                if w != h:
+                    out.append(f"{label}: {name}: {field}: {h!r} -> {w!r}")
+
     return out
 
 

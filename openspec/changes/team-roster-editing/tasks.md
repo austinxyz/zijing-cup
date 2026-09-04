@@ -11,7 +11,9 @@
 - [x] 1.2 GREEN — 新 migration（teams.school_count + division_borrowed_limits）+ 模型 + seed；本地打库
 - [x] 1.3 RED — pytest：Team 带 school_count，可空默认 null（非 0）
 - [x] 1.4 GREEN — Team.school_count 字段 + 取队伍时返回
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3, plateau <5pt escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3, plateau <5pt escalate)
+  - **Result**: PASS (94/100: Spec 100, Runtime 100, Code 75)
+  - **Finding**: [HIGH] drift-detection gap in load_rules._field_differences() — doesn't inspect borrowed_limits changes, affects incremental updates (not fresh seeding)
 
 ## 2. 后端写入：外援/外卡/代表学校、学校数、批量双打 UTR
 

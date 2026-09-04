@@ -86,6 +86,26 @@ def test_gold_2026_borrowed_limits_seeded(session, seed_dir):
     }
 
 
+def test_check_detects_borrowed_limit_drift(session, seed_dir):
+    # Drift detection must inspect borrowed_limits, else --check reports clean
+    # while an import would write (the exact failure --check exists to prevent).
+    from app.seeds.load_rules import check_rules, load_rules
+
+    load_rules(session, seed_dir)
+    assert check_rules(session, seed_dir).is_clean
+
+    # Change one on_court_cap in the seed and re-check: must be dirty.
+    silver = seed_dir / "2026-silver.toml"
+    silver.write_text(
+        silver.read_text(encoding="utf-8").replace(
+            "school_count = 1\nroster_cap = 3\non_court_cap = 2",
+            "school_count = 1\nroster_cap = 3\non_court_cap = 1",
+        ),
+        encoding="utf-8",
+    )
+    assert not check_rules(session, seed_dir).is_clean
+
+
 def test_team_school_count_defaults_null_not_zero(session, seed_dir):
     from app.models import Team
 
