@@ -1,0 +1,245 @@
+"use client";
+
+import { useState, useTransition } from "react";
+
+import type { RosterPlayer, TeamRoster } from "@/lib/api";
+import { EditModeToggle } from "@/app/[season]/[division]/lineup/[code]/EditModeToggle";
+import { RosterTable } from "./RosterTable";
+import { saveTeamEdits } from "./actions";
+import { capsFor, borrowedCountWith, rosterOverCap } from "./teamEdit";
+
+interface Props {
+  roster: TeamRoster;
+  canEdit: boolean;
+  season: string;
+  division: string;
+  teamCode: string;
+}
+
+/** "姓 名", the shared display form. */
+function displayName(p: RosterPlayer): string {
+  return `${p.last_name} ${p.first_name}`;
+}
+
+export function TeamEditPanel({ roster, canEdit, season, division, teamCode }: Props) {
+  const players = roster.players;
+  const [pending, startTransition] = useTransition();
+
+  // Pending edits, keyed by player_id. Absent = unchanged.
+  const [doubles, setDoubles] = useState<Record<number, string>>({});
+  const [borrowed, setBorrowed] = useState<Record<number, boolean>>({});
+  const [wildcard, setWildcard] = useState<Record<number, boolean>>({});
+  const [schools, setSchools] = useState<Record<number, string>>({});
+  const [schoolCount, setSchoolCount] = useState<number | null>(roster.school_count);
+
+  const schoolCountChanged = schoolCount !== roster.school_count;
+  const caps = capsFor(roster.borrowed_limits, schoolCount);
+  const borrowedNow = borrowedCountWith(players, borrowed);
+  const overCap = rosterOverCap(borrowedNow, caps);
+
+  function isBorrowed(p: RosterPlayer): boolean {
+    return p.player_id in borrowed ? borrowed[p.player_id] : p.is_borrowed_player === true;
+  }
+  function isWildcard(p: RosterPlayer): boolean {
+    return p.player_id in wildcard ? wildcard[p.player_id] : p.is_wildcard === true;
+  }
+  function schoolOf(p: RosterPlayer): string {
+    return p.player_id in schools ? schools[p.player_id] : p.representing_school ?? "";
+  }
+
+  const dirtyCount =
+    Object.keys(doubles).length +
+    Object.keys(borrowed).length +
+    Object.keys(wildcard).length +
+    Object.keys(schools).length +
+    (schoolCountChanged ? 1 : 0);
+
+  function reset() {
+    setDoubles({}); setBorrowed({}); setWildcard({}); setSchools({});
+    setSchoolCount(roster.school_count);
+  }
+
+  function save() {
+    const utrs = Object.entries(doubles).map(([id, v]) => ({
+      player_id: Number(id),
+      doubles_utr: v,
+    }));
+    // A membership change collects whichever of the three fields changed for a
+    // player; borrowed/wildcard true clears the school (server enforces this too).
+    const ids = new Set<number>([
+      ...Object.keys(borrowed).map(Number),
+      ...Object.keys(wildcard).map(Number),
+      ...Object.keys(schools).map(Number),
+    ]);
+    const memberships = [...ids].map((id) => {
+      const p = players.find((x) => x.player_id === id)!;
+      const b = isBorrowed(p);
+      const w = isWildcard(p);
+      return {
+        player_id: id,
+        is_borrowed_player: b,
+        is_wildcard: w,
+        representing_school: b || w ? null : schoolOf(p) || null,
+      };
+    });
+    startTransition(async () => {
+      await saveTeamEdits(season, division, teamCode, roster.team.id, {
+        utrs,
+        memberships,
+        ...(schoolCountChanged ? { schoolCount } : {}),
+      });
+      reset();
+    });
+  }
+
+  // Not unlocked: the existing read-only table, plus the unlock control.
+  if (!canEdit) {
+    return (
+      <>
+        <div className="flex flex-none items-center gap-3 border-b border-border bg-surface px-[22px] py-2">
+          <EditModeToggle signedIn={false} />
+          {roster.school_count != null ? (
+            <span className="font-mono text-[11.5px] text-muted-foreground">
+              学校数 {roster.school_count}
+            </span>
+          ) : null}
+        </div>
+        <RosterTable players={players} canEdit={false} locked={roster.locked} />
+      </>
+    );
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex flex-none flex-wrap items-center gap-3 border-b border-border bg-surface px-[22px] py-2">
+        <EditModeToggle signedIn={true} />
+        <label className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+          学校数
+          <input
+            type="number"
+            min={1}
+            aria-label="学校数"
+            value={schoolCount ?? ""}
+            onChange={(e) =>
+              setSchoolCount(e.target.value === "" ? null : Number(e.target.value))
+            }
+            className="h-8 w-14 rounded-token border border-border bg-surface px-2 font-mono text-[12.5px]"
+          />
+        </label>
+        {caps ? (
+          <span className="font-mono text-[11.5px] text-muted-foreground">
+            外援：名单 ≤{caps.roster_cap} · 每场 ≤{caps.on_court_cap}
+          </span>
+        ) : (
+          <span className="text-[11.5px] text-muted">未设学校数 · 外援上限不校验</span>
+        )}
+        {!roster.locked ? (
+          <span className="text-[11.5px] text-warning">
+            保存当前双打 UTR 会一并覆盖本赛季参赛 UTR
+          </span>
+        ) : null}
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <table className="w-full border-collapse text-[12.5px]">
+          <thead>
+            <tr>
+              {["队员", "性别", "参赛 UTR", "当前双打", "外援", "外卡", "代表学校"].map((h) => (
+                <th
+                  key={h}
+                  className="sticky top-0 z-10 h-[34px] whitespace-nowrap border-b border-border bg-surface-muted px-3 text-left font-mono text-[11px] font-medium text-muted"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {players.map((p) => {
+              const b = isBorrowed(p);
+              const w = isWildcard(p);
+              const external = b || w;
+              const dChanged = p.player_id in doubles;
+              return (
+                <tr key={p.player_id} className={b ? "bg-borrowed-surface" : undefined}>
+                  <td className="border-b border-border/60 px-3 py-1.5">{displayName(p)}</td>
+                  <td className="border-b border-border/60 px-3 py-1.5">
+                    {p.gender === "M" ? "♂" : p.gender === "F" ? "♀" : "—"}
+                  </td>
+                  <td className="border-b border-border/60 px-3 py-1.5 font-mono text-[11px] text-muted-foreground">
+                    {p.match_utr ?? "—"}
+                  </td>
+                  <td className="border-b border-border/60 px-3 py-1.5">
+                    <input
+                      aria-label={`当前双打 ${displayName(p)}`}
+                      value={p.player_id in doubles ? doubles[p.player_id] : p.doubles_utr ?? ""}
+                      onChange={(e) =>
+                        setDoubles((d) => ({ ...d, [p.player_id]: e.target.value }))
+                      }
+                      className={`h-8 w-[68px] rounded-token border px-2 font-mono text-[12px] ${
+                        dChanged ? "border-primary bg-primary/5" : "border-border bg-surface"
+                      }`}
+                    />
+                  </td>
+                  <td className="border-b border-border/60 px-3 py-1.5 text-center">
+                    <input
+                      type="checkbox"
+                      aria-label={`外援 ${displayName(p)}`}
+                      checked={b}
+                      onChange={(e) =>
+                        setBorrowed((m) => ({ ...m, [p.player_id]: e.target.checked }))
+                      }
+                    />
+                  </td>
+                  <td className="border-b border-border/60 px-3 py-1.5 text-center">
+                    <input
+                      type="checkbox"
+                      aria-label={`外卡 ${displayName(p)}`}
+                      checked={w}
+                      onChange={(e) =>
+                        setWildcard((m) => ({ ...m, [p.player_id]: e.target.checked }))
+                      }
+                    />
+                  </td>
+                  <td className="border-b border-border/60 px-3 py-1.5">
+                    <input
+                      aria-label={`代表学校 ${displayName(p)}`}
+                      disabled={external}
+                      value={external ? "" : schoolOf(p)}
+                      placeholder={external ? "—" : ""}
+                      onChange={(e) =>
+                        setSchools((m) => ({ ...m, [p.player_id]: e.target.value }))
+                      }
+                      className="h-8 w-24 rounded-token border border-border bg-surface px-2 text-[12px] disabled:bg-surface-muted disabled:text-muted"
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex flex-none flex-wrap items-center gap-3 border-t border-border bg-surface px-[22px] py-2.5">
+        <button
+          type="button"
+          onClick={save}
+          disabled={dirtyCount === 0 || pending}
+          className="min-h-11 rounded-token bg-primary px-4 py-2 text-[12.5px] font-semibold text-primary-foreground disabled:opacity-50"
+        >
+          {pending ? "保存中…" : `保存 ${dirtyCount} 处改动`}
+        </button>
+        {dirtyCount > 0 ? (
+          <button type="button" onClick={reset} className="min-h-11 rounded-token border border-border bg-surface px-3 py-2 text-[12.5px]">
+            撤销
+          </button>
+        ) : null}
+        {overCap ? (
+          <span role="alert" className="text-[12px] text-warning">
+            超名单外援上限（{borrowedNow} &gt; {caps?.roster_cap}）——仍可保存
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}

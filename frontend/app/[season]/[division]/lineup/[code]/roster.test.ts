@@ -23,6 +23,8 @@ function teamPlayer(over: Partial<TeamRoster["players"][number]> = {}) {
     doubles_utr: null,
     doubles_status: null,
     is_borrowed_player: null,
+    is_wildcard: null,
+    representing_school: null,
     utr_profile_id: null,
     ...over,
   };
@@ -30,9 +32,11 @@ function teamPlayer(over: Partial<TeamRoster["players"][number]> = {}) {
 
 function team(players: TeamRoster["players"]): TeamRoster {
   return {
-    team: { code: "PKU", display_name: null, season_year: 2026, division_code: "silver" },
+    team: { id: 1, code: "PKU", display_name: null, season_year: 2026, division_code: "silver" },
     players,
     locked: false,
+    school_count: null,
+    borrowed_limits: {},
   };
 }
 

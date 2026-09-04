@@ -81,6 +81,13 @@
   --color-male: #1f5fd0;
   --color-female: #ab237f;
 
+  /* Borrowed ("外援") players: a warm tint distinct from ♂/♀ and the estimate
+     amber, used as a row/seat background to mark them in the roster editor and
+     in candidate/saved line blocks. `borrowed` is the text/mark colour (a
+     darker terracotta), measured ≥4.5:1 on both surface and this tint. */
+  --color-borrowed: #9a4410;
+  --color-borrowed-surface: #fbf1e7;
+
   /* Sidebar is a dark page-chrome panel, not a reusable component token —
      kept separate from the surface/bg tokens above. */
   --color-sidebar: #1c1b18;
@@ -127,6 +134,8 @@
   --color-success-border: var(--color-success-border);
   --color-male: var(--color-male);
   --color-female: var(--color-female);
+  --color-borrowed: var(--color-borrowed);
+  --color-borrowed-surface: var(--color-borrowed-surface);
 
   --color-warning: var(--color-warning);
   --color-warning-foreground: var(--color-warning-fg);

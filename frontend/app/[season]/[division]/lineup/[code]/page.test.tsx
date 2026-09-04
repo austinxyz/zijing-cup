@@ -133,8 +133,10 @@ const SEARCH: LineupSearch = {
 
 // The light default-view source: the team roster with no candidate solve.
 const TEAM_ROSTER: TeamRoster = {
-  team: { code: "PKU", display_name: null, season_year: 2026, division_code: "silver" },
+  team: { id: 1, code: "PKU", display_name: null, season_year: 2026, division_code: "silver" },
   locked: false,
+  school_count: null,
+  borrowed_limits: {},
   players: ROSTER.map((p) => ({
     player_id: Number(p.key.slice(1)),
     last_name: p.last_name,
@@ -154,6 +156,8 @@ const TEAM_ROSTER: TeamRoster = {
     doubles_utr: null,
     doubles_status: null,
     is_borrowed_player: null,
+    is_wildcard: null,
+    representing_school: null,
     utr_profile_id: null,
   })),
 };

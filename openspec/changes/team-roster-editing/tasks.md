@@ -65,14 +65,14 @@
 - **Code**: D4 `teams/[code]` 挂 `EditModeToggle`（复用，signedIn=canEdit）；`RosterTable`/`RosterEditor` 编辑态批量双打输入 + 外援/外卡勾选 + 代表学校下拉（borrowed/wildcard→disabled）+ school_count 头部输入 + 保存/警告；只读不渲染控件；roster 取数扩 school_count + per-player borrowed。
 - **Threshold**: 70
 
-- [ ] 4.0 CONTRACT — write openspec/changes/team-roster-editing/contracts/group-4.md
-- [ ] 4.1 RED — vitest：EditModeToggle 在队伍页解锁流程（复用组件，signedIn 分支）；只读态无输入框
-- [ ] 4.2 GREEN — 队伍页挂 EditModeToggle + 只读/编辑态切换
-- [ ] 4.3 RED — vitest：批量双打输入改多格 → 一个保存调批量 action；改动格有标记
-- [ ] 4.4 GREEN — RosterTable 批量双打输入 + 保存条
-- [ ] 4.5 RED — vitest：勾外援/外卡 → 该行学校下拉 disabled；名单外援超 roster_cap → 警告仍可存；school_count 改动显示上限
-- [ ] 4.6 GREEN — 外援/外卡/学校/学校数控件 + 警告 + 上限提示
-- [ ] 4.7 MOCK — open docs/superpowers/specs/mocks/2026-09-04-team-roster-editing-mocks.html（① 编辑表 + Save 条 + 学校数 + 条件学校）；note 覆盖提示串、禁用态、警告态
+- [x] 4.0 CONTRACT — write openspec/changes/team-roster-editing/contracts/group-4.md
+- [x] 4.1 RED — vitest：EditModeToggle 在队伍页解锁流程（复用组件，signedIn 分支）；只读态无输入框
+- [x] 4.2 GREEN — 队伍页挂 EditModeToggle + 只读/编辑态切换
+- [x] 4.3 RED — vitest：批量双打输入改多格 → 一个保存调批量 action；改动格有标记
+- [x] 4.4 GREEN — RosterTable 批量双打输入 + 保存条
+- [x] 4.5 RED — vitest：勾外援/外卡 → 该行学校下拉 disabled；名单外援超 roster_cap → 警告仍可存；school_count 改动显示上限
+- [x] 4.6 GREEN — 外援/外卡/学校/学校数控件 + 警告 + 上限提示
+- [x] 4.7 MOCK — open docs/superpowers/specs/mocks/2026-09-04-team-roster-editing-mocks.html（① 编辑表 + Save 条 + 学校数 + 条件学校）；note 覆盖提示串、禁用态、警告态
 - [ ] 4.8 VISUAL DIFF — dev stack（补种 + 造 school_count/外援数据）；admin 解锁队伍页对照 mock ①（批量双打改+存、外援/外卡勾选、外援行学校禁用、学校数上限提示、名单超限警告）；桌面 + 375；量对比度 ≥4.5、44px、无横向溢出；fix drift
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥70 PASS; <70 FIX+retry
 

@@ -19,15 +19,19 @@ vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
 }));
 
 const ROSTER: TeamRoster = {
   team: {
+    id: 1,
     code: "TEST-ALPHA",
     display_name: "甲队",
     season_year: 2025,
     division_code: "silver",
   },
+  school_count: null,
+  borrowed_limits: {},
   players: [
     {
       player_id: 1,
@@ -48,6 +52,8 @@ const ROSTER: TeamRoster = {
       doubles_utr: null,
       doubles_status: null,
       is_borrowed_player: null,
+      is_wildcard: null,
+      representing_school: null,
       utr_profile_id: null,
     },
     {
@@ -69,6 +75,8 @@ const ROSTER: TeamRoster = {
       doubles_utr: null,
       doubles_status: null,
       is_borrowed_player: null,
+      is_wildcard: null,
+      representing_school: null,
       utr_profile_id: null,
     },
   ],

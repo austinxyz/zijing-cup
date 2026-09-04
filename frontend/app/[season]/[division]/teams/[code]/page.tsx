@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { isSignedIn } from "@/lib/admin";
 import { getTeamRoster } from "@/lib/api";
-import { RosterEditor } from "./RosterEditor";
+import { TeamEditPanel } from "./TeamEditPanel";
 
 interface PageProps {
   params: Promise<{ season: string; division: string; code: string }>;
@@ -91,18 +91,15 @@ export default async function TeamRosterPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Only the table scrolls: the team's name and head count stay in
-          view, and the column labels stick to the top of this box. */}
-      <div className="flex-1 overflow-y-auto">
-        <RosterEditor
-          players={roster.players}
-          canEdit={canEdit}
-          locked={roster.locked}
-          season={season}
-          division={division}
-          teamCode={code}
-        />
-      </div>
+      {/* The edit panel owns its own scroll: the team header above stays in
+          view; the toggle/caps bar and the Save bar pin, the table scrolls. */}
+      <TeamEditPanel
+        roster={roster}
+        canEdit={canEdit}
+        season={season}
+        division={division}
+        teamCode={code}
+      />
     </>
   );
 }

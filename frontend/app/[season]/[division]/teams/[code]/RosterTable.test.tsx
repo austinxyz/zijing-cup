@@ -24,6 +24,8 @@ function player(overrides: Partial<RosterPlayer> = {}): RosterPlayer {
     doubles_utr: null,
     doubles_status: null,
     is_borrowed_player: null,
+    is_wildcard: null,
+    representing_school: null,
     utr_profile_id: null,
     ...overrides,
   };

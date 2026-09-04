@@ -20,6 +20,7 @@ from sqlmodel import Session, func, select
 
 from app.models import (
     Division,
+    DivisionBorrowedLimit,
     Player,
     PlayerSeasonUtr,
     PlayerTeamMembership,
@@ -53,6 +54,9 @@ class TeamSummaryOut(BaseModel):
 
 
 class TeamOut(BaseModel):
+    #: The team's own id. The edit UI needs it to address a membership write by
+    #: (player, team); the code alone is not the key the membership table uses.
+    id: int
     code: str
     display_name: Optional[str] = None
     season_year: int
@@ -143,6 +147,11 @@ class TeamRosterOut(BaseModel):
     #: How many schools this (联队) team combines, or null if unset. Drives the
     #: per-match borrowed ceiling; the edit UI shows the caps derived from it.
     school_count: Optional[int] = None
+    #: This division's borrowed-limit rule as school_count -> {roster_cap,
+    #: on_court_cap}, so the edit UI can show the caps for whatever school_count
+    #: the admin picks and warn when the roster exceeds roster_cap. Empty when
+    #: the division has no borrowed rule seeded.
+    borrowed_limits: dict[int, dict[str, int]] = {}
 
 
 def _division_exists(session: Session, year: int, code: str) -> bool:
@@ -297,6 +306,7 @@ def get_team_roster(
 
     return TeamRosterOut(
         team=TeamOut(
+            id=team.id,
             code=team.code,
             display_name=team.display_name,
             season_year=team.season_year,
@@ -305,4 +315,26 @@ def get_team_roster(
         players=players,
         locked=session.get(SeasonLock, year) is not None,
         school_count=team.school_count,
+        borrowed_limits=_borrowed_limits_for(session, year, division_code),
     )
+
+
+def _borrowed_limits_for(
+    session: Session, year: int, division_code: str
+) -> dict[int, dict[str, int]]:
+    division = session.exec(
+        select(Division).where(
+            Division.season_year == year, Division.code == division_code
+        )
+    ).one_or_none()
+    if division is None:
+        return {}
+    rows = session.exec(
+        select(DivisionBorrowedLimit).where(
+            DivisionBorrowedLimit.division_id == division.id
+        )
+    ).all()
+    return {
+        r.school_count: {"roster_cap": r.roster_cap, "on_court_cap": r.on_court_cap}
+        for r in rows
+    }

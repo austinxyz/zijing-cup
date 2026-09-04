@@ -27,3 +27,51 @@ export async function saveCurrentUtr(
   });
   revalidatePath(`/${season}/${division}/teams/${teamCode}`);
 }
+
+/**
+ * The team-page batch save: any number of current-UTR edits plus any number of
+ * membership flag/school changes plus (optionally) the team's school_count, in
+ * as few writes as the changes need. Doubles UTRs go through the same
+ * season-mirroring batch endpoint as a single save; each membership change is a
+ * PATCH addressed by (player, team); school_count is a PATCH on the team.
+ */
+export async function saveTeamEdits(
+  season: string,
+  division: string,
+  teamCode: string,
+  teamId: number,
+  edits: {
+    // A subset of the current-UTR fields per player; the batch endpoint treats
+    // absent fields as "leave alone". The team page only edits doubles.
+    utrs?: Array<{ player_id: number; doubles_utr?: string }>;
+    memberships?: Array<{
+      player_id: number;
+      is_borrowed_player?: boolean;
+      is_wildcard?: boolean;
+      representing_school?: string | null;
+    }>;
+    schoolCount?: number | null;
+  },
+): Promise<void> {
+  if (edits.utrs && edits.utrs.length > 0) {
+    await adminWrite("PUT", "/api/players/current-utr", {
+      season_year: Number(season),
+      updates: edits.utrs,
+    });
+  }
+  for (const m of edits.memberships ?? []) {
+    const { player_id, ...fields } = m;
+    await adminWrite("PATCH", `/api/players/${player_id}/memberships`, {
+      team_id: teamId,
+      ...fields,
+    });
+  }
+  if (edits.schoolCount !== undefined) {
+    await adminWrite(
+      "PATCH",
+      `/api/seasons/${season}/divisions/${division}/teams/${encodeURIComponent(teamCode)}`,
+      { school_count: edits.schoolCount },
+    );
+  }
+  revalidatePath(`/${season}/${division}/teams/${teamCode}`);
+}

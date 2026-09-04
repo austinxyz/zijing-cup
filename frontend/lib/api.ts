@@ -182,6 +182,12 @@ export interface RosterPlayer {
   doubles_status: string | null;
   /** null means nobody has marked this player — not "confirmed not one". */
   is_borrowed_player: boolean | null;
+  /** A different thing from borrowed: not from the current school, needs
+   *  committee approval, does NOT affect eligibility. null = unmarked. */
+  is_wildcard: boolean | null;
+  /** The home school this player represents (null for borrowed/wildcard, who
+   *  have none). Editable on the team page for regular players. */
+  representing_school: string | null;
   utr_profile_id: string | null;
 }
 
@@ -203,6 +209,9 @@ export interface UtrSheetRow {
 
 export interface TeamRoster {
   team: {
+    /** The team's own id — the edit UI addresses a membership write by
+     *  (player, team) and needs it. */
+    id: number;
     code: string;
     display_name: string | null;
     season_year: number;
@@ -216,6 +225,12 @@ export interface TeamRoster {
    *  also overwrites the participation UTR, and the editor says so; once true
    *  the backend refuses that write, so the warning must not show. */
   locked: boolean;
+  /** How many schools this (联队) team combines, or null if unset. Drives the
+   *  per-match borrowed ceiling; the edit UI shows the caps for it. */
+  school_count: number | null;
+  /** This division's borrowed rule as school_count -> {roster_cap,
+   *  on_court_cap}. Keys arrive as strings over JSON. Empty when unseeded. */
+  borrowed_limits: Record<string, { roster_cap: number; on_court_cap: number }>;
 }
 
 /** The rows a team's UTR sheet is built from, or null when there is no such
