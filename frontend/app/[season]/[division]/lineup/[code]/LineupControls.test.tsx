@@ -23,6 +23,30 @@ function roster(count: number): LineupPlayer[] {
 }
 
 describe("the lock and exclude panel", () => {
+  it("marks a hot-hand player (≥60%) with ▲ in the select options and exclude chips", () => {
+    const hot: LineupPlayer = {
+      key: "p1", last_name: "南", first_name: "热手",
+      origin: "frozen", origin_year: 2026, is_unresolved: false,
+      gender: "M", match_utr: "6.00", wins: 67, losses: 20,
+    };
+    const cold: LineupPlayer = {
+      key: "p2", last_name: "南", first_name: "平手",
+      origin: "frozen", origin_year: 2026, is_unresolved: false,
+      gender: "M", match_utr: "5.80", wins: 1, losses: 1,
+    };
+    render(
+      <LineupControls lines={LINES} roster={[hot, cold]} locks={{}} excluded={[]} />,
+    );
+    // partner-select option
+    const opt = screen.getAllByRole("option").find((o) => /热手/.test(o.textContent ?? ""));
+    expect(opt?.textContent).toMatch(/▲/);
+    const coldOpt = screen.getAllByRole("option").find((o) => /平手/.test(o.textContent ?? ""));
+    expect(coldOpt?.textContent ?? "").not.toMatch(/▲/);
+    // exclude chip
+    const hotChip = screen.getByText("南 热手").closest("label")!;
+    expect(hotChip.textContent).toMatch(/▲/);
+  });
+
   it("carries a hidden go=1 so submitting the controls runs the search", () => {
     const { container } = render(
       <LineupControls lines={LINES} roster={roster(6)} locks={{}} excluded={[]} />,

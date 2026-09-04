@@ -1,5 +1,6 @@
 import type { LineupFilterPreset, LineupPlayer, RuleLine } from "@/lib/api";
 import { playerName } from "@/lib/name";
+import { isHotHand } from "@/lib/winLoss";
 import { Presets } from "./Presets";
 
 /** Rank a gender for the select order: men, then women, then unmarked. */
@@ -84,7 +85,11 @@ function PlayerSelect({
       <option value="">交给引擎</option>
       {roster.map((player) => (
         <option key={player.key} value={player.key}>
+          {/* A native <option> can only hold text, so the hot-hand mark is the
+              ▲ character (same green ▲ the line blocks show), appended after
+              the UTR. */}
           {playerName(player)} · {player.match_utr}
+          {isHotHand(player.wins, player.losses) ? " ▲" : ""}
         </option>
       ))}
     </select>
@@ -252,7 +257,14 @@ export function LineupControls({
                 value={player.key}
                 defaultChecked={excludedSet.has(player.key)}
               />
-              <span>{playerName(player)}</span>
+              <span>
+                {playerName(player)}
+                {isHotHand(player.wins, player.losses) ? (
+                  <span title="状态好（胜率 ≥ 60%）" className="ml-0.5 text-success">
+                    ▲
+                  </span>
+                ) : null}
+              </span>
             </label>
           ))}
         </div>
