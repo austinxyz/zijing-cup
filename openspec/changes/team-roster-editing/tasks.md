@@ -74,7 +74,15 @@
 - [x] 4.6 GREEN — 外援/外卡/学校/学校数控件 + 警告 + 上限提示
 - [x] 4.7 MOCK — open docs/superpowers/specs/mocks/2026-09-04-team-roster-editing-mocks.html（① 编辑表 + Save 条 + 学校数 + 条件学校）；note 覆盖提示串、禁用态、警告态
 - [x] 4.8 VISUAL DIFF — dev stack（补种 + 造 school_count/外援数据）；admin 解锁队伍页对照 mock ①（批量双打改+存、外援/外卡勾选、外援行学校禁用、学校数上限提示、名单超限警告）；桌面 + 375；量对比度 ≥4.5、44px、无横向溢出；fix drift
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥70 PASS; <70 FIX+retry
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥70 PASS; <70 FIX+retry
+  - **Result**: BLOCK (90/100 if calculated: Spec 95, Runtime 100, Code 60)
+  - **Findings**: [HIGH] empty doubles_utr field causes 422 blocking batch save; [HIGH] save() has no error handling; [MEDIUM] representing_school is text input not dropdown; [MEDIUM] RosterEditor.tsx orphaned; [LOW] sequential membership PATCHes
+  - **Fix Tasks**:
+    - [ ] 4.F1 FIX — Normalize empty doubles UTR input to null in TeamEditPanel.tsx:302-305. Change `doubles_utr: v,` to `doubles_utr: v === "" ? null : v,` to match RosterTable pattern and prevent 422 Decimal parse errors.
+    - [ ] 4.F2 FIX — Add error handling to save() in TeamEditPanel.tsx:324-332. Wrap saveTeamEdits in try/catch, surface user-visible error message in alert, only call reset() on success. UI should not hang on failed write.
+    - [ ] 4.F3 FIX — Change representing_school input to dropdown. If no canonical school list available, confirm this is intentional deviation from contract and document it. Otherwise populate dropdown from available schools.
+    - [ ] 4.F4 DELETE — Remove orphaned RosterEditor.tsx file. No longer imported after page.tsx switched to TeamEditPanel.
+    - [ ] 4.F5 OPT — Parallelize membership PATCHes in actions.ts:62-68 using Promise.all for better latency on Render cold starts (not critical, low-priority optimization).
 
 ## 5. 候选/已存阵容外援配色
 

@@ -56,3 +56,39 @@
     - "Display: _display_name() used to format names avoiding tab artifact; BorrowedOverLimit dataclass holds names, on_court, cap"
     - "Minor (LOW): Unused deduped variable in result condition (line 260) always evaluates to False, making guard redundant but harmless — condition effectively 'if borrowed_cap is not None and not truncated and borrowed_example is not None'"
     - "Prior CRITICAL resolved: fail-open design is correct, consistently implemented, and test-covered"
+
+- group: 4
+  attempt: 1
+  scores: {spec: 95, runtime: 100, code: 60}
+  total: 90
+  status: BLOCK
+  findings:
+    - "[HIGH] Empty doubles_utr field causes 422 error blocking entire batch save. TeamEditPanel sends empty string instead of null when user clears field; backend Decimal parsing fails and all-or-nothing batch logic rejects entire save. Existing editors (RosterTable EditDrawer) correctly normalize `doubles_utr: v === \"\" ? null : v`; TeamEditPanel diverges from pattern."
+    - "[HIGH] save() has no error handling. saveTeamEdits failure throws inside useTransition callback with no try/catch. No feedback to user, dirty state stuck, unhandled promise rejection in console. Failures from 422, unknown player_id, school_count < 1, or season lock conflict all produce silent UI hang."
+    - "[MEDIUM] representing_school is text input, not dropdown. Contract (group-4.md line 5) specifies \"代表学校下拉\"; implementation uses plain <input> allowing inconsistent/misspelled school names with no normalization. Confirms whether this is intentional contract deviation before merge."
+    - "[MEDIUM] RosterEditor.tsx is orphaned. page.tsx switched from RosterEditor to TeamEditPanel; nothing imports RosterEditor anymore. Should be deleted as part of this change (dead code)."
+    - "[LOW] Membership PATCHes are sequential not parallel. Writes are independent per player; wrapping in Promise.all would cut latency on Render free-tier cold starts without changing semantics."
+  notes:
+    - "Contract SHALLs verified: EditModeToggle mounted and reused; read-only path renders only RosterTable with canEdit=false, no edit controls leak; batch doubles with change marking; borrowed/wildcard checkboxes with representing_school disabled when external=true; school_count input drives caps display; roster-over-cap is warning with save still enabled; colors added to globals.css"
+    - "Runtime: 448 tests pass (60 files), tsc clean. New tests: TeamEditPanel.test.tsx (4 tests: read-only, batch edits, borrowed logic, caps), teamEdit.test.ts (3 tests: capsFor, borrowedCountWith, rosterOverCap). Fixtures updated consistently for is_wildcard, representing_school, team.id, borrowed_limits."
+    - "Backend routes pre-existing: /api/players/current-utr (PUT) in utr.py:320, /api/players/{id}/memberships (PATCH) in players.py:211, /api/seasons/.../teams/{code} (PATCH) in rosters.py:63. Backend query responses extended with school_count, borrowed_limits, per-player is_borrowed_player (Candidate carries it via load_roster)."
+    - "Borrowed/wildcard clearing verified both sides: client `representing_school: b || w ? null : schoolOf(p) || null`; server command.py:229-230 enforces independently — defense-in-depth correct."
+    - "No CRITICAL issues. 2 HIGHs block merge: (1) empty field 422 blocks batch, (2) missing error handling leaves UI hung on failure. Both are real behavioral bugs an admin will hit (clearing a UTR is normal, network failure is normal)."
+
+- group: 4
+  attempt: 2
+  scores: {spec: 95, runtime: 100, code: 90}
+  total: 96
+  status: PASS
+  findings: []
+  notes:
+    - "Prior attempt-1 HIGHs verified fixed: (1) empty doubles field now maps `v === \"\" ? null : v` (TeamEditPanel.tsx:378), confirmed by regression test 'sends null (not '') for a cleared doubles field'; (2) save() wrapped in try/catch (TeamEditPanel.tsx:399-413), keeps dirty state on error, reset() only on success, error alert shown, confirmed by test 'keeps the edits and shows an error when the save fails'"
+    - "Orphaned RosterEditor.tsx deleted per attempt-1 feedback (diff shows deletion)"
+    - "representing_school remains free-text input (not dropdown). Design.md D4 and contract agreement confirm this is intentional deviation from mock — no flag as defect"
+    - "Code review (subagent): 0 CRITICAL, 0 HIGH. Verified: Decimal full-stack (empty→null before PUT); error handling preserves dirty state; borrowed_limits dict keys consistent end-to-end (Pydantic int→JSON string, frontend `Record<string,...>` and `limits[String(schoolCount)]`); representing_school nulled server+client when is_borrowed_player||is_wildcard; no SQL injection (parameterized SQLModel select); no XSS (plain controlled inputs); team.id properly used for membership (player_id, team_id) addressing"
+    - "One MEDIUM note (not blocking): saveTeamEdits performs UTR PUT + per-player membership PATCH loop + school_count PATCH as separate un-transactional calls. If one PATCH in loop fails, earlier PATCHes already committed. Assessed non-data-corrupting since all sends are idempotent (full desired state, not deltas); retry re-sends same values with no side effects. Acknowledged in code comments."
+    - "Runtime: 450 tests pass (60 files), tsc clean. New tests in attempt 2: TeamEditPanel.test.tsx expanded with regression tests for prior HIGHs (cleared field sends null, error keeps dirty state)"
+    - "Backend: _borrowed_limits_for() function correctly fetches division_borrowed_limits; team.id added to TeamOut (required for membership PATCH by (player, team)); school_count and borrowed_limits added to TeamRosterOut; proper use of set search_path in migration context"
+    - "Contract SHALLs verified: EditModeToggle reused; read-only when not unlocked; batch doubles with dirty marking; borrowed/wildcard flags with representing_school disabled; school_count input showing caps; warning when over-cap, save still enabled; lock-season overwrite semantics preserved"
+    - "Spec coverage: 95/100 (all contract items implemented, minor deduction for MEDIUM transactionality note); Runtime: 100/100 (tests + types clean); Code: 90/100 (APPROVE from reviewer, minor deduction for MEDIUM note)"
+    - "Total = 95×0.4 + 100×0.4 + 90×0.2 = 96. Status: PASS (threshold 70)"
