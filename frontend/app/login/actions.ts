@@ -84,6 +84,55 @@ export async function login(
   redirect("/");
 }
 
+export interface UnlockState extends LoginState {
+  /** Set once the password checked out and the session cookie was issued. The
+   *  caller refreshes in place instead of navigating, so there is no redirect
+   *  here — that is the only difference from `login`. */
+  ok?: boolean;
+}
+
+/**
+ * Exchange a password for a session cookie WITHOUT leaving the page.
+ *
+ * Same auth core as `login` — same rate limit, same `checkPassword`, same
+ * session cookie, same failure feedback — but it returns `{ ok: true }` instead
+ * of redirecting, so an in-place "编辑模式" unlock can refresh the current route
+ * rather than being thrown to the home page. Not a second trust surface: the
+ * write routes are still guarded by the method-keyed middleware; this only
+ * decides "who is this", exactly as `login` does.
+ */
+export async function unlockAdmin(
+  _previous: UnlockState | undefined,
+  formData: FormData,
+): Promise<UnlockState> {
+  const address = await callerAddress();
+  const limit = rateLimitState(address);
+  if (limit.remaining === 0) {
+    return { error: "rate-limited", remaining: 0, lockedUntil: limit.lockedUntil };
+  }
+
+  const password = String(formData.get("password") ?? "");
+  if (!(await checkPassword(password))) {
+    recordFailure(address);
+    const after = rateLimitState(address);
+    return {
+      error: after.remaining === 0 ? "rate-limited" : "bad-password",
+      remaining: after.remaining,
+      lockedUntil: after.lockedUntil,
+    };
+  }
+
+  const store = await cookies();
+  store.set(SESSION_COOKIE, await issueSession(), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SESSION_TTL_MS / 1000,
+  });
+  return { ok: true };
+}
+
 export async function logout(): Promise<void> {
   const store = await cookies();
   store.delete(SESSION_COOKIE);

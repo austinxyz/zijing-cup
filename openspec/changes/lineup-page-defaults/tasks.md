@@ -53,7 +53,7 @@
 - [x] 3.4 GREEN — 控件区保存/另存入口（admin 门控表层）；绑定 season/division/team
 - [x] 3.5 MOCK — open mock（② 载入=现有控件预填 + 搜索/保存/另存）；note 草稿提示串、三态（锁定/pin/引擎）
 - [x] 3.6 VISUAL DIFF — dev stack；admin 载入一套阵型 → 控件已填、无候选、URL 无 go；改一处→保存/另存；桌面 + 375；量对比度、44px、无溢出；fix drift
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 4. 就地解锁编辑模式（输 admin 密码，不跳 /login）
 
@@ -63,13 +63,13 @@
 - **Code**: D5 新客户端组件 `EditModeToggle`：开关→口令输入→调**现有** `login`（`useActionState`），成功 `router.refresh()` 让 server 重读会话、`canEdit` 变真；失败用 login 返回的 `bad-password`/`rate-limited` 文案。会话仍 httpOnly cookie；写路由仍方法判权；已登录显示「已解锁·登出」。
 - **Threshold**: 70
 
-- [ ] 4.0 CONTRACT — write openspec/changes/lineup-page-defaults/contracts/group-4.md
-- [ ] 4.1 RED — vitest：`EditModeToggle` 开关展开口令输入；提交正确口令调用 login action（mock）并触发 refresh
-- [ ] 4.2 GREEN — `EditModeToggle` 组件（开关 + 口令 + 调 login + refresh）
-- [ ] 4.3 RED — vitest：错误口令渲染 `bad-password` 文案、不解锁；已登录态显示「已解锁·登出」
-- [ ] 4.4 GREEN — 接 login 返回态渲染反馈；已登录分支
-- [ ] 4.5 MOCK — open mock（④ 就地解锁）；note 口令输入 44px、解锁后绿条「已解锁编辑」、错误同登录文案
-- [ ] 4.6 VISUAL DIFF — dev stack；未登录在排阵页开编辑模式→输密码解锁→保存/编辑控件出现（用 requestSubmit 触发 action）；桌面 + 375；量对比度、44px、无溢出；fix drift
+- [x] 4.0 CONTRACT — write openspec/changes/lineup-page-defaults/contracts/group-4.md
+- [x] 4.1 RED — vitest：`EditModeToggle` 开关展开口令输入；提交正确口令调用 login action（mock）并触发 refresh
+- [x] 4.2 GREEN — `EditModeToggle` 组件（开关 + 口令 + 调 login + refresh）
+- [x] 4.3 RED — vitest：错误口令渲染 `bad-password` 文案、不解锁；已登录态显示「已解锁·登出」
+- [x] 4.4 GREEN — 接 login 返回态渲染反馈；已登录分支
+- [x] 4.5 MOCK — open mock（④ 就地解锁）；note 口令输入 44px、解锁后绿条「已解锁编辑」、错误同登录文案
+- [x] 4.6 VISUAL DIFF — dev stack；未登录在排阵页开编辑模式→输密码解锁→保存/编辑控件出现（用 requestSubmit 触发 action）；桌面 + 375；量对比度、44px、无溢出；fix drift
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 5. 验证与交付

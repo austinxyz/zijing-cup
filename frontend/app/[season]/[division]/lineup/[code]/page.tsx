@@ -18,6 +18,7 @@ import {
   deleteSavedLineup,
 } from "./actions";
 import { CollapsibleSaved } from "./CollapsibleSaved";
+import { EditModeToggle } from "./EditModeToggle";
 import { LineupControls } from "./LineupControls";
 import { LineupMobileControls } from "./LineupMobileControls";
 import { LineupResults } from "./LineupResults";
@@ -210,11 +211,16 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
               {rules.division.partner_gap_max}
             </span>
           </div>
-          {/* The number every lineup is checked against is the frozen one,
-              not today's rating. */}
-          <span className="flex-none font-mono text-[11.5px] text-muted-foreground">
-            参赛 UTR · 赛前冻结
-          </span>
+          <div className="flex flex-none items-center gap-3">
+            {/* In-place admin unlock: type the password here instead of being
+                sent to /login, then the edit controls appear on refresh. */}
+            <EditModeToggle signedIn={canEdit} />
+            {/* The number every lineup is checked against is the frozen one,
+                not today's rating. */}
+            <span className="font-mono text-[11.5px] text-muted-foreground">
+              参赛 UTR · 赛前冻结
+            </span>
+          </div>
         </div>
 
         {/* Narrow viewport: results lead, controls fold into a sheet whose
