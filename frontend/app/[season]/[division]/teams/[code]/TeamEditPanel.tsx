@@ -110,7 +110,7 @@ export function TeamEditPanel({ roster, canEdit, season, division, teamCode }: P
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="flex flex-none flex-wrap items-center gap-3 border-b border-border bg-surface px-[22px] py-2">
         <EditModeToggle signedIn={true} />
         <label className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
@@ -140,8 +140,11 @@ export function TeamEditPanel({ roster, canEdit, season, division, teamCode }: P
         ) : null}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <table className="w-full border-collapse text-[12.5px]">
+      {/* Both axes scroll inside this box: the seven edit columns are wider
+          than the team pane, so without overflow-x the last columns (外卡,
+          代表学校) are silently clipped with no scrollbar. */}
+      <div className="min-w-0 flex-1 overflow-auto">
+        <table className="w-full min-w-[640px] border-collapse text-[12.5px]">
           <thead>
             <tr>
               {["队员", "性别", "参赛 UTR", "当前双打", "外援", "外卡", "代表学校"].map((h) => (
