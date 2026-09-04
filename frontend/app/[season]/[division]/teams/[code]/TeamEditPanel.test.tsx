@@ -91,4 +91,22 @@ describe("TeamEditPanel", () => {
     show();
     expect(screen.getByText(/名单 ≤2 · 每场 ≤1/)).toBeTruthy();
   });
+
+  it("sends null (not '') for a cleared doubles field", async () => {
+    show({ roster: roster({ players: [player(1, { doubles_utr: "6.0" })] }) });
+    fireEvent.change(screen.getByLabelText("当前双打 南 甲1"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: /保存/ }));
+    const edits = saveTeamEdits.mock.calls[0][4];
+    expect(edits.utrs[0]).toEqual({ player_id: 1, doubles_utr: null });
+  });
+
+  it("keeps the edits and shows an error when the save fails", async () => {
+    saveTeamEdits.mockRejectedValueOnce(new Error("boom"));
+    show();
+    fireEvent.change(screen.getByLabelText("当前双打 南 甲1"), { target: { value: "6.5" } });
+    fireEvent.click(screen.getByRole("button", { name: /保存/ }));
+    await screen.findByText(/保存失败/);
+    // dirty state kept — the button still offers to save the change
+    expect(screen.getByRole("button", { name: /保存 1 处改动/ })).toBeTruthy();
+  });
 });

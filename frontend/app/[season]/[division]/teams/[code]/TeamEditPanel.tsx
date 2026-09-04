@@ -31,6 +31,7 @@ export function TeamEditPanel({ roster, canEdit, season, division, teamCode }: P
   const [wildcard, setWildcard] = useState<Record<number, boolean>>({});
   const [schools, setSchools] = useState<Record<number, string>>({});
   const [schoolCount, setSchoolCount] = useState<number | null>(roster.school_count);
+  const [error, setError] = useState<string | null>(null);
 
   const schoolCountChanged = schoolCount !== roster.school_count;
   const caps = capsFor(roster.borrowed_limits, schoolCount);
@@ -62,7 +63,9 @@ export function TeamEditPanel({ roster, canEdit, season, division, teamCode }: P
   function save() {
     const utrs = Object.entries(doubles).map(([id, v]) => ({
       player_id: Number(id),
-      doubles_utr: v,
+      // A cleared field clears the value (null), never "" — an unparseable
+      // Decimal would 422 and, all-or-nothing, sink the whole batch.
+      doubles_utr: v === "" ? null : v,
     }));
     // A membership change collects whichever of the three fields changed for a
     // player; borrowed/wildcard true clears the school (server enforces this too).
@@ -82,13 +85,21 @@ export function TeamEditPanel({ roster, canEdit, season, division, teamCode }: P
         representing_school: b || w ? null : schoolOf(p) || null,
       };
     });
+    setError(null);
     startTransition(async () => {
-      await saveTeamEdits(season, division, teamCode, roster.team.id, {
-        utrs,
-        memberships,
-        ...(schoolCountChanged ? { schoolCount } : {}),
-      });
-      reset();
+      try {
+        await saveTeamEdits(season, division, teamCode, roster.team.id, {
+          utrs,
+          memberships,
+          ...(schoolCountChanged ? { schoolCount } : {}),
+        });
+        reset();
+      } catch {
+        // A failed write (bad value, season lock, lost auth) must not vanish:
+        // keep the dirty edits so nothing is lost, and say so. reset() runs
+        // only on success.
+        setError("保存失败——请检查输入或重新解锁编辑后重试。");
+      }
     });
   }
 
@@ -240,6 +251,11 @@ export function TeamEditPanel({ roster, canEdit, season, division, teamCode }: P
         {overCap ? (
           <span role="alert" className="text-[12px] text-warning">
             超名单外援上限（{borrowedNow} &gt; {caps?.roster_cap}）——仍可保存
+          </span>
+        ) : null}
+        {error ? (
+          <span role="alert" className="text-[12px] text-danger">
+            {error}
           </span>
         ) : null}
       </div>
