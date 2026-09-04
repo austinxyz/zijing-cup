@@ -102,6 +102,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 ---
 
+**team-roster-editing（2026-09-04）**: 队伍页 `teams/[code]` 加就地编辑（`TeamEditPanel`）：页头「编辑模式」开关复用 `unlockAdmin` 就地输 admin 口令解锁（不跳 `/login`），只读态不渲染任何控件。解锁后是可编辑表——每人当前双打 UTR 就地输入、改动格高亮、一个「保存 N 处改动」批量提交（未锁季顺带覆盖参赛 UTR，界面就近说明）；外援/外卡勾选、代表学校输入（勾了外援或外卡则禁用清空——外部球员无本校可代表，后端也兜一层）；队伍学校数 `school_count` 输入，据此显示该 division 的外援上限（名单/每场），名单外援超 `roster_cap` 时保存**警告放行**不硬拦。七列宽于窄队伍列，表容器 `min-w-0 overflow-auto` 让它在框内横滚（桌面放得下、375 横滚），不逃到 `overflow-hidden` 壳里被静默裁。`saveTeamEdits` 把当前 UTR 批量写 + 逐 membership PATCH + school_count PATCH 合成尽量少的写；写失败 try/catch 保留改动并 role=alert 报错，只有成功才 reset。代表学校是自由文本（无规范学校清单，故不用下拉）。
+
 ### `lineup-search` ✅ 已实现 · 🌐 已上线
 **用户故事**: 作为队长，我想给出几对已经定下的搭档和本场上不了的人，让系统在剩下的空间里把五条线补齐，并告诉我这套限制下最强能排到多少、有多少种十人组合能达到它；如果根本凑不出合法阵容，我要知道是哪条线卡住了，而不是收到一个空列表让我猜是没搜到还是没有解。
 
@@ -128,6 +130,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **验收标准**: 2025 全部 24 支真实球队（金 6 + 银 18）各搜一次，全部返回完整结果、0 截断，开发机最坏 0.09s（2025 两组 buffer 均为 0.00，可行空间小；2026 开了 buffer 会变慢，Render 免费实例的真实耗时仍需部署后实测）；小名单上穷举全部合法阵容，最大值等于报告的上限；锁定被遵守、排除被遵守、换线不算两套；未知球队 404，格式非法的 query 返回 4xx 而非 500；OpenAPI 中仍不存在 POST/PUT/PATCH/DELETE。
 
 ---
+
+**team-roster-editing（2026-09-04）**: 每场外援上场上限真正进引擎（此前 `borrowed_players_checked` 恒 false）。规则数据化按 division 存 `division_borrowed_limits(division_id, school_count, roster_cap, on_court_cap)`，随 seed 灌（2026 金/银：1校→3/2、2校→2/1、3-4校→0/0），可逐赛季改数据不改代码。`Candidate.borrowed` 由 `load_roster` 从 membership 读入（**只有确认为 True 才算外援**——None 未标/False 确认非，都不计；把 None 当外援会让没标过人的队变成十个外援、永远无解）。`search_lineups(borrowed_cap)` 在递归叶子把上场十人外援数 > cap 的阵容丢弃并记一个样本；若因此候选全空且未截断，置顶层 `borrowed_over_limit`（点名外援 + on_court + cap）。`school_count` 未设 → cap 为 None → 不校验、`borrowed_players_checked` 为 false；已设且有规则行才 true。seed 漂移检测（`--check`）也要比 borrowed_limits，否则改一个 cap 会误报 clean。
 
 ### `lineup-ui` ✅ 已实现 · 🌐 已上线
 **用户故事**: 作为队长，我想在页面上锁定几对搭档、勾掉本场不能上的人，然后看到按强弱排好的候选阵容，每条线的两个人、性别、该线之和与超出量都摆在那里；我还想把这套搜索的链接直接发给队友，他打开看到的是同一套限制。
@@ -168,6 +172,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 ---
 
+**team-roster-editing（2026-09-04）**: 候选与已存阵容的三行块里外援队员用 `外` 角标（`text-borrowed`）+ 底色 `bg-borrowed-surface` 标出，不与 ♂/♀、估算 `估` 撞；`--color-borrowed`(#9a4410) 实测在 surface/muted/borrowed-surface 上都 ≥4.5:1，进 `globals.contrast.test.ts`。`LineBlock` seat 加 `borrowed`，`CandidateCards`/`SavedLineups` 从后端 `is_borrowed_player`（候选 `PlayerOut` 新加、roster 映射也带）传入。外援上场超限的无解由 `LineupResults` 的 `borrowed_over_limit` 面板点名外援 + 超出量呈现。
+
 ### `lineup-filter-presets` ✅ 已实现 · 🌐 待远程迁移
 **用户故事**: 作为队长，我常用几套固定阵型（主力、缺主力备案、打某对手的针对阵），想给它们各起名存下来，下次直接点开，不用每次重勾或翻聊天记录找链接。
 **覆盖需求**: docs/superpowers/specs/2026-09-02-lineup-saved-filters-requirements.md（按队命名存输入约束、名唯一 + 同名覆盖、存删限 admin·列出开放、preset 不是新信任入口）
@@ -202,6 +208,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **验收标准**: 线上两季一次迁完 —— 489 行名单 → 387 名队员（规范化姓名去重）、489 条成员关系、405 条赛季 UTR、**17 条未裁决**，与 `--check` 完全一致；重复执行 0 变更；同一 `(人, 赛季)` 插入两条被数据库拒绝；一人可在同赛季金银两组各有一条成员关系；赛季锁定后该赛季的改动被拒且理由指名是赛季锁。
 
 ---
+
+**team-roster-editing（2026-09-04）**: membership 的 `is_borrowed_player`/`is_wildcard`/`representing_school` 可写（`update_membership` + `PATCH /players/{id}/memberships`，按 (队员,队伍) 定位，与「批量写五字段」端点分开；borrowed 或 wildcard 为真时后端清空 representing_school）。`teams.school_count` 可写（`PATCH /seasons/{y}/divisions/{c}/teams/{code}`，`Field(ge=1)` 拒 0/负，null=未设）。写当前双打 UTR 未锁季一并覆盖参赛值（批量对每人套同一规则，复用既有 `_mirror_participation` 的赛季锁护栏）。均由方法判权中间件保护。
 
 ### `admin-access` ✅ 已实现 · 🌐 已上线
 **用户故事**: 作为项目负责人，我想让只有我能改队员数据，而任何人都能照常读规则、名单与阵容；我也想让将来新加的写接口默认就是受保护的，不依赖谁记得挂上什么。

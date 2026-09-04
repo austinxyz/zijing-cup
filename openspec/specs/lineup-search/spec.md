@@ -210,15 +210,6 @@ MUST 仅针对**排除**与**锁进别线**这两种用户动作；资格、cap�
 - **WHEN** 搜索在预算内自然穷尽
 - **THEN** 结果标明搜索完整
 
-### Requirement: 外援限制不校验且明说
-系统 MUST NOT 校验外援限制，并 SHALL 在结果中明确标注这一项未被校验。
-每场外援上场人数的上限取决于该队由几所学校组成，而系统没有这个信息。
-沉默会让人以为已经查过。
-
-#### Scenario: 结果带有未校验声明
-- **WHEN** 返回任何搜索或校验结果
-- **THEN** 结果中标明外援限制未被校验
-
 ### Requirement: 提供只读的阵容搜索端点
 后端 SHALL 提供一个只读端点返回搜索结果，锁定与排除通过 query 参数传入。
 系统 MUST NOT 因此新增任何写方法——阵容不落库，没有东西需要写。
@@ -374,3 +365,35 @@ SHALL 只在**含被钉者的对**范围内按四类原因（性别人手不足 
 #### Scenario: pin 无解不给无关原因
 - **WHEN** 被钉的线在不含被钉者时本可组出合法对，但含被钉者的对都不合法
 - **THEN** 诊断给出的是含被钉者那些对的失败原因，而非整池「本可行」的读数
+
+### Requirement: 外援上场上限按队伍学校数校验
+一支队每场能上场的外援人数上限由该队的**学校数**（`school_count`，几所学校组成的联队）决定，
+按 division 数据化存储的规则给出。搜索 SHALL 校验**上场十人**里 `is_borrowed_player` 为真的
+人数 ≤ 该队的 `on_court_cap(school_count)`；超过的阵容 MUST NOT 作为合法候选。规则按 division
+存（如 `division_borrowed_limits(division_id, school_count, roster_cap, on_court_cap)`）并随
+seed 灌入，可逐赛季/组别改数据而不改代码。
+
+当队伍的 `school_count` **未设**时，SHALL NOT 因外援拦搜索（未知不等于 0），此时
+`borrowed_players_checked` 为 false；`school_count` 已设时校验并置 `borrowed_players_checked`
+为 true。`is_wildcard` 不参与本校验。
+
+#### Scenario: 上场外援超上限不作为候选
+- **WHEN** 某阵容上场十人里外援数超过该队 on_court_cap(school_count)
+- **THEN** 该阵容不出现在候选里
+
+#### Scenario: 学校数未设则不拦
+- **WHEN** 队伍未设 school_count
+- **THEN** 搜索不因外援限制排除任何阵容，且结果标明外援限制未按上限校验
+
+#### Scenario: 规则随 division
+- **WHEN** 两个 division 的外援上限规则不同
+- **THEN** 各自按本 division 的 division_borrowed_limits 校验
+
+### Requirement: 外援超上限的无解以专门原因呈现
+当外援上场上限使某线/整体凑不出合法阵容时，无解结果 SHALL 以一个**专门的原因类型**
+`borrowed_over_limit` 表达，点名是哪些外援、上场外援数与上限各是多少，沿用既有 infeasibility
+原因/归因结构（不并入光秃秃的一句、不与其它资格原因混淆）。
+
+#### Scenario: 外援超限点名
+- **WHEN** 因上场外援超上限导致无解
+- **THEN** 结果给出 borrowed_over_limit 原因，点名涉及的外援并说明超出量
