@@ -111,6 +111,35 @@ describe("TeamEditPanel", () => {
     });
   });
 
+  it("sends an edited participation UTR as a season-utr write", () => {
+    show();
+    fireEvent.change(screen.getByLabelText("参赛 UTR 南 甲1"), {
+      target: { value: "6.5" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /保存/ }));
+    const edits = saveTeamEdits.mock.calls[0][4];
+    expect(edits.seasonUtrs).toEqual([{ player_id: 1, value: "6.5" }]);
+  });
+
+  it("does not send an untouched participation UTR", () => {
+    show();
+    // Change only a doubles field; the participation UTR is left alone and must
+    // not be written (so the doubles-mirror fallback still governs it).
+    fireEvent.change(screen.getByLabelText("当前双打 南 甲1"), {
+      target: { value: "6.2" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /保存/ }));
+    const edits = saveTeamEdits.mock.calls[0][4];
+    expect(edits.seasonUtrs ?? []).toEqual([]);
+  });
+
+  it("makes the participation UTR read-only when the season is locked", () => {
+    show({ roster: roster({ locked: true }) });
+    expect(
+      (screen.getByLabelText("参赛 UTR 南 甲1") as HTMLInputElement).disabled,
+    ).toBe(true);
+  });
+
   it("shows the caps for the chosen school count", () => {
     show();
     expect(screen.getByText(/名单 ≤2 · 每场 ≤1/)).toBeTruthy();

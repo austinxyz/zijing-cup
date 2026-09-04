@@ -58,6 +58,10 @@ export async function saveTeamEdits(
       is_wildcard?: boolean;
       representing_school?: string | null;
     }>;
+    // Directly-set participation UTRs. Written AFTER the current-UTR batch so an
+    // explicit value wins over any doubles→participation mirror that batch does:
+    // the admin typed this number for this season, it is not a stand-in.
+    seasonUtrs?: Array<{ player_id: number; value: string }>;
     schoolCount?: number | null;
   },
 ): Promise<void> {
@@ -65,6 +69,16 @@ export async function saveTeamEdits(
     await adminWrite("PUT", "/api/players/current-utr", {
       season_year: Number(season),
       updates: edits.utrs,
+    });
+  }
+  for (const s of edits.seasonUtrs ?? []) {
+    // source "admin_ruling", no status: a hand-set participation value, shown
+    // as 待定 on the roster — a stated number, not anybody's rating class. The
+    // endpoint 409s if the season is locked; that surfaces as a save error.
+    await adminWrite("PUT", `/api/players/${s.player_id}/season-utrs/${season}`, {
+      value: s.value,
+      source: "admin_ruling",
+      status: null,
     });
   }
   for (const m of edits.memberships ?? []) {

@@ -26,6 +26,7 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
   const [pending, startTransition] = useTransition();
 
   // Pending edits, keyed by player_id. Absent = unchanged.
+  const [matchUtr, setMatchUtr] = useState<Record<number, string>>({});
   const [doubles, setDoubles] = useState<Record<number, string>>({});
   const [doublesStatus, setDoublesStatus] = useState<Record<number, string>>({});
   const [profileId, setProfileId] = useState<Record<number, string>>({});
@@ -57,14 +58,27 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
     ...Object.keys(profileId).map(Number),
   ]);
 
+  // A participation-UTR edit only counts if it is non-empty and actually
+  // differs from what is shown: this endpoint replaces the value and cannot
+  // delete a row, so a blank is "leave alone", not "clear".
+  const seasonUtrDirtyIds = Object.keys(matchUtr)
+    .map(Number)
+    .filter((id) => {
+      const next = matchUtr[id].trim();
+      const p = players.find((x) => x.player_id === id);
+      return next !== "" && next !== (p?.match_utr ?? "");
+    });
+
   const dirtyCount =
     utrDirtyIds.size +
+    seasonUtrDirtyIds.length +
     Object.keys(borrowed).length +
     Object.keys(wildcard).length +
     Object.keys(schools).length +
     (schoolCountChanged ? 1 : 0);
 
   function reset() {
+    setMatchUtr({});
     setDoubles({}); setDoublesStatus({}); setProfileId({});
     setBorrowed({}); setWildcard({}); setSchools({});
     setSchoolCount(roster.school_count);
@@ -106,12 +120,17 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
         representing_school: b || w ? null : schoolOf(p) || null,
       };
     });
+    const seasonUtrs = seasonUtrDirtyIds.map((id) => ({
+      player_id: id,
+      value: matchUtr[id].trim(),
+    }));
     setError(null);
     startTransition(async () => {
       try {
         await saveTeamEdits(season, division, teamCode, roster.team.id, {
           utrs,
           memberships,
+          ...(seasonUtrs.length > 0 ? { seasonUtrs } : {}),
           ...(schoolCountChanged ? { schoolCount } : {}),
         });
         reset();
@@ -208,8 +227,30 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
                   <td className="border-b border-border/60 px-3 py-1.5">
                     {p.gender === "M" ? "♂" : p.gender === "F" ? "♀" : "—"}
                   </td>
-                  <td className="border-b border-border/60 px-3 py-1.5 font-mono text-[11px] text-muted-foreground">
-                    {p.match_utr ?? "—"}
+                  <td className="border-b border-border/60 px-3 py-1.5">
+                    {/* Editable participation UTR. Left untouched, the doubles→
+                        participation mirror (rated, unlocked) still governs it;
+                        an explicit value here wins. Locked → read-only: the lock
+                        freezes participation, and the endpoint 409s anyway. */}
+                    <input
+                      type="number"
+                      step="0.01"
+                      aria-label={`参赛 UTR ${displayName(p)}`}
+                      disabled={roster.locked}
+                      value={
+                        p.player_id in matchUtr
+                          ? matchUtr[p.player_id]
+                          : p.match_utr ?? ""
+                      }
+                      onChange={(e) =>
+                        setMatchUtr((m) => ({ ...m, [p.player_id]: e.target.value }))
+                      }
+                      className={`h-8 w-[68px] rounded-token border px-2 font-mono text-[12px] disabled:bg-surface-muted disabled:text-muted ${
+                        seasonUtrDirtyIds.includes(p.player_id)
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-surface"
+                      }`}
+                    />
                   </td>
                   <td className="border-b border-border/60 px-3 py-1.5">
                     <input
