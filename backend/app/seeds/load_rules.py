@@ -33,7 +33,13 @@ from typing import Iterable, Optional, Sequence
 from sqlmodel import Session, delete, select
 
 from app.db import engine
-from app.models import Division, DivisionEligibilityLimit, DivisionLine, Season
+from app.models import (
+    Division,
+    DivisionBorrowedLimit,
+    DivisionEligibilityLimit,
+    DivisionLine,
+    Season,
+)
 
 DEFAULT_SEED_DIR = Path(__file__).resolve().parents[2] / "seeds" / "rules"
 
@@ -67,6 +73,15 @@ class LimitSpec:
 
 
 @dataclass(frozen=True)
+class BorrowedSpec:
+    #: How many schools the 联队 team combines.
+    school_count: int
+    #: Roster cap (data-entry warning) and on-court cap (hard rule).
+    roster_cap: int
+    on_court_cap: int
+
+
+@dataclass(frozen=True)
 class DivisionSpec:
     season_year: int
     edition_name: Optional[str]
@@ -79,6 +94,7 @@ class DivisionSpec:
     mens_doubles_must_be_ordered: bool
     lines: tuple[LineSpec, ...]
     limits: tuple[LimitSpec, ...]
+    borrowed_limits: tuple[BorrowedSpec, ...] = ()
 
     @property
     def key(self) -> tuple[int, str]:
@@ -146,6 +162,20 @@ def parse_seed_file(path: Path) -> DivisionSpec:
         )
     )
 
+    borrowed_limits = tuple(
+        sorted(
+            (
+                BorrowedSpec(
+                    school_count=b["school_count"],
+                    roster_cap=b["roster_cap"],
+                    on_court_cap=b["on_court_cap"],
+                )
+                for b in data.get("borrowed_limits", [])
+            ),
+            key=lambda b: b.school_count,
+        )
+    )
+
     return DivisionSpec(
         season_year=season["year"],
         edition_name=season.get("edition_name"),
@@ -158,6 +188,7 @@ def parse_seed_file(path: Path) -> DivisionSpec:
         mens_doubles_must_be_ordered=division["mens_doubles_must_be_ordered"],
         lines=lines,
         limits=limits,
+        borrowed_limits=borrowed_limits,
     )
 
 
@@ -258,6 +289,24 @@ def read_division(session: Session, year: int, code: str) -> Optional[DivisionSp
         )
     )
 
+    borrowed_limits = tuple(
+        sorted(
+            (
+                BorrowedSpec(
+                    school_count=b.school_count,
+                    roster_cap=b.roster_cap,
+                    on_court_cap=b.on_court_cap,
+                )
+                for b in session.exec(
+                    select(DivisionBorrowedLimit).where(
+                        DivisionBorrowedLimit.division_id == division.id
+                    )
+                ).all()
+            ),
+            key=lambda b: b.school_count,
+        )
+    )
+
     return DivisionSpec(
         season_year=division.season_year,
         edition_name=season.edition_name if season else None,
@@ -270,6 +319,7 @@ def read_division(session: Session, year: int, code: str) -> Optional[DivisionSp
         mens_doubles_must_be_ordered=division.mens_doubles_must_be_ordered,
         lines=lines,
         limits=limits,
+        borrowed_limits=borrowed_limits,
     )
 
 
@@ -438,6 +488,11 @@ def _write_division(session: Session, spec: DivisionSpec) -> None:
             DivisionEligibilityLimit.division_id == division.id
         )
     )
+    session.execute(
+        delete(DivisionBorrowedLimit).where(
+            DivisionBorrowedLimit.division_id == division.id
+        )
+    )
     session.flush()
 
     for line in spec.lines:
@@ -464,6 +519,16 @@ def _write_division(session: Session, spec: DivisionSpec) -> None:
                     if limit.restricted_to_lines is not None
                     else None
                 ),
+            )
+        )
+
+    for borrowed in spec.borrowed_limits:
+        session.add(
+            DivisionBorrowedLimit(
+                division_id=division.id,
+                school_count=borrowed.school_count,
+                roster_cap=borrowed.roster_cap,
+                on_court_cap=borrowed.on_court_cap,
             )
         )
 

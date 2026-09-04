@@ -12,6 +12,7 @@ from app.models.roster import RosterEntry, Team
 from app.models.saved import SavedLineup
 from app.models.rules import (
     Division,
+    DivisionBorrowedLimit,
     DivisionEligibilityLimit,
     DivisionLine,
     Season,
@@ -20,6 +21,7 @@ from app.models.rules import (
 __all__ = [
     "CURRENT_UTR_STATUSES",
     "Division",
+    "DivisionBorrowedLimit",
     "DivisionEligibilityLimit",
     "DivisionLine",
     "LineupFilterPreset",

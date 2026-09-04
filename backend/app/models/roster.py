@@ -47,6 +47,12 @@ class Team(SQLModel, table=True):
     # importer must leave it exactly as it found it.
     display_name: Optional[str] = None
 
+    # How many schools this (联队) team combines, set by hand by an admin. Drives
+    # the per-match borrowed-player ceiling (division_borrowed_limits). None
+    # means nobody has set it — NOT 0 schools — and while it is None the lineup
+    # engine does not enforce the borrowed limit (unknown is not zero).
+    school_count: Optional[int] = None
+
 
 class RosterEntry(SQLModel, table=True):
     __tablename__ = "roster_entries"

@@ -6,11 +6,11 @@
 - **Code**: D1 新 migration（`teams.school_count int null` + 表 `division_borrowed_limits`，`unique(division_id, school_count)`；文件以 `set search_path to zijing_cup, public;` 开头）；seed 2026 金+银 `(1,3,2)(2,2,1)(3,0,0)(4,0,0)`；本地打 127.0.0.1（断言连接串含 127.0.0.1），远程 Dashboard 手工、禁 CLI push。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/team-roster-editing/contracts/group-1.md; confirm 三字段非空
-- [ ] 1.1 RED — pytest：加载某 division 的外援上限规则 → 得到 school_count→(roster_cap,on_court_cap) 映射（2026 银 1→(3,2) 等）
-- [ ] 1.2 GREEN — 新 migration（teams.school_count + division_borrowed_limits）+ 模型 + seed；本地打库
-- [ ] 1.3 RED — pytest：Team 带 school_count，可空默认 null（非 0）
-- [ ] 1.4 GREEN — Team.school_count 字段 + 取队伍时返回
+- [x] 1.0 CONTRACT — write openspec/changes/team-roster-editing/contracts/group-1.md; confirm 三字段非空
+- [x] 1.1 RED — pytest：加载某 division 的外援上限规则 → 得到 school_count→(roster_cap,on_court_cap) 映射（2026 银 1→(3,2) 等）
+- [x] 1.2 GREEN — 新 migration（teams.school_count + division_borrowed_limits）+ 模型 + seed；本地打库
+- [x] 1.3 RED — pytest：Team 带 school_count，可空默认 null（非 0）
+- [x] 1.4 GREEN — Team.school_count 字段 + 取队伍时返回
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3, plateau <5pt escalate)
 
 ## 2. 后端写入：外援/外卡/代表学校、学校数、批量双打 UTR

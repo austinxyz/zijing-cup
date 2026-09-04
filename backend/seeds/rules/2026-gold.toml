@@ -90,3 +90,25 @@ max_players = 3
 gender = "F"
 utr_above = "7.75"
 max_players = 1
+
+# 外援上场限制（联队学校数 → 名单上限 / 每场上场上限）。2026 规则：
+# 1 校可有 3 外援、每场最多上 2；2 校 2 外援、每场 1；3 或 4 校不得有外援。
+[[borrowed_limits]]
+school_count = 1
+roster_cap = 3
+on_court_cap = 2
+
+[[borrowed_limits]]
+school_count = 2
+roster_cap = 2
+on_court_cap = 1
+
+[[borrowed_limits]]
+school_count = 3
+roster_cap = 0
+on_court_cap = 0
+
+[[borrowed_limits]]
+school_count = 4
+roster_cap = 0
+on_court_cap = 0

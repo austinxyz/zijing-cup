@@ -87,3 +87,27 @@ class DivisionEligibilityLimit(SQLModel, table=True):
     restricted_to_lines: Optional[list[str]] = Field(
         default=None, sa_column=Column(ARRAY(Text()), nullable=True)
     )
+
+
+class DivisionBorrowedLimit(SQLModel, table=True):
+    """Per-match borrowed-player ceiling, keyed on how many schools the team
+    combines. One row per (division, school_count): the roster cap (how many
+    borrowed players may be on the team) and the on-court cap (how many may
+    play in a single match). Data-driven and per-division so the rule can
+    change year to year without a code change — the engine reads it, the seed
+    files own the values."""
+
+    __tablename__ = "division_borrowed_limits"
+    __table_args__ = {"schema": SCHEMA}
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    division_id: int = Field(foreign_key=f"{SCHEMA}.divisions.id")
+
+    #: How many schools the (联队) team combines. 1..4 in the current rules.
+    school_count: int
+    #: Most borrowed players allowed on the roster for a team of this many
+    #: schools. Data-entry validation only (warn, not block).
+    roster_cap: int
+    #: Most borrowed players allowed on court in one match — the hard rule the
+    #: lineup engine enforces.
+    on_court_cap: int
