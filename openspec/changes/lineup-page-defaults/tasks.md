@@ -15,7 +15,7 @@
 - [x] 1.6 GREEN — 折叠组件 + 右栏两段组装（上 SavedLineups 可折叠、下候选/空态）
 - [x] 1.7 MOCK — open docs/superpowers/specs/mocks/2026-09-03-lineup-page-defaults-mocks.html（① 两栏布局：左控件、右上折叠已存阵容、右下候选默认空）；note 空态串「点搜索阵容计算」与折叠交互
 - [x] 1.8 VISUAL DIFF — bring up dev stack (`npm run dev --prefix frontend`)；无 go 进排阵页对照 mock ①（左控件/右上已存阵容可折叠/右下空态、无候选请求）；桌面 + 375；量对比度 ≥4.5、无横向溢出、44px；fix drift
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 统一「每条线 3 行块」（候选 + 已存阵容，性别符号 ♂/♀ + UTR）
 

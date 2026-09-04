@@ -74,6 +74,13 @@
   --color-warning-surface: #fbf5e6;
   --color-warning-border: #ecd9a4;
 
+  /* Gender marks (♂/♀) shown next to every player in a line block. Small
+     symbols, so they must clear 4.5:1 on the surfaces they sit on — white
+     cards and the muted strip inside a block. Measured, not eyeballed:
+     #1f5fd0 (♂) = 5.06:1 on white; #ab237f (♀) = 5.10:1 on white. */
+  --color-male: #1f5fd0;
+  --color-female: #ab237f;
+
   /* Sidebar is a dark page-chrome panel, not a reusable component token —
      kept separate from the surface/bg tokens above. */
   --color-sidebar: #1c1b18;
@@ -118,6 +125,8 @@
   --color-success-foreground: var(--color-success-fg);
   --color-success-surface: var(--color-success-surface);
   --color-success-border: var(--color-success-border);
+  --color-male: var(--color-male);
+  --color-female: var(--color-female);
 
   --color-warning: var(--color-warning);
   --color-warning-foreground: var(--color-warning-fg);
