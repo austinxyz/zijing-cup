@@ -80,6 +80,18 @@ class Infeasibility:
     reasons: list[InfeasibilityReason]
 
 
+@dataclass(frozen=True)
+class BorrowedOverLimit:
+    """The team is infeasible not on any one line but because every lineup it
+    can field puts more borrowed players on court than the per-match cap allows.
+    A lineup-wide fact, so it is its own top-level state rather than a per-line
+    reason: names the borrowed players in the offending lineup, how many were on
+    court, and the cap they exceeded."""
+    names: list[str]
+    on_court: int
+    cap: int
+
+
 @dataclass
 class SearchResult:
     candidates: list[LineupCandidate] = field(default_factory=list)
@@ -106,10 +118,15 @@ class SearchResult:
     #: True when the search stopped at its node budget, so the results are a
     #: sample rather than the whole answer.
     truncated: bool = False
-    #: Always False. The per-match ceiling on borrowed players depends on how
-    #: many schools a team combines, which is not in the system — so this is
-    #: stated rather than left silent, because silence reads as "checked".
+    #: Whether the per-match borrowed-player ceiling was enforced. True when the
+    #: team's school_count is set (so a cap is known); False when it is unset —
+    #: unknown is not zero, and silence would read as "checked". Stated so the UI
+    #: can still say the limit was not applied.
     borrowed_players_checked: bool = False
+    #: Set only when the borrowed cap is what makes the team infeasible: no line
+    #: is empty, but every lineup exceeds the on-court borrowed ceiling. Names
+    #: the borrowed players in one such lineup and the cap they broke.
+    borrowed_over_limit: Optional["BorrowedOverLimit"] = None
     #: Locks the rules do not permit. A lock bypasses the per-line filter —
     #: that is what makes it a lock — so nothing downstream would catch it, and
     #: an unchecked one either yields a "legal" lineup that is not or an empty
@@ -544,6 +561,7 @@ def search_lineups(
     keep: int = 20,
     node_budget: int = 5_000_000,
     pins: Optional[dict[str, Candidate]] = None,
+    borrowed_cap: Optional[int] = None,
 ) -> SearchResult:
     """Every legal lineup worth keeping, strongest first.
 
@@ -653,11 +671,29 @@ def search_lineups(
     best_total: Optional[Decimal] = None
     best_squads: set[frozenset[str]] = set()
     count_exact = True
+    # One example of a lineup dropped solely for exceeding the borrowed cap, so
+    # that if nothing survives we can say the borrowed limit is why.
+    borrowed_example: Optional[tuple[list[str], int]] = None
 
     def recurse(depth: int, used: frozenset[str], chosen: dict[str, Pair],
                 total: Decimal, spent: Decimal) -> None:
         nonlocal incumbent, best_total, count_exact, nodes, truncated
+        nonlocal borrowed_example
         if depth == len(order):
+            if borrowed_cap is not None:
+                borrowed_players = [
+                    p for pair in chosen.values() for p in pair if p.borrowed
+                ]
+                if len(borrowed_players) > borrowed_cap:
+                    # A full, otherwise-legal lineup that only the borrowed cap
+                    # rejects. Remember one so an all-empty result can explain
+                    # itself; do not keep it.
+                    if borrowed_example is None:
+                        borrowed_example = (
+                            [_display_name(p.name) for p in borrowed_players],
+                            len(borrowed_players),
+                        )
+                    return
             candidate = LineupCandidate(total=total, buffer_spent=spent,
                                         lines=dict(chosen))
             if best_total is None or total > best_total:
@@ -738,6 +774,20 @@ def search_lineups(
     result.ceiling = best_total
     result.squads_at_ceiling = len(best_squads)
     result.squads_at_ceiling_exact = count_exact
+    result.borrowed_players_checked = borrowed_cap is not None
+    # The borrowed cap is the reason only when it is what emptied the list: no
+    # line was infeasible (we got past that), nothing survived, the search was
+    # not truncated, and at least one lineup was dropped for the cap.
+    if (
+        borrowed_cap is not None
+        and not deduped
+        and not truncated
+        and borrowed_example is not None
+    ):
+        names, on_court = borrowed_example
+        result.borrowed_over_limit = BorrowedOverLimit(
+            names=names, on_court=on_court, cap=borrowed_cap
+        )
     return result
 
 

@@ -42,13 +42,13 @@
 - **Code**: D2 `load_roster` 把 membership.borrowed 读进 `Candidate`（一处，候选与已存阵容都经它）；搜索/过滤阶段统计上场外援数 vs on_court_cap；null→跳过、`borrowed_players_checked` 随之；`diagnose_line`/infeasibility 加 `borrowed_over_limit`，点名用 `_display_name`（避免 tab 拼接）。
 - **Threshold**: 80
 
-- [ ] 3.0 CONTRACT — write openspec/changes/team-roster-editing/contracts/group-3.md
-- [ ] 3.1 RED — pytest：Candidate 带 borrowed；上场外援数超 on_court_cap 的阵容被排除
-- [ ] 3.2 GREEN — load_roster 带 borrowed + 上场外援校验
-- [ ] 3.3 RED — pytest：school_count 未设 → 不拦、borrowed_players_checked=false；已设→true
-- [ ] 3.4 GREEN — null 跳过 + borrowed_players_checked 落地
-- [ ] 3.5 RED — pytest：外援超限无解 → infeasibility 原因 borrowed_over_limit 点名外援
-- [ ] 3.6 GREEN — diagnose 加 borrowed_over_limit
+- [x] 3.0 CONTRACT — write openspec/changes/team-roster-editing/contracts/group-3.md
+- [x] 3.1 RED — pytest：Candidate 带 borrowed；上场外援数超 on_court_cap 的阵容被排除
+- [x] 3.2 GREEN — load_roster 带 borrowed + 上场外援校验
+- [x] 3.3 RED — pytest：school_count 未设 → 不拦、borrowed_players_checked=false；已设→true
+- [x] 3.4 GREEN — null 跳过 + borrowed_players_checked 落地
+- [x] 3.5 RED — pytest：外援超限无解 → infeasibility 原因 borrowed_over_limit 点名外援
+- [x] 3.6 GREEN — diagnose 加 borrowed_over_limit
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS; <80 FIX+retry
 
 ## 4. 队伍页编辑模式 + 批量双打 UTR + 外援/外卡/学校/学校数

@@ -86,6 +86,19 @@ def test_gold_2026_borrowed_limits_seeded(session, seed_dir):
     }
 
 
+def test_on_court_cap_loader_reads_seeded_rule(session, seed_dir):
+    from app.lineups.query import _borrowed_on_court_cap
+
+    load_rules(session, seed_dir)
+    # 2026 silver: 1 school → on-court 2, 2 schools → 1, 3 schools → 0.
+    assert _borrowed_on_court_cap(session, 2026, "silver", 1) == 2
+    assert _borrowed_on_court_cap(session, 2026, "silver", 2) == 1
+    assert _borrowed_on_court_cap(session, 2026, "silver", 3) == 0
+    # Unset school_count → None (do not enforce); unknown count → None.
+    assert _borrowed_on_court_cap(session, 2026, "silver", None) is None
+    assert _borrowed_on_court_cap(session, 2026, "silver", 9) is None
+
+
 def test_check_detects_borrowed_limit_drift(session, seed_dir):
     # Drift detection must inspect borrowed_limits, else --check reports clean
     # while an import would write (the exact failure --check exists to prevent).

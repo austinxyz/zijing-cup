@@ -21,6 +21,7 @@ from app.lineups.rules import Candidate, EligibilityLimit, LineRule, RuleSet
 from app.lineups.search import SearchResult, search_lineups
 from app.models import (
     Division,
+    DivisionBorrowedLimit,
     DivisionEligibilityLimit,
     DivisionLine,
     Player,
@@ -117,6 +118,13 @@ class InfeasibilityOut(BaseModel):
     reasons: list[InfeasibilityReasonOut]
 
 
+class BorrowedOverLimitOut(BaseModel):
+    #: The borrowed players on court in one over-the-cap lineup, and the numbers.
+    names: list[str]
+    on_court: int
+    cap: int
+
+
 class LineupSearchOut(BaseModel):
     candidates: list[CandidateOut]
     ceiling: Optional[Decimal] = None
@@ -147,10 +155,15 @@ class LineupSearchOut(BaseModel):
 
     truncated: bool = False
 
-    #: Always false. The per-match ceiling on borrowed players depends on how
-    #: many schools a team combines, which this system does not know; silence
-    #: would read as "checked".
+    #: Whether the per-match borrowed ceiling was enforced. True when the team's
+    #: school_count is set (a cap is known); false when unset — silence would
+    #: read as "checked".
     borrowed_players_checked: bool = False
+
+    #: Set only when the borrowed cap is what makes the team infeasible: no line
+    #: is empty, but every lineup exceeds the on-court borrowed ceiling. Names
+    #: the borrowed players in one such lineup and the cap they broke.
+    borrowed_over_limit: Optional[BorrowedOverLimitOut] = None
 
     invalid_locks: list[ViolationOut] = []
 
@@ -237,6 +250,10 @@ class LoadedRoster:
     #: has no business carrying provenance through the search.
     provenance: dict[str, ResolvedUtr] = field(default_factory=dict)
 
+    #: How many schools this team combines, or None if unset. Drives the
+    #: per-match borrowed cap; None means the cap is not enforced.
+    school_count: Optional[int] = None
+
 
 def load_roster(
     session: Session, year: int, code: str, team_code: str
@@ -280,7 +297,7 @@ def load_roster(
     candidates: list[Candidate] = []
     provenance: dict[str, ResolvedUtr] = {}
     missing = estimated = unresolved = 0
-    for _membership, player in memberships:
+    for membership, player in memberships:
         resolved = resolve_match_utr(
             season_utrs=seasons_by_player.get(player.id, []),
             current_doubles=player.doubles_utr,
@@ -304,6 +321,7 @@ def load_roster(
                 name=f"{player.last_name}	{player.first_name}",
                 gender=player.gender,
                 match_utr=resolved.value,
+                borrowed=bool(membership.is_borrowed_player),
             )
         )
 
@@ -313,6 +331,7 @@ def load_roster(
         estimated_count=estimated,
         unresolved_count=unresolved,
         provenance=provenance,
+        school_count=team.school_count,
     )
 
 
@@ -407,6 +426,15 @@ def to_output(
         placements=result.placements,
         truncated=result.truncated,
         borrowed_players_checked=result.borrowed_players_checked,
+        borrowed_over_limit=(
+            BorrowedOverLimitOut(
+                names=result.borrowed_over_limit.names,
+                on_court=result.borrowed_over_limit.on_court,
+                cap=result.borrowed_over_limit.cap,
+            )
+            if result.borrowed_over_limit is not None
+            else None
+        ),
         invalid_locks=[
             ViolationOut(code=v.code, line=v.line, amount=v.amount, message=v.message)
             for v in result.invalid_locks
@@ -419,6 +447,30 @@ def to_output(
         estimated_count=loaded.estimated_count,
         unresolved_count=loaded.unresolved_count,
     )
+
+
+def _borrowed_on_court_cap(
+    session: Session, year: int, code: str, school_count: Optional[int]
+) -> Optional[int]:
+    """The per-match borrowed ceiling for a team of `school_count` schools in
+    this division, or None when it cannot be determined (school_count unset, or
+    no rule row for that count) — None means "do not enforce"."""
+    if school_count is None:
+        return None
+    division = session.exec(
+        select(Division).where(
+            Division.season_year == year, Division.code == code
+        )
+    ).one_or_none()
+    if division is None:
+        return None
+    row = session.exec(
+        select(DivisionBorrowedLimit).where(
+            DivisionBorrowedLimit.division_id == division.id,
+            DivisionBorrowedLimit.school_count == school_count,
+        )
+    ).one_or_none()
+    return row.on_court_cap if row is not None else None
 
 
 def search_team_lineups(
@@ -439,6 +491,7 @@ def search_team_lineups(
     if loaded is None:
         return None
     roster = loaded.candidates
+    borrowed_cap = _borrowed_on_court_cap(session, year, code, loaded.school_count)
 
     line_codes = {line.code for line in rules.lines}
     by_key = {player.key: player for player in roster}
@@ -480,6 +533,6 @@ def search_team_lineups(
 
     result = search_lineups(
         rules, roster, locks=resolved, excluded=excluded or (), keep=keep,
-        pins=resolved_pins,
+        pins=resolved_pins, borrowed_cap=borrowed_cap,
     )
     return to_output(rules, loaded, result)

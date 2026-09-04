@@ -26,6 +26,10 @@ class Candidate:
     name: str
     gender: Optional[str]
     match_utr: Decimal
+    #: Whether this player is a borrowed ("外援") player. The per-match on-court
+    #: borrowed ceiling counts these across the ten on court. Default False so
+    #: existing call sites (and rosters with no borrowed data) are unaffected.
+    borrowed: bool = False
 
 
 @dataclass(frozen=True)
