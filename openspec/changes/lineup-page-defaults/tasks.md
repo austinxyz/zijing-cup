@@ -36,7 +36,7 @@
 - [x] 2.8 GREEN — 调 ♂/♀ token 值至达标
 - [x] 2.9 MOCK — open mock（① 已存阵容三行块、③ 候选三行块）；note ♂ 蓝/♀ 粉、行1「和 X · buf Y」、超 cap 标红
 - [x] 2.10 VISUAL DIFF — dev stack；造已存阵容 + 搜出候选，对照 mock 三行块（五块横排、♂/♀、UTR、超 cap）；桌面 + 375；量对比度 ≥4.5、无横向溢出；fix drift
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 3. 载入阵型：预填现有控件、不即搜、可保存（覆盖/另存）
 
@@ -46,13 +46,13 @@
 - **Code**: D4 载入复用 `buildLoadHref` 写控件参数**不加 `go`**（`go` 门控后写参不再自动搜）；「搜索阵容」= 提交控件 + `go=1`；保存复用 `savePreset`（覆盖）+ 新增「另存」（同 action、不同名），入口在控件区、不要求候选存在。
 - **Threshold**: 70
 
-- [ ] 3.0 CONTRACT — write openspec/changes/lineup-page-defaults/contracts/group-3.md
-- [ ] 3.1 RED — vitest：载入一套阵型 → 生成的 URL/参数含该套锁定/排除但**不含 `go`**
-- [ ] 3.2 GREEN — 载入写草稿参数（无 go）；确认门控后不自动搜
-- [ ] 3.3 RED — vitest：载入后改控件并保存 → 调 savePreset（覆盖）；另存 → 以新名调用；均不要求候选存在
-- [ ] 3.4 GREEN — 控件区保存/另存入口（admin 门控表层）；绑定 season/division/team
-- [ ] 3.5 MOCK — open mock（② 载入=现有控件预填 + 搜索/保存/另存）；note 草稿提示串、三态（锁定/pin/引擎）
-- [ ] 3.6 VISUAL DIFF — dev stack；admin 载入一套阵型 → 控件已填、无候选、URL 无 go；改一处→保存/另存；桌面 + 375；量对比度、44px、无溢出；fix drift
+- [x] 3.0 CONTRACT — write openspec/changes/lineup-page-defaults/contracts/group-3.md
+- [x] 3.1 RED — vitest：载入一套阵型 → 生成的 URL/参数含该套锁定/排除但**不含 `go`**
+- [x] 3.2 GREEN — 载入写草稿参数（无 go）；确认门控后不自动搜
+- [x] 3.3 RED — vitest：载入后改控件并保存 → 调 savePreset（覆盖）；另存 → 以新名调用；均不要求候选存在
+- [x] 3.4 GREEN — 控件区保存/另存入口（admin 门控表层）；绑定 season/division/team
+- [x] 3.5 MOCK — open mock（② 载入=现有控件预填 + 搜索/保存/另存）；note 草稿提示串、三态（锁定/pin/引擎）
+- [x] 3.6 VISUAL DIFF — dev stack；admin 载入一套阵型 → 控件已填、无候选、URL 无 go；改一处→保存/另存；桌面 + 375；量对比度、44px、无溢出；fix drift
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 4. 就地解锁编辑模式（输 admin 密码，不跳 /login）
