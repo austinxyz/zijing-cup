@@ -52,6 +52,7 @@ describe("SavedLineups per-line detail", () => {
           D1: { total: "12.80", cap: "13.00", over: "0" },
           D2: { total: "13.40", cap: "12.00", over: "1.40" },
         },
+        total: "26.20",
         buffer_spent: "1.40",
         buffer_total: "0.50",
       }),
@@ -66,6 +67,10 @@ describe("SavedLineups per-line detail", () => {
     expect(screen.getByText(/超\s*1\.40/)).toBeTruthy();
     // team buffer usage
     expect(screen.getByText(/1\.40\s*\/\s*0\.50/)).toBeTruthy();
+    // whole-lineup total beside the name, like a candidate card
+    expect(screen.getByText(/总和\s*26\.20/)).toBeTruthy();
+    // names read "姓 名" with a space (shared with candidate cards)
+    expect(screen.getByText("南 甲")).toBeTruthy();
   });
 });
 

@@ -11,6 +11,7 @@ returned. No constraint or search logic lives here.
 
 import re
 from datetime import datetime
+from decimal import Decimal
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -311,6 +312,11 @@ class SavedLineupOut(BaseModel):
     #: gone (the lineup cannot be totalled). Per-player UTR and gender are not
     #: repeated here — the page already holds the roster and reads them there.
     line_totals: dict[str, LineTotalOut] = {}
+    #: The whole lineup's participation-UTR sum (the five line totals added up),
+    #: for display beside the name exactly as a candidate shows its total. Null
+    #: when a player is gone — the lineup cannot be totalled. Summed here in
+    #: Decimal so the card never adds display strings and drifts off the backend.
+    total: str | None = None
     #: buffer the current overages spend, and the whole-team allowance.
     buffer_spent: str = "0"
     buffer_total: str = "0"
@@ -319,6 +325,11 @@ class SavedLineupOut(BaseModel):
 def _serialize_saved(status, saved, rules) -> SavedLineupOut:
     """One place both the list and single-item paths build the response, so a
     new field is never added to one and forgotten in the other."""
+    total = (
+        str(sum((lt.total for lt in status.line_totals.values()), Decimal(0)))
+        if status.line_totals
+        else None
+    )
     return SavedLineupOut(
         id=saved.id, name=saved.name, assignment=saved.assignment,
         utr_snapshot=saved.utr_snapshot, status=status.status,
@@ -331,6 +342,7 @@ def _serialize_saved(status, saved, rules) -> SavedLineupOut:
             line: LineTotalOut(total=lt.total, cap=lt.cap, over=lt.over)
             for line, lt in status.line_totals.items()
         },
+        total=total,
         buffer_spent=str(status.buffer_spent),
         buffer_total=str(rules.buffer_total) if rules is not None else "0",
     )

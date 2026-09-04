@@ -473,6 +473,11 @@ export interface SavedLineup {
    *  lineup (it cannot be totalled). Per-player UTR/gender are read from the
    *  page's roster, not repeated here. */
   line_totals?: Record<string, LineTotal>;
+  /** The whole lineup's participation-UTR sum (the five line totals added up),
+   *  shown beside the name like a candidate's total. Null when a player is gone
+   *  (it cannot be totalled). Summed server-side in Decimal — never add the
+   *  display strings here. */
+  total?: string | null;
   /** How much team buffer the current overages spend, and the whole allowance;
    *  both strings (Decimal end to end). */
   buffer_spent?: string;

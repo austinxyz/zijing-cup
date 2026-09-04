@@ -69,8 +69,10 @@ export function SavedLineups({
   const canUseEditor = canEdit && Boolean(validateAction && saveBackAction);
 
   function displayName(key: string): string {
+    // "姓 名" with a space, same as the candidate cards (playerName), so saved
+    // and candidate read identically.
     const p = byKey.get(key);
-    return p ? `${p.last_name}${p.first_name}` : key;
+    return p ? `${p.last_name} ${p.first_name}` : key;
   }
 
   /** A seat for the shared LineBlock: name + gender + current UTR from the
@@ -109,9 +111,16 @@ export function SavedLineups({
             className="flex flex-col gap-2.5 rounded-token border border-border bg-surface px-4 py-3.5"
           >
             <div className="flex items-center gap-2.5">
-              <span className="min-w-0 flex-1 text-[14px] font-semibold text-foreground">
+              <span className="min-w-0 flex-none text-[14px] font-semibold text-foreground">
                 {item.name}
               </span>
+              {item.total != null ? (
+                <span className="flex-1 font-mono text-[13px] text-muted-foreground">
+                  总和 {money(item.total)}
+                </span>
+              ) : (
+                <span className="flex-1" />
+              )}
               <span
                 className={`flex-none rounded border px-2 py-0.5 text-[11px] font-medium ${badge.className}`}
               >
