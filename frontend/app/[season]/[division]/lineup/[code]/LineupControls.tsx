@@ -47,7 +47,10 @@ interface LineupControlsProps {
   presets?: LineupFilterPreset[];
   canEdit?: boolean;
   basePath?: string;
-  saveAction?: (name: string) => Promise<void>;
+  saveAction?: (
+    constraints: LineupFilterPreset["constraints"],
+    name: string,
+  ) => Promise<void>;
   deleteAction?: (id: number) => Promise<void>;
 }
 

@@ -163,13 +163,11 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   const basePath = `/${season}/${division}/lineup/${encodeURIComponent(code)}`;
   // Bound server actions: the client supplies only the name / id. The current
   // locks and exclusions travel with the save, captured here on the server.
-  const saveAction = savePreset.bind(null, season, division, code, {
-    locks: constraints.locks,
-    // Pins were dropped here before, so a draft with only single-pins (no full
-    // lock) saved as an empty preset — nothing to load back. Carry them.
-    pins: constraints.pins,
-    excluded: constraints.excluded,
-  });
+  // Bound to (season,division,team) only — the constraints are read from the
+  // LIVE controls at save time, not the URL, so edits made after loading a
+  // preset (and before submitting a search) are captured. Binding the URL
+  // constraints here would persist the state as it was loaded and drop the edits.
+  const saveAction = savePreset.bind(null, season, division, code);
   const deleteAction = deletePreset.bind(null, season, division, code);
   // Saving a specific candidate: the client sends only the name + assignment;
   // (season,division,team) ride the binding, the UTR snapshot is built on the

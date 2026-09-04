@@ -10,6 +10,7 @@ import {
   staleLockRefs,
   type StaleLockRef,
 } from "./presetLoad";
+import { constraintsFromForm, hasLiveConstraints } from "./liveConstraints";
 
 const LINE_LABEL: Record<string, string> = {
   mens_doubles: "男双",
@@ -35,7 +36,10 @@ interface PresetsProps {
   basePath: string;
   /** Server actions, bound to (season,division,team) by the page. Absent in
    *  isolation (tests); the buttons still render. */
-  saveAction?: (name: string) => Promise<void>;
+  saveAction?: (
+    constraints: LineupFilterPreset["constraints"],
+    name: string,
+  ) => Promise<void>;
   deleteAction?: (id: number) => Promise<void>;
 }
 
@@ -51,6 +55,7 @@ export function Presets({
 }: PresetsProps) {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [saveHint, setSaveHint] = useState<string | null>(null);
   //: The preset whose load was refused because a locked player is gone, and
   //: the dead references to show. Cleared when another action runs.
   const [stale, setStale] = useState<{ preset: LineupFilterPreset; refs: StaleLockRef[] } | null>(null);
@@ -190,18 +195,34 @@ export function Presets({
           />
           <button
             type="button"
-            disabled={!hasConstraints || name.trim().length === 0}
-            onClick={() => {
+            disabled={name.trim().length === 0}
+            onClick={(e) => {
               if (!saveAction) return;
               const trimmed = name.trim();
-              if (!trimmed || !hasConstraints) return;
-              void saveAction(trimmed).then(() => setName(""));
+              if (!trimmed) return;
+              // Read the LIVE controls, not the URL: edits made after loading a
+              // preset only reach the URL on search-submit, so a URL-based save
+              // would drop them.
+              const form = e.currentTarget.closest("form");
+              if (!form) return;
+              const live = constraintsFromForm(form, lines);
+              if (!hasLiveConstraints(live)) {
+                setSaveHint("先设置锁定、pin 或排除，再存为阵型。");
+                return;
+              }
+              setSaveHint(null);
+              void saveAction(live, trimmed).then(() => setName(""));
             }}
             className="h-9 flex-none rounded-token border border-border bg-surface-muted px-3 text-[12px] text-foreground disabled:opacity-50"
           >
             存为阵型
           </button>
         </div>
+      ) : null}
+      {saveHint ? (
+        <p role="alert" className="mt-1.5 text-[11.5px] text-warning">
+          {saveHint}
+        </p>
       ) : null}
     </section>
   );
