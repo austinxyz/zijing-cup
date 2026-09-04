@@ -17,7 +17,7 @@
   .cap b { color:#1a1917; }
   .row { display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; }
 
-  .frame { background:#fff; border:1px solid #e4e0d8; border-radius:10px; overflow:hidden; width:860px; max-width:100%; }
+  .frame { background:#fff; border:1px solid #e4e0d8; border-radius:10px; overflow:hidden; width:720px; max-width:100%; }
   .frame.phone { width:375px; }
   .bar { display:flex; align-items:center; gap:10px; border-bottom:1px solid #e4e0d8; background:#fff; padding:10px 14px; }
   .bar .code { font-size:15px; font-weight:600; }
@@ -25,18 +25,10 @@
   .bar .spacer { flex:1; }
   .btn { border-radius:7px; font-size:12.5px; padding:8px 12px; border:1px solid #e4e0d8; background:#f2efe9; color:#1a1917; cursor:pointer; min-height:36px; }
   .btn-p { background:#9c3417; color:#fff; border-color:#9c3417; }
+  .btn-d { border-color:#f0cfc9; background:#fbf0ee; color:#b3261e; }
   .btn-lg { min-height:44px; padding:10px 16px; font-weight:600; }
   .body { padding:14px; display:flex; flex-direction:column; gap:12px; }
 
-  /* controls strip (draft) */
-  .controls { border:1px solid #e4e0d8; border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; background:#faf9f6; }
-  .controls .hd { font-size:12.5px; font-weight:600; }
-  .lockrow { display:flex; align-items:center; gap:8px; }
-  .lockrow .lc { width:30px; font-family:ui-monospace,Consolas,monospace; font-size:11px; color:#6b665d; }
-  .pill { flex:1; height:32px; border:1px solid #e4e0d8; border-radius:6px; background:#fff; display:flex; align-items:center; padding:0 9px; font-size:12px; color:#1a1917; }
-  .draft-note { font-size:12px; color:#8a6508; background:#fbf5e6; border:1px solid #ecd9a4; border-radius:6px; padding:7px 10px; }
-
-  /* saved cards (four states) */
   .savedhd { font-size:13px; font-weight:600; }
   .card { border:1px solid #e4e0d8; border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; }
   .card .top { display:flex; align-items:center; gap:8px; }
@@ -46,27 +38,32 @@
   .b-moved { color:#706a61; background:#f2efe9; border-color:#e4e0d8; }
   .b-bad { color:#b3261e; background:#fbf0ee; border-color:#f0cfc9; }
   .b-gone { color:#8a6508; background:#fbf5e6; border-color:#ecd9a4; }
-  .lines { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
-  .ln { border:1px solid #e4e0d8; border-radius:6px; padding:5px 7px; display:flex; flex-direction:column; gap:2px; min-width:0; }
-  .ln.bad { border-color:#f0cfc9; background:#fbf0ee; }
-  .ln .lc { font-family:ui-monospace,Consolas,monospace; font-size:9px; color:#6b665d; display:flex; justify-content:space-between; }
-  .ln .pl { font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* 每条线 3 行块：header + 两名队员一人一行 */
+  .blocks { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .blk { border:1px solid #e4e0d8; border-radius:6px; overflow:hidden; }
+  .blk .h { display:flex; justify-content:space-between; align-items:baseline; background:#f2efe9; padding:4px 9px; font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#6b665d; }
+  .blk .h .sum { color:#1a1917; }
+  .blk .h .buf { }
+  .blk .h .over { color:#b3261e; }
+  .blk .p { display:flex; align-items:baseline; gap:8px; padding:5px 9px; font-size:12.5px; border-top:1px solid #efece6; }
+  .blk .p .g { font-size:12px; color:#6b665d; width:14px; text-align:center; }
+  .blk .p .who { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .blk .p .u { font-family:ui-monospace,Consolas,monospace; font-size:11px; color:#6b665d; }
+  .blk.bad .h { background:#fbf0ee; color:#b3261e; }
+  .m { color:#2f6df6; } /* ♂ */
+  .f { color:#c2379b; } /* ♀ */
+  .teambuf { font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#6b665d; }
+
   .acts { display:flex; gap:8px; flex-wrap:wrap; }
-  .btn-d { border-color:#f0cfc9; background:#fbf0ee; color:#b3261e; }
 
-  /* candidate table with inline UTR+gender */
-  .tbl { width:100%; overflow-x:auto; }
-  table { border-collapse:collapse; width:100%; font-size:12px; }
-  th,td { border-bottom:1px solid #e4e0d8; padding:6px 8px; text-align:left; vertical-align:top; }
-  th { background:#f2efe9; font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#6b665d; position:sticky; top:0; }
-  td.num,th.num { text-align:right; font-family:ui-monospace,Consolas,monospace; }
-  .seat { display:flex; flex-direction:column; line-height:1.35; }
-  .seat .who { font-size:11.5px; }
-  .seat .meta { font-family:ui-monospace,Consolas,monospace; font-size:10px; color:#6b665d; }
-  .lt { font-family:ui-monospace,Consolas,monospace; font-size:10px; color:#6b665d; }
-  .lt .over { color:#b3261e; }
+  .controls { border:1px solid #e4e0d8; border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; background:#faf9f6; }
+  .controls .hd { font-size:12.5px; font-weight:600; }
+  .lockrow { display:flex; align-items:center; gap:8px; }
+  .lockrow .lc { width:30px; font-family:ui-monospace,Consolas,monospace; font-size:11px; color:#6b665d; }
+  .pill { flex:1; height:36px; border:1px solid #e4e0d8; border-radius:6px; background:#fff; display:flex; align-items:center; padding:0 9px; font-size:12px; }
+  .edit-note { font-size:12px; color:#8a6508; background:#fbf5e6; border:1px solid #ecd9a4; border-radius:6px; padding:7px 10px; }
 
-  /* edit-mode unlock */
   .editbar { display:flex; align-items:center; gap:10px; border:1px dashed #cbb6a6; border-radius:8px; padding:10px 12px; background:#fffdf8; flex-wrap:wrap; }
   .editbar input { height:44px; border:1px solid #e4e0d8; border-radius:6px; padding:0 10px; font-family:ui-monospace,Consolas,monospace; font-size:12.5px; width:180px; }
   .editbar .unlocked { color:#3a6b4d; font-size:12.5px; font-weight:600; }
@@ -75,108 +72,150 @@
 </head>
 <body>
 
-<h1>lineup-page-defaults —— 视觉稿</h1>
+<h1>lineup-page-defaults —— 视觉稿 v2</h1>
 <p class="lede">
-  排阵页四改：① 有已存阵容就默认列出、不一进来整解；② 搜索显式化（草稿态 vs
-  <code>go=1</code>）；③ 载入阵型只填控件不即搜；④ 候选行内显示两人 姓名/UTR/性别；
-  ⑤ 就地输 admin 密码解锁编辑。设计体系 <code>linear</code>，不新增 token。
+  统一「每条线 3 行块」：行1 线名 + 参赛 UTR 之和 + 该线 buffer 占用；行2/3 两名队员
+  一人一行（姓名 + 性别符号 <span class="m">♂</span>/<span class="f">♀</span> + UTR）。
+  已存阵容与候选**同款**。载入阵型后进可编辑态（改后搜、也能存）。设计体系 <code>linear</code>。
 </p>
 
-<h2 id="default">① 默认视图（有已存阵容，无 <code>go</code>）—— 不整解</h2>
-<p class="note">进排阵页先看到已存阵容（按当前 UTR 四态重判），顶部一个醒目「搜索阵容」；候选**没算**。</p>
+<h2 id="default">① 默认视图：已存阵容打底（无 <code>go</code>，不整解）</h2>
 <div class="row">
 <div class="frame">
   <div class="bar">
-    <span class="code">SJTU</span><span class="sub">16 人 · 已存阵容 3 套</span>
+    <span class="code">SJTU</span><span class="sub">已存阵容 2 套</span>
     <span class="spacer"></span>
     <span class="toggle"><input type="checkbox"> 编辑模式</span>
     <button class="btn btn-p btn-lg">搜索阵容</button>
   </div>
   <div class="body">
     <div class="savedhd">已存阵容（按当前参赛 UTR 重判）</div>
+
     <div class="card">
       <div class="top"><span class="nm">主力最强</span><span class="badge b-ok">仍合法</span></div>
-      <div class="lines">
-        <div class="ln"><span class="lc"><span>D1</span><span>12.30</span></span><span class="pl">陈嘉禾·吴普强</span></div>
-        <div class="ln"><span class="lc"><span>D2</span><span>11.81</span></span><span class="pl">明轩·一鸣</span></div>
-        <div class="ln"><span class="lc"><span>D3</span><span>10.94</span></span><span class="pl">秦朗·冠宇</span></div>
-        <div class="ln"><span class="lc"><span>MD</span><span>10.39</span></span><span class="pl">周乐言·雨萌</span></div>
-        <div class="ln"><span class="lc"><span>WD</span><span>9.47</span></span><span class="pl">佳怡·可欣</span></div>
+      <div class="blocks">
+        <div class="blk">
+          <div class="h"><span>D1</span><span><span class="sum">和 13.21</span> · <span class="buf">buf 0.21</span></span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">陈嘉禾</span><span class="u">6.98</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">吴普强</span><span class="u">6.23</span></div>
+        </div>
+        <div class="blk">
+          <div class="h"><span>D2</span><span><span class="sum">和 11.93</span> · <span class="buf">buf 0.00</span></span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">明轩</span><span class="u">6.00</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">一鸣</span><span class="u">5.93</span></div>
+        </div>
+        <div class="blk">
+          <div class="h"><span>D3</span><span><span class="sum">和 10.60</span> · <span class="buf">buf 0.00</span></span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">秦朗</span><span class="u">5.40</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">冠宇</span><span class="u">5.20</span></div>
+        </div>
+        <div class="blk">
+          <div class="h"><span>MD</span><span><span class="sum">和 10.10</span> · <span class="buf">buf 0.00</span></span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">周乐言</span><span class="u">5.50</span></div>
+          <div class="p"><span class="g f">♀</span><span class="who">雨萌</span><span class="u">4.60</span></div>
+        </div>
+        <div class="blk">
+          <div class="h"><span>WD</span><span><span class="sum">和 8.98</span> · <span class="buf">buf 0.00</span></span></div>
+          <div class="p"><span class="g f">♀</span><span class="who">佳怡</span><span class="u">4.55</span></div>
+          <div class="p"><span class="g f">♀</span><span class="who">可欣</span><span class="u">4.43</span></div>
+        </div>
       </div>
+      <span class="teambuf">全队 buffer 0.21 / 0.50</span>
       <div class="acts"><button class="btn btn-p">载入</button><button class="btn">编辑</button></div>
     </div>
+
     <div class="card">
       <div class="top"><span class="nm">打交大针对阵</span><span class="badge b-bad">已非法</span></div>
-      <div class="lt">D2 超 cap 0.42 —— 陈嘉禾涨到 7.30 顶超。</div>
+      <div class="blocks">
+        <div class="blk bad">
+          <div class="h"><span>D2</span><span><span class="sum">和 12.42</span> · <span class="over">超 0.42</span></span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">陈嘉禾</span><span class="u">7.02</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">一鸣</span><span class="u">5.40</span></div>
+        </div>
+        <div class="blk">
+          <div class="h"><span>D1</span><span><span class="sum">和 11.69</span> · <span class="buf">buf 0.00</span></span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">明轩</span><span class="u">6.00</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">吴普强</span><span class="u">5.69</span></div>
+        </div>
+      </div>
+      <span class="teambuf">D2 超 cap，全队 buffer 0.42 / 0.00 —— 已非法</span>
       <div class="acts"><button class="btn btn-p">编辑修好</button></div>
     </div>
   </div>
 </div>
-<p class="cap">已存阵容打底；候选**没跑**（省掉冷启动最慢的那次整解）。要重新算 → 顶部「搜索阵容」。
-无已存阵容时这里是空态提示 + 控件 + 同一个「搜索阵容」按钮，同样不自动搜。</p>
+<p class="cap">每条线 = 3 行（线头 + 两人各一行，♂蓝/♀粉）。候选**没算**（省冷启动整解）；要算点「搜索阵容」。
+无已存阵容 = 空态 + 控件 + 同一按钮，也不自动搜。</p>
 </div>
 
-<h2 id="draft">② 载入阵型 → 草稿态（控件已填，未搜）</h2>
-<p class="note">载入把锁定/排除写回**草稿**参数、更新控件，URL **不带 <code>go</code>**，页面不算候选。</p>
+<h2 id="loadedit">② 载入阵型 → 可编辑态（改后搜、也能存）</h2>
+<p class="note">载入把该套锁定/排除写进控件并进入编辑：可继续改，点「搜索阵容」才算；改过的也能保存（覆盖/另存）。</p>
 <div class="row">
 <div class="frame">
-  <div class="bar">
-    <span class="code">SJTU</span><span class="sub">草稿 · 未搜索</span>
-    <span class="spacer"></span>
-    <button class="btn btn-p btn-lg">搜索阵容</button>
-  </div>
+  <div class="bar"><span class="code">SJTU</span><span class="sub">已载入「缺主力备案」· 编辑中</span><span class="spacer"></span><button class="btn btn-p btn-lg">搜索阵容</button></div>
   <div class="body">
-    <div class="draft-note">已载入「缺主力备案」的锁定与排除，尚未计算候选——点右上「搜索阵容」才算。</div>
+    <div class="edit-note">已把这套的锁定/排除填进控件，还没算候选。改完点「搜索阵容」；这套改动也可直接保存。</div>
     <div class="controls">
       <div class="hd">锁定搭档</div>
       <div class="lockrow"><span class="lc">D1</span><span class="pill">陈嘉禾 · 吴普强</span></div>
-      <div class="lockrow"><span class="lc">D2</span><span class="pill">交给引擎</span></div>
+      <div class="lockrow"><span class="lc">D2</span><span class="pill">明轩 · 交给引擎（改这里…）</span></div>
       <div class="hd" style="margin-top:6px;">本场不能上</div>
-      <div class="lockrow"><span class="pill">明轩</span></div>
+      <div class="lockrow"><span class="pill">周乐言</span></div>
+    </div>
+    <div class="acts">
+      <button class="btn btn-p btn-lg">搜索阵容</button>
+      <button class="btn btn-lg">保存修改（覆盖）</button>
+      <button class="btn btn-lg">另存为新阵型</button>
     </div>
   </div>
 </div>
-<p class="cap">URL 是 <code>?D1a=..&D1b=..&ex=..</code>（**无 <code>go</code>**）。分享一条带
-<code>go=1</code> 的链接才直接出结果——可分享性不丢。</p>
+<p class="cap">URL 为草稿（无 <code>go</code>）；保存走 <code>lineup-filter-presets</code> 的存/覆盖，不要求先搜出候选。
+（保存的是「阵型」= 锁定/排除这套输入；「已存阵容」= 具体十人五线，两者不同。）</p>
 </div>
 
-<h2 id="cands">③ 候选（<code>go=1</code>）—— 行内两人 姓名/UTR/性别</h2>
-<p class="note">每格两行：姓名 + <code>UTR·性别</code>。表宽超出时表自带横向滚动，不撑破页面。</p>
+<h2 id="cands">③ 候选（<code>go=1</code>）—— 同款 3 行块</h2>
 <div class="row">
 <div class="frame">
   <div class="bar"><span class="code">SJTU</span><span class="sub">候选 · 去重后 13 套</span><span class="spacer"></span><button class="btn">改条件重搜</button></div>
   <div class="body">
-    <div class="tbl">
-      <table>
-        <thead><tr><th class="num">#</th><th class="num">总和</th><th>D1</th><th>D2</th><th>D3</th><th>MD</th><th>WD</th></tr></thead>
-        <tbody>
-          <tr>
-            <td class="num">1</td><td class="num">54.91</td>
-            <td><div class="seat"><span class="who">陈嘉禾</span><span class="meta">6.98·男</span></div><div class="seat"><span class="who">吴普强</span><span class="meta">5.60·男</span></div><span class="lt">13.21</span></td>
-            <td><div class="seat"><span class="who">明轩</span><span class="meta">6.00·男</span></div><div class="seat"><span class="who">一鸣</span><span class="meta">5.93·男</span></div><span class="lt">11.93</span></td>
-            <td><div class="seat"><span class="who">秦朗</span><span class="meta">5.40·男</span></div><div class="seat"><span class="who">冠宇</span><span class="meta">5.20·男</span></div><span class="lt">10.60</span></td>
-            <td><div class="seat"><span class="who">周乐言</span><span class="meta">5.50·男</span></div><div class="seat"><span class="who">雨萌</span><span class="meta">4.60·女</span></div><span class="lt">10.10</span></td>
-            <td><div class="seat"><span class="who">佳怡</span><span class="meta">4.55·女</span></div><div class="seat"><span class="who">可欣</span><span class="meta">4.43·女</span></div><span class="lt">8.98</span></td>
-          </tr>
-          <tr>
-            <td class="num">2</td><td class="num">54.89</td>
-            <td><div class="seat"><span class="who">陈嘉禾</span><span class="meta">6.98·男</span></div><div class="seat"><span class="who">一鸣</span><span class="meta">5.93·男</span></div><span class="lt">12.91</span></td>
-            <td><div class="seat"><span class="who">明轩</span><span class="meta">6.00·男</span></div><div class="seat"><span class="who">吴普强</span><span class="meta">5.60·男</span></div><span class="lt">11.60</span></td>
-            <td><div class="seat"><span class="who">秦朗</span><span class="meta">5.40·男</span></div><div class="seat"><span class="who">冠宇</span><span class="meta">5.20·男</span></div><span class="lt">10.60</span></td>
-            <td><div class="seat"><span class="who">周乐言</span><span class="meta">5.50·男</span></div><div class="seat"><span class="who">雨萌</span><span class="meta">4.60·女</span></div><span class="lt">10.10</span></td>
-            <td><div class="seat"><span class="who">佳怡</span><span class="meta">4.55·女</span></div><div class="seat"><span class="who">可欣</span><span class="meta">4.43·女</span></div><span class="lt">8.98</span></td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="card">
+      <div class="top"><span class="nm">#1 · 总和 54.91</span><span class="badge b-ok">合法</span></div>
+      <div class="blocks">
+        <div class="blk">
+          <div class="h"><span>D1</span><span><span class="sum">和 13.21</span> · <span class="buf">buf 0.21</span></span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">陈嘉禾</span><span class="u">6.98</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">吴普强</span><span class="u">6.23</span></div>
+        </div>
+        <div class="blk">
+          <div class="h"><span>D2</span><span><span class="sum">和 11.93</span> · <span class="buf">buf 0.00</span></span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">明轩</span><span class="u">6.00</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">一鸣</span><span class="u">5.93</span></div>
+        </div>
+        <div class="blk">
+          <div class="h"><span>D3</span><span><span class="sum">和 10.60</span> · <span class="buf">buf 0.00</span></span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">秦朗</span><span class="u">5.40</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">冠宇</span><span class="u">5.20</span></div>
+        </div>
+        <div class="blk">
+          <div class="h"><span>MD</span><span><span class="sum">和 10.10</span> · <span class="buf">buf 0.00</span></span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">周乐言</span><span class="u">5.50</span></div>
+          <div class="p"><span class="g f">♀</span><span class="who">雨萌</span><span class="u">4.60</span></div>
+        </div>
+        <div class="blk">
+          <div class="h"><span>WD</span><span><span class="sum">和 8.98</span> · <span class="buf">buf 0.00</span></span></div>
+          <div class="p"><span class="g f">♀</span><span class="who">佳怡</span><span class="u">4.55</span></div>
+          <div class="p"><span class="g f">♀</span><span class="who">可欣</span><span class="u">4.43</span></div>
+        </div>
+      </div>
+      <span class="teambuf">全队 buffer 0.21 / 0.50</span>
+      <div class="acts"><button class="btn btn-p">保存此阵容</button></div>
     </div>
+    <p class="cap" style="margin:0;">「保存此阵容」仅编辑模式（admin）可见。多套候选纵向堆叠，每套一张同款卡。</p>
   </div>
 </div>
-<p class="cap">姓名 + <code>UTR·性别</code>逐人可见（性别不再只靠角标、UTR 不再要另查）。超 cap 的线之和标红。
-数字全取自后端，前端不比。桌面撑不下就横向滚动，页面本身不横溢。</p>
+<p class="cap">候选与已存阵容**同一种块**：一眼可比。数字全取自后端，前端不比。桌面两列块、窄屏一列。</p>
 </div>
 
 <h2 id="edit">④ 就地解锁编辑（输 admin 密码，不跳 /login）</h2>
-<p class="note">勾「编辑模式」→ 就地一行输密码 → 解锁保存/编辑/删除。走现有登录 action，密码错同款反馈。</p>
 <div class="row">
 <div class="frame">
   <div class="bar"><span class="code">SJTU</span><span class="sub">编辑模式</span><span class="spacer"></span></div>
@@ -185,49 +224,51 @@
       <span class="toggle"><input type="checkbox" checked> 编辑模式</span>
       <input type="password" placeholder="管理员口令" value="••••••">
       <button class="btn btn-p btn-lg">解锁</button>
-      <span class="cap" style="margin:0;">口令不对时：还可以试 N 次（同登录反馈）。</span>
+      <span class="cap" style="margin:0;">口令不对：还可以试 N 次（同登录反馈）。</span>
     </div>
     <div class="editbar" style="border-style:solid;border-color:#cfe2d6;background:#eef4f0;">
-      <span class="unlocked">✓ 已解锁编辑（管理员）</span>
-      <span class="spacer"></span>
-      <button class="btn">登出</button>
+      <span class="unlocked">✓ 已解锁编辑（管理员）</span><span class="spacer"></span><button class="btn">登出</button>
     </div>
-    <p class="cap" style="margin:0;">解锁后：候选行出现「保存此阵容」，已存阵容出现「编辑/删除」。会话是 httpOnly cookie，
-    写操作仍靠方法判权中间件保护——解锁只是换个入口，不新开信任口。</p>
+    <p class="cap" style="margin:0;">解锁后：候选出「保存此阵容」，已存阵容出「编辑/删除」，载入态出「保存修改/另存」。
+    会话是 httpOnly cookie，写操作仍靠方法判权中间件——解锁只换入口，不新开信任口。</p>
   </div>
 </div>
 </div>
 
-<h2 id="mobile">⑤ 手机（375）</h2>
+<h2 id="mobile">⑤ 手机（375）—— 每条线仍 3 行，块单列</h2>
 <div class="row">
 <div class="frame phone">
   <div class="bar"><span class="code">SJTU</span><span class="spacer"></span><button class="btn btn-p btn-lg">搜索</button></div>
   <div class="body">
-    <div class="savedhd">已存阵容</div>
     <div class="card">
       <div class="top"><span class="nm">主力最强</span><span class="badge b-ok">仍合法</span></div>
-      <div class="lines" style="grid-template-columns:repeat(2,1fr);">
-        <div class="ln"><span class="lc"><span>D1</span><span>12.30</span></span><span class="pl">陈嘉禾·吴普强</span></div>
-        <div class="ln"><span class="lc"><span>D2</span><span>11.81</span></span><span class="pl">明轩·一鸣</span></div>
-        <div class="ln"><span class="lc"><span>D3</span><span>10.94</span></span><span class="pl">秦朗·冠宇</span></div>
-        <div class="ln"><span class="lc"><span>MD</span><span>10.39</span></span><span class="pl">周乐言·雨萌</span></div>
-        <div class="ln"><span class="lc"><span>WD</span><span>9.47</span></span><span class="pl">佳怡·可欣</span></div>
+      <div class="blocks" style="grid-template-columns:1fr;">
+        <div class="blk">
+          <div class="h"><span>D1</span><span><span class="sum">和 13.21</span> · buf 0.21</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">陈嘉禾</span><span class="u">6.98</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">吴普强</span><span class="u">6.23</span></div>
+        </div>
+        <div class="blk">
+          <div class="h"><span>MD</span><span><span class="sum">和 10.10</span> · buf 0.00</span></div>
+          <div class="p"><span class="g m">♂</span><span class="who">周乐言</span><span class="u">5.50</span></div>
+          <div class="p"><span class="g f">♀</span><span class="who">雨萌</span><span class="u">4.60</span></div>
+        </div>
       </div>
+      <span class="teambuf">全队 buffer 0.21 / 0.50</span>
       <div class="acts"><button class="btn btn-p btn-lg">载入</button></div>
     </div>
-    <p class="cap" style="margin:0;">候选走既有手机紧凑行，点开展开五线，每人 UTR·性别一行；不横向溢出、44px 目标。</p>
   </div>
 </div>
 </div>
 
-<h2>核对清单（实现后逐条量）</h2>
+<h2>核对清单</h2>
 <ul>
-  <li>有已存阵容且无 <code>go</code>：默认列出已存阵容、**不**跑候选（无候选请求）。</li>
-  <li>点「搜索阵容」→ URL 带 <code>go=1</code> + 控件参数 → 出候选；直访同一 URL 同结果。</li>
-  <li>载入阵型 → 控件更新、URL 无 <code>go</code>、无候选；再点搜索才算。</li>
-  <li>候选每格显示两人 姓名 + UTR + 性别；桌面 + 375 不横向溢出（表自带横滚）。</li>
-  <li>就地输密码解锁 = 走登录 action、密码错同款反馈；解锁后写操作生效、写路由仍方法判权。</li>
-  <li>对比度 ≥4.5:1、触摸目标 ≥44px（「搜索阵容」「载入」「解锁」均加大）。</li>
+  <li>已存阵容 + 候选同款「每条线 3 行块」：行1 线名+和+buffer 占用；行2/3 每人一行 姓名+♂/♀+UTR。</li>
+  <li>♂ 蓝 / ♀ 粉均 ≥4.5:1（量 computed style）；块头总和/超量对比达标。</li>
+  <li>有已存阵容且无 <code>go</code> 不跑候选；点搜索加 <code>go=1</code> 才算；带 go 链接可分享直出。</li>
+  <li>载入 → 可编辑控件 + 「搜索阵容/保存修改/另存」；保存不要求先搜。</li>
+  <li>就地输密码解锁走登录 action；解锁后写生效、写路由仍方法判权。</li>
+  <li>桌面两列块 / 375 单列，均不横向溢出；主操作 ≥44px。</li>
 </ul>
 
 </body>
