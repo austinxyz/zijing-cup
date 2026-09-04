@@ -155,25 +155,32 @@
 无已存阵容 = 空态 + 控件 + 同一按钮，也不自动搜。</p>
 </div>
 
-<h2 id="loadedit">② 载入阵型 = 填进现有排阵控件（可编辑，改后搜、也能存）</h2>
-<p class="note">载入不是另开界面，是把该套锁定/排除**填进和常规排阵一样的控件**：每线一个下拉——选两人=锁定、选一人=pin 交给引擎配、都不选=整条交给引擎；外加「本场不能上」勾选。只是预填，随后可改、点搜索才算、也能存。</p>
+<h2 id="loadedit">② 载入阵型 = 预填<strong>现有这套控件</strong>（不新画）；改后搜、也能存</h2>
+<p class="note">就是现在排阵页的锁定控件（每线**两个下拉** + 「锁整对」+ 下方「本场不能上」勾选格），只是被阵型预填了值。相对现状只两点变化：载入后**不自动搜**（点搜索才算）、这套改完能**保存**。</p>
 <div class="row">
-<div class="frame">
+<div class="frame" style="width:760px;">
   <div class="bar"><span class="code">SJTU</span><span class="sub">已载入「缺主力备案」· 编辑中</span><span class="spacer"></span><button class="btn btn-p btn-lg">搜索阵容</button></div>
   <div class="body">
-    <div class="edit-note">已把这套阵型填进控件，**尚未计算**候选。改完点「搜索阵容」才算；这套也可直接保存。</div>
+    <div class="edit-note">已把这套阵型预填进控件，**尚未计算**候选。改完点「搜索阵容」才算；这套也可直接保存。</div>
     <div class="controls">
-      <div class="hd">每条线（下拉选搭档 / 交给引擎）</div>
-      <div class="selrow"><span class="lc">D1</span><span class="sel">陈嘉禾 · 吴普强 <span><span class="tag lock">锁定</span><span class="chev">▾</span></span></span></div>
-      <div class="selrow"><span class="lc">D2</span><span class="sel">明轩 · <span style="color:#6b665d;">交给引擎配</span> <span><span class="tag pin">pin</span><span class="chev">▾</span></span></span></div>
-      <div class="selrow"><span class="lc">D3</span><span class="sel"><span style="color:#6b665d;">交给引擎</span> <span><span class="tag eng">引擎</span><span class="chev">▾</span></span></span></div>
-      <div class="selrow"><span class="lc">MD</span><span class="sel"><span style="color:#6b665d;">交给引擎</span> <span><span class="tag eng">引擎</span><span class="chev">▾</span></span></span></div>
-      <div class="selrow"><span class="lc">WD</span><span class="sel"><span style="color:#6b665d;">交给引擎</span> <span><span class="tag eng">引擎</span><span class="chev">▾</span></span></span></div>
-      <div class="hd" style="margin-top:6px;">本场不能上（勾选排除）</div>
+      <div class="hd">锁定搭档</div>
+      <p class="cap" style="margin:0 0 4px;">留空的线交给引擎。每条线两个下拉各选一名；两个都选＝锁这对（或点「锁整对」），只选一个＝pin。</p>
+      <div class="selrow"><span class="lc">D1<br><span style="font-weight:400;color:#6b665d;">cap 13.00</span></span>
+        <span class="sel">陈嘉禾 <span class="chev">▾</span></span><span class="sel">吴普强 <span class="chev">▾</span></span><button class="btn">锁整对</button></div>
+      <div class="selrow"><span class="lc">D2<br><span style="font-weight:400;color:#6b665d;">cap 12.00</span></span>
+        <span class="sel">明轩 <span class="chev">▾</span></span><span class="sel"><span style="color:#6b665d;">交给引擎</span> <span class="chev">▾</span></span><button class="btn">锁整对</button></div>
+      <div class="selrow"><span class="lc">D3<br><span style="font-weight:400;color:#6b665d;">cap 11.00</span></span>
+        <span class="sel"><span style="color:#6b665d;">交给引擎</span> <span class="chev">▾</span></span><span class="sel"><span style="color:#6b665d;">交给引擎</span> <span class="chev">▾</span></span><button class="btn">锁整对</button></div>
+      <div class="selrow"><span class="lc">MD<br><span style="font-weight:400;color:#6b665d;">cap 10.25</span></span>
+        <span class="sel"><span style="color:#6b665d;">交给引擎</span> <span class="chev">▾</span></span><span class="sel"><span style="color:#6b665d;">交给引擎</span> <span class="chev">▾</span></span><button class="btn">锁整对</button></div>
+      <div class="selrow"><span class="lc">WD<br><span style="font-weight:400;color:#6b665d;">cap 9.25</span></span>
+        <span class="sel"><span style="color:#6b665d;">交给引擎</span> <span class="chev">▾</span></span><span class="sel"><span style="color:#6b665d;">交给引擎</span> <span class="chev">▾</span></span><button class="btn">锁整对</button></div>
+      <div class="hd" style="margin-top:8px;">本场不能上</div>
       <div class="chips">
-        <span class="chip on">周乐言 ✕</span>
-        <span class="chip">陈嘉禾</span><span class="chip">吴普强</span><span class="chip">明轩</span>
-        <span class="chip">一鸣</span><span class="chip">秦朗</span><span class="chip">…</span>
+        <span class="chip">Cao Shihe</span><span class="chip">Chen Gary</span><span class="chip">Cheng Max</span>
+        <span class="chip on">Li Haoyang ✕</span><span class="chip on">Li Ning ✕</span><span class="chip on">Ma Xiaoyu ✕</span>
+        <span class="chip">Ouyang Yubo</span><span class="chip on">Shen Jiayi ✕</span><span class="chip">Sun Nan</span>
+        <span class="chip on">Zhang Guang ✕</span><span class="chip">Zhang Jean</span><span class="chip">…</span>
       </div>
     </div>
     <div class="acts">
@@ -183,9 +190,8 @@
     </div>
   </div>
 </div>
-<p class="cap">这就是现在排阵页的那套控件，只是被阵型预填了。三态：<b>选两人</b>=锁定、<b>选一人</b>=pin（引擎配另一半）、
-<b>不选</b>=整条交给引擎。URL 是草稿（无 <code>go</code>），点搜索才加 <code>go=1</code> 计算。
-保存的是「阵型」=这套输入（`lineup-filter-presets`）；「已存阵容」=具体十人五线，是另一回事。</p>
+<p class="cap">控件本身不重画——就是现在这套。URL 是草稿（无 <code>go</code>），点搜索才加 <code>go=1</code> 计算。
+保存的是「阵型」=这套锁定/排除输入（`lineup-filter-presets`）；「已存阵容」=具体十人五线，是另一回事。</p>
 </div>
 
 <h2 id="cands">③ 候选（<code>go=1</code>）—— 同款 3 行块</h2>
