@@ -132,6 +132,12 @@ class TestSchoolCount:
                          json={"school_count": 2}, headers=READ)
         assert r.status_code == 403
 
+    def test_zero_or_negative_school_count_rejected(self, client):
+        for bad in (0, -1):
+            r = client.patch("/api/seasons/1991/divisions/silver/teams/EDIT-SILVER",
+                             json={"school_count": bad}, headers=WRITE)
+            assert r.status_code == 422
+
 
 class TestBatchDoublesOverwrite:
     def test_unlocked_doubles_mirrors_participation(self, client):

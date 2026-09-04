@@ -10,7 +10,7 @@ other write.
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from app.db import get_session
@@ -22,7 +22,9 @@ router = APIRouter(prefix="/api", tags=["rosters"])
 
 
 class TeamPatch(BaseModel):
-    school_count: Optional[int] = None
+    # A 联队 combines at least one school; 0 or negative is meaningless and would
+    # never match a division_borrowed_limits row. null clears it (unset).
+    school_count: Optional[int] = Field(default=None, ge=1)
 
 
 @router.get(

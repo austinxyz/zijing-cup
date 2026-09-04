@@ -30,7 +30,9 @@
 - [x] 2.4 GREEN — school_count 写 + representing_school 条件兜底
 - [x] 2.5 RED — pytest：批量双打 UTR，未锁季覆盖参赛值 / 已锁季不覆盖
 - [x] 2.6 GREEN — 批量双打 UTR 写（复用 saveCurrentUtr 覆盖逻辑）
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS; <80 FIX+retry
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS; <80 FIX+retry
+  - **Result**: PASS (98/100: Spec 100, Runtime 100, Code 90)
+  - **Finding**: [MEDIUM] school_count lacks bounds validation (should reject negative/zero); 0 CRITICAL/HIGH; all contract SHALLs verified; 112/112 tests pass including 7 new team_editing tests
 
 ## 3. 引擎：外援上场校验 + borrowed_over_limit 归因
 
