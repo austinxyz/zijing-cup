@@ -70,7 +70,7 @@
 - [x] 4.4 GREEN — 接 login 返回态渲染反馈；已登录分支
 - [x] 4.5 MOCK — open mock（④ 就地解锁）；note 口令输入 44px、解锁后绿条「已解锁编辑」、错误同登录文案
 - [x] 4.6 VISUAL DIFF — dev stack；未登录在排阵页开编辑模式→输密码解锁→保存/编辑控件出现（用 requestSubmit 触发 action）；桌面 + 375；量对比度、44px、无溢出；fix drift
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry
 
 ## 5. 验证与交付
 

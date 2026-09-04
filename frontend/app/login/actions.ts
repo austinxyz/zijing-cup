@@ -42,19 +42,20 @@ async function callerAddress(): Promise<string> {
 }
 
 /**
- * Exchange a password for a session cookie.
+ * The single auth core: rate-limit, check the password, and on success issue
+ * the session cookie. Returns the failure `LoginState` when it did not pass, or
+ * `null` when it did (cookie set). Both `login` and `unlockAdmin` go through
+ * here so the rate limit, password check, feedback wording, and cookie flags
+ * can never drift apart — the only difference between them is what happens on
+ * success (redirect vs. return-ok), which stays with each caller.
  *
  * The password never reaches FastAPI: the backend only learns that this server
  * vouches for an admin, via a secret that stays server-side. So this is the one
  * place where "who is this" is decided.
  */
-export async function login(
-  _previous: LoginState | undefined,
-  formData: FormData,
-): Promise<LoginState> {
+async function authenticate(formData: FormData): Promise<LoginState | null> {
   const address = await callerAddress();
   const limit = rateLimitState(address);
-
   if (limit.remaining === 0) {
     // The right password waits too. Letting it through would mean the limit
     // only ever slows down someone who is already guessing wrong.
@@ -80,7 +81,18 @@ export async function login(
     path: "/",
     maxAge: SESSION_TTL_MS / 1000,
   });
+  return null;
+}
 
+/**
+ * Exchange a password for a session cookie, then land on the home page.
+ */
+export async function login(
+  _previous: LoginState | undefined,
+  formData: FormData,
+): Promise<LoginState> {
+  const failure = await authenticate(formData);
+  if (failure) return failure;
   redirect("/");
 }
 
@@ -94,42 +106,19 @@ export interface UnlockState extends LoginState {
 /**
  * Exchange a password for a session cookie WITHOUT leaving the page.
  *
- * Same auth core as `login` — same rate limit, same `checkPassword`, same
- * session cookie, same failure feedback — but it returns `{ ok: true }` instead
- * of redirecting, so an in-place "编辑模式" unlock can refresh the current route
- * rather than being thrown to the home page. Not a second trust surface: the
- * write routes are still guarded by the method-keyed middleware; this only
- * decides "who is this", exactly as `login` does.
+ * Same auth core as `login` (shared `authenticate`) — same rate limit, same
+ * `checkPassword`, same session cookie, same failure feedback — but it returns
+ * `{ ok: true }` instead of redirecting, so an in-place "编辑模式" unlock can
+ * refresh the current route rather than being thrown to the home page. Not a
+ * second trust surface: the write routes are still guarded by the method-keyed
+ * middleware; this only decides "who is this", exactly as `login` does.
  */
 export async function unlockAdmin(
   _previous: UnlockState | undefined,
   formData: FormData,
 ): Promise<UnlockState> {
-  const address = await callerAddress();
-  const limit = rateLimitState(address);
-  if (limit.remaining === 0) {
-    return { error: "rate-limited", remaining: 0, lockedUntil: limit.lockedUntil };
-  }
-
-  const password = String(formData.get("password") ?? "");
-  if (!(await checkPassword(password))) {
-    recordFailure(address);
-    const after = rateLimitState(address);
-    return {
-      error: after.remaining === 0 ? "rate-limited" : "bad-password",
-      remaining: after.remaining,
-      lockedUntil: after.lockedUntil,
-    };
-  }
-
-  const store = await cookies();
-  store.set(SESSION_COOKIE, await issueSession(), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: SESSION_TTL_MS / 1000,
-  });
+  const failure = await authenticate(formData);
+  if (failure) return failure;
   return { ok: true };
 }
 
