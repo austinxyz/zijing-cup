@@ -42,10 +42,16 @@ export async function saveTeamEdits(
   teamId: number,
   edits: {
     // A subset of the current-UTR fields per player; the batch endpoint treats
-    // absent fields as "leave alone". The team page only edits doubles; a
-    // cleared field sends null (clear the value), never "" (which fails to parse
-    // as a Decimal and, being all-or-nothing, would sink the whole batch).
-    utrs?: Array<{ player_id: number; doubles_utr?: string | null }>;
+    // absent fields as "leave alone". The team page edits the doubles UTR, its
+    // status, and the UTR profile link. A cleared value sends null (clear it),
+    // never "" (which fails to parse as a Decimal and, being all-or-nothing,
+    // would sink the whole batch).
+    utrs?: Array<{
+      player_id: number;
+      doubles_utr?: string | null;
+      doubles_status?: string | null;
+      utr_profile_id?: string | null;
+    }>;
     memberships?: Array<{
       player_id: number;
       is_borrowed_player?: boolean;

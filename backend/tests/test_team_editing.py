@@ -151,6 +151,31 @@ class TestBatchDoublesOverwrite:
                 PlayerSeasonUtr.player_id == pid, PlayerSeasonUtr.season_year == YEAR)).one()
             assert row.value == Decimal("6.40")
 
+    def test_projected_or_unrated_doubles_does_not_mirror(self, client):
+        # A projected/unrated doubles UTR is not a settled rating — it must not
+        # become the participation UTR, even unlocked.
+        for status, first in (("projected", "庚"), ("unrated", "辛")):
+            pid = _player(client, first)
+            client.put("/api/players/current-utr",
+                       json={"season_year": YEAR, "updates": [
+                           {"player_id": pid, "doubles_utr": "6.40", "doubles_status": status}]},
+                       headers=WRITE)
+            with Session(engine) as s:
+                row = s.exec(select(PlayerSeasonUtr).where(
+                    PlayerSeasonUtr.player_id == pid, PlayerSeasonUtr.season_year == YEAR)).one_or_none()
+                assert row is None, f"{status} should not mirror"
+
+    def test_rated_doubles_mirrors(self, client):
+        pid = _player(client, "壬")
+        client.put("/api/players/current-utr",
+                   json={"season_year": YEAR, "updates": [
+                       {"player_id": pid, "doubles_utr": "6.40", "doubles_status": "rated"}]},
+                   headers=WRITE)
+        with Session(engine) as s:
+            row = s.exec(select(PlayerSeasonUtr).where(
+                PlayerSeasonUtr.player_id == pid, PlayerSeasonUtr.season_year == YEAR)).one()
+            assert row.value == Decimal("6.40")
+
     def test_locked_doubles_does_not_mirror(self, client):
         pid = _player(client, "戊")
         with Session(engine) as s:

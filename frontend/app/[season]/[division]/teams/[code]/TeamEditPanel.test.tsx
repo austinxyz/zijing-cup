@@ -98,6 +98,19 @@ describe("TeamEditPanel", () => {
     expect((screen.getByRole("button", { name: /保存/ }) as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it("saves doubles status and UTR profile link, cleared fields as null", () => {
+    show({ roster: roster({ players: [player(1, { doubles_utr: "6.0", utr_profile_id: "abc" })] }) });
+    fireEvent.change(screen.getByLabelText("双打状态 南 甲1"), { target: { value: "projected" } });
+    fireEvent.change(screen.getByLabelText("UTR 链接 南 甲1"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: /保存/ }));
+    const edits = saveTeamEdits.mock.calls[0][4];
+    expect(edits.utrs[0]).toEqual({
+      player_id: 1,
+      doubles_status: "projected",
+      utr_profile_id: null,
+    });
+  });
+
   it("shows the caps for the chosen school count", () => {
     show();
     expect(screen.getByText(/名单 ≤2 · 每场 ≤1/)).toBeTruthy();

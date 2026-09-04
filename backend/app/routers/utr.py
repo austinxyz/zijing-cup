@@ -34,6 +34,11 @@ from app.rosters.query import get_team_roster
 
 router = APIRouter(prefix="/api", tags=["utr"])
 
+#: Doubles-UTR statuses that must NOT mirror into the participation UTR: a
+#: projected or unrated number is not a settled rating, and the participation
+#: UTR is the value every lineup is checked against.
+_NON_MIRRORING_STATUSES = {"projected", "unrated"}
+
 
 class SheetRowOut(BaseModel):
     """One row of the exported sheet.
@@ -355,7 +360,15 @@ def write_current_utrs(
             setattr(person, field, value)
         session.add(person)
 
-        if batch.season_year is not None and named.get("doubles_utr") is not None:
+        # A projected or unrated doubles UTR is not a settled rating — it must
+        # NOT become the participation UTR a lineup is checked against. Only a
+        # rated (or unmarked) hand-typed value mirrors. `person.doubles_status`
+        # is already the new status here (set above).
+        if (
+            batch.season_year is not None
+            and named.get("doubles_utr") is not None
+            and person.doubles_status not in _NON_MIRRORING_STATUSES
+        ):
             _mirror_participation(
                 session, person.id, batch.season_year, named["doubles_utr"]
             )

@@ -27,6 +27,8 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
 
   // Pending edits, keyed by player_id. Absent = unchanged.
   const [doubles, setDoubles] = useState<Record<number, string>>({});
+  const [doublesStatus, setDoublesStatus] = useState<Record<number, string>>({});
+  const [profileId, setProfileId] = useState<Record<number, string>>({});
   const [borrowed, setBorrowed] = useState<Record<number, boolean>>({});
   const [wildcard, setWildcard] = useState<Record<number, boolean>>({});
   const [schools, setSchools] = useState<Record<number, string>>({});
@@ -48,25 +50,44 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
     return p.player_id in schools ? schools[p.player_id] : p.representing_school ?? "";
   }
 
+  // Player ids whose current-UTR fields (value / status / profile link) changed.
+  const utrDirtyIds = new Set<number>([
+    ...Object.keys(doubles).map(Number),
+    ...Object.keys(doublesStatus).map(Number),
+    ...Object.keys(profileId).map(Number),
+  ]);
+
   const dirtyCount =
-    Object.keys(doubles).length +
+    utrDirtyIds.size +
     Object.keys(borrowed).length +
     Object.keys(wildcard).length +
     Object.keys(schools).length +
     (schoolCountChanged ? 1 : 0);
 
   function reset() {
-    setDoubles({}); setBorrowed({}); setWildcard({}); setSchools({});
+    setDoubles({}); setDoublesStatus({}); setProfileId({});
+    setBorrowed({}); setWildcard({}); setSchools({});
     setSchoolCount(roster.school_count);
   }
 
   function save() {
-    const utrs = Object.entries(doubles).map(([id, v]) => ({
-      player_id: Number(id),
-      // A cleared field clears the value (null), never "" — an unparseable
-      // Decimal would 422 and, all-or-nothing, sink the whole batch.
-      doubles_utr: v === "" ? null : v,
-    }));
+    const utrs = [...utrDirtyIds].map((id) => {
+      const edit: {
+        player_id: number;
+        doubles_utr?: string | null;
+        doubles_status?: string | null;
+        utr_profile_id?: string | null;
+      } = { player_id: id };
+      // Only the fields actually changed for this player; a cleared value/link
+      // sends null (clear it), never "" — an unparseable Decimal would 422 and,
+      // all-or-nothing, sink the whole batch.
+      if (id in doubles) edit.doubles_utr = doubles[id] === "" ? null : doubles[id];
+      if (id in doublesStatus)
+        edit.doubles_status = doublesStatus[id] === "" ? null : doublesStatus[id];
+      if (id in profileId)
+        edit.utr_profile_id = profileId[id] === "" ? null : profileId[id];
+      return edit;
+    });
     // A membership change collects whichever of the three fields changed for a
     // player; borrowed/wildcard true clears the school (server enforces this too).
     const ids = new Set<number>([
@@ -153,7 +174,7 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
         )}
         {!roster.locked ? (
           <span className="text-[11.5px] text-warning">
-            保存当前双打 UTR 会一并覆盖本赛季参赛 UTR
+            保存 rated 双打 UTR 会一并覆盖本赛季参赛 UTR（projected / unrated 不覆盖）
           </span>
         ) : null}
       </div>
@@ -162,10 +183,10 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
           than the team pane, so without overflow-x the last columns (外卡,
           代表学校) are silently clipped with no scrollbar. */}
       <div className="min-w-0 flex-1 overflow-auto">
-        <table className="w-full min-w-[640px] border-collapse text-[12.5px]">
+        <table className="w-full min-w-[800px] border-collapse text-[12.5px]">
           <thead>
             <tr>
-              {["队员", "性别", "参赛 UTR", "当前双打", "外援", "外卡", "代表学校"].map((h) => (
+              {["队员", "性别", "参赛 UTR", "当前双打", "双打状态", "UTR 链接", "外援", "外卡", "代表学校"].map((h) => (
                 <th
                   key={h}
                   className="sticky top-0 z-10 h-[34px] whitespace-nowrap border-b border-border bg-surface-muted px-3 text-left font-mono text-[11px] font-medium text-muted"
@@ -200,6 +221,40 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
                       className={`h-8 w-[68px] rounded-token border px-2 font-mono text-[12px] ${
                         dChanged ? "border-primary bg-primary/5" : "border-border bg-surface"
                       }`}
+                    />
+                  </td>
+                  <td className="border-b border-border/60 px-3 py-1.5">
+                    <select
+                      aria-label={`双打状态 ${displayName(p)}`}
+                      value={
+                        p.player_id in doublesStatus
+                          ? doublesStatus[p.player_id]
+                          : p.doubles_status ?? ""
+                      }
+                      onChange={(e) =>
+                        setDoublesStatus((m) => ({ ...m, [p.player_id]: e.target.value }))
+                      }
+                      className="h-8 rounded-token border border-border bg-surface px-1 text-[12px]"
+                    >
+                      <option value="">—</option>
+                      <option value="rated">rated</option>
+                      <option value="projected">projected</option>
+                      <option value="unrated">unrated</option>
+                    </select>
+                  </td>
+                  <td className="border-b border-border/60 px-3 py-1.5">
+                    <input
+                      aria-label={`UTR 链接 ${displayName(p)}`}
+                      value={
+                        p.player_id in profileId
+                          ? profileId[p.player_id]
+                          : p.utr_profile_id ?? ""
+                      }
+                      placeholder="profile id"
+                      onChange={(e) =>
+                        setProfileId((m) => ({ ...m, [p.player_id]: e.target.value }))
+                      }
+                      className="h-8 w-24 rounded-token border border-border bg-surface px-2 font-mono text-[11px]"
                     />
                   </td>
                   <td className="border-b border-border/60 px-3 py-1.5 text-center">
