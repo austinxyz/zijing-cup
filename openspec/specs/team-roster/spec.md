@@ -14,7 +14,9 @@
 
 读取端只有查询接口，没有写入端点——本项目不做 per-user 登录，一个公开的写接口
 等于谁都能覆盖所有队的名单。
+
 ## Requirements
+
 ### Requirement: 球队与名单按赛季与组别存储为快照
 系统 SHALL 以 `(赛季, 组别)` 为维度存储球队与球员名单。一条名单记录是
 **该赛季该队的一行快照**，其唯一键为 `(赛季, 组别, 球队, 姓, 名)`。
@@ -387,3 +389,15 @@ MUST NOT 只输出「+N 行」——那是一次成功的假象：命令报告�
 - **THEN** 数据照常写入 `roster_entries`
 - **AND** 输出仍然说明这些行不会被任何页面读取
 
+### Requirement: 花名册响应带队员胜/负
+`get_team_roster` 的每名队员 SHALL 带出 `wins`/`losses`（生涯战绩，来自 players）。
+两者可空：`null` 表示从未导入战绩，MUST NOT 用 0 或哨兵冒充「未知」（0 是合法战绩）。
+胜率是显示派生量，后端不算、不带出——只带 `wins`/`losses` 两个整数。
+
+#### Scenario: 带出胜负
+- **WHEN** 一名队员 `wins`=67、`losses`=20
+- **THEN** 花名册响应里该队员带 `wins`=67、`losses`=20
+
+#### Scenario: 未导入战绩带 null
+- **WHEN** 一名队员从未导入战绩
+- **THEN** 花名册响应里该队员 `wins`=null、`losses`=null

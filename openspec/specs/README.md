@@ -73,6 +73,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **验收标准**: 2025 赛季金组 6 队 120 人、银组 18 队 339 人落库；两个伪队名不出现在球队表；重复导入报告无变化且不产生重复行；导入器一次都不写 `is_borrowed_player`；`Unrated` 行的 `rating_class` 为 NULL 而非猜测值；名单 CSV 不进版本库（`custom_verification_checks` 按内容扫描前 20 行拦截）。
 
+**player-win-loss（2026-09-04）**: `RosterPlayerOut` + `get_team_roster` 带出 `wins`/`losses`（`Optional[int]`，来自 players）。可空，MUST NOT 用 0 或哨兵冒充「未知」；胜率是显示派生量，后端不算、不带出，只带两个整数。
+
 ---
 
 ### `team-roster-ui` ✅ 已实现 · 🌐 已上线
@@ -102,7 +104,9 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 ---
 
-**team-roster-editing（2026-09-04）**: 队伍页 `teams/[code]` 加就地编辑（`TeamEditPanel`）：页头「编辑模式」开关复用 `unlockAdmin` 就地输 admin 口令解锁（不跳 `/login`），只读态不渲染任何控件。解锁后是可编辑表——每人当前双打 UTR 就地输入、改动格高亮、一个「保存 N 处改动」批量提交（未锁季顺带覆盖参赛 UTR，界面就近说明）；外援/外卡勾选、代表学校输入（勾了外援或外卡则禁用清空——外部球员无本校可代表，后端也兜一层）；队伍学校数 `school_count` 输入，据此显示该 division 的外援上限（名单/每场），名单外援超 `roster_cap` 时保存**警告放行**不硬拦。七列宽于窄队伍列，表容器 `min-w-0 overflow-auto` 让它在框内横滚（桌面放得下、375 横滚），不逃到 `overflow-hidden` 壳里被静默裁。`saveTeamEdits` 把当前 UTR 批量写 + 逐 membership PATCH + school_count PATCH 合成尽量少的写；写失败 try/catch 保留改动并 role=alert 报错，只有成功才 reset。代表学校是自由文本（无规范学校清单，故不用下拉）。
+**team-roster-editing（2026-09-04）**: 队伍页 `teams/[code]` 加就地编辑（`TeamEditPanel`）：页头「编辑模式」开关复用 `unlockAdmin` 就地输 admin 口令解锁（不跳 `/login`），只读态不渲染任何控件。解锁后是可编辑表——每人当前双打 UTR 就地输入、改动格高亮、一个「保存 N 处改动」批量提交（未锁季顺带覆盖参赛 UTR，界面就近说明）；外援/外卡勾选、代表学校输入（勾了外援或外卡则禁用清空——外部球员无本校可代表，后端也兜一层）；队伍学校数 `school_count` 输入，据此显示该 division 的外援上限（名单/每场），名单外援超 `roster_cap` 时保存**警告放行**不硬拦。七列宽于窄队伍列，表容器 `min-w-0 overflow-auto` 让它在框内横滚（桌面放得下、375 横滚），不逃到 `overflow-hidden` 壳里被静默裁。`saveTeamEdits` 把当前 UTR 批量写 + 逐 membership PATCH + school_count PATCH 合成尽量少的写；写失败 try/catch 保留改动并 role=alert 报错，只有成功才 reset。代表学校是自由文本（无规范学校清单，故不用下拉）。**后续（同日两次直接修）**：编辑模式加可编辑「参赛 UTR」字段——显式值直写 season UTR（`source=admin_ruling`、无状态→待定，走既有 `PUT /players/{id}/season-utrs/{year}`），排在当前 UTR 批量之后故压过 mirror；未动则沿用既有 mirror（rated 双打 + 未锁季）；锁季→只读（端点本就 409）；空=不改（该端点只替换不删行）。
+
+**player-win-loss（2026-09-04）**: 只读花名册加「胜率」列——`胜-负` + 百分比（`胜/(胜+负)` 前端派生、四舍五入），任一为 null（从未导入）显示 `—`（**不**显示 `0-0`/`0%`），真的 0-0 显示 `0-0` 但百分比 `—`（不除零）。桌面表 + 手机卡片共用 `lib/winLoss.ts` 的 `formatWinLoss`（`== null` 松判，兼容旧响应缺字段避免 `NaN%`）；`RosterPlayer` 类型加 `wins/losses`（后端漂移红 tsc）。导入差异屏字段计数标签补胜/负。
 
 ### `lineup-search` ✅ 已实现 · 🌐 已上线
 **用户故事**: 作为队长，我想给出几对已经定下的搭档和本场上不了的人，让系统在剩下的空间里把五条线补齐，并告诉我这套限制下最强能排到多少、有多少种十人组合能达到它；如果根本凑不出合法阵容，我要知道是哪条线卡住了，而不是收到一个空列表让我猜是没搜到还是没有解。
@@ -211,6 +215,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **team-roster-editing（2026-09-04）**: membership 的 `is_borrowed_player`/`is_wildcard`/`representing_school` 可写（`update_membership` + `PATCH /players/{id}/memberships`，按 (队员,队伍) 定位，与「批量写五字段」端点分开；borrowed 或 wildcard 为真时后端清空 representing_school）。`teams.school_count` 可写（`PATCH /seasons/{y}/divisions/{c}/teams/{code}`，`Field(ge=1)` 拒 0/负，null=未设）。写当前双打 UTR 未锁季一并覆盖参赛值（批量对每人套同一规则，复用既有 `_mirror_participation` 的赛季锁护栏）。均由方法判权中间件保护。
 
+**player-win-loss（2026-09-04）**: `players` 加 `wins`/`losses`（可空 int，生涯值、跨赛季、最新导入为准）。两者可空且**无默认**——`null`=从未导入，与 `0`（真的 0 胜/0 负）是不同断言，MUST NOT 用 0 冒充未知（与时间戳那条 NOT NULL 陷阱相反：这里 None=NULL 正是意图）。总场次=胜+负、胜率=胜/(胜+负) 都是派生量，不入库。migration 以 `set search_path to zijing_cup` 开头（共享库，本地打 127.0.0.1、远程 Dashboard 手工执行）。
+
 ### `admin-access` ✅ 已实现 · 🌐 已上线
 **用户故事**: 作为项目负责人，我想让只有我能改队员数据，而任何人都能照常读规则、名单与阵容；我也想让将来新加的写接口默认就是受保护的，不依赖谁记得挂上什么。
 
@@ -259,6 +265,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **前台**: `app/[season]/[division]/teams/[code]/utr/`（导出/导入两页签 + 差异屏 + 自己的登录门与 `error.tsx` —— 它在 `teams/` 下，`players/layout.tsx` 的门覆盖不到）与名单页的行内编辑。差异屏按人分组，代价是列不对齐、看不出「一竖排都在变」这个整列粘错信号，因此顶部补一行**按字段的改动计数**把那个信号换种形式给回来。有任何一行被拒 → 确认按钮禁用、整批不写。跨组的队员被点名 —— 当前 UTR 是人的属性，改完另一组页面看到的也是这个值。
 
 **验收标准**: 原样导出、原样导回产生 0 处改动；行被打乱或粘错位时姓名校验位整批拦下；`id` 为空而姓名唯一匹配时仍然报错；状态写 `Rated` 接受、写 `已认证` 整行拒绝；真实数据实测一次完整往返（贴表 → 差异 → 确认 → 名单页可见 → 排阵页标「估算」）；赛季未锁时参赛 UTR 跟着变、锁上后不动；差异屏全部文案对比度 ≥ 4.5:1（实测 computed style，改前 28 个元素不合格）。
+
+**player-win-loss（2026-09-04）**: 导入多读组委会导出表末尾的 `胜`(cell 9)/`负`(cell 10) 两列写进 `players.wins/losses`；`总场次`(8)/`胜率`(11) 是派生量，忽略。`SheetRow`/`PlayerView` 加 wins/losses，进 `FIELDS`（差异屏计数含它俩，整列粘错一样看得出）与 `_changed_fields`（整数按 `str(existing)==written` 判等，不进 `_NUMERIC_FIELDS`）；`_winloss_errors` 校验非负整数、坏行整批回滚；空=不改、`-`=清空沿用既有语义；导出 `COLUMNS` 保持 8 列不动，故只带 8 列的自家导出表往返对战绩 0 改动。差异屏 field→中文标签补 `wins`→胜、`losses`→负。**同批修掉一个既有缺陷**：sheet apply 路径此前无条件 mirror 双打→参赛 UTR，未套 `_NON_MIRRORING_STATUSES` 门 —— projected/unrated 的双打 UTR 导入会无声覆盖冻结的参赛值；已补上与批量/行内一致的门。
 
 ---
 
