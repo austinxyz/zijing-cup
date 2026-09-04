@@ -160,6 +160,10 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **single-pin（2026-09-03）**: 一条线的三态由已填座位数决定——填**恰好一个**=pin（「已钉」warning 角标 + 「搭档交给引擎」小字）、两个=硬锁整对（「锁整对」primary 角标）、零=交给引擎。`constraintsFromQuery` 分出 `{locks, pins, excluded}`（同人填两座=无约束）；`lib/api.ts` 编码 `pin=LINE:key`；`hasStaleKeys` 也扫 pins。pin 造成某线无解走既有 `NoSolution`（后端 message 已含「你把 X 钉在 L」点名，前端无需新面板）。修了 pin 显示名的 tab 拼接（`last first`）。触发起因见 `lineup-search` 的同名条目：半填以前被无声丢弃、意图丢失。
 
+**saved-lineups（2026-09-03）**: 排阵结果每套候选给管理员一个「保存此阵容」（起名、队内唯一、同名覆盖；`SaveLineupButton`），存下这具体十人的线位分配 + 服务端拍的参赛 UTR 快照。新页 `lineup/[code]/saved/`（含 `error.tsx`）列出该队所有已存阵容，每套按**当前** UTR 服务端重判成四态并着色 token：仍合法（success）/ UTR 动了仍合法（中性，点名 X→Y）/ 已非法（danger，列出卡哪条）/ 有人离队（warning，点名缺哪座）——合法性只认后端 `status`，未知状态**失败关闭**成「未知状态」且不可载入（`?? BADGE.valid` 会把未知糊成合法）。每行还显示逐人当前 UTR + 性别（从 roster 读，不由后端重复）、每线之和 + 超 cap 标记、全队 buffer 用量（后端复用 `pair_total`+caps 算 `line_totals`/`buffer_spent` 出到响应）。一键载入 = 五线硬锁写进排阵 URL（复用 `lock=` 方案），含离队/旧 key 走 stale 不发搜索。就地编辑器（`LineupEditor`）：替换=每槽下拉整队名单、互换=选两槽点「互换」；每改一次经 `POST …/validate`（走 admin 出口）**防抖 300ms** 实时重判，就近显示合法/卡哪条；编辑自由改、合法性是唯一护栏（重复上场靠 `check_lineup` 报、不前端预拦），存回（PUT）覆盖 + 重拍快照、仅合法时可用。触摸目标 ≥44px、四态徽标对比度机测（`globals.contrast.test.ts` 新增 danger/warning/success×surface 对）。存取契约见 `lineup-saved-lineups`。
+
+**踩坑（saved-lineups）**: ① render-prop 函数从 Server Component 传给 Client Component（`CandidateRows`）运行时抛 `Functions cannot be passed directly to Client Components`——整页崩到 error boundary，vitest（jsdom 无 RSC 边界）测不出。改传 `canEdit` + **序列化的 server action**，由表自己建按钮。② 已沉进 CLAUDE.md。
+
 ---
 
 ### `lineup-filter-presets` ✅ 已实现 · 🌐 待远程迁移
@@ -168,6 +172,15 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **后台**: `zijing_cup.lineup_filter_presets` 单表（`team_id` FK teams on delete cascade、`name` check 长度、`constraints` JSONB = 那批 URL query 参数、`unique(team_id,name)`、`created_at`/`updated_at` server_default）。`app/lineups/presets.py`：`save_preset`（同名走 UPDATE 覆盖、空名/长度/每队≤50 守卫）、`list_presets`、`delete_preset`（按 team_id 作用域，删不存在是 no-op）。路由挂在 `routers/lineups.py`：GET 列出（开放）+ POST 存 + DELETE 删（写路由靠 `WRITE_METHODS` admin 中间件自动受保护，不加前缀、不用依赖式鉴权）。
 **前台**: 无独立页面；呈现在 `lineup-ui` 的「已存阵型」块。
 **验收标准**: 存/取/删/同名覆盖/空名拒/长度与数量上限/无 admin 凭据写被拒 全绿；载入等价于把约束变成 URL query 走与手填完全相同的后端校验，不能注入裸 URL 注入不了的东西。**远程共享 Supabase 需去 Dashboard SQL Editor 手动执行 `20260902120000_create_lineup_filter_presets.sql` 后功能才生效**（前端有降级：表未建时列表为空、排阵页不 500）。
+
+---
+
+### `lineup-saved-lineups` ✅ 已实现 · 🌐 待远程迁移
+**用户故事**: 作为队长，我想把一套**具体阵容**（这十人怎么排五线）连同当时的参赛 UTR 存下来，之后在专门的页面按当前 UTR 重看它是否还成立——谁的 UTR 动了、哪条超了、谁离队了——并能就地改（线间互换、换个人），改完实时判合法、合法了再存回。
+**覆盖需求**: docs/superpowers/specs/2026-09-03-lineup-saved-lineups-requirements.md（按队命名存线位分配 + UTR 快照、服务端按当前 UTR 重判四态、校验端点复用 check_lineup、存删存回限 admin·列出重判开放、快照只读不回写）
+**后台**: `zijing_cup.saved_lineups` 单表（`team_id` FK teams on delete cascade、`name` check 1–60、`assignment` + `utr_snapshot` 两列 JSONB、`unique(team_id,name)`、时间戳 server_default）。`app/lineups/saved.py`：`save_lineup`（同名覆盖、空名/长度/每队≤50 守卫）、`list_saved_lineups`、`delete_saved_lineup`（team 作用域）、`revalidate_saved`（缺 key→`player_gone` 不判；否则 `check_lineup` 打当前值 + 快照 diff 分四态，并**复用 `pair_total`+caps** 算 `line_totals`/`buffer_spent`，不复制规则）、`assignment_violations`（校验端点复用 `check_lineup`）。路由挂 `routers/lineups.py`：GET 列出+重判（开放）、POST 存（服务端拍快照）、PUT 存回（重拍）、DELETE 删、POST `…/validate`（编辑实时判）——写路由靠 `WRITE_METHODS` admin 中间件自动受保护。快照**只读**、绝不回写 `player_season_utrs`。
+**前台**: 呈现在 `lineup-ui` 的 saved-lineups 段（保存入口、`saved/` 页四态、就地编辑器）。
+**验收标准**: 存/取/删/同名覆盖/存回/快照不回写/重判四态（含点名 UTR-diff 与卡哪条）/未知状态失败关闭/无 admin 凭据写被拒 全绿；载入锁满五线到 URL，坏 key 走 stale 不发搜索；编辑器实时校验复用 check_lineup、重复上场据实报不预拦。**远程共享 Supabase 需去 Dashboard SQL Editor 手动执行 `20260903120000_create_saved_lineups.sql` 后功能才生效**（前端 `getSavedLineups` 任何失败降级空列表，表未建时 saved 页为空、不 500）。
 
 ---
 
