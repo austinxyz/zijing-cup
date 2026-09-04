@@ -49,7 +49,13 @@
 - [x] 3.4 GREEN — null 跳过 + borrowed_players_checked 落地
 - [x] 3.5 RED — pytest：外援超限无解 → infeasibility 原因 borrowed_over_limit 点名外援
 - [x] 3.6 GREEN — diagnose 加 borrowed_over_limit
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS; <80 FIX+retry
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS; <80 FIX+retry
+  - **Result**: RETRY (60/100: Spec 40, Runtime 100, Code 20)
+  - **Finding**: [CRITICAL] bool(membership.is_borrowed_player) collapse silently defeats cap enforcement for unmarked members; [LOW] docstring overstates borrowed_players_checked trigger
+  - **Fix Tasks**:
+    - [ ] 3.F1 FIX — Change bool(membership.is_borrowed_player) to `membership.is_borrowed_player is not False` in query.py:324 (fail closed: count unmarked toward cap, matching "unknown is not zero" pattern elsewhere)
+    - [ ] 3.F2 FIX — Add load_roster integration test in test_lineup_borrowed.py: roster with is_borrowed_player=None, search result borrowed_players_checked=true, cap enforcement counts unmarked correctly
+    - [ ] 3.F3 FIX — Update docstring for borrowed_players_checked in search.py:121-124 and query.py:158-161: clarify trigger is "cap was resolved" not just "school_count is set"
 
 ## 4. 队伍页编辑模式 + 批量双打 UTR + 外援/外卡/学校/学校数
 
