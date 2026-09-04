@@ -68,7 +68,7 @@ export function LineupResults({
   // as a list with zero rows.
   if (search.invalid_locks.length > 0) {
     return (
-      <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-5 py-4">
+      <div className="flex flex-col gap-3">
         <InvalidLocks search={search} />
         <BorrowedPlayersNotice />
       </div>
@@ -77,7 +77,7 @@ export function LineupResults({
 
   if (search.infeasible_line !== null) {
     return (
-      <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-5 py-4">
+      <div className="flex flex-col gap-3">
         <NoSolution search={search} lines={lines} />
         <BorrowedPlayersNotice />
       </div>
@@ -85,7 +85,7 @@ export function LineupResults({
   }
 
   return (
-    <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden px-5 py-4">
+    <div className="flex flex-col gap-3">
       <UnresolvedNotice count={search.unresolved_count} />
       <MissingUtrNotice count={search.missing_utr_count} />
       {search.truncated ? <Truncated /> : null}
