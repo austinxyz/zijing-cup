@@ -21,7 +21,7 @@ const LINE_ORDER = ["D1", "D2", "D3", "MD", "WD"];
 
 function saved(): SavedLineup {
   return {
-    id: 7, name: "打交大针对阵",
+    id: 7, name: "打交大针对阵", sort_order: 0,
     assignment: {
       D1: ["p1", "p2"], D2: ["p3", "p4"], D3: ["p5", "p6"],
       MD: ["p1", "p3"], WD: ["p2", "p4"],

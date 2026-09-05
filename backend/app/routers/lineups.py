@@ -36,12 +36,16 @@ from app.lineups.query import (
     search_team_lineups,
 )
 from app.lineups.saved import (
+    BadReorder,
     InvalidSavedLineup,
     SavedLineupLimitExceeded,
+    SavedLineupNotFound,
     UnknownAssignmentKey,
     assignment_violations,
+    clone_saved_lineup,
     delete_saved_lineup,
     list_saved_lineups,
+    reorder_saved_lineups,
     revalidate_saved,
     save_lineup,
 )
@@ -300,6 +304,9 @@ class SaveBackIn(BaseModel):
 class SavedLineupOut(BaseModel):
     id: int
     name: str
+    #: Display order within the team, ascending. The list is returned in this
+    #: order; the client echoes the full ordered id list back to reorder.
+    sort_order: int = 0
     assignment: dict[str, list[str]]
     utr_snapshot: dict[str, str]
     #: "valid" | "utr_moved" | "illegal" | "player_gone"
@@ -331,7 +338,8 @@ def _serialize_saved(status, saved, rules) -> SavedLineupOut:
         else None
     )
     return SavedLineupOut(
-        id=saved.id, name=saved.name, assignment=saved.assignment,
+        id=saved.id, name=saved.name, sort_order=saved.sort_order,
+        assignment=saved.assignment,
         utr_snapshot=saved.utr_snapshot, status=status.status,
         violations=[
             ViolationOut(code=v.code, line=v.line, amount=v.amount, message=v.message)
@@ -424,6 +432,46 @@ def save_back_team_lineup(
     # Same name overwrites in place, re-snapshotting to the current UTRs.
     saved = save_lineup(session, team_id, existing.name, body.assignment, snapshot)
     return _saved_out(session, year, code, team_code, saved)
+
+
+class ReorderIn(BaseModel):
+    #: The team's saved-lineup ids in the desired order — the WHOLE set, once
+    #: each. A partial or foreign list is rejected whole.
+    order: list[int]
+
+
+@router.patch(_SAVED + "/order", response_model=list[SavedLineupOut])
+def reorder_team_saved_lineups(
+    year: int, code: str, team_code: str, body: ReorderIn,
+    session: Session = Depends(get_session),
+) -> list[SavedLineupOut]:
+    team_id = _resolve_team(session, year, code, team_code)
+    try:
+        reorder_saved_lineups(session, team_id, body.order)
+    except BadReorder as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    rules, roster = _current_roster(session, year, code, team_code)
+    return [
+        _serialize_saved(
+            revalidate_saved(rules, roster, s.assignment, s.utr_snapshot), s, rules
+        )
+        for s in list_saved_lineups(session, team_id)
+    ]
+
+
+@router.post(_SAVED + "/{saved_id}/clone", response_model=SavedLineupOut, status_code=201)
+def clone_team_saved_lineup(
+    year: int, code: str, team_code: str, saved_id: int,
+    session: Session = Depends(get_session),
+) -> SavedLineupOut:
+    team_id = _resolve_team(session, year, code, team_code)
+    try:
+        clone = clone_saved_lineup(session, team_id, saved_id)
+    except SavedLineupNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except SavedLineupLimitExceeded as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return _saved_out(session, year, code, team_code, clone)
 
 
 @router.delete(_SAVED + "/{saved_id}", status_code=204)

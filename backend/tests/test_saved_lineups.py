@@ -85,6 +85,35 @@ class TestStoreAndList:
         assert got[0].utr_snapshot["p1"] == "5.90"
 
 
+class TestSortOrder:
+    def test_list_orders_by_sort_order_not_name(self, team_id):
+        # Names deliberately in reverse alpha of insert order: proves the list
+        # follows sort_order (insertion → 0,1,2), not name.
+        with Session(engine) as session:
+            save_lineup(session, team_id, "丙", ASSIGN, SNAP)  # inserted first
+            save_lineup(session, team_id, "乙", ASSIGN, SNAP)
+            save_lineup(session, team_id, "甲", ASSIGN, SNAP)  # inserted last
+            got = list_saved_lineups(session, team_id)
+        assert [s.name for s in got] == ["丙", "乙", "甲"]
+        assert [s.sort_order for s in got] == [0, 1, 2]
+
+    def test_new_save_gets_max_plus_one(self, team_id):
+        with Session(engine) as session:
+            save_lineup(session, team_id, "一", ASSIGN, SNAP)
+            save_lineup(session, team_id, "二", ASSIGN, SNAP)
+            third = save_lineup(session, team_id, "三", ASSIGN, SNAP)
+        assert third.sort_order == 2
+
+    def test_overwrite_keeps_position(self, team_id):
+        with Session(engine) as session:
+            save_lineup(session, team_id, "一", ASSIGN, SNAP)
+            b = save_lineup(session, team_id, "二", ASSIGN, SNAP)
+            assert b.sort_order == 1
+            # re-saving "一" (upsert) must not move it to the end
+            again = save_lineup(session, team_id, "一", {**ASSIGN, "D1": ["p2", "p1"]}, SNAP)
+        assert again.sort_order == 0
+
+
 class TestOverwriteAndLimits:
     def test_same_name_overwrites(self, team_id):
         alt = {**ASSIGN, "D1": ["p2", "p1"]}
@@ -459,6 +488,14 @@ class TestSavedRoutes:
         assert rows[0]["status"] == "utr_moved"
         assert keymap["m2"] in rows[0]["utr_diff"]
 
+    def test_list_carries_sort_order(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        client.post(_surl(), headers=WRITE_AUTH,
+                    json={"name": "主力", "assignment": assignment})
+        rows = client.get(_surl(), headers=READ_AUTH).json()
+        assert rows[0]["sort_order"] == 0
+
     def test_save_without_admin_is_refused(self, seeded):
         _, assignment, _ = seeded
         client = TestClient(app)
@@ -466,6 +503,115 @@ class TestSavedRoutes:
                         json={"name": "x", "assignment": assignment})
         assert r.status_code in (401, 403)
         assert client.get(_surl(), headers=READ_AUTH).json() == []
+
+    def _make_three(self, client, assignment):
+        ids = []
+        for n in ("甲", "乙", "丙"):
+            r = client.post(_surl(), headers=WRITE_AUTH,
+                            json={"name": n, "assignment": assignment})
+            ids.append(r.json()["id"])
+        return ids  # in insert order → sort_order 0,1,2
+
+    def test_reorder_writes_positions_and_is_idempotent(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        a, b, c = self._make_three(client, assignment)
+        # reorder to [c, a, b]
+        r = client.patch(f"{_surl()}/order", headers=WRITE_AUTH,
+                         json={"order": [c, a, b]})
+        assert r.status_code == 200, r.text
+        rows = client.get(_surl(), headers=READ_AUTH).json()
+        assert [row["id"] for row in rows] == [c, a, b]
+        assert [row["sort_order"] for row in rows] == [0, 1, 2]
+        # idempotent: same list again, still [c, a, b]
+        client.patch(f"{_surl()}/order", headers=WRITE_AUTH, json={"order": [c, a, b]})
+        rows2 = client.get(_surl(), headers=READ_AUTH).json()
+        assert [row["id"] for row in rows2] == [c, a, b]
+
+    def test_reorder_rejects_a_bad_list_whole(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        a, b, c = self._make_three(client, assignment)
+        for bad in ([c, a], [c, a, b, 999999], [c, a, a]):
+            r = client.patch(f"{_surl()}/order", headers=WRITE_AUTH, json={"order": bad})
+            assert r.status_code == 422, (bad, r.text)
+        # order unchanged (still insert order)
+        rows = client.get(_surl(), headers=READ_AUTH).json()
+        assert [row["id"] for row in rows] == [a, b, c]
+
+    def test_reorder_without_admin_is_refused(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        a, b, c = self._make_three(client, assignment)
+        r = client.patch(f"{_surl()}/order", headers=READ_AUTH, json={"order": [c, b, a]})
+        assert r.status_code in (401, 403)
+
+    def test_clone_copies_verbatim_and_appends(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        src = client.post(_surl(), headers=WRITE_AUTH,
+                          json={"name": "主力", "assignment": assignment}).json()
+        r = client.post(f"{_surl()}/{src['id']}/clone", headers=WRITE_AUTH)
+        assert r.status_code == 201, r.text
+        rows = client.get(_surl(), headers=READ_AUTH).json()
+        assert len(rows) == 2
+        clone = next(x for x in rows if x["id"] != src["id"])
+        assert clone["name"] == "主力 副本"
+        # byte-for-byte copy of assignment + snapshot (not re-snapshotted)
+        assert clone["assignment"] == src["assignment"]
+        assert clone["utr_snapshot"] == src["utr_snapshot"]
+        # appended to the end
+        assert clone["sort_order"] > src["sort_order"]
+
+    def test_clone_dedupes_the_name(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        src = client.post(_surl(), headers=WRITE_AUTH,
+                          json={"name": "主力", "assignment": assignment}).json()
+        client.post(f"{_surl()}/{src['id']}/clone", headers=WRITE_AUTH)  # 主力 副本
+        client.post(f"{_surl()}/{src['id']}/clone", headers=WRITE_AUTH)  # 主力 副本2
+        names = {x["name"] for x in client.get(_surl(), headers=READ_AUTH).json()}
+        assert names == {"主力", "主力 副本", "主力 副本2"}
+
+    def test_clone_at_cap_is_409(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        # fill to the cap
+        first = None
+        for i in range(MAX_SAVED_PER_TEAM):
+            r = client.post(_surl(), headers=WRITE_AUTH,
+                            json={"name": f"L{i}", "assignment": assignment}).json()
+            if i == 0:
+                first = r["id"]
+        r = client.post(f"{_surl()}/{first}/clone", headers=WRITE_AUTH)
+        assert r.status_code == 409
+
+    def test_clone_of_a_near_max_name_stays_within_60_chars(self, seeded):
+        # DB checks char_length(name) between 1 and 60. A 58-char source + the
+        # 副本 suffix would overflow → raw 500. The clone name must be clamped.
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        long_name = "队" * 58
+        src = client.post(_surl(), headers=WRITE_AUTH,
+                          json={"name": long_name, "assignment": assignment}).json()
+        r = client.post(f"{_surl()}/{src['id']}/clone", headers=WRITE_AUTH)
+        assert r.status_code == 201, r.text
+        clone = r.json()
+        assert len(clone["name"]) <= 60
+        assert clone["name"].endswith("副本")
+
+    def test_clone_foreign_id_is_404(self, seeded):
+        client = TestClient(app)
+        r = client.post(f"{_surl()}/99999999/clone", headers=WRITE_AUTH)
+        assert r.status_code == 404
+
+    def test_clone_without_admin_is_refused(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        src = client.post(_surl(), headers=WRITE_AUTH,
+                          json={"name": "主力", "assignment": assignment}).json()
+        r = client.post(f"{_surl()}/{src['id']}/clone", headers=READ_AUTH)
+        assert r.status_code in (401, 403)
 
     def test_save_back_overwrites_and_delete(self, seeded):
         _, assignment, keymap = seeded

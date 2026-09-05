@@ -132,12 +132,16 @@ class SavedLineupLimitExceeded(ValueError):
 
 
 def list_saved_lineups(session: Session, team_id: int) -> list[SavedLineup]:
-    """Every saved lineup for a team, ordered by name so the list is stable."""
+    """Every saved lineup for a team, in display order.
+
+    Ordered by `(sort_order, id)`: the editable order the captain set, with id
+    as a stable tiebreak (default-0 rows before a backfill, or a race on two
+    fresh inserts, must not reorder run to run)."""
     return list(
         session.exec(
             select(SavedLineup)
             .where(SavedLineup.team_id == team_id)
-            .order_by(SavedLineup.name)
+            .order_by(SavedLineup.sort_order, SavedLineup.id)
         ).all()
     )
 
@@ -180,12 +184,130 @@ def save_lineup(
         saved = SavedLineup(
             team_id=team_id, name=name,
             assignment=assignment, utr_snapshot=utr_snapshot,
+            sort_order=_next_sort_order(session, team_id),
         )
         session.add(saved)
 
     session.commit()
     session.refresh(saved)
     return saved
+
+
+def _next_sort_order(session: Session, team_id: int) -> int:
+    """One past the team's current maximum, so a new lineup lands at the end.
+    Empty team → 0."""
+    rows = session.exec(
+        select(SavedLineup.sort_order).where(SavedLineup.team_id == team_id)
+    ).all()
+    return (max(rows) + 1) if rows else 0
+
+
+class BadReorder(ValueError):
+    """The reorder id list is not exactly this team's current set of ids."""
+
+
+def reorder_saved_lineups(
+    session: Session, team_id: int, ordered_ids: list[int]
+) -> None:
+    """Write `sort_order` by list position for a team's saved lineups.
+
+    Takes the WHOLE ordered id list, not a single move: it is idempotent (send
+    the same list twice → no change) and race-safe (two tabs cannot splice a
+    half-order). The list must be exactly this team's current id set — same
+    members, no duplicates, no strangers, nothing missing — or the whole call
+    is rejected and nothing is written. A partial write would leave the order
+    half-old with nothing on screen saying which half.
+    """
+    current = {
+        s.id
+        for s in session.exec(
+            select(SavedLineup).where(SavedLineup.team_id == team_id)
+        ).all()
+    }
+    if len(ordered_ids) != len(set(ordered_ids)) or set(ordered_ids) != current:
+        raise BadReorder(
+            "order must list exactly this team's saved-lineup ids, once each"
+        )
+
+    for position, saved_id in enumerate(ordered_ids):
+        row = session.get(SavedLineup, saved_id)
+        row.sort_order = position
+        session.add(row)
+    session.commit()
+
+
+class SavedLineupNotFound(ValueError):
+    """A clone/lookup for an id not on this team."""
+
+
+def clone_saved_lineup(
+    session: Session, team_id: int, saved_id: int
+) -> SavedLineup:
+    """Copy a saved lineup into a new row for the same team.
+
+    A true copy: `assignment` and `utr_snapshot` are taken verbatim from the
+    source, NOT re-snapshotted against current UTRs — the clone is "another
+    copy of that lineup as it was", so it revalidates to the same status as its
+    source at clone time. Named `<name> 副本`, deduped to `副本2`/`副本3`… since
+    `(team_id, name)` is unique. Appended (sort_order max+1). Counts against the
+    per-team cap like any new row.
+    """
+    source = session.exec(
+        select(SavedLineup).where(
+            SavedLineup.id == saved_id,
+            SavedLineup.team_id == team_id,
+        )
+    ).one_or_none()
+    if source is None:
+        raise SavedLineupNotFound(f"no saved lineup {saved_id} on this team")
+
+    if len(list_saved_lineups(session, team_id)) >= MAX_SAVED_PER_TEAM:
+        raise SavedLineupLimitExceeded(
+            f"a team may keep at most {MAX_SAVED_PER_TEAM} saved lineups"
+        )
+
+    name = _unique_clone_name(session, team_id, source.name)
+    clone = SavedLineup(
+        team_id=team_id,
+        name=name,
+        # dict(...) so the clone owns its own JSON, not a shared reference.
+        assignment=dict(source.assignment),
+        utr_snapshot=dict(source.utr_snapshot),
+        sort_order=_next_sort_order(session, team_id),
+    )
+    session.add(clone)
+    session.commit()
+    session.refresh(clone)
+    return clone
+
+
+def _unique_clone_name(session: Session, team_id: int, base: str) -> str:
+    """`<base> 副本`, then `副本2`, `副本3`… — the first not already taken on
+    this team. Bounded by the per-team cap, so the probe terminates.
+
+    The result is clamped to `MAX_NAME_LENGTH`: the DB enforces a 1-60 char
+    check, and a near-max source name plus the suffix would otherwise overflow
+    and surface as a raw 500. The base is trimmed to leave room for the suffix
+    (the suffix always wins — it is what makes the name a distinct copy)."""
+    def taken(candidate: str) -> bool:
+        return session.exec(
+            select(SavedLineup).where(
+                SavedLineup.team_id == team_id,
+                SavedLineup.name == candidate,
+            )
+        ).one_or_none() is not None
+
+    def fit(suffix: str) -> str:
+        room = MAX_NAME_LENGTH - len(suffix)
+        return f"{base[:room]}{suffix}"
+
+    first = fit(" 副本")
+    if not taken(first):
+        return first
+    n = 2
+    while taken(fit(f" 副本{n}")):
+        n += 1
+    return fit(f" 副本{n}")
 
 
 class UnknownAssignmentKey(ValueError):

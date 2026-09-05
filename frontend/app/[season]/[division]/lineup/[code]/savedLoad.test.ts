@@ -26,6 +26,7 @@ function saved(assignment: Record<string, string[]>): SavedLineup {
   return {
     id: 1,
     name: "x",
+    sort_order: 0,
     assignment,
     utr_snapshot: {},
     status: "valid",

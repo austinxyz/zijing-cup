@@ -117,3 +117,27 @@ export async function deleteSavedLineup(
   await adminWrite("DELETE", `${savedPath(season, division, team)}/${id}`);
   revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
 }
+
+export async function reorderSavedLineups(
+  season: string,
+  division: string,
+  team: string,
+  orderedIds: number[],
+): Promise<void> {
+  // The whole ordered id set, so the write is idempotent and race-safe; the
+  // backend rejects a list that is not exactly this team's ids.
+  await adminWrite("PATCH", `${savedPath(season, division, team)}/order`, {
+    order: orderedIds,
+  });
+  revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
+}
+
+export async function cloneSavedLineup(
+  season: string,
+  division: string,
+  team: string,
+  id: number,
+): Promise<void> {
+  await adminWrite("POST", `${savedPath(season, division, team)}/${id}/clone`);
+  revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
+}

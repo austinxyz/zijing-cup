@@ -36,6 +36,8 @@ vi.mock("./actions", () => ({
   deleteSavedLineup: vi.fn(),
   saveBackLineup: vi.fn(),
   validateAssignment: vi.fn(),
+  reorderSavedLineups: vi.fn(),
+  cloneSavedLineup: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({

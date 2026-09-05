@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import type { LineupPlayer, LineupViolation, SavedLineup } from "@/lib/api";
 import { savedStaleRefs } from "./savedLoad";
@@ -23,6 +23,10 @@ interface SavedLineupsProps {
   validateAction?: (assignment: Assignment) => Promise<LineupViolation[]>;
   /** Overwrite a saved lineup (by id) with an edited assignment. Admin only. */
   saveBackAction?: (id: number, assignment: Assignment) => Promise<void>;
+  /** Write the whole ordered id list. Admin only; enables drag + ↑/↓. */
+  reorderAction?: (orderedIds: number[]) => Promise<void>;
+  /** Clone a saved lineup by id. Admin only; enables the 克隆 button. */
+  cloneAction?: (id: number) => Promise<void>;
 }
 
 /** A status the backend sent that this build does not know. Fail closed: a
@@ -63,9 +67,64 @@ export function SavedLineups({
   deleteAction,
   validateAction,
   saveBackAction,
+  reorderAction,
+  cloneAction,
 }: SavedLineupsProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const byKey = new Map(roster.map((p) => [p.key, p]));
+
+  // Local display order for snappy reorder feedback. Re-synced from props
+  // whenever the server order changes (a successful reorder/clone revalidates
+  // the route, which re-renders this with the new order) — keyed on the id
+  // sequence so an actual order change adopts the server's, but our own
+  // optimistic update (same sequence) is a no-op.
+  const [items, setItems] = useState(saved);
+  const sig = saved.map((s) => s.id).join(",");
+  useEffect(() => {
+    setItems(saved);
+  }, [sig]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [reorderError, setReorderError] = useState<string | null>(null);
+  const [reordering, startReorder] = useTransition();
+  const dragFrom = useRef<number | null>(null);
+
+  const canReorder = canEdit && Boolean(reorderAction) && items.length > 1;
+  const canClone = canEdit && Boolean(cloneAction);
+
+  function commitOrder(next: SavedLineup[]) {
+    // One reorder in flight at a time: a second, computed off different state,
+    // would race on the server. Controls are also disabled while pending.
+    if (reordering) return;
+    const before = items;
+    setItems(next);
+    setReorderError(null);
+    startReorder(async () => {
+      try {
+        await reorderAction!(next.map((s) => s.id));
+      } catch {
+        // Revert to the last server-confirmed order; nothing landed.
+        setItems(before);
+        setReorderError("重排保存失败——请重试或刷新。");
+      }
+    });
+  }
+
+  function move(index: number, delta: number) {
+    const target = index + delta;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    commitOrder(next);
+  }
+
+  function drop(index: number) {
+    const from = dragFrom.current;
+    dragFrom.current = null;
+    if (from === null || from === index) return;
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(index, 0, moved);
+    commitOrder(next);
+  }
   const canUseEditor = canEdit && Boolean(validateAction && saveBackAction);
 
   function displayName(key: string): string {
@@ -102,7 +161,12 @@ export function SavedLineups({
 
   return (
     <div className="flex flex-col gap-4">
-      {saved.map((item) => {
+      {reorderError ? (
+        <p role="alert" className="text-[12px] text-danger">
+          {reorderError}
+        </p>
+      ) : null}
+      {items.map((item, index) => {
         const known = Object.prototype.hasOwnProperty.call(BADGE, item.status);
         const badge = known ? BADGE[item.status] : UNKNOWN_BADGE;
         const stale = savedStaleRefs(item, roster);
@@ -111,6 +175,10 @@ export function SavedLineups({
           <article
             key={item.id}
             aria-label={item.name}
+            draggable={canReorder && !reordering}
+            onDragStart={canReorder ? () => (dragFrom.current = index) : undefined}
+            onDragOver={canReorder ? (e) => e.preventDefault() : undefined}
+            onDrop={canReorder ? () => drop(index) : undefined}
             className="flex flex-col gap-2.5 rounded-token border border-border bg-surface px-4 py-3.5"
           >
             <div className="flex items-center gap-2.5">
@@ -195,7 +263,42 @@ export function SavedLineups({
               </span>
             ) : null}
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {canReorder ? (
+                <div className="flex flex-none items-center gap-1">
+                  {/* Touch-friendly reorder: 44px targets, so a phone user has
+                      a non-drag way to move a row (native DnD is unreliable on
+                      touch). Desktop can also drag the whole card. */}
+                  <button
+                    type="button"
+                    aria-label="上移"
+                    disabled={index === 0 || reordering}
+                    onClick={() => move(index, -1)}
+                    className="flex h-11 w-9 items-center justify-center rounded-token border border-border bg-surface-muted text-[14px] text-foreground disabled:opacity-40"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="下移"
+                    disabled={index === items.length - 1 || reordering}
+                    onClick={() => move(index, 1)}
+                    className="flex h-11 w-9 items-center justify-center rounded-token border border-border bg-surface-muted text-[14px] text-foreground disabled:opacity-40"
+                  >
+                    ↓
+                  </button>
+                </div>
+              ) : null}
+              {canClone ? (
+                <button
+                  type="button"
+                  disabled={reordering}
+                  onClick={() => void cloneAction!(item.id)}
+                  className="min-h-11 flex-none rounded-token border border-border bg-surface-muted px-3 py-2 text-[12px] text-foreground disabled:opacity-40"
+                >
+                  克隆
+                </button>
+              ) : null}
               {canUseEditor ? (
                 <button
                   type="button"

@@ -9,7 +9,7 @@ rather than letting the database fill it.
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import Column, DateTime, func
+from sqlalchemy import Column, DateTime, Integer, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
 
@@ -24,6 +24,15 @@ class SavedLineup(SQLModel, table=True):
     team_id: int = Field(foreign_key=f"{SCHEMA}.teams.id")
 
     name: str
+
+    #: Display order within a team, ascending. NOT NULL with a database default
+    #: of 0 (an int has no "unknown" state — 0 is a fine initial value), so an
+    #: insert need not supply it. New rows are given max+1 by save_lineup; the
+    #: migration backfills existing rows by name so the order does not jump when
+    #: the list switches from name-ordering to this.
+    sort_order: int = Field(
+        sa_column=Column(Integer, server_default=text("0"), nullable=False)
+    )
 
     #: {"D1": ["p12", "p34"], ...}
     assignment: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))

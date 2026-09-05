@@ -1,11 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-const push = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
-}));
-
 import type { LineupPlayer, SavedLineup } from "@/lib/api";
 import { SavedLineups } from "./SavedLineups";
 
@@ -23,6 +18,7 @@ function saved(over: Partial<SavedLineup> = {}): SavedLineup {
   return {
     id: 1,
     name: "主力最强",
+    sort_order: 0,
     assignment: { D1: ["p1", "p2"], D2: ["p3", "p4"] },
     utr_snapshot: {},
     status: "valid",
@@ -200,5 +196,55 @@ describe("SavedLineups admin gating", () => {
         basePath="/2026/silver/lineup/ZJU-USC" deleteAction={vi.fn()} />,
     );
     expect(screen.getByRole("button", { name: /删除/ })).toBeTruthy();
+  });
+});
+
+describe("SavedLineups reorder + clone", () => {
+  const A = saved({ id: 1, name: "甲", sort_order: 0 });
+  const B = saved({ id: 2, name: "乙", sort_order: 1 });
+  const C = saved({ id: 3, name: "丙", sort_order: 2 });
+
+  it("moving a row down sends the full reordered id list", async () => {
+    const reorderAction = vi.fn<(ids: number[]) => Promise<void>>(async () => {});
+    render(
+      <SavedLineups saved={[A, B, C]} roster={ROSTER} canEdit
+        basePath="/x" reorderAction={reorderAction} />,
+    );
+    // move 甲 (first) down → order becomes [乙, 甲, 丙]
+    const firstCard = screen.getByLabelText("甲");
+    fireEvent.click(within(firstCard).getByRole("button", { name: "下移" }));
+    expect(reorderAction).toHaveBeenCalledTimes(1);
+    expect(reorderAction.mock.calls[0][0]).toEqual([2, 1, 3]);
+  });
+
+  it("moving a row up sends the full reordered id list", async () => {
+    const reorderAction = vi.fn<(ids: number[]) => Promise<void>>(async () => {});
+    render(
+      <SavedLineups saved={[A, B, C]} roster={ROSTER} canEdit
+        basePath="/x" reorderAction={reorderAction} />,
+    );
+    const lastCard = screen.getByLabelText("丙");
+    fireEvent.click(within(lastCard).getByRole("button", { name: "上移" }));
+    expect(reorderAction.mock.calls[0][0]).toEqual([1, 3, 2]);
+  });
+
+  it("clones a row by id", () => {
+    const cloneAction = vi.fn(async () => {});
+    render(
+      <SavedLineups saved={[A]} roster={ROSTER} canEdit
+        basePath="/x" cloneAction={cloneAction} />,
+    );
+    fireEvent.click(within(screen.getByLabelText("甲")).getByRole("button", { name: /克隆/ }));
+    expect(cloneAction).toHaveBeenCalledWith(1);
+  });
+
+  it("shows no reorder/clone controls to a non-admin", () => {
+    render(
+      <SavedLineups saved={[A, B]} roster={ROSTER} canEdit={false}
+        basePath="/x" reorderAction={vi.fn()} cloneAction={vi.fn()} />,
+    );
+    expect(screen.queryByRole("button", { name: "上移" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "下移" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /克隆/ })).toBeNull();
   });
 });

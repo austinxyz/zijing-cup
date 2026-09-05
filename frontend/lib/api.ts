@@ -491,6 +491,10 @@ export async function getTeamPresets(
 export interface SavedLineup {
   id: number;
   name: string;
+  /** Display order within the team, ascending. The list arrives in this order;
+   *  reordering echoes the full ordered id list back. Required so a backend
+   *  drift on this field reddens tsc. */
+  sort_order: number;
   /** line code -> the two player keys standing on it. */
   assignment: Record<string, string[]>;
   /** player key -> the participation UTR string captured at save time. Read

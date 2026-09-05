@@ -18,6 +18,8 @@ import {
   deleteSavedLineup,
   saveBackLineup,
   validateAssignment,
+  reorderSavedLineups,
+  cloneSavedLineup,
 } from "./actions";
 import { CollapsibleSaved } from "./CollapsibleSaved";
 import { EditModeToggle } from "./EditModeToggle";
@@ -179,6 +181,8 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   // it back. Same bindings the standalone /saved page uses.
   const validateSavedAction = validateAssignment.bind(null, season, division, code);
   const saveBackSavedAction = saveBackLineup.bind(null, season, division, code);
+  const reorderSavedAction = reorderSavedLineups.bind(null, season, division, code);
+  const cloneSavedAction = cloneSavedLineup.bind(null, season, division, code);
 
   const men = roster.filter((p) => p.gender === "M").length;
   const women = roster.filter((p) => p.gender === "F").length;
@@ -282,6 +286,8 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
               deleteAction={canEdit ? deleteSavedAction : undefined}
               validateAction={canEdit ? validateSavedAction : undefined}
               saveBackAction={canEdit ? saveBackSavedAction : undefined}
+              reorderAction={canEdit ? reorderSavedAction : undefined}
+              cloneAction={canEdit ? cloneSavedAction : undefined}
             />
           </CollapsibleSaved>
 
