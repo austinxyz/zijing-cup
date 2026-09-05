@@ -73,7 +73,7 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
 - [x] 3.4 GREEN — `adminWrite` 显式 scope 参数 + `assertScope`；写 server action 传 (season,division)；解锁表单加隐藏字段
 - [x] 3.5 RED — test: 就地解锁表单渲染出 season/division 隐藏字段（值正确）——`EditModeToggle`/两个 HeaderControl
 - [x] 3.6 GREEN — 表单加隐藏 season/division，接 `unlockAdmin`
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 4. super 专属改密码页
 
@@ -88,11 +88,11 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
   `hashPassword` → `adminWrite("PUT", ".../admin-credential", {password_hash}, "super-only")`。
 - **Threshold**: 80
 
-- [ ] 4.0 CONTRACT — write openspec/changes/scoped-admin-auth/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 RED — test: `setCompetitionPassword` scope 非 `"*"` → 抛错、`adminWrite` 未调用；scope `"*"` → 调 hashPassword + adminWrite PUT（mock）
-- [ ] 4.2 GREEN — `setCompetitionPassword` server action（super 门 + Next 侧 hash + PUT super-only）
-- [ ] 4.3 RED — test: super 页非 super 会话不渲染表单（显示提示）；super 会话渲染选择器 + 密码输入
-- [ ] 4.4 GREEN — super-only 改密码页（server 组件 scope 门 + 表单）
+- [x] 4.0 CONTRACT — write openspec/changes/scoped-admin-auth/contracts/group-4.md with the ### Contract block above
+- [x] 4.1 RED — test: `setCompetitionPassword` scope 非 `"*"` → 抛错、`adminWrite` 未调用；scope `"*"` → 调 hashPassword + adminWrite PUT（mock）
+- [x] 4.2 GREEN — `setCompetitionPassword` server action（super 门 + Next 侧 hash + PUT super-only）
+- [x] 4.3 RED — test: super 页非 super 会话不渲染表单（显示提示）；super 会话渲染选择器 + 密码输入
+- [x] 4.4 GREEN — super-only 改密码页（server 组件 scope 门 + 表单）
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 5. 验证

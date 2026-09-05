@@ -46,6 +46,12 @@ export async function canEdit(
   return scope === "*" || scope === `${season}:${division}`;
 }
 
+/** Whether the session is the super admin (scope "*") — the only one allowed to
+ *  set competition passwords. */
+export async function isSuper(): Promise<boolean> {
+  return (await currentScope()) === "*";
+}
+
 /** super-only, or a specific competition the write targets. */
 export type WriteScope = "super-only" | { season: string | number; division: string };
 
