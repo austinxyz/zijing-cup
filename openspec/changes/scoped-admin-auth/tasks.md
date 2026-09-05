@@ -93,11 +93,11 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
 - [x] 4.2 GREEN — `setCompetitionPassword` server action（super 门 + Next 侧 hash + PUT super-only）
 - [x] 4.3 RED — test: super 页非 super 会话不渲染表单（显示提示）；super 会话渲染选择器 + 密码输入
 - [x] 4.4 GREEN — super-only 改密码页（server 组件 scope 门 + 表单）
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 5. 验证
 
-- [ ] 5.1 Run superpowers:verification-before-completion — 后端 pytest（`.venv-std` + 双密钥）+ 前端
+- [x] 5.1 Run superpowers:verification-before-completion — 后端 pytest（`.venv-std` + 双密钥）+ 前端
   `npm run test` + `npx tsc --noEmit`；审计无 console.log；`curl` GET/PUT admin-credential 确认落库；
   真渲染核对：2026 银组密码解锁只改银组、super 全改、super 改密码页非 super 打不开。顺序固定：
   先测试 → 再补种 → 再视觉核对（跑完 pytest 本地库会空）。super 页登录用 `ADMIN_PASSWORD_HASH`（临时
