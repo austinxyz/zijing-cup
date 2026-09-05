@@ -1,11 +1,11 @@
 import { render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { isSignedIn } from "@/lib/admin";
+import { canEdit } from "@/lib/admin";
 import { redirect } from "next/navigation";
 import UtrLayout from "./layout";
 
-vi.mock("@/lib/admin", () => ({ isSignedIn: vi.fn() }));
+vi.mock("@/lib/admin", () => ({ canEdit: vi.fn() }));
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(() => {
     throw new Error("NEXT_REDIRECT");
@@ -14,22 +14,25 @@ vi.mock("next/navigation", () => ({
 
 afterEach(() => vi.resetAllMocks());
 
-describe("the UTR route's own login gate", () => {
-  it("sends a signed-out visitor to the login page", async () => {
-    // This route sits under teams/, so the gate on players/ does not reach
-    // it. Without one of its own it would render an admin screen to anyone.
-    vi.mocked(isSignedIn).mockResolvedValue(false);
+const params = Promise.resolve({ season: "2026", division: "silver" });
 
-    await expect(UtrLayout({ children: <p>x</p> })).rejects.toThrow(
+describe("the UTR route's own competition gate", () => {
+  it("sends a viewer without edit rights for this competition to its team list", async () => {
+    // This route sits under teams/, so the gate on players/ does not reach it.
+    // A viewer who has not unlocked THIS competition is sent to its team list
+    // (where the in-place unlock lives), not the super-only /login.
+    vi.mocked(canEdit).mockResolvedValue(false);
+
+    await expect(UtrLayout({ children: <p>x</p>, params })).rejects.toThrow(
       "NEXT_REDIRECT",
     );
-    expect(redirect).toHaveBeenCalledWith("/login");
+    expect(redirect).toHaveBeenCalledWith("/2026/silver/teams");
   });
 
-  it("lets a signed-in admin through", async () => {
-    vi.mocked(isSignedIn).mockResolvedValue(true);
+  it("lets a competition admin through", async () => {
+    vi.mocked(canEdit).mockResolvedValue(true);
 
-    const { container } = render(await UtrLayout({ children: <p>x</p> }));
+    const { container } = render(await UtrLayout({ children: <p>x</p>, params }));
 
     expect(container.textContent).toContain("x");
     expect(redirect).not.toHaveBeenCalled();

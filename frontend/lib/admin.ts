@@ -20,13 +20,53 @@ export class NotLoggedIn extends Error {
   }
 }
 
-export async function isSignedIn(): Promise<boolean> {
-  const store = await cookies();
-  return (await readSession(store.get(SESSION_COOKIE)?.value)) !== null;
+export class NotAuthorizedForCompetition extends Error {
+  constructor() {
+    super("当前解锁的比赛无权编辑这一项");
+    this.name = "NotAuthorizedForCompetition";
+  }
 }
+
+async function currentScope(): Promise<string | null> {
+  const store = await cookies();
+  const session = await readSession(store.get(SESSION_COOKIE)?.value);
+  return session?.scope ?? null;
+}
+
+export async function isSignedIn(): Promise<boolean> {
+  return (await currentScope()) !== null;
+}
+
+/** Whether the session may edit this competition. super ("*") edits all. */
+export async function canEdit(
+  season: string | number,
+  division: string,
+): Promise<boolean> {
+  const scope = await currentScope();
+  return scope === "*" || scope === `${season}:${division}`;
+}
+
+/** super-only, or a specific competition the write targets. */
+export type WriteScope = "super-only" | { season: string | number; division: string };
 
 async function requireAdmin(): Promise<void> {
   if (!(await isSignedIn())) throw new NotLoggedIn();
+}
+
+/**
+ * The session must cover the write's target. Defaults to "super-only" so a
+ * write whose scope was not passed fails closed for a scoped admin (only super
+ * can do an unscoped write) rather than silently letting it through.
+ */
+async function assertScope(scope: WriteScope): Promise<void> {
+  const current = await currentScope();
+  if (scope === "super-only") {
+    if (current !== "*") throw new NotAuthorizedForCompetition();
+    return;
+  }
+  if (!(await canEdit(scope.season, scope.division))) {
+    throw new NotAuthorizedForCompetition();
+  }
 }
 
 export type WriteMethod = "POST" | "PUT" | "PATCH" | "DELETE";
@@ -42,8 +82,13 @@ export async function adminWrite(
   method: WriteMethod,
   path: string,
   body?: unknown,
+  scope: WriteScope = "super-only",
 ): Promise<unknown> {
   await requireAdmin();
+  // Scope check before the request is built: a scoped admin must not reach the
+  // backend for a competition they do not hold, and the refusal is "not your
+  // competition", not a backend 4xx. Defaults to super-only (fail closed).
+  await assertScope(scope);
 
   const base = process.env.BACKEND_URL;
   if (!base) throw new Error("BACKEND_URL is not configured");

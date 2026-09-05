@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { isSignedIn } from "@/lib/admin";
+import { canEdit } from "@/lib/admin";
 
 /**
  * This route's own login gate.
@@ -13,9 +13,12 @@ import { isSignedIn } from "@/lib/admin";
  */
 export default async function UtrLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ season: string; division: string }>;
 }) {
-  if (!(await isSignedIn())) redirect("/login");
+  const { season, division } = await params;
+  if (!(await canEdit(season, division))) redirect(`/${season}/${division}/teams`);
   return <>{children}</>;
 }

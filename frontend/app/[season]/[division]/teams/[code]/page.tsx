@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { isSignedIn } from "@/lib/admin";
+import { canEdit as canEditCompetition } from "@/lib/admin";
 import { getTeamRoster } from "@/lib/api";
 import { TeamEditPanel } from "./TeamEditPanel";
 import { TeamEditProvider } from "./TeamEditContext";
@@ -22,7 +22,7 @@ export default async function TeamRosterPage({ params }: PageProps) {
   // Only decides whether to offer the controls. The write endpoint refuses an
   // unauthenticated caller on its own; this keeps the page from showing a
   // button that cannot work.
-  const canEdit = await isSignedIn();
+  const canEdit = await canEditCompetition(season, division);
 
   const men = roster.players.filter((p) => p.gender === "M").length;
   const women = roster.players.filter((p) => p.gender === "F").length;
@@ -91,7 +91,7 @@ export default async function TeamRosterPage({ params }: PageProps) {
             参赛 UTR · 赛前冻结
           </span>
           {/* Far right, on the team-name row: the unlock / edit-view toggle. */}
-          <TeamEditHeaderControl />
+          <TeamEditHeaderControl season={season} division={division} />
         </div>
       </div>
 

@@ -107,6 +107,58 @@ describe("adminWrite", () => {
   });
 });
 
+describe("canEdit + adminWrite scope", () => {
+  async function signedInAs(scope: string) {
+    cookieStore.get.mockReturnValue({ value: await issueSession(scope) });
+  }
+
+  it("canEdit is true only for the session's own competition", async () => {
+    const { canEdit } = await import("./admin");
+    await signedInAs("2026:silver");
+    await expect(canEdit("2026", "silver")).resolves.toBe(true);
+    await expect(canEdit("2026", "gold")).resolves.toBe(false);
+    await expect(canEdit("2025", "silver")).resolves.toBe(false);
+  });
+
+  it("canEdit is true everywhere for super", async () => {
+    const { canEdit } = await import("./admin");
+    await signedInAs("*");
+    await expect(canEdit("2026", "gold")).resolves.toBe(true);
+    await expect(canEdit("2025", "silver")).resolves.toBe(true);
+  });
+
+  it("adminWrite refuses a write outside the session's scope, before the network", async () => {
+    const { adminWrite, NotAuthorizedForCompetition } = await import("./admin");
+    await signedInAs("2026:silver");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(
+      adminWrite("PUT", "/api/x", {}, { season: "2026", division: "gold" }),
+    ).rejects.toBeInstanceOf(NotAuthorizedForCompetition);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("adminWrite allows a write inside the session's scope", async () => {
+    const { adminWrite } = await import("./admin");
+    await signedInAs("2026:silver");
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, json: () => Promise.resolve({}),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await adminWrite("PUT", "/api/x", {}, { season: "2026", division: "silver" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("a scoped session cannot do a super-only write", async () => {
+    const { adminWrite, NotAuthorizedForCompetition } = await import("./admin");
+    await signedInAs("2026:silver");
+    vi.stubGlobal("fetch", vi.fn());
+    await expect(
+      adminWrite("PUT", "/api/admin-cred", {}, "super-only"),
+    ).rejects.toBeInstanceOf(NotAuthorizedForCompetition);
+  });
+});
+
 describe("isSignedIn", () => {
   it("is false without a cookie and true with a fresh one", async () => {
     const { isSignedIn } = await import("./admin");

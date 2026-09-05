@@ -21,7 +21,7 @@ export async function splitPlayer(formData: FormData): Promise<void> {
     utr_profile_id: String(formData.get("utrProfileId") ?? "").trim() || null,
     membership_ids: formData.getAll("m").map((value) => Number(value)),
     season_years: formData.getAll("s").map((value) => Number(value)),
-  })) as { id: number } | null;
+  }, { season, division })) as { id: number } | null;
 
   // Land on the new record rather than back on the old one: the thing worth
   // checking after a split is what the new person ended up with.

@@ -18,6 +18,17 @@ describe("EditModeToggle (in-place admin unlock)", () => {
     expect(screen.getByRole("button", { name: /解锁/ })).toBeTruthy();
   });
 
+  it("carries the competition into the unlock form as hidden fields", () => {
+    const { container } = render(
+      <EditModeToggle signedIn={false} season="2026" division="silver" />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /编辑模式/ }));
+    const season = container.querySelector('input[name="season"]') as HTMLInputElement;
+    const division = container.querySelector('input[name="division"]') as HTMLInputElement;
+    expect(season?.value).toBe("2026");
+    expect(division?.value).toBe("silver");
+  });
+
   it("renders the same failure feedback the login page uses", () => {
     render(<EditModeToggle signedIn={false} error="bad-password" remaining={3} />);
     // matches LoginForm's wording

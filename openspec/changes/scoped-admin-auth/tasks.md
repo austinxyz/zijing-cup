@@ -50,7 +50,7 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
 - [x] 2.4 GREEN — 抽 `matches`；`checkCompetitionPassword`（后端 GET + 比对 + 失败降级）
 - [x] 2.5 RED — test: `authenticate` super→`"*"`、比赛命中→`"season:division"`、无行/错密码→失败；限速在比对前（login/actions 测试或抽出的核心）
 - [x] 2.6 GREEN — `authenticate(season,division,password)` 三分支；`login`/`unlockAdmin` 传 season/division（super `/login` 无比赛上下文时只认 super）
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 3. canEdit(比赛) + adminWrite 越权拒 + 各取值点接线
 
@@ -66,13 +66,13 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
   带 season/division 隐藏字段。
 - **Threshold**: 80
 
-- [ ] 3.0 CONTRACT — write openspec/changes/scoped-admin-auth/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 RED — test: `canEdit` scope `2026:silver` → (2026,silver) 真、(2026,gold)/(2025,silver) 假；`"*"` 全真（lib/admin.test.ts，mock 会话）
-- [ ] 3.2 GREEN — `canEdit(season,division)`；各页取值点改按比赛（layout、teams/[code]、lineup/[code]、lineup/[code]/saved、players layout）
-- [ ] 3.3 RED — test: `adminWrite` scope 盖不住目标比赛 → 抛错、`fetch` 未被调用；覆盖时照发双密钥（mock fetch）
-- [ ] 3.4 GREEN — `adminWrite` 显式 scope 参数 + `assertScope`；写 server action 传 (season,division)；解锁表单加隐藏字段
-- [ ] 3.5 RED — test: 就地解锁表单渲染出 season/division 隐藏字段（值正确）——`EditModeToggle`/两个 HeaderControl
-- [ ] 3.6 GREEN — 表单加隐藏 season/division，接 `unlockAdmin`
+- [x] 3.0 CONTRACT — write openspec/changes/scoped-admin-auth/contracts/group-3.md with the ### Contract block above
+- [x] 3.1 RED — test: `canEdit` scope `2026:silver` → (2026,silver) 真、(2026,gold)/(2025,silver) 假；`"*"` 全真（lib/admin.test.ts，mock 会话）
+- [x] 3.2 GREEN — `canEdit(season,division)`；各页取值点改按比赛（layout、teams/[code]、lineup/[code]、lineup/[code]/saved、players layout）
+- [x] 3.3 RED — test: `adminWrite` scope 盖不住目标比赛 → 抛错、`fetch` 未被调用；覆盖时照发双密钥（mock fetch）
+- [x] 3.4 GREEN — `adminWrite` 显式 scope 参数 + `assertScope`；写 server action 传 (season,division)；解锁表单加隐藏字段
+- [x] 3.5 RED — test: 就地解锁表单渲染出 season/division 隐藏字段（值正确）——`EditModeToggle`/两个 HeaderControl
+- [x] 3.6 GREEN — 表单加隐藏 season/division，接 `unlockAdmin`
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 4. super 专属改密码页

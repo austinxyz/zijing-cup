@@ -10,11 +10,17 @@ import { useTeamEdit } from "./TeamEditContext";
  * - Signed in → a 编辑模式 / 查看模式 toggle (switches the roster panel below),
  *   plus the logout affordance from EditModeToggle.
  */
-export function TeamEditHeaderControl() {
+export function TeamEditHeaderControl({
+  season,
+  division,
+}: {
+  season: string;
+  division: string;
+}) {
   const { canEdit, editing, setEditing } = useTeamEdit();
 
   if (!canEdit) {
-    return <EditModeToggle signedIn={false} />;
+    return <EditModeToggle signedIn={false} season={season} division={division} />;
   }
 
   return (
@@ -26,7 +32,7 @@ export function TeamEditHeaderControl() {
       >
         {editing ? "查看模式" : "编辑模式"}
       </button>
-      <EditModeToggle signedIn={true} />
+      <EditModeToggle signedIn={true} season={season} division={division} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getDivisionRules, getSavedLineups, getTeamLineups } from "@/lib/api";
-import { isSignedIn } from "@/lib/admin";
+import { canEdit as canEditCompetition } from "@/lib/admin";
 import {
   deleteSavedLineup,
   saveBackLineup,
@@ -31,7 +31,7 @@ export default async function SavedLineupsPage({ params }: PageProps) {
   // Saved lineups are confidential planned lineups — fetched only for an admin,
   // so a non-admin's page never contains them (hiding in the client would still
   // ship them in the HTML). Admin status resolved first to gate the fetch.
-  const canEdit = await isSignedIn();
+  const canEdit = await canEditCompetition(season, division);
   const [search, saved, rules] = await Promise.all([
     getTeamLineups(season, division, code),
     canEdit ? getSavedLineups(season, division, code) : Promise.resolve([]),

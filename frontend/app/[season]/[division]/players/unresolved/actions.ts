@@ -24,6 +24,7 @@ export async function ruleOnSeason(formData: FormData): Promise<void> {
     "POST",
     `/api/players/${playerId}/season-utrs/${seasonYear}/ruling`,
     { value },
+    { season, division },
   );
 
   revalidatePath(`/${season}/${division}/players/unresolved`);

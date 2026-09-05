@@ -11,11 +11,17 @@ import { useLineupEdit } from "./LineupEditContext";
  *   affordances (saved-lineup controls, preset save/delete, save-this-lineup),
  *   plus the logout affordance.
  */
-export function LineupEditHeaderControl() {
+export function LineupEditHeaderControl({
+  season,
+  division,
+}: {
+  season: string;
+  division: string;
+}) {
   const { canEdit, editing, setEditing } = useLineupEdit();
 
   if (!canEdit) {
-    return <EditModeToggle signedIn={false} />;
+    return <EditModeToggle signedIn={false} season={season} division={division} />;
   }
 
   return (
@@ -27,7 +33,7 @@ export function LineupEditHeaderControl() {
       >
         {editing ? "查看模式" : "编辑模式"}
       </button>
-      <EditModeToggle signedIn={true} />
+      <EditModeToggle signedIn={true} season={season} division={division} />
     </div>
   );
 }

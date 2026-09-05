@@ -18,7 +18,7 @@ export async function mergePlayers(formData: FormData): Promise<void> {
 
   await adminWrite("POST", `/api/players/${playerId}/merge`, {
     merge_id: mergeId,
-  });
+  }, { season, division });
 
   redirect(`/${season}/${division}/players/${playerId}`);
 }

@@ -26,7 +26,7 @@ export async function savePreset(
   await adminWrite("POST", presetsPath(season, division, team), {
     name,
     constraints,
-  });
+  }, { season, division });
   revalidatePath(`/${season}/${division}/lineup/${team}`);
 }
 
@@ -39,6 +39,8 @@ export async function deletePreset(
   await adminWrite(
     "DELETE",
     `${presetsPath(season, division, team)}/${id}`,
+    undefined,
+    { season, division },
   );
   revalidatePath(`/${season}/${division}/lineup/${team}`);
 }
@@ -65,7 +67,7 @@ export async function saveLineup(
   await adminWrite("POST", savedPath(season, division, team), {
     name,
     assignment,
-  });
+  }, { season, division });
   revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
 }
 
@@ -80,7 +82,7 @@ export async function saveBackLineup(
 ): Promise<void> {
   await adminWrite("PUT", `${savedPath(season, division, team)}/${id}`, {
     assignment,
-  });
+  }, { season, division });
   revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
 }
 
@@ -102,6 +104,7 @@ export async function validateAssignment(
     "POST",
     `${savedPath(season, division, team)}/validate`,
     { assignment },
+    { season, division },
   );
   const violations = (result as { violations?: LineupViolation[] } | null)
     ?.violations;
@@ -114,7 +117,7 @@ export async function deleteSavedLineup(
   team: string,
   id: number,
 ): Promise<void> {
-  await adminWrite("DELETE", `${savedPath(season, division, team)}/${id}`);
+  await adminWrite("DELETE", `${savedPath(season, division, team)}/${id}`, undefined, { season, division });
   revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
 }
 
@@ -128,7 +131,7 @@ export async function reorderSavedLineups(
   // backend rejects a list that is not exactly this team's ids.
   await adminWrite("PATCH", `${savedPath(season, division, team)}/order`, {
     order: orderedIds,
-  });
+  }, { season, division });
   revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
 }
 
@@ -138,7 +141,7 @@ export async function cloneSavedLineup(
   team: string,
   id: number,
 ): Promise<void> {
-  await adminWrite("POST", `${savedPath(season, division, team)}/${id}/clone`);
+  await adminWrite("POST", `${savedPath(season, division, team)}/${id}/clone`, undefined, { season, division });
   revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
 }
 
@@ -153,6 +156,6 @@ export async function renameSavedLineup(
   // lineup's name (409); adminWrite throws on non-2xx, surfaced by the caller.
   await adminWrite("PATCH", `${savedPath(season, division, team)}/${id}`, {
     name,
-  });
+  }, { season, division });
   revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
 }

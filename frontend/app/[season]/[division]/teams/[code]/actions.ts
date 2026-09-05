@@ -24,7 +24,7 @@ export async function saveCurrentUtr(
     // only number a lineup can be built from before the committee's arrives.
     season_year: Number(season),
     updates: [edit],
-  });
+  }, { season, division });
   revalidatePath(`/${season}/${division}/teams/${teamCode}`);
 }
 
@@ -69,7 +69,7 @@ export async function saveTeamEdits(
     await adminWrite("PUT", "/api/players/current-utr", {
       season_year: Number(season),
       updates: edits.utrs,
-    });
+    }, { season, division });
   }
   for (const s of edits.seasonUtrs ?? []) {
     // source "admin_ruling", no status: a hand-set participation value, shown
@@ -79,20 +79,21 @@ export async function saveTeamEdits(
       value: s.value,
       source: "admin_ruling",
       status: null,
-    });
+    }, { season, division });
   }
   for (const m of edits.memberships ?? []) {
     const { player_id, ...fields } = m;
     await adminWrite("PATCH", `/api/players/${player_id}/memberships`, {
       team_id: teamId,
       ...fields,
-    });
+    }, { season, division });
   }
   if (edits.schoolCount !== undefined) {
     await adminWrite(
       "PATCH",
       `/api/seasons/${season}/divisions/${division}/teams/${encodeURIComponent(teamCode)}`,
       { school_count: edits.schoolCount },
+      { season, division },
     );
   }
   revalidatePath(`/${season}/${division}/teams/${teamCode}`);

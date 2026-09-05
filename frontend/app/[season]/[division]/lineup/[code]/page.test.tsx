@@ -12,7 +12,7 @@ import {
   type LineupSearch,
   type TeamRoster,
 } from "@/lib/api";
-import { isSignedIn } from "@/lib/admin";
+import { canEdit, isSignedIn } from "@/lib/admin";
 import Page, { constraintsFromQuery, hasStaleKeys } from "./page";
 
 vi.mock("@/lib/api", async (importOriginal) => {
@@ -29,6 +29,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
 
 vi.mock("@/lib/admin", () => ({
   isSignedIn: vi.fn(async () => false),
+  canEdit: vi.fn(async () => false),
 }));
 
 vi.mock("./actions", () => ({
@@ -210,7 +211,7 @@ describe("the lineup page gates the candidate search on go", () => {
   it("does NOT fetch or render saved lineups for a non-admin (confidential)", async () => {
     vi.mocked(getDivisionRules).mockResolvedValue(RULES);
     vi.mocked(getTeamRoster).mockResolvedValue(TEAM_ROSTER);
-    vi.mocked(isSignedIn).mockResolvedValue(false);
+    vi.mocked(canEdit).mockResolvedValue(false);
     // Even if the backend would return lineups, a non-admin page must not fetch
     // them — they must never reach the HTML.
     vi.mocked(getSavedLineups).mockResolvedValue([
@@ -231,7 +232,7 @@ describe("the lineup page gates the candidate search on go", () => {
   it("fetches saved lineups for an admin", async () => {
     vi.mocked(getDivisionRules).mockResolvedValue(RULES);
     vi.mocked(getTeamRoster).mockResolvedValue(TEAM_ROSTER);
-    vi.mocked(isSignedIn).mockResolvedValue(true);
+    vi.mocked(canEdit).mockResolvedValue(true);
     vi.mocked(getSavedLineups).mockResolvedValue([]);
 
     render(await renderDraft());

@@ -50,6 +50,7 @@ export async function previewSheet(
     `/api/seasons/${year}/divisions/${division}/teams/` +
       `${encodeURIComponent(teamCode)}/utr-sheet/preview`,
     { text },
+    { season: year, division },
   )) as SheetDiff;
 }
 
@@ -72,5 +73,6 @@ export async function applySheet(
     `/api/seasons/${year}/divisions/${division}/teams/` +
       `${encodeURIComponent(teamCode)}/utr-sheet/apply`,
     { text },
+    { season: year, division },
   )) as { updated: number };
 }

@@ -10,7 +10,7 @@ import {
   type LineupSearch,
   type RuleLine,
 } from "@/lib/api";
-import { isSignedIn } from "@/lib/admin";
+import { canEdit as canEditCompetition } from "@/lib/admin";
 import {
   savePreset,
   deletePreset,
@@ -133,7 +133,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   // would still ship them in the server-rendered HTML; not fetching is the
   // actual control. (Only the Next server holds BACKEND_SECRET, so a non-admin
   // browser cannot reach the backend list on its own either.)
-  const canEdit = await isSignedIn();
+  const canEdit = await canEditCompetition(season, division);
   const [saved, presets] = await Promise.all([
     canEdit ? getSavedLineups(season, division, code) : Promise.resolve([]),
     getTeamPresets(season, division, code),
@@ -248,7 +248,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
                 in, mirroring the team page: the edit affordances below (saved
                 lineup controls, preset save/delete, save-this-lineup) show only
                 in edit mode. */}
-            <LineupEditHeaderControl />
+            <LineupEditHeaderControl season={season} division={division} />
             {/* The number every lineup is checked against is the frozen one,
                 not today's rating. */}
             <span className="font-mono text-[11.5px] text-muted-foreground">

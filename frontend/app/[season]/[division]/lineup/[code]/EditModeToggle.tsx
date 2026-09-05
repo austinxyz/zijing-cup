@@ -12,6 +12,11 @@ import {
 interface EditModeToggleProps {
   /** Whether the viewer already holds an admin session. */
   signedIn: boolean;
+  /** The competition being unlocked, carried into the unlock so the password is
+   *  checked against THIS competition (or super). Absent = super-only unlock
+   *  (the global /login has no competition context). */
+  season?: string;
+  division?: string;
   /** Test-only: render a failure state without driving the server action. */
   error?: UnlockState["error"];
   remaining?: number;
@@ -52,6 +57,8 @@ function Message({
  */
 export function EditModeToggle({
   signedIn,
+  season,
+  division,
   error,
   remaining,
 }: EditModeToggleProps) {
@@ -101,6 +108,10 @@ export function EditModeToggle({
 
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
+      {/* The competition travels with the unlock so authenticate checks this
+          competition's password (or super). Omitted → super-only. */}
+      {season ? <input type="hidden" name="season" value={season} /> : null}
+      {division ? <input type="hidden" name="division" value={division} /> : null}
       <input
         type="password"
         name="password"
