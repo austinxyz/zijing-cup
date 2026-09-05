@@ -266,6 +266,21 @@ describe("SavedLineups rename", () => {
     expect(renameAction).toHaveBeenCalledWith(1, "主力最强");
   });
 
+  it("reflects a renamed lineup when the refreshed props arrive (same id)", () => {
+    // After a successful rename the server revalidates and re-renders with the
+    // new name but the SAME id. The local items must re-sync off name, not just
+    // id order, or the shown name stays stale.
+    const { rerender } = render(
+      <SavedLineups saved={[A]} roster={ROSTER} canEdit basePath="/x" renameAction={vi.fn()} />,
+    );
+    expect(screen.getByText("甲")).toBeTruthy();
+    rerender(
+      <SavedLineups saved={[{ ...A, name: "甲改" }]} roster={ROSTER} canEdit basePath="/x" renameAction={vi.fn()} />,
+    );
+    expect(screen.getByText("甲改")).toBeTruthy();
+    expect(screen.queryByText("甲")).toBeNull();
+  });
+
   it("shows no rename control to a non-admin", () => {
     render(
       <SavedLineups saved={[A]} roster={ROSTER} canEdit={false}

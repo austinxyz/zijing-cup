@@ -104,7 +104,11 @@ export function SavedLineups({
   // sequence so an actual order change adopts the server's, but our own
   // optimistic update (same sequence) is a no-op.
   const [items, setItems] = useState(saved);
-  const sig = saved.map((s) => s.id).join(",");
+  // Signature covers everything the list renders that the server can change —
+  // id order AND name AND sort_order — not just the id sequence: a rename keeps
+  // the ids but changes a name, and keying on ids alone left `items` (and the
+  // shown name) stale after a successful rename.
+  const sig = saved.map((s) => `${s.id}:${s.name}:${s.sort_order}`).join(",");
   useEffect(() => {
     setItems(saved);
   }, [sig]); // eslint-disable-line react-hooks/exhaustive-deps
