@@ -1,3 +1,4 @@
+from app.models.admin_credentials import AdminCredential
 from app.models.players import (
     CURRENT_UTR_STATUSES,
     SEASON_UTR_SOURCES,
@@ -19,6 +20,7 @@ from app.models.rules import (
 )
 
 __all__ = [
+    "AdminCredential",
     "CURRENT_UTR_STATUSES",
     "Division",
     "DivisionBorrowedLimit",

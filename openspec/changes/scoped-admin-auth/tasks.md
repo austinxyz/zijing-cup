@@ -19,14 +19,14 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
   后端绝不算 hash。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/scoped-admin-auth/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
-- [ ] 1.1 RED — test: 模型/表存在、`(season,division)` 唯一、`password_hash` 非空（backend/tests/test_admin_credentials.py，打本地库）
-- [ ] 1.2 GREEN — `app/models/` 加 `AdminCredential`；写 migration；本地断言 127.0.0.1 后打本地栈
-- [ ] 1.3 RED — test: PUT upsert 后 GET 返回同一 hash；无行 GET 404；同 (season,division) PUT 两次是更新非新增
-- [ ] 1.4 GREEN — GET/PUT 路由（读 hash/404、upsert）
-- [ ] 1.5 RED — test: GET 无 `X-Backend-Secret`→401；PUT 无 `X-Admin-Secret`→403（test_admin_auth 那条全应用范围断言覆盖到新写路由）
-- [ ] 1.6 GREEN — 确认中间件覆盖（应无需改 auth.py；若断言红再查）
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
+- [x] 1.0 CONTRACT — write openspec/changes/scoped-admin-auth/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
+- [x] 1.1 RED — test: 模型/表存在、`(season,division)` 唯一、`password_hash` 非空（backend/tests/test_admin_credentials.py，打本地库）
+- [x] 1.2 GREEN — `app/models/` 加 `AdminCredential`；写 migration；本地断言 127.0.0.1 后打本地栈
+- [x] 1.3 RED — test: PUT upsert 后 GET 返回同一 hash；无行 GET 404；同 (season,division) PUT 两次是更新非新增
+- [x] 1.4 GREEN — GET/PUT 路由（读 hash/404、upsert）
+- [x] 1.5 RED — test: GET 无 `X-Backend-Secret`→401；PUT 无 `X-Admin-Secret`→403（test_admin_auth 那条全应用范围断言覆盖到新写路由）
+- [x] 1.6 GREEN — 确认中间件覆盖（应无需改 auth.py；若断言红再查）
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 2. 会话 scope + 按比赛认证（auth 核心）
 
