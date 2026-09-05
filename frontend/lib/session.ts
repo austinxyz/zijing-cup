@@ -63,11 +63,16 @@ export function hashPassword(password: string): string {
  * deployment mistake this whole surface has to be closed about, and it is the
  * same rule the backend applies to a missing ADMIN_SECRET.
  */
-export async function checkPassword(password: string): Promise<boolean> {
-  const configured = process.env.ADMIN_PASSWORD_HASH;
-  if (!configured || !password) return false;
-
-  const [salt, expected] = configured.split(":");
+/**
+ * Whether `password` derives to `hash` (a `salt:hash` from hashPassword).
+ *
+ * The single scrypt + timing-safe compare, shared by the super check
+ * (`checkPassword`) and the per-competition check (`checkCompetitionPassword`)
+ * so the two cannot drift into different comparison behaviour.
+ */
+export function matches(hash: string | null | undefined, password: string): boolean {
+  if (!hash || !password) return false;
+  const [salt, expected] = hash.split(":");
   if (!salt || !expected) return false;
 
   const derived = scryptSync(password, salt, 32);
@@ -77,15 +82,94 @@ export async function checkPassword(password: string): Promise<boolean> {
   return timingSafeEqual(derived, expectedBuffer);
 }
 
+/**
+ * The super password: the existing single `ADMIN_PASSWORD_HASH`. Reused as the
+ * owner's all-competitions credential, so their current password keeps working.
+ *
+ * Fail closed: an unconfigured hash means nobody gets in — the same rule the
+ * backend applies to a missing ADMIN_SECRET.
+ */
+export async function checkPassword(password: string): Promise<boolean> {
+  return matches(process.env.ADMIN_PASSWORD_HASH, password);
+}
+
+/**
+ * Whether `password` matches the stored password for one competition.
+ *
+ * Reads the hash from the backend (guarded by X-Backend-Secret, which only this
+ * server holds — so this can run during login, before any user is
+ * authenticated). Any failure — no credential row (404), a network error, a
+ * missing config — is treated as "no password set" (false), i.e. that
+ * competition is unlockable only by super. Never throws to the caller and never
+ * lets a read failure read as a pass.
+ */
+export async function checkCompetitionPassword(
+  season: string | number,
+  division: string,
+  password: string,
+): Promise<boolean> {
+  if (!password) return false;
+  const base = process.env.BACKEND_URL;
+  const backendSecret = process.env.BACKEND_SECRET;
+  if (!base || !backendSecret) return false;
+
+  try {
+    const res = await fetch(
+      `${base}/api/seasons/${season}/divisions/${encodeURIComponent(division)}/admin-credential`,
+      {
+        cache: "no-store",
+        headers: { "X-Backend-Secret": backendSecret },
+      },
+    );
+    if (!res.ok) return false;
+    const body = (await res.json().catch(() => null)) as
+      | { password_hash?: string }
+      | null;
+    return matches(body?.password_hash, password);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The scope a password earns for a competition context, or null if none.
+ *
+ * Super first (the existing `ADMIN_PASSWORD_HASH`) → `"*"`; else, when a
+ * competition is in context, that competition's stored password → its scope;
+ * else null. With no competition context (the global /login), only super is
+ * accepted — there is no competition to scope to.
+ */
+export async function resolveScope(
+  season: string | number | null,
+  division: string | null,
+  password: string,
+): Promise<string | null> {
+  if (await checkPassword(password)) return "*";
+  if (
+    season != null &&
+    division != null &&
+    (await checkCompetitionPassword(season, division, password))
+  ) {
+    return `${season}:${division}`;
+  }
+  return null;
+}
+
 export interface Session {
   issuedAt: number;
   expiresAt: number;
+  /** What this session may edit: "*" (super, everything) or "<season>:<division>"
+   *  (that one competition only). Part of the SIGNED payload, so it cannot be
+   *  escalated by editing the cookie — a changed scope invalidates the
+   *  signature. */
+  scope: string;
 }
 
-export async function issueSession(): Promise<string> {
+export async function issueSession(scope: string): Promise<string> {
   const payload = JSON.stringify({
     issuedAt: Date.now(),
     expiresAt: Date.now() + SESSION_TTL_MS,
+    scope,
   });
   const encoded = Buffer.from(payload).toString("base64url");
   return `${encoded}.${sign(encoded)}`;
@@ -116,6 +200,9 @@ export async function readSession(token: string | undefined): Promise<Session | 
     ) as Session;
     if (typeof session.expiresAt !== "number") return null;
     if (session.expiresAt <= Date.now()) return null;
+    // A session with no scope predates scoping / is malformed — reject rather
+    // than treat as super. Fail closed.
+    if (typeof session.scope !== "string" || session.scope === "") return null;
     return session;
   } catch {
     return null;

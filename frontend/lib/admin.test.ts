@@ -23,7 +23,7 @@ afterEach(() => {
 });
 
 async function signedIn() {
-  cookieStore.get.mockReturnValue({ value: await issueSession() });
+  cookieStore.get.mockReturnValue({ value: await issueSession("*") });
 }
 
 describe("adminWrite", () => {

@@ -6,10 +6,10 @@ import { redirect } from "next/navigation";
 import {
   SESSION_COOKIE,
   SESSION_TTL_MS,
-  checkPassword,
   issueSession,
   rateLimitState,
   recordFailure,
+  resolveScope,
 } from "@/lib/session";
 
 export interface LoginState {
@@ -63,7 +63,15 @@ async function authenticate(formData: FormData): Promise<LoginState | null> {
   }
 
   const password = String(formData.get("password") ?? "");
-  if (!(await checkPassword(password))) {
+  // The competition being unlocked, carried by the in-place unlock form. Absent
+  // on the global /login, where only the super password is accepted.
+  const seasonRaw = formData.get("season");
+  const divisionRaw = formData.get("division");
+  const season = seasonRaw ? String(seasonRaw) : null;
+  const division = divisionRaw ? String(divisionRaw) : null;
+
+  const scope = await resolveScope(season, division, password);
+  if (scope === null) {
     recordFailure(address);
     const after = rateLimitState(address);
     return {
@@ -74,7 +82,7 @@ async function authenticate(formData: FormData): Promise<LoginState | null> {
   }
 
   const store = await cookies();
-  store.set(SESSION_COOKIE, await issueSession(), {
+  store.set(SESSION_COOKIE, await issueSession(scope), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

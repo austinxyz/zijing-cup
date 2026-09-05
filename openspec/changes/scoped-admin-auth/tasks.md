@@ -43,13 +43,13 @@ Test runner note: 本机 `uv run` 被 Application Control 拦，后端命令走
   走后端 GET（`X-Backend-Secret`，404/失败→false）；`authenticate` 三分支，限速在比对前。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/scoped-admin-auth/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — test: `issueSession("2026:silver")` → `readSession` 得回该 scope；改载荷里的 scope 再验签 → null（lib/session.test.ts）
-- [ ] 2.2 GREEN — `Session.scope` + `issueSession(scope)` + `readSession` 解出 scope（签名覆盖 scope）
-- [ ] 2.3 RED — test: `matches(hash,pwd)` 抽出后 super 与比赛两路一致；`checkCompetitionPassword` 命中/未命中/404→false/读错→false
-- [ ] 2.4 GREEN — 抽 `matches`；`checkCompetitionPassword`（后端 GET + 比对 + 失败降级）
-- [ ] 2.5 RED — test: `authenticate` super→`"*"`、比赛命中→`"season:division"`、无行/错密码→失败；限速在比对前（login/actions 测试或抽出的核心）
-- [ ] 2.6 GREEN — `authenticate(season,division,password)` 三分支；`login`/`unlockAdmin` 传 season/division（super `/login` 无比赛上下文时只认 super）
+- [x] 2.0 CONTRACT — write openspec/changes/scoped-admin-auth/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 RED — test: `issueSession("2026:silver")` → `readSession` 得回该 scope；改载荷里的 scope 再验签 → null（lib/session.test.ts）
+- [x] 2.2 GREEN — `Session.scope` + `issueSession(scope)` + `readSession` 解出 scope（签名覆盖 scope）
+- [x] 2.3 RED — test: `matches(hash,pwd)` 抽出后 super 与比赛两路一致；`checkCompetitionPassword` 命中/未命中/404→false/读错→false
+- [x] 2.4 GREEN — 抽 `matches`；`checkCompetitionPassword`（后端 GET + 比对 + 失败降级）
+- [x] 2.5 RED — test: `authenticate` super→`"*"`、比赛命中→`"season:division"`、无行/错密码→失败；限速在比对前（login/actions 测试或抽出的核心）
+- [x] 2.6 GREEN — `authenticate(season,division,password)` 三分支；`login`/`unlockAdmin` 传 season/division（super `/login` 无比赛上下文时只认 super）
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; total ≥ 80 → PASS; < 80 → append FIX tasks + retry
 
 ## 3. canEdit(比赛) + adminWrite 越权拒 + 各取值点接线

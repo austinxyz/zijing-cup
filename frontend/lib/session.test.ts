@@ -61,14 +61,14 @@ describe("issueSession / readSession", () => {
   it("round-trips a signed session", async () => {
     vi.stubEnv("SESSION_SECRET", SECRET);
 
-    const token = await issueSession();
+    const token = await issueSession("*");
 
     await expect(readSession(token)).resolves.not.toBeNull();
   });
 
   it("rejects a tampered token", async () => {
     vi.stubEnv("SESSION_SECRET", SECRET);
-    const token = await issueSession();
+    const token = await issueSession("*");
 
     // Flip the payload but keep the signature: an unsigned cookie would be a
     // login anyone can mint for themselves.
@@ -80,7 +80,7 @@ describe("issueSession / readSession", () => {
 
   it("rejects a token signed with a different secret", async () => {
     vi.stubEnv("SESSION_SECRET", SECRET);
-    const token = await issueSession();
+    const token = await issueSession("*");
 
     vi.stubEnv("SESSION_SECRET", "a-different-secret");
 
@@ -91,7 +91,7 @@ describe("issueSession / readSession", () => {
     vi.stubEnv("SESSION_SECRET", SECRET);
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-29T00:00:00Z"));
-    const token = await issueSession();
+    const token = await issueSession("*");
 
     // Past the two-hour lifetime the login page advertises.
     vi.setSystemTime(new Date("2026-08-29T03:00:00Z"));
@@ -103,7 +103,7 @@ describe("issueSession / readSession", () => {
     vi.stubEnv("SESSION_SECRET", SECRET);
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-29T00:00:00Z"));
-    const token = await issueSession();
+    const token = await issueSession("*");
 
     vi.setSystemTime(new Date("2026-08-29T01:30:00Z"));
 
@@ -117,8 +117,117 @@ describe("issueSession / readSession", () => {
     await expect(readSession("not-a-token")).resolves.toBeNull();
   });
 
+  it("round-trips the session scope", async () => {
+    vi.stubEnv("SESSION_SECRET", SECRET);
+    const token = await issueSession("2026:silver");
+    const session = await readSession(token);
+    expect(session?.scope).toBe("2026:silver");
+  });
+
+  it("round-trips the super scope", async () => {
+    vi.stubEnv("SESSION_SECRET", SECRET);
+    const session = await readSession(await issueSession("*"));
+    expect(session?.scope).toBe("*");
+  });
+
+  it("rejects a token whose scope was tampered (signature stale)", async () => {
+    vi.stubEnv("SESSION_SECRET", SECRET);
+    const token = await issueSession("2026:silver");
+    const [encoded, signature] = token.split(".");
+    // Re-encode the payload with an escalated scope, keep the old signature.
+    const payload = JSON.parse(Buffer.from(encoded, "base64url").toString());
+    payload.scope = "*";
+    const forgedEncoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
+    await expect(readSession(`${forgedEncoded}.${signature}`)).resolves.toBeNull();
+  });
+
   it("names the cookie once, so nothing has to guess it", () => {
     expect(SESSION_COOKIE).toBe("zj_admin");
+  });
+});
+
+describe("checkCompetitionPassword", () => {
+  async function withHash(hash: string | null, status = 200) {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "be-secret");
+    const fetchMock = vi.fn(async () =>
+      status === 200
+        ? new Response(JSON.stringify({ password_hash: hash }), { status: 200 })
+        : new Response("no", { status }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("accepts the competition's stored password", async () => {
+    const { checkCompetitionPassword } = await import("./session");
+    await withHash(await hashOf("silver-pw"));
+    await expect(
+      checkCompetitionPassword("2026", "silver", "silver-pw"),
+    ).resolves.toBe(true);
+  });
+
+  it("rejects a wrong password", async () => {
+    const { checkCompetitionPassword } = await import("./session");
+    await withHash(await hashOf("silver-pw"));
+    await expect(
+      checkCompetitionPassword("2026", "silver", "nope"),
+    ).resolves.toBe(false);
+  });
+
+  it("treats a missing credential (404) as no password", async () => {
+    const { checkCompetitionPassword } = await import("./session");
+    await withHash(null, 404);
+    await expect(
+      checkCompetitionPassword("2026", "gold", "anything"),
+    ).resolves.toBe(false);
+  });
+
+  it("fails closed when the backend read errors", async () => {
+    const { checkCompetitionPassword } = await import("./session");
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "be-secret");
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new Error("network");
+    }));
+    await expect(
+      checkCompetitionPassword("2026", "silver", "x"),
+    ).resolves.toBe(false);
+  });
+});
+
+describe("resolveScope (super / competition / none)", () => {
+  it("super password wins with scope '*'", async () => {
+    const { resolveScope } = await import("./session");
+    vi.stubEnv("ADMIN_PASSWORD_HASH", await hashOf("super-pw"));
+    await expect(resolveScope("2026", "silver", "super-pw")).resolves.toBe("*");
+  });
+
+  it("a competition password gives that competition's scope", async () => {
+    const { resolveScope } = await import("./session");
+    vi.stubEnv("ADMIN_PASSWORD_HASH", await hashOf("super-pw"));
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "be-secret");
+    const compHash = await hashOf("silver-pw");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({ password_hash: compHash }), { status: 200 })));
+    await expect(resolveScope("2026", "silver", "silver-pw")).resolves.toBe("2026:silver");
+  });
+
+  it("returns null when neither matches", async () => {
+    const { resolveScope } = await import("./session");
+    vi.stubEnv("ADMIN_PASSWORD_HASH", await hashOf("super-pw"));
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "be-secret");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("no", { status: 404 })));
+    await expect(resolveScope("2026", "silver", "wrong")).resolves.toBeNull();
+  });
+
+  it("with no competition context, only super is accepted", async () => {
+    const { resolveScope } = await import("./session");
+    vi.stubEnv("ADMIN_PASSWORD_HASH", await hashOf("super-pw"));
+    await expect(resolveScope(null, null, "super-pw")).resolves.toBe("*");
+    await expect(resolveScope(null, null, "anything")).resolves.toBeNull();
   });
 });
 
