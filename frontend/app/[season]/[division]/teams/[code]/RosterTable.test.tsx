@@ -53,11 +53,12 @@ describe("RosterTable", () => {
       "性别",
       "参赛 UTR",
       "UTR 来源",
-      "当前单打",
       "当前双打",
     ]) {
       expect(screen.getByRole("columnheader", { name: heading })).toBeTruthy();
     }
+    // 当前单打 is intentionally not shown on the team page.
+    expect(screen.queryByRole("columnheader", { name: "当前单打" })).toBeNull();
   });
 
   it("keeps the order it was given", () => {
@@ -283,6 +284,7 @@ describe("derived participation UTRs", () => {
 
 describe("current UTRs", () => {
   it("shows the value with the word UTR itself uses", () => {
+    // 当前单打 is not shown on the team page; only 当前双打 (cells[5]).
     render(
       <RosterTable
         players={[
@@ -297,10 +299,10 @@ describe("current UTRs", () => {
     );
 
     const cells = within(rows()[0]).getAllByRole("cell");
-    expect(within(cells[5]).getByText("6.90")).toBeTruthy();
-    expect(within(cells[5]).getByText("rated")).toBeTruthy();
-    expect(within(cells[6]).getByText("6.72")).toBeTruthy();
-    expect(within(cells[6]).getByText("projected")).toBeTruthy();
+    expect(within(cells[5]).getByText("6.72")).toBeTruthy();
+    expect(within(cells[5]).getByText("projected")).toBeTruthy();
+    // The singles value is not rendered anywhere in the row.
+    expect(within(rows()[0]).queryByText("6.90")).toBeNull();
   });
 
   it("shows a dash rather than nothing when unfilled", () => {
@@ -309,7 +311,6 @@ describe("current UTRs", () => {
 
     const cells = within(rows()[0]).getAllByRole("cell");
     expect(within(cells[5]).getByText("—")).toBeTruthy();
-    expect(within(cells[6]).getByText("—")).toBeTruthy();
   });
 
   it("says the column is maintained by hand", () => {

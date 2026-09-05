@@ -192,8 +192,8 @@ export function RosterTable({
         <col />
         {/* Wide enough for the number field and its status together: the
             cells clip their overflow, so a column that is merely close makes
-            the controls look cut off. */}
-        <col className="w-[184px]" />
+            the controls look cut off. Only 当前双打 is shown — 当前单打 is not
+            used on the team page. */}
         <col className="w-[184px]" />
         {canEdit ? <col className="w-[64px]" /> : null}
       </colgroup>
@@ -204,7 +204,6 @@ export function RosterTable({
           <Th>性别</Th>
           <Th>参赛 UTR</Th>
           <Th>UTR 来源</Th>
-          <Th>当前单打</Th>
           <Th>当前双打</Th>
           <Th>外援</Th>
           <Th>外卡</Th>
@@ -253,12 +252,7 @@ export function RosterTable({
               />
             ) : (
               <>
-                <Td className="font-mono text-[12.5px] text-muted">
-                  <CurrentUtrCell
-                    value={player.singles_utr}
-                    status={player.singles_status}
-                  />
-                </Td>
+                {/* 当前单打 is intentionally not shown on the team page. */}
                 <Td className="font-mono text-[12.5px] text-muted">
                   <CurrentUtrCell
                     value={player.doubles_utr}
