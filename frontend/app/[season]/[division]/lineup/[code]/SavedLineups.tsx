@@ -27,6 +27,8 @@ interface SavedLineupsProps {
   reorderAction?: (orderedIds: number[]) => Promise<void>;
   /** Clone a saved lineup by id. Admin only; enables the 克隆 button. */
   cloneAction?: (id: number) => Promise<void>;
+  /** Rename a saved lineup by id. Admin only; enables the 改名 control. */
+  renameAction?: (id: number, name: string) => Promise<void>;
 }
 
 /** A status the backend sent that this build does not know. Fail closed: a
@@ -69,8 +71,30 @@ export function SavedLineups({
   saveBackAction,
   reorderAction,
   cloneAction,
+  renameAction,
 }: SavedLineupsProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
+  // The lineup whose name is being edited inline, and the draft text.
+  const [renamingId, setRenamingId] = useState<number | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [renaming, startRename] = useTransition();
+
+  function submitRename(id: number) {
+    const name = renameDraft.trim();
+    if (!name) return;
+    setRenameError(null);
+    startRename(async () => {
+      try {
+        await renameAction!(id, name);
+        setRenamingId(null);
+      } catch {
+        // 409 (name taken), 422 (empty/too long), or lost auth. Keep the input
+        // open with the draft so nothing typed is lost.
+        setRenameError("改名失败——可能与已有阵容重名，或名字过长。");
+      }
+    });
+  }
   const byKey = new Map(roster.map((p) => [p.key, p]));
 
   // Local display order for snappy reorder feedback. Re-synced from props
@@ -89,6 +113,7 @@ export function SavedLineups({
 
   const canReorder = canEdit && Boolean(reorderAction) && items.length > 1;
   const canClone = canEdit && Boolean(cloneAction);
+  const canRename = canEdit && Boolean(renameAction);
 
   function commitOrder(next: SavedLineup[]) {
     // One reorder in flight at a time: a second, computed off different state,
@@ -182,9 +207,57 @@ export function SavedLineups({
             className="flex flex-col gap-2.5 rounded-token border border-border bg-surface px-4 py-3.5"
           >
             <div className="flex items-center gap-2.5">
-              <span className="min-w-0 flex-none text-[14px] font-semibold text-foreground">
-                {item.name}
-              </span>
+              {renamingId === item.id ? (
+                <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <input
+                    aria-label="阵容名"
+                    autoFocus
+                    value={renameDraft}
+                    maxLength={60}
+                    onChange={(e) => setRenameDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") submitRename(item.id);
+                      if (e.key === "Escape") setRenamingId(null);
+                    }}
+                    className="min-w-0 flex-1 rounded-token border border-border bg-surface px-2 py-1 text-[13px] text-foreground"
+                  />
+                  <button
+                    type="button"
+                    aria-label="保存名字"
+                    disabled={renaming}
+                    onClick={() => submitRename(item.id)}
+                    className="min-h-11 flex-none rounded-token bg-primary px-2.5 py-1 text-[12px] text-primary-foreground disabled:opacity-40"
+                  >
+                    保存
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="取消改名"
+                    onClick={() => setRenamingId(null)}
+                    className="min-h-11 flex-none rounded-token border border-border px-2.5 py-1 text-[12px] text-foreground"
+                  >
+                    取消
+                  </button>
+                </span>
+              ) : (
+                <span className="min-w-0 flex-none text-[14px] font-semibold text-foreground">
+                  {item.name}
+                </span>
+              )}
+              {canRename && renamingId !== item.id ? (
+                <button
+                  type="button"
+                  aria-label="改名"
+                  onClick={() => {
+                    setRenamingId(item.id);
+                    setRenameDraft(item.name);
+                    setRenameError(null);
+                  }}
+                  className="flex-none rounded-token border border-border bg-surface-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+                >
+                  改名
+                </button>
+              ) : null}
               {item.total != null ? (
                 <span className="flex-1 font-mono text-[13px] text-muted-foreground">
                   总和 {money(item.total)}
@@ -198,6 +271,12 @@ export function SavedLineups({
                 {badge.label}
               </span>
             </div>
+
+            {renamingId === item.id && renameError ? (
+              <p role="alert" className="text-[12px] text-danger">
+                {renameError}
+              </p>
+            ) : null}
 
             {item.status === "utr_moved" && movers.length > 0 ? (
               <p className="rounded-token bg-surface-muted px-2.5 py-1.5 text-[12px] leading-relaxed text-muted-foreground">

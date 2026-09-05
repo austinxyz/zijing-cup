@@ -8,6 +8,7 @@ import {
   validateAssignment,
   reorderSavedLineups,
   cloneSavedLineup,
+  renameSavedLineup,
 } from "../actions";
 import { SavedLineups } from "../SavedLineups";
 
@@ -42,6 +43,7 @@ export default async function SavedLineupsPage({ params }: PageProps) {
   const saveBackAction = saveBackLineup.bind(null, season, division, code);
   const reorderAction = reorderSavedLineups.bind(null, season, division, code);
   const cloneAction = cloneSavedLineup.bind(null, season, division, code);
+  const renameAction = renameSavedLineup.bind(null, season, division, code);
 
   return (
     <main className="flex flex-1 min-w-0 flex-col overflow-hidden bg-background">
@@ -75,6 +77,7 @@ export default async function SavedLineupsPage({ params }: PageProps) {
           saveBackAction={canEdit ? saveBackAction : undefined}
           reorderAction={canEdit ? reorderAction : undefined}
           cloneAction={canEdit ? cloneAction : undefined}
+          renameAction={canEdit ? renameAction : undefined}
         />
       </div>
     </main>

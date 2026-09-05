@@ -240,6 +240,53 @@ class SavedLineupNotFound(ValueError):
     """A clone/lookup for an id not on this team."""
 
 
+class DuplicateName(ValueError):
+    """A rename to a name another saved lineup on this team already uses."""
+
+
+def rename_saved_lineup(
+    session: Session, team_id: int, saved_id: int, new_name: str
+) -> SavedLineup:
+    """Change one saved lineup's name, nothing else.
+
+    `(team_id, name)` is unique. Renaming onto a name ANOTHER lineup already
+    uses is rejected (DuplicateName), never a silent merge — that would fold two
+    distinct lineups into one. Renaming to its own current name is a no-op OK.
+    """
+    new_name = new_name.strip()
+    if not new_name:
+        raise InvalidSavedLineup("saved lineup name cannot be empty")
+    if len(new_name) > MAX_NAME_LENGTH:
+        raise InvalidSavedLineup(
+            f"saved lineup name over {MAX_NAME_LENGTH} characters"
+        )
+
+    row = session.exec(
+        select(SavedLineup).where(
+            SavedLineup.id == saved_id,
+            SavedLineup.team_id == team_id,
+        )
+    ).one_or_none()
+    if row is None:
+        raise SavedLineupNotFound(f"no saved lineup {saved_id} on this team")
+
+    clash = session.exec(
+        select(SavedLineup).where(
+            SavedLineup.team_id == team_id,
+            SavedLineup.name == new_name,
+            SavedLineup.id != saved_id,
+        )
+    ).one_or_none()
+    if clash is not None:
+        raise DuplicateName(f"another saved lineup is named 「{new_name}」")
+
+    row.name = new_name
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
 def clone_saved_lineup(
     session: Session, team_id: int, saved_id: int
 ) -> SavedLineup:

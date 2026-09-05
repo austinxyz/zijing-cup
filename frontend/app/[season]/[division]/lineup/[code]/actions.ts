@@ -141,3 +141,18 @@ export async function cloneSavedLineup(
   await adminWrite("POST", `${savedPath(season, division, team)}/${id}/clone`);
   revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
 }
+
+export async function renameSavedLineup(
+  season: string,
+  division: string,
+  team: string,
+  id: number,
+  name: string,
+): Promise<void> {
+  // Backend rejects an empty/over-long name (422) or a clash with another
+  // lineup's name (409); adminWrite throws on non-2xx, surfaced by the caller.
+  await adminWrite("PATCH", `${savedPath(season, division, team)}/${id}`, {
+    name,
+  });
+  revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
+}

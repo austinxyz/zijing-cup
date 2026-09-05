@@ -613,6 +613,64 @@ class TestSavedRoutes:
         r = client.post(f"{_surl()}/{src['id']}/clone", headers=READ_AUTH)
         assert r.status_code in (401, 403)
 
+    def test_rename_changes_the_name_only(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        src = client.post(_surl(), headers=WRITE_AUTH,
+                          json={"name": "主力", "assignment": assignment}).json()
+        r = client.patch(f"{_surl()}/{src['id']}", headers=WRITE_AUTH,
+                         json={"name": "主力最强"})
+        assert r.status_code == 200, r.text
+        rows = client.get(_surl(), headers=READ_AUTH).json()
+        assert rows[0]["name"] == "主力最强"
+        # assignment and order untouched
+        assert rows[0]["assignment"] == src["assignment"]
+        assert rows[0]["sort_order"] == src["sort_order"]
+
+    def test_rename_to_another_lineups_name_is_409(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        a = client.post(_surl(), headers=WRITE_AUTH,
+                        json={"name": "甲", "assignment": assignment}).json()
+        client.post(_surl(), headers=WRITE_AUTH,
+                    json={"name": "乙", "assignment": assignment})
+        r = client.patch(f"{_surl()}/{a['id']}", headers=WRITE_AUTH,
+                         json={"name": "乙"})
+        assert r.status_code == 409
+        # unchanged
+        rows = {x["id"]: x for x in client.get(_surl(), headers=READ_AUTH).json()}
+        assert rows[a["id"]]["name"] == "甲"
+
+    def test_rename_to_its_own_name_is_ok(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        a = client.post(_surl(), headers=WRITE_AUTH,
+                        json={"name": "甲", "assignment": assignment}).json()
+        r = client.patch(f"{_surl()}/{a['id']}", headers=WRITE_AUTH, json={"name": "甲"})
+        assert r.status_code == 200
+
+    def test_rename_empty_or_too_long_is_422(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        a = client.post(_surl(), headers=WRITE_AUTH,
+                        json={"name": "甲", "assignment": assignment}).json()
+        for bad in ("   ", "x" * 61):
+            r = client.patch(f"{_surl()}/{a['id']}", headers=WRITE_AUTH, json={"name": bad})
+            assert r.status_code == 422, bad
+
+    def test_rename_foreign_id_is_404(self, seeded):
+        client = TestClient(app)
+        r = client.patch(f"{_surl()}/99999999", headers=WRITE_AUTH, json={"name": "x"})
+        assert r.status_code == 404
+
+    def test_rename_without_admin_is_refused(self, seeded):
+        _, assignment, _ = seeded
+        client = TestClient(app)
+        a = client.post(_surl(), headers=WRITE_AUTH,
+                        json={"name": "甲", "assignment": assignment}).json()
+        r = client.patch(f"{_surl()}/{a['id']}", headers=READ_AUTH, json={"name": "乙"})
+        assert r.status_code in (401, 403)
+
     def test_save_back_overwrites_and_delete(self, seeded):
         _, assignment, keymap = seeded
         client = TestClient(app)

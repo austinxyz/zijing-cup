@@ -248,3 +248,29 @@ describe("SavedLineups reorder + clone", () => {
     expect(screen.queryByRole("button", { name: /克隆/ })).toBeNull();
   });
 });
+
+describe("SavedLineups rename", () => {
+  const A = saved({ id: 1, name: "甲", sort_order: 0 });
+
+  it("renames a lineup: opens an input, submits the new name by id", async () => {
+    const renameAction = vi.fn<(id: number, name: string) => Promise<void>>(async () => {});
+    render(
+      <SavedLineups saved={[A]} roster={ROSTER} canEdit
+        basePath="/x" renameAction={renameAction} />,
+    );
+    const card = screen.getByLabelText("甲");
+    fireEvent.click(within(card).getByRole("button", { name: /改名/ }));
+    const input = within(card).getByLabelText("阵容名") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "主力最强" } });
+    fireEvent.click(within(card).getByRole("button", { name: /保存名字/ }));
+    expect(renameAction).toHaveBeenCalledWith(1, "主力最强");
+  });
+
+  it("shows no rename control to a non-admin", () => {
+    render(
+      <SavedLineups saved={[A]} roster={ROSTER} canEdit={false}
+        basePath="/x" renameAction={vi.fn()} />,
+    );
+    expect(screen.queryByRole("button", { name: /改名/ })).toBeNull();
+  });
+});

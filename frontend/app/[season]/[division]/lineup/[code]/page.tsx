@@ -20,6 +20,7 @@ import {
   validateAssignment,
   reorderSavedLineups,
   cloneSavedLineup,
+  renameSavedLineup,
 } from "./actions";
 import { CollapsibleSaved } from "./CollapsibleSaved";
 import { EditModeToggle } from "./EditModeToggle";
@@ -183,6 +184,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   const saveBackSavedAction = saveBackLineup.bind(null, season, division, code);
   const reorderSavedAction = reorderSavedLineups.bind(null, season, division, code);
   const cloneSavedAction = cloneSavedLineup.bind(null, season, division, code);
+  const renameSavedAction = renameSavedLineup.bind(null, season, division, code);
 
   const men = roster.filter((p) => p.gender === "M").length;
   const women = roster.filter((p) => p.gender === "F").length;
@@ -288,6 +290,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
               saveBackAction={canEdit ? saveBackSavedAction : undefined}
               reorderAction={canEdit ? reorderSavedAction : undefined}
               cloneAction={canEdit ? cloneSavedAction : undefined}
+              renameAction={canEdit ? renameSavedAction : undefined}
             />
           </CollapsibleSaved>
 

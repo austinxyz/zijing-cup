@@ -37,6 +37,7 @@ from app.lineups.query import (
 )
 from app.lineups.saved import (
     BadReorder,
+    DuplicateName,
     InvalidSavedLineup,
     SavedLineupLimitExceeded,
     SavedLineupNotFound,
@@ -45,6 +46,7 @@ from app.lineups.saved import (
     clone_saved_lineup,
     delete_saved_lineup,
     list_saved_lineups,
+    rename_saved_lineup,
     reorder_saved_lineups,
     revalidate_saved,
     save_lineup,
@@ -457,6 +459,27 @@ def reorder_team_saved_lineups(
         )
         for s in list_saved_lineups(session, team_id)
     ]
+
+
+class RenameIn(BaseModel):
+    name: str
+
+
+@router.patch(_SAVED + "/{saved_id}", response_model=SavedLineupOut)
+def rename_team_saved_lineup(
+    year: int, code: str, team_code: str, saved_id: int, body: RenameIn,
+    session: Session = Depends(get_session),
+) -> SavedLineupOut:
+    team_id = _resolve_team(session, year, code, team_code)
+    try:
+        renamed = rename_saved_lineup(session, team_id, saved_id, body.name)
+    except SavedLineupNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except InvalidSavedLineup as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except DuplicateName as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return _saved_out(session, year, code, team_code, renamed)
 
 
 @router.post(_SAVED + "/{saved_id}/clone", response_model=SavedLineupOut, status_code=201)
