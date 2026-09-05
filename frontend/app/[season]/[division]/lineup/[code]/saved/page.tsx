@@ -28,11 +28,14 @@ export default async function SavedLineupsPage({ params }: PageProps) {
   // names for display, and which keys have left the team. null means no such
   // team — a saved-lineups page for a team that does not exist is a 404, the
   // same answer the search page gives.
-  const [search, saved, rules, canEdit] = await Promise.all([
+  // Saved lineups are confidential planned lineups — fetched only for an admin,
+  // so a non-admin's page never contains them (hiding in the client would still
+  // ship them in the HTML). Admin status resolved first to gate the fetch.
+  const canEdit = await isSignedIn();
+  const [search, saved, rules] = await Promise.all([
     getTeamLineups(season, division, code),
-    getSavedLineups(season, division, code),
+    canEdit ? getSavedLineups(season, division, code) : Promise.resolve([]),
     getDivisionRules(season, division),
-    isSignedIn(),
   ]);
   if (search === null) notFound();
 
@@ -66,19 +69,25 @@ export default async function SavedLineupsPage({ params }: PageProps) {
       </div>
 
       <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-5 py-4">
-        <SavedLineups
-          saved={saved}
-          roster={search.roster}
-          canEdit={canEdit}
-          basePath={basePath}
-          lineOrder={lineOrder}
-          deleteAction={canEdit ? deleteAction : undefined}
-          validateAction={canEdit ? validateAction : undefined}
-          saveBackAction={canEdit ? saveBackAction : undefined}
-          reorderAction={canEdit ? reorderAction : undefined}
-          cloneAction={canEdit ? cloneAction : undefined}
-          renameAction={canEdit ? renameAction : undefined}
-        />
+        {canEdit ? (
+          <SavedLineups
+            saved={saved}
+            roster={search.roster}
+            canEdit={canEdit}
+            basePath={basePath}
+            lineOrder={lineOrder}
+            deleteAction={deleteAction}
+            validateAction={validateAction}
+            saveBackAction={saveBackAction}
+            reorderAction={reorderAction}
+            cloneAction={cloneAction}
+            renameAction={renameAction}
+          />
+        ) : (
+          <p className="text-[13px] text-muted-foreground">
+            已存阵容是保密信息，登录后（编辑模式）才可见。
+          </p>
+        )}
       </div>
     </main>
   );

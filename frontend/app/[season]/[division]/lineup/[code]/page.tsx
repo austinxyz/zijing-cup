@@ -127,12 +127,16 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
     constraints.excluded.length > 0;
   const stale = hasStaleKeys(constraints);
 
-  // Everything the page needs regardless of go: the saved lineups (re-judged
-  // server-side), the presets, and whether the viewer is an admin.
-  const [saved, presets, canEdit] = await Promise.all([
-    getSavedLineups(season, division, code),
+  // Admin status is resolved FIRST so the saved lineups are fetched only for an
+  // admin: they are a team's planned lineups — confidential from opponents — so
+  // a non-admin's page must never contain them at all. Hiding them in the client
+  // would still ship them in the server-rendered HTML; not fetching is the
+  // actual control. (Only the Next server holds BACKEND_SECRET, so a non-admin
+  // browser cannot reach the backend list on its own either.)
+  const canEdit = await isSignedIn();
+  const [saved, presets] = await Promise.all([
+    canEdit ? getSavedLineups(season, division, code) : Promise.resolve([]),
     getTeamPresets(season, division, code),
-    isSignedIn(),
   ]);
 
   // The roster the controls and saved cards read. With `go` it comes free with
@@ -279,24 +283,26 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
         />
 
         <div className="flex flex-1 min-h-0 flex-col overflow-y-auto">
-          {/* Top: the team's saved lineups, re-judged server-side, collapsible.
-              This is what the default (no-go) view leads with — the search is
-              not run until the reader asks for it. */}
-          <CollapsibleSaved count={saved.length}>
-            <SavedLineups
-              saved={saved}
-              roster={roster}
-              canEdit={canEdit}
-              basePath={basePath}
-              lineOrder={lines.map((line) => line.code)}
-              deleteAction={canEdit ? deleteSavedAction : undefined}
-              validateAction={canEdit ? validateSavedAction : undefined}
-              saveBackAction={canEdit ? saveBackSavedAction : undefined}
-              reorderAction={canEdit ? reorderSavedAction : undefined}
-              cloneAction={canEdit ? cloneSavedAction : undefined}
-              renameAction={canEdit ? renameSavedAction : undefined}
-            />
-          </CollapsibleSaved>
+          {/* Top: the team's saved lineups — shown to an admin only (view OR
+              edit mode). They are confidential planned lineups; a non-admin
+              never has them (not fetched, so absent from the HTML too). */}
+          {canEdit ? (
+            <CollapsibleSaved count={saved.length}>
+              <SavedLineups
+                saved={saved}
+                roster={roster}
+                canEdit={canEdit}
+                basePath={basePath}
+                lineOrder={lines.map((line) => line.code)}
+                deleteAction={deleteSavedAction}
+                validateAction={validateSavedAction}
+                saveBackAction={saveBackSavedAction}
+                reorderAction={reorderSavedAction}
+                cloneAction={cloneSavedAction}
+                renameAction={renameSavedAction}
+              />
+            </CollapsibleSaved>
+          ) : null}
 
           {/* Bottom: the candidate search — only when go asked for it. */}
           <div className="flex min-h-0 flex-col gap-3 px-5 py-4">

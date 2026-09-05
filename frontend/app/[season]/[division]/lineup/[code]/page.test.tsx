@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { notFound } from "next/navigation";
 import {
   getDivisionRules,
+  getSavedLineups,
   getTeamLineups,
   getTeamRoster,
   type DivisionRules,
@@ -11,6 +12,7 @@ import {
   type LineupSearch,
   type TeamRoster,
 } from "@/lib/api";
+import { isSignedIn } from "@/lib/admin";
 import Page, { constraintsFromQuery, hasStaleKeys } from "./page";
 
 vi.mock("@/lib/api", async (importOriginal) => {
@@ -203,6 +205,38 @@ describe("the lineup page gates the candidate search on go", () => {
 
     expect(getTeamLineups).not.toHaveBeenCalled();
     expect(getTeamRoster).toHaveBeenCalledWith("2026", "silver", "PKU");
+  });
+
+  it("does NOT fetch or render saved lineups for a non-admin (confidential)", async () => {
+    vi.mocked(getDivisionRules).mockResolvedValue(RULES);
+    vi.mocked(getTeamRoster).mockResolvedValue(TEAM_ROSTER);
+    vi.mocked(isSignedIn).mockResolvedValue(false);
+    // Even if the backend would return lineups, a non-admin page must not fetch
+    // them — they must never reach the HTML.
+    vi.mocked(getSavedLineups).mockResolvedValue([
+      {
+        id: 1, name: "机密主力", sort_order: 0,
+        assignment: {}, utr_snapshot: {}, status: "valid",
+        violations: [], utr_diff: {}, missing: [],
+      },
+    ]);
+
+    render(await renderDraft());
+
+    expect(getSavedLineups).not.toHaveBeenCalled();
+    expect(screen.queryByText("机密主力")).toBeNull();
+    expect(screen.queryByText("已存阵容")).toBeNull();
+  });
+
+  it("fetches saved lineups for an admin", async () => {
+    vi.mocked(getDivisionRules).mockResolvedValue(RULES);
+    vi.mocked(getTeamRoster).mockResolvedValue(TEAM_ROSTER);
+    vi.mocked(isSignedIn).mockResolvedValue(true);
+    vi.mocked(getSavedLineups).mockResolvedValue([]);
+
+    render(await renderDraft());
+
+    expect(getSavedLineups).toHaveBeenCalledWith("2026", "silver", "PKU");
   });
 
   it("runs the candidate search when go=1 is present", async () => {
