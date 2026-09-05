@@ -7,6 +7,7 @@ import { savedStaleRefs } from "./savedLoad";
 import { money } from "./candidate";
 import { LineBlock, type LineSeat } from "./LineBlock";
 import { LineupEditor } from "./LineupEditor";
+import { useLineupEdit } from "./LineupEditContext";
 
 type Assignment = Record<string, [string, string]>;
 
@@ -111,9 +112,15 @@ export function SavedLineups({
   const [reordering, startReorder] = useTransition();
   const dragFrom = useRef<number | null>(null);
 
-  const canReorder = canEdit && Boolean(reorderAction) && items.length > 1;
-  const canClone = canEdit && Boolean(cloneAction);
-  const canRename = canEdit && Boolean(renameAction);
+  // Edit affordances follow the header's edit/view switch: shown only when the
+  // admin is in edit mode. Without a provider (the standalone /saved page)
+  // `editing` defaults true, so that page is unchanged.
+  const { editing } = useLineupEdit();
+  const showEdit = canEdit && editing;
+
+  const canReorder = showEdit && Boolean(reorderAction) && items.length > 1;
+  const canClone = showEdit && Boolean(cloneAction);
+  const canRename = showEdit && Boolean(renameAction);
 
   function commitOrder(next: SavedLineup[]) {
     // One reorder in flight at a time: a second, computed off different state,
@@ -150,7 +157,7 @@ export function SavedLineups({
     next.splice(index, 0, moved);
     commitOrder(next);
   }
-  const canUseEditor = canEdit && Boolean(validateAction && saveBackAction);
+  const canUseEditor = showEdit && Boolean(validateAction && saveBackAction);
 
   function displayName(key: string): string {
     // "姓 名" with a space, same as the candidate cards (playerName), so saved
@@ -389,7 +396,7 @@ export function SavedLineups({
                   {editingId === item.id ? "收起编辑" : "编辑"}
                 </button>
               ) : null}
-              {canEdit && deleteAction ? (
+              {showEdit && deleteAction ? (
                 <button
                   type="button"
                   onClick={() => void deleteAction(item.id)}

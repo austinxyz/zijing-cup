@@ -274,3 +274,37 @@ describe("SavedLineups rename", () => {
     expect(screen.queryByRole("button", { name: /改名/ })).toBeNull();
   });
 });
+
+import { LineupEditProvider } from "./LineupEditContext";
+
+describe("SavedLineups edit/view mode", () => {
+  const A = saved({ id: 1, name: "甲", sort_order: 0 });
+  const B = saved({ id: 2, name: "乙", sort_order: 1 });
+
+  it("hides admin controls in view mode (editing=false) even for an admin", () => {
+    render(
+      <LineupEditProvider canEdit initialEditing={false}>
+        <SavedLineups saved={[A, B]} roster={ROSTER} canEdit basePath="/x"
+          deleteAction={vi.fn()} reorderAction={vi.fn()} cloneAction={vi.fn()}
+          renameAction={vi.fn()} />
+      </LineupEditProvider>,
+    );
+    expect(screen.queryByRole("button", { name: "上移" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /克隆/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /改名/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /删除/ })).toBeNull();
+  });
+
+  it("shows admin controls in edit mode (editing=true)", () => {
+    render(
+      <LineupEditProvider canEdit initialEditing={true}>
+        <SavedLineups saved={[A, B]} roster={ROSTER} canEdit basePath="/x"
+          deleteAction={vi.fn()} reorderAction={vi.fn()} cloneAction={vi.fn()}
+          renameAction={vi.fn()} />
+      </LineupEditProvider>,
+    );
+    expect(screen.getAllByRole("button", { name: "上移" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: /克隆/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: /改名/ }).length).toBeGreaterThan(0);
+  });
+});

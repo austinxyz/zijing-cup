@@ -23,7 +23,8 @@ import {
   renameSavedLineup,
 } from "./actions";
 import { CollapsibleSaved } from "./CollapsibleSaved";
-import { EditModeToggle } from "./EditModeToggle";
+import { LineupEditProvider } from "./LineupEditContext";
+import { LineupEditHeaderControl } from "./LineupEditHeaderControl";
 import { LineupControls } from "./LineupControls";
 import { LineupMobileControls } from "./LineupMobileControls";
 import { LineupResults } from "./LineupResults";
@@ -205,6 +206,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   ]);
 
   return (
+    <LineupEditProvider canEdit={canEdit}>
     <div className="flex flex-1 min-h-0">
       <LineupControls
         key={controlsKey}
@@ -238,9 +240,11 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
             </span>
           </div>
           <div className="flex flex-none items-center gap-3">
-            {/* In-place admin unlock: type the password here instead of being
-                sent to /login, then the edit controls appear on refresh. */}
-            <EditModeToggle signedIn={canEdit} />
+            {/* In-place admin unlock + an 编辑模式/查看模式 toggle once signed
+                in, mirroring the team page: the edit affordances below (saved
+                lineup controls, preset save/delete, save-this-lineup) show only
+                in edit mode. */}
+            <LineupEditHeaderControl />
             {/* The number every lineup is checked against is the frozen one,
                 not today's rating. */}
             <span className="font-mono text-[11.5px] text-muted-foreground">
@@ -319,5 +323,6 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
         </div>
       </main>
     </div>
+    </LineupEditProvider>
   );
 }

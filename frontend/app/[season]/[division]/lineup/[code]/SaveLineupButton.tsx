@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import type { LineupCandidate } from "@/lib/api";
 import { candidateAssignment } from "./savedLoad";
+import { useLineupEdit } from "./LineupEditContext";
 
 /** The save server action, bound to (season,division,team) by the page; the
  *  client supplies name + assignment. A server action, so it may cross the
@@ -38,7 +39,9 @@ export function SaveLineupButton({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!canEdit) return null;
+  // Hidden in the header's view mode (no provider → editing defaults true).
+  const { editing } = useLineupEdit();
+  if (!canEdit || !editing) return null;
 
   async function save() {
     const trimmed = name.trim();

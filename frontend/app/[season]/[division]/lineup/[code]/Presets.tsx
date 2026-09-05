@@ -11,6 +11,7 @@ import {
   type StaleLockRef,
 } from "./presetLoad";
 import { constraintsFromForm, hasLiveConstraints } from "./liveConstraints";
+import { useLineupEdit } from "./LineupEditContext";
 
 const LINE_LABEL: Record<string, string> = {
   mens_doubles: "男双",
@@ -54,6 +55,11 @@ export function Presets({
   deleteAction,
 }: PresetsProps) {
   const router = useRouter();
+  // Write affordances (save/delete a preset) follow the header's edit/view
+  // switch; loading a preset stays available in both modes. No provider (tests)
+  // → editing defaults true → unchanged.
+  const { editing } = useLineupEdit();
+  const showEdit = canEdit && editing;
   const [name, setName] = useState("");
   const [saveHint, setSaveHint] = useState<string | null>(null);
   //: The preset whose load was refused because a locked player is gone, and
@@ -78,7 +84,7 @@ export function Presets({
       <div className="flex flex-col gap-0.5">
         <span className="text-[13px] font-semibold text-foreground">
           已存阵型
-          {canEdit ? (
+          {showEdit ? (
             <span className="ml-1.5 rounded border border-border px-1 font-mono text-[9.5px] text-muted">
               admin 可存/删
             </span>
@@ -111,7 +117,7 @@ export function Presets({
                 >
                   载入
                 </button>
-                {canEdit && deleteAction ? (
+                {showEdit && deleteAction ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -122,7 +128,7 @@ export function Presets({
                   >
                     删除
                   </button>
-                ) : canEdit ? (
+                ) : showEdit ? (
                   <button
                     type="button"
                     className="flex-none rounded-token border border-danger-border bg-danger-surface px-2 py-1 text-[10px] text-danger"
@@ -166,7 +172,7 @@ export function Presets({
             >
               按现有名单重建
             </a>
-            {canEdit && deleteAction ? (
+            {showEdit && deleteAction ? (
               <button
                 type="button"
                 onClick={() => {
@@ -183,7 +189,7 @@ export function Presets({
         </div>
       ) : null}
 
-      {canEdit ? (
+      {showEdit ? (
         <div className="flex gap-2">
           <input
             value={name}
