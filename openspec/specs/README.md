@@ -174,6 +174,12 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **踩坑（saved-lineups）**: ① render-prop 函数从 Server Component 传给 Client Component（`CandidateRows`）运行时抛 `Functions cannot be passed directly to Client Components`——整页崩到 error boundary，vitest（jsdom 无 RSC 边界）测不出。改传 `canEdit` + **序列化的 server action**，由表自己建按钮。② 已沉进 CLAUDE.md。
 
+**saved-lineup-order（2026-09-04）**: 已存阵容列表加桌面 HTML5 拖拽 + 手机每行 ↑/↓（44px）重排、每行「克隆」、内联「改名」（输入 + 保存/取消，Enter/Esc，失败提示）。`SavedLineups` 维护本地有序 `items`（乐观更新 + 失败回滚 + pending 期间禁用），改序后发**整份有序 id**给 `reorderSavedLineups`。三个 server action（`reorder`/`clone`/`rename`）走 `adminWrite` + `revalidatePath`；两页（排阵页 + `saved/`）都接线。**踩坑**：`items` 同步键最初只含 id 顺序，改名（id 不变）不触发同步 → 卡片显示旧名（改名其实成功了）；键扩到 `id:name:sort_order`。已沉进 CLAUDE.md。
+
+**lineup-edit-mode（2026-09-04，直接改）**: 排阵页仿队伍页加「编辑模式 ⇄ 查看模式」（`LineupEditProvider`/`LineupEditHeaderControl`）。编辑态才显示 admin 写控件（已存阵容改名/克隆/删除/↑↓/编辑、阵型存删、候选「保存此阵容」）；载入 preset 与查看两态都在。context 默认 `editing:true` → 独立 `saved/` 页（无 provider）不变；主页 provider 从查看模式起（opt-in）。在客户端叶子（`SavedLineups`/`Presets`/`SaveLineupButton`）门控，不改服务端组件。
+
+**hot-hand（2026-09-04，直接改）**: 胜率 ≥60% 的队员在候选/已存阵容线块、约束下拉选项、排除 chip 上标绿色 ▲（`isHotHand`，只认真实胜率，null 与 0-0 不算）；每个座位 hover 显示 `胜率 胜-负 · %`。lineup roster `PlayerOut` 带 `wins/losses`（display-only，经 `LoadedRoster.win_loss` map，不污染纯引擎）。
+
 ---
 
 **team-roster-editing（2026-09-04）**: 候选与已存阵容的三行块里外援队员用 `外` 角标（`text-borrowed`）+ 底色 `bg-borrowed-surface` 标出，不与 ♂/♀、估算 `估` 撞；`--color-borrowed`(#9a4410) 实测在 surface/muted/borrowed-surface 上都 ≥4.5:1，进 `globals.contrast.test.ts`。`LineBlock` seat 加 `borrowed`，`CandidateCards`/`SavedLineups` 从后端 `is_borrowed_player`（候选 `PlayerOut` 新加、roster 映射也带）传入。外援上场超限的无解由 `LineupResults` 的 `borrowed_over_limit` 面板点名外援 + 超出量呈现。
@@ -193,6 +199,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **后台**: `zijing_cup.saved_lineups` 单表（`team_id` FK teams on delete cascade、`name` check 1–60、`assignment` + `utr_snapshot` 两列 JSONB、`unique(team_id,name)`、时间戳 server_default）。`app/lineups/saved.py`：`save_lineup`（同名覆盖、空名/长度/每队≤50 守卫）、`list_saved_lineups`、`delete_saved_lineup`（team 作用域）、`revalidate_saved`（缺 key→`player_gone` 不判；否则 `check_lineup` 打当前值 + 快照 diff 分四态，并**复用 `pair_total`+caps** 算 `line_totals`/`buffer_spent`，不复制规则）、`assignment_violations`（校验端点复用 `check_lineup`）。路由挂 `routers/lineups.py`：GET 列出+重判（开放）、POST 存（服务端拍快照）、PUT 存回（重拍）、DELETE 删、POST `…/validate`（编辑实时判）——写路由靠 `WRITE_METHODS` admin 中间件自动受保护。快照**只读**、绝不回写 `player_season_utrs`。
 **前台**: 呈现在 `lineup-ui` 的 saved-lineups 段（保存入口、`saved/` 页四态、就地编辑器）。
 **验收标准**: 存/取/删/同名覆盖/存回/快照不回写/重判四态（含点名 UTR-diff 与卡哪条）/未知状态失败关闭/无 admin 凭据写被拒 全绿；载入锁满五线到 URL，坏 key 走 stale 不发搜索；编辑器实时校验复用 check_lineup、重复上场据实报不预拦。**远程共享 Supabase 需去 Dashboard SQL Editor 手动执行 `20260903120000_create_saved_lineups.sql` 后功能才生效**（前端 `getSavedLineups` 任何失败降级空列表，表未建时 saved 页为空、不 500）。
+
+**saved-lineup-order（2026-09-04）**: 已存阵容加可编辑顺序 + 克隆 + 改名。`saved_lineups.sort_order`（int not null default 0）+ migration 按 name 回填现有行保序；`list_saved_lineups` 改按 `(sort_order, id)`；`save_lineup` 新行取 `max(sort_order)+1`；`SavedLineupOut` 带 `sort_order`。三个新写端点（方法判权自动保护）：`PATCH …/order`（收**整份有序 id 列表**按位置写，幂等；与该队 id 集合不一致→422 整体拒，不写一半）；`POST …/{id}/clone`（`assignment`/`utr_snapshot` **逐字节复制**、不重新快照；名 `<原名> 副本`→`副本N` 去重、**clamp 到 60 字**避免撞 `char_length` check 出 500；`sort_order` 末尾；计入 50 上限→409；别队 id→404）；`PATCH …/{id}`（改名：空/超60→422、与另一阵容重名→409 不静默合并、改成自名→OK、别队→404，声明在 `…/order` 之后免路由撞）。migration 远程需 Dashboard 手工执行后再 push 后端（否则读 `sort_order` 500）。
 
 ---
 
