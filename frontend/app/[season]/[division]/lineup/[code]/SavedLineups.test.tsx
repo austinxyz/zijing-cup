@@ -281,6 +281,25 @@ describe("SavedLineups rename", () => {
     expect(screen.queryByText("甲")).toBeNull();
   });
 
+  it("reflects an edited assignment when refreshed props arrive (same id)", () => {
+    // Save-back changes the assignment but keeps the id. The card must adopt the
+    // new lineup, not revert to the stale local copy.
+    const one = { ...A, assignment: { D1: ["p1", "p2"] } };
+    const { rerender } = render(
+      <SavedLineups saved={[one]} roster={ROSTER} canEdit basePath="/x" />,
+    );
+    expect(screen.getByText("南 甲")).toBeTruthy();
+    expect(screen.queryByText("南 丙")).toBeNull();
+    rerender(
+      <SavedLineups
+        saved={[{ ...one, assignment: { D1: ["p3", "p4"] } }]}
+        roster={ROSTER} canEdit basePath="/x" />,
+    );
+    // D1 now [p3,p4] → 丙/丁 shown, 甲/乙 gone.
+    expect(screen.getByText("南 丙")).toBeTruthy();
+    expect(screen.queryByText("南 甲")).toBeNull();
+  });
+
   it("shows no rename control to a non-admin", () => {
     render(
       <SavedLineups saved={[A]} roster={ROSTER} canEdit={false}

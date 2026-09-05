@@ -104,11 +104,14 @@ export function SavedLineups({
   // sequence so an actual order change adopts the server's, but our own
   // optimistic update (same sequence) is a no-op.
   const [items, setItems] = useState(saved);
-  // Signature covers everything the list renders that the server can change —
-  // id order AND name AND sort_order — not just the id sequence: a rename keeps
-  // the ids but changes a name, and keying on ids alone left `items` (and the
-  // shown name) stale after a successful rename.
-  const sig = saved.map((s) => `${s.id}:${s.name}:${s.sort_order}`).join(",");
+  // Re-sync whenever ANY server-provided field changes, not just id order: a
+  // rename changes name, a save-back changes assignment/status/totals — all with
+  // the SAME id — and a signature that missed a changed field left `items` (and
+  // thus the card) showing the stale value even though the write succeeded.
+  // Full stringify is the safe key; the list is small (≤50). An optimistic
+  // reorder's own change produces the same string the server later confirms, so
+  // it does not fight the effect.
+  const sig = JSON.stringify(saved);
   useEffect(() => {
     setItems(saved);
   }, [sig]); // eslint-disable-line react-hooks/exhaustive-deps
