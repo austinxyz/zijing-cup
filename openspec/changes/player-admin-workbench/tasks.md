@@ -8,15 +8,15 @@
 - **Code**: `_filtered` 加 `gender`/`team`/`year` 三参数；`year` 用 `Player.id.in_(子查询 PlayerSeasonUtr) | Player.id.in_(子查询 membership-join-Team)` 的 OR，**不**并进 team 的 INNER join（否则变「该队且该年」而非任一）；`team` 模糊 join Team 后 `Team.code.ilike | Team.display_name.ilike`；`list_players` 仍按 id 去重；`count_players` 复用同一 `_filtered`。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
-- [ ] 1.1 RED — `tests/players/` 加测：`list_players(gender="F")` 只返回女；`gender` 精确。断言失败（参数未支持）
-- [ ] 1.2 GREEN — `_filtered` 加 `gender` 参数 + `list_players`/`count_players` 透传
-- [ ] 1.3 RED — 测 `team="北大"` 模糊命中 `Team.code`/`display_name`（造一支 display_name 含「北大」的队）；`team` 未支持时失败
-- [ ] 1.4 GREEN — `_filtered` 加 `team` 模糊（join Team + code/display_name ilike）
-- [ ] 1.5 RED — 测 `year=Y` 任一命中：只有该年 season_utr 的人、只有该年 membership 的人，都入选；只有别年的不入选
-- [ ] 1.6 GREEN — `_filtered` 加 `year`（两子查询 id.in_ 的 OR）
-- [ ] 1.7 RED — 测 `count_players` 带新筛选返回真实总数（造 >?? 行，断言 count 与 list 去重后一致、不受 limit 影响）；测多维 AND（gender+year）
-- [ ] 1.8 GREEN — 确认 `count_players` 复用 `_filtered`；`routers/players.py` 列表加 `gender`/`team`/`year` Query 参数透传
+- [x] 1.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
+- [x] 1.1 RED — `tests/players/` 加测：`list_players(gender="F")` 只返回女；`gender` 精确。断言失败（参数未支持）
+- [x] 1.2 GREEN — `_filtered` 加 `gender` 参数 + `list_players`/`count_players` 透传
+- [x] 1.3 RED — 测 `team="北大"` 模糊命中 `Team.code`/`display_name`（造一支 display_name 含「北大」的队）；`team` 未支持时失败
+- [x] 1.4 GREEN — `_filtered` 加 `team` 模糊（join Team + code/display_name ilike）
+- [x] 1.5 RED — 测 `year=Y` 任一命中：只有该年 season_utr 的人、只有该年 membership 的人，都入选；只有别年的不入选
+- [x] 1.6 GREEN — `_filtered` 加 `year`（两子查询 id.in_ 的 OR）
+- [x] 1.7 RED — 测 `count_players` 带新筛选返回真实总数（造 >?? 行，断言 count 与 list 去重后一致、不受 limit 影响）；测多维 AND（gender+year）
+- [x] 1.8 GREEN — 确认 `count_players` 复用 `_filtered`；`routers/players.py` 列表加 `gender`/`team`/`year` Query 参数透传
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs/player-registry/spec.md + design.md + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS else FIX + retry
 
 ## 2. 前端 api 层：PlayerFilters 加 gender / team / year

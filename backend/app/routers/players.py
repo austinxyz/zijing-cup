@@ -113,6 +113,14 @@ def read_players(
     unresolved: bool = Query(
         default=False, description="Only players with a contested season value"
     ),
+    gender: Optional[str] = Query(default=None, description="Exact gender match"),
+    team: Optional[str] = Query(
+        default=None, description="Fuzzy match on team code or Chinese display name"
+    ),
+    year: Optional[int] = Query(
+        default=None,
+        description="Participation UTR that year OR a team membership that year",
+    ),
     limit: int = Query(default=200, ge=1, le=1000),
     session: Session = Depends(get_session),
 ) -> list[PlayerOut]:
@@ -126,6 +134,9 @@ def read_players(
             season_year=season,
             team_id=team_id,
             unresolved_only=unresolved,
+            gender=gender,
+            team=team,
+            year=year,
         )
     )
     return list_players(
@@ -135,6 +146,9 @@ def read_players(
         team_id=team_id,
         unresolved_only=unresolved,
         limit=limit,
+        gender=gender,
+        team=team,
+        year=year,
     )
 
 

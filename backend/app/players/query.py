@@ -180,6 +180,9 @@ def count_players(
     season_year: Optional[int] = None,
     team_id: Optional[int] = None,
     unresolved_only: bool = False,
+    gender: Optional[str] = None,
+    team: Optional[str] = None,
+    year: Optional[int] = None,
 ) -> int:
     """How many players match, ignoring the page limit.
 
@@ -188,7 +191,16 @@ def count_players(
     wrong number presented as a fact.
     """
     ids = session.exec(
-        _filtered(select(Player.id), query, season_year, team_id, unresolved_only)
+        _filtered(
+            select(Player.id),
+            query,
+            season_year,
+            team_id,
+            unresolved_only,
+            gender,
+            team,
+            year,
+        )
     ).all()
     return len(set(ids))
 
@@ -199,6 +211,9 @@ def _filtered(
     season_year: Optional[int],
     team_id: Optional[int],
     unresolved_only: bool,
+    gender: Optional[str] = None,
+    team: Optional[str] = None,
+    year: Optional[int] = None,
 ):
     if query:
         needle = f"%{query.strip().lower()}%"
@@ -208,7 +223,12 @@ def _filtered(
             | (Player.utr_profile_id.ilike(needle))
         )
 
-    if season_year is not None or team_id is not None:
+    if gender is not None:
+        statement = statement.where(Player.gender == gender)
+
+    # season_year / team_id / team all constrain via team membership (INNER
+    # join): they are AND conditions on "which team the player is on".
+    if season_year is not None or team_id is not None or team is not None:
         statement = statement.join(
             PlayerTeamMembership, PlayerTeamMembership.player_id == Player.id
         ).join(Team, Team.id == PlayerTeamMembership.team_id)
@@ -216,6 +236,29 @@ def _filtered(
             statement = statement.where(Team.season_year == season_year)
         if team_id is not None:
             statement = statement.where(Team.id == team_id)
+        if team is not None:
+            needle = f"%{team.strip().lower()}%"
+            statement = statement.where(
+                Team.code.ilike(needle) | Team.display_name.ilike(needle)
+            )
+
+    # `year` is the "either" dimension: a participation UTR that year OR a team
+    # membership that year. Expressed as two id.in_ subqueries OR'd together so
+    # it does NOT fold into the team INNER join above (that would make it "this
+    # team AND this year" instead of "either signal of that year").
+    if year is not None:
+        statement = statement.where(
+            Player.id.in_(
+                select(PlayerSeasonUtr.player_id).where(
+                    PlayerSeasonUtr.season_year == year
+                )
+            )
+            | Player.id.in_(
+                select(PlayerTeamMembership.player_id)
+                .join(Team, Team.id == PlayerTeamMembership.team_id)
+                .where(Team.season_year == year)
+            )
+        )
 
     if unresolved_only:
         statement = statement.where(
@@ -236,6 +279,9 @@ def list_players(
     team_id: Optional[int] = None,
     unresolved_only: bool = False,
     limit: int = 200,
+    gender: Optional[str] = None,
+    team: Optional[str] = None,
+    year: Optional[int] = None,
 ) -> list[PlayerOut]:
     """Players, newest constraint first, with their teams and season values.
 
@@ -244,7 +290,14 @@ def list_players(
     single IN clause answers.
     """
     statement = _filtered(
-        select(Player), query, season_year, team_id, unresolved_only
+        select(Player),
+        query,
+        season_year,
+        team_id,
+        unresolved_only,
+        gender,
+        team,
+        year,
     )
 
     players = session.exec(
