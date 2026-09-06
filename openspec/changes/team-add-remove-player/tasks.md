@@ -27,7 +27,7 @@
 - **Code**: 加入控件（搜索输入 + 结果列「加入本队」+ 「新建」姓/名/性别 表单）与每行「移出」+ 就地确认，接 group 1 的 server actions；只在 `TeamEditPanel` 已渲染（canEdit + 编辑模式）时出现；后端 detail 就地显示；成功依赖 `revalidatePath`/RSC 重渲染刷新，不拼本地陈旧态；`team_id` 来源见 design D3（TeamRoster 带则用，否则 getDivisionTeams 按 code 解析）。
 - **Threshold**: 70
 
-- [ ] 2.0 CONTRACT — write openspec/changes/team-add-remove-player/contracts/group-2.md with the ### Contract block above
+- [x] 2.0 CONTRACT — write openspec/changes/team-add-remove-player/contracts/group-2.md with the ### Contract block above
 - [x] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-05-team-add-remove-player-mocks.html；记 token 与文案（「加入队员」「加入本队」「新建队员」「移出」「确认移出」「取消」，确认条提示语）
 - [x] 2.2 RED — 测：编辑模式渲染出「加入队员」搜索控件 + 「新建」入口；点某行「移出」出就地确认（确认/取消）、未确认不触发删除
 - [x] 2.3 GREEN — 实现加入控件 + 行内移出确认，接 server actions
