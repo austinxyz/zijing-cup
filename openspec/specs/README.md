@@ -225,6 +225,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **player-win-loss（2026-09-04）**: `players` 加 `wins`/`losses`（可空 int，生涯值、跨赛季、最新导入为准）。两者可空且**无默认**——`null`=从未导入，与 `0`（真的 0 胜/0 负）是不同断言，MUST NOT 用 0 冒充未知（与时间戳那条 NOT NULL 陷阱相反：这里 None=NULL 正是意图）。总场次=胜+负、胜率=胜/(胜+负) 都是派生量，不入库。migration 以 `set search_path to zijing_cup` 开头（共享库，本地打 127.0.0.1、远程 Dashboard 手工执行）。
 
+**player-admin-workbench（2026-09-05）**: `list_players`/`count_players` 加三个筛选维度：`gender`（精确）、`team`（模糊 ilike `Team.code` + `Team.display_name` 中文名，命中任一）、`year`（该年有 `PlayerSeasonUtr` **或**该年在某队名单，两者任一）。`year` 用两个 `Player.id.in_(子查询)` 的 OR，**不**并进 `team` 的 INNER join，否则会退化成「该队且该年」而非「任一」。`count_players` 复用同一 `_filtered`。无 migration。
+
 ### `admin-access` ✅ 已实现 · 🌐 已上线
 **用户故事**: 作为项目负责人，我想让只有我能改队员数据，而任何人都能照常读规则、名单与阵容；我也想让将来新加的写接口默认就是受保护的，不依赖谁记得挂上什么。
 
@@ -269,6 +271,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **验收标准**: 一人多队时列表列出全部队伍；未裁决与预填同档标记；缺 UTR 链接可见但不是错误态；徽标与截断提示的数字来自服务端；详情页三块同屏且未裁决横幅写明当前采用值；队列每行显示两个候选值**及其来源总表**（按记录的来源归列，不按大小）与当前采用值；未登录访问管理界面跳转登录页。真实数据实测：队列 17 行，一次裁决后 16 行、来源变 `admin_ruling`。
 
 **mobile-shell（2026-08-31）**: 队员列表与详情页的 UTR 链接从不可点文字/「有」改成真链接（指向 `app.utrsports.net/profiles/<id>`，`rel=noopener noreferrer`，缺失仍显示「无」且不是链接）。**不做手机版式**——管理界面在窄视口下仍是桌面版式需横向滚动，是既定取舍。
+
+**player-admin-workbench（2026-09-05）**: 页面从单栏列表 + 独立详情路由改为**左右两栏工作台**——左搜索（姓名/性别/所在队伍模糊/参赛年份，AND、GET、条件入 URL，一次新搜索清空选中）+ 精简结果列表（姓名·性别·最新参赛UTR·所在队伍「最新一支 +N」，行是 `?sel=` 软导航链接），右详情（`PlayerDetail`，按 sel key remount 防陈旧；抽出来与 `[id]` 深链共用）。查看权改为**任人可读、编辑 gate**（`players/layout.tsx` 去掉 canEdit 重定向，`PlayerEditContext`/`EditOnly` 按 `canEdit && editing` 显隐写控件，默认查看模式因合并/拆分不可逆）。编辑模式下右栏出内联「资料」编辑表单（`savePlayerFields` → `PATCH /players/{id}`，只改姓/名/性别/UTR链接，单双打 UTR 留在队伍页以保留其参赛值联动护栏）+ 合并/拆分/裁决链接（跳现有页）。**去 layout gate 的连带**：merge/split/unresolved 三个写页各自 `canEdit` 自守卫 + 补路由级 `error.tsx`（原来靠板块 layout 重定向兜底，gate 一撤就得逐页补）。移动端两栏堆叠为「列表 → 详情（可返回）」。**队伍加/移出队员不在此**（属 team-roster-ui 的后续 change）。
 
 ---
 
