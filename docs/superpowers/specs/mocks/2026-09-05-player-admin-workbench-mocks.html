@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>player-admin-workbench mocks</title>
+<style>
+  :root{
+    --bg:#f6f4f0; --fg:#1a1917; --surface:#fff; --surface-muted:#f2efe9;
+    --border:#e4e0d8; --primary:#9c3417; --primary-fg:#fff;
+    --muted:#6b665d; --muted-fg:#706a61;
+    --danger:#b3261e; --danger-surface:#fbf0ee; --danger-border:#f0cfc9;
+    --success:#3a6b4d; --success-surface:#eef4f0; --success-border:#cfe2d6;
+    --warning:#8a6508; --warning-surface:#fbf5e6; --warning-border:#ecd9a4;
+    --male:#1f5fd0; --female:#ab237f; --borrowed:#9a4410; --borrowed-surface:#fbf1e7;
+    --sb:#1c1b18; --sb-border:#2a2823; --sb-fg:#b8b2a6; --sb-fg-dim:#8f8a7e;
+    --sb-fg-bright:#f2eee7; --sb-active:#2c2a25; --sb-well:#14130f;
+    --r:8px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 -apple-system,"Segoe UI",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;padding:28px}
+  h2.section{font-size:14px;margin:34px 0 10px;color:var(--fg)}
+  .caption{color:var(--muted-fg);font:11px/1.5 ui-monospace,Menlo,monospace;margin:-6px 0 12px}
+  .mono{font-family:ui-monospace,Menlo,monospace}
+  .frame{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+
+  /* app shell */
+  .shell{display:flex;height:560px}
+  .sidebar{width:200px;flex:none;background:var(--sb);color:var(--sb-fg);display:flex;flex-direction:column;border-right:1px solid var(--sb-border)}
+  .sb-top{padding:16px 14px;border-bottom:1px solid var(--sb-border)}
+  .sb-brand{display:flex;align-items:center;gap:8px;color:var(--sb-fg-bright);font-weight:600}
+  .sb-badge{width:20px;height:20px;border-radius:5px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font:11px/1 ui-monospace;font-weight:600}
+  .sb-switch{margin-top:10px;height:32px;border:1px solid #33322c;background:var(--sb-well);border-radius:6px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;color:var(--sb-fg-bright);font-size:12px}
+  .sb-nav{flex:1;padding:8px}
+  .sb-item{height:32px;border-radius:6px;padding:0 10px;display:flex;align-items:center;gap:8px;color:var(--sb-fg);font-size:13px}
+  .sb-item.cur{background:var(--sb-active);color:var(--sb-fg-bright);border-left:2px solid #c9502f;padding-left:8px;font-weight:500}
+  .sb-foot{border-top:1px solid var(--sb-border);padding:10px 12px;font-size:12px;color:var(--sb-fg-bright);display:flex;justify-content:space-between;align-items:center}
+  .sb-foot .out{font:10.5px ui-monospace;color:var(--sb-fg-dim);text-decoration:underline}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg)}
+  .head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);background:var(--surface);padding:10px 16px}
+  .head h1{font-size:15px;margin:0;font-weight:600}
+  .toggle{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+  .toggle span{padding:5px 10px;font-size:12px;color:var(--muted)}
+  .toggle span.on{background:var(--surface-muted);color:var(--fg);font-weight:600}
+  .pill{display:inline-flex;align-items:center;gap:6px;height:28px;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:12px;background:var(--surface)}
+  .count{border:1px solid var(--warning-border);background:var(--warning-surface);color:var(--warning);border-radius:999px;padding:0 7px;font-size:11px}
+
+  /* two-column body */
+  .body{flex:1;display:flex;min-height:0}
+  .left{width:300px;flex:none;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)}
+  .search{padding:12px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+  .fld{display:flex;flex-direction:column;gap:3px}
+  .fld label{font-size:11px;color:var(--muted)}
+  .fld input,.fld select{height:32px;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:0 8px;font-size:12.5px;color:var(--fg)}
+  .go{height:32px;border:0;border-radius:6px;background:var(--primary);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer}
+  .results{flex:1;overflow-y:auto}
+  .rhead{padding:7px 12px;font:11px ui-monospace;color:var(--muted-fg);background:var(--surface-muted);border-bottom:1px solid var(--border)}
+  .row{padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer}
+  .row.sel{background:#f4f7fc;border-left:3px solid var(--primary);padding-left:9px}
+  .row .r1{display:flex;align-items:center;gap:7px}
+  .row .nm{font-weight:600;font-size:13px}
+  .g{font-weight:700}.g.m{color:var(--male)}.g.f{color:var(--female)}
+  .row .r2{display:flex;justify-content:space-between;color:var(--muted-fg);font-size:11.5px;margin-top:2px}
+  .row .utr{font-family:ui-monospace}
+
+  .right{flex:1;min-width:0;overflow-y:auto;padding:16px 18px}
+  .empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+  .dname{font-size:18px;font-weight:700;margin:0 0 2px}
+  .dsub{color:var(--muted-fg);font-size:12px;margin-bottom:14px}
+  .dsub a{color:var(--primary)}
+  .card{border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden}
+  .card h3{margin:0;font-size:12px;padding:8px 12px;background:var(--surface-muted);border-bottom:1px solid var(--border);color:var(--muted);font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:7px 12px;border-bottom:1px solid var(--border)}
+  th{font:11px ui-monospace;color:var(--muted-fg);font-weight:400}
+  tr:last-child td{border-bottom:0}
+  .tag{font-size:10.5px;border-radius:999px;padding:1px 7px;border:1px solid var(--border);color:var(--muted)}
+  .tag.warn{background:var(--warning-surface);border-color:var(--warning-border);color:var(--warning)}
+  .tag.ok{background:var(--success-surface);border-color:var(--success-border);color:var(--success)}
+  .banner{background:var(--warning-surface);border:1px solid var(--warning-border);color:var(--warning);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:14px}
+  .editbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .btn{height:30px;border:1px solid var(--border);background:var(--surface);border-radius:6px;padding:0 12px;font-size:12px;color:var(--fg);cursor:pointer}
+  .btn.pri{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+  .btn.dgr{border-color:var(--danger-border);background:var(--danger-surface);color:var(--danger)}
+  .edited input,.edited select{height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12.5px;width:120px}
+  .note{font-size:11px;color:var(--muted-fg);margin-top:4px}
+  .ro{color:var(--muted-fg);font-size:11px}
+
+  /* mobile */
+  .phones{display:flex;gap:22px;flex-wrap:wrap}
+  .phone{width:300px}
+  .phone .frame{height:560px;display:flex;flex-direction:column}
+  .topbar{background:var(--sb);color:var(--sb-fg-bright);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;font-size:13px}
+  .tabbar{display:flex;border-bottom:1px solid var(--border);background:var(--surface)}
+  .tabbar span{flex:1;text-align:center;padding:8px;font-size:12px;color:var(--muted)}
+  .tabbar span.on{color:var(--fg);border-bottom:2px solid var(--primary);font-weight:600}
+  .backbar{padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface);font-size:12px;color:var(--primary)}
+</style>
+</head>
+<body>
+
+<h1 style="font-size:18px;margin:0 0 4px">player-admin-workbench — 视觉稿</h1>
+<div class="caption">复用现有设计系统 token（不新选风格）。查看模式=只读、无写控件；编辑模式=解锁后出写动作。左搜索/右详情，选中经 ?sel= 软导航。</div>
+
+<h2 class="section">桌面 · 查看模式（任人可读，无任何写控件）</h2>
+<div class="caption">编辑/查看开关停在「查看模式」；无「解锁」表示已解锁但切到查看，或未登录只出「编辑模式」入口。右栏详情、来源、未裁决横幅只读可见。</div>
+<div class="frame">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sb-top">
+        <div class="sb-brand"><span class="sb-badge">紫</span> 紫荆杯</div>
+        <div class="sb-switch"><span>2026 · 银组</span><span>▾</span></div>
+      </div>
+      <nav class="sb-nav">
+        <div class="sb-item">赛制规则</div>
+        <div class="sb-item">队伍</div>
+        <div class="sb-item">阵容</div>
+        <div class="sb-item cur">队员管理</div>
+      </nav>
+      <div class="sb-foot" style="color:var(--sb-fg)"><span>管理员登录</span></div>
+    </aside>
+    <div class="main">
+      <div class="head">
+        <h1>队员</h1>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="pill">编辑模式</span>
+          <span class="pill">未裁决 <span class="count">12</span></span>
+        </div>
+      </div>
+      <div class="body">
+        <div class="left">
+          <div class="search">
+            <div class="fld"><label>姓名</label><input placeholder="姓 / 名…" /></div>
+            <div class="fld"><label>性别</label><select><option>全部</option><option>男</option><option>女</option></select></div>
+            <div class="fld"><label>所在队伍</label><input placeholder="队名或代码，如 北大 / PKU" /></div>
+            <div class="fld"><label>参赛年份</label><select><option>全部</option><option>2026</option><option>2025</option></select></div>
+            <button class="go">搜索</button>
+          </div>
+          <div class="results">
+            <div class="rhead">42 人 · 跨赛季</div>
+            <div class="row sel">
+              <div class="r1"><span class="nm">胡 Mitch</span><span class="g m">♂</span></div>
+              <div class="r2"><span>最新参赛 <span class="utr">7.42</span></span><span>PKU 北大 +1</span></div>
+            </div>
+            <div class="row">
+              <div class="r1"><span class="nm">宗 青青</span><span class="g f">♀</span></div>
+              <div class="r2"><span>最新参赛 <span class="utr">6.38</span></span><span>THU 清华</span></div>
+            </div>
+            <div class="row">
+              <div class="r1"><span class="nm">陈 一伦</span><span class="g m">♂</span></div>
+              <div class="r2"><span>最新参赛 <span class="utr">6.98</span></span><span>SJTU 交大</span></div>
+            </div>
+            <div class="row">
+              <div class="r1"><span class="nm">李 娜</span><span class="g f">♀</span></div>
+              <div class="r2"><span class="ro">无参赛 UTR</span><span>ZJU 浙大</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="dname">胡 Mitch <span class="g m" style="font-size:14px">♂</span></div>
+          <div class="dsub">UTR 档案 <a href="#">app.utrsports.net/profiles/12345 ↗</a> · 单打 8.1 / 双打 7.6（人工维护）</div>
+          <div class="card">
+            <h3>各赛季参赛 UTR</h3>
+            <table>
+              <tr><th>赛季</th><th>参赛值</th><th>来源</th><th>状态</th></tr>
+              <tr><td>2026</td><td class="mono">7.42</td><td>组委会总表</td><td><span class="tag ok">已认证</span></td></tr>
+              <tr><td>2025</td><td class="mono">7.30 <span class="ro">/ 备选 7.10</span></td><td class="ro">来源未知</td><td><span class="tag warn">未裁决</span></td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <h3>所在队伍（只读）</h3>
+            <table>
+              <tr><th>赛季</th><th>组别</th><th>队伍</th><th>代表校</th><th>外援/外卡</th></tr>
+              <tr><td>2026</td><td>银组</td><td>PKU 北大</td><td>北京大学</td><td class="ro">—</td></tr>
+              <tr><td>2025</td><td>银组</td><td>PKU 北大</td><td>北京大学</td><td class="ro">—</td></tr>
+            </table>
+          </div>
+          <div class="note">查看模式：无改字段 / 裁决 / 合并 / 拆分入口。队伍加/移出不在本页（属队伍页，另一 change）。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2 class="section">桌面 · 编辑模式（已解锁该比赛 → 出写动作）</h2>
+<div class="caption">开关切到「查看模式」可退回只读；页头出「✓ 已解锁编辑 · 登出」。右栏字段可改，出裁决/合并/拆分。</div>
+<div class="frame">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sb-top">
+        <div class="sb-brand"><span class="sb-badge">紫</span> 紫荆杯</div>
+        <div class="sb-switch"><span>2026 · 银组</span><span>▾</span></div>
+      </div>
+      <nav class="sb-nav">
+        <div class="sb-item">赛制规则</div>
+        <div class="sb-item">队伍</div>
+        <div class="sb-item">阵容</div>
+        <div class="sb-item cur">队员管理</div>
+      </nav>
+      <div class="sb-foot"><span>管理员</span><span class="out">登出</span></div>
+    </aside>
+    <div class="main">
+      <div class="head">
+        <h1>队员</h1>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="toggle"><span>查看模式</span><span class="on">编辑模式</span></span>
+          <span class="pill" style="color:var(--success);border-color:var(--success-border);background:var(--success-surface)">✓ 已解锁</span>
+          <span class="pill">未裁决 <span class="count">12</span></span>
+        </div>
+      </div>
+      <div class="body">
+        <div class="left">
+          <div class="search">
+            <div class="fld"><label>姓名</label><input value="胡" /></div>
+            <div class="fld"><label>性别</label><select><option>全部</option><option selected>男</option><option>女</option></select></div>
+            <div class="fld"><label>所在队伍</label><input placeholder="队名或代码" /></div>
+            <div class="fld"><label>参赛年份</label><select><option>全部</option><option>2026</option><option>2025</option></select></div>
+            <button class="go">搜索</button>
+          </div>
+          <div class="results">
+            <div class="rhead">1 人 · 匹配「胡」·男</div>
+            <div class="row sel">
+              <div class="r1"><span class="nm">胡 Mitch</span><span class="g m">♂</span></div>
+              <div class="r2"><span>最新参赛 <span class="utr">7.42</span></span><span>PKU 北大 +1</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="dname">胡 Mitch</div>
+          <div class="dsub">编辑资料</div>
+          <div class="card">
+            <h3>资料</h3>
+            <table class="edited">
+              <tr><td>姓</td><td><input value="胡"/></td><td>名</td><td><input value="Mitch"/></td></tr>
+              <tr><td>性别</td><td><select><option selected>男</option><option>女</option></select></td><td>UTR 链接</td><td><input value="12345"/></td></tr>
+            </table>
+            <div style="padding:10px 12px"><button class="btn pri">保存资料</button></div>
+          </div>
+          <div class="banner">2025 参赛 UTR <b>未裁决</b>：现按较大值 7.30 算。可裁决选定真值（可能两候选都不是）。</div>
+          <div class="card">
+            <h3>各赛季参赛 UTR</h3>
+            <table>
+              <tr><th>赛季</th><th>参赛值</th><th>来源</th><th></th></tr>
+              <tr><td>2026</td><td class="mono">7.42</td><td>组委会总表</td><td class="ro">已认证</td></tr>
+              <tr><td>2025</td><td class="mono">7.30 / 7.10</td><td class="ro">来源未知</td><td><button class="btn">裁决</button></td></tr>
+            </table>
+          </div>
+          <div class="editbtns">
+            <button class="btn">合并到另一条记录…</button>
+            <button class="btn dgr">拆分这条记录…</button>
+          </div>
+          <div class="note">合并/拆分走各自确认子页（不可逆，进去前把结果摆出来）。队伍加/移出不在本页。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2 class="section">移动 · 两屏（&lt;768px：列表 → 详情，可返回）</h2>
+<div class="caption">窄屏堆叠：先列表（含搜索抽屉入口），点人进详情、左上「← 队员」返回。编辑模式的写动作同桌面，收在详情内。</div>
+<div class="phones">
+  <div class="phone">
+    <div class="frame">
+      <div class="topbar"><span>☰ 队员</span><span style="font-size:12px">编辑模式</span></div>
+      <div class="search" style="border-bottom:1px solid var(--border)">
+        <div class="fld"><label>姓名</label><input placeholder="姓 / 名…"/></div>
+        <div style="display:flex;gap:8px">
+          <div class="fld" style="flex:1"><label>性别</label><select><option>全部</option><option>男</option><option>女</option></select></div>
+          <div class="fld" style="flex:1"><label>年份</label><select><option>全部</option><option>2026</option></select></div>
+        </div>
+        <div class="fld"><label>所在队伍</label><input placeholder="队名或代码"/></div>
+        <button class="go">搜索</button>
+      </div>
+      <div class="results">
+        <div class="rhead">42 人</div>
+        <div class="row"><div class="r1"><span class="nm">胡 Mitch</span><span class="g m">♂</span></div><div class="r2"><span>7.42</span><span>PKU 北大 +1</span></div></div>
+        <div class="row"><div class="r1"><span class="nm">宗 青青</span><span class="g f">♀</span></div><div class="r2"><span>6.38</span><span>THU 清华</span></div></div>
+        <div class="row"><div class="r1"><span class="nm">陈 一伦</span><span class="g m">♂</span></div><div class="r2"><span>6.98</span><span>SJTU 交大</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="phone">
+    <div class="frame">
+      <div class="topbar"><span>☰ 队员</span><span style="font-size:12px">编辑模式</span></div>
+      <div class="backbar">← 队员</div>
+      <div class="right" style="padding:14px">
+        <div class="dname">胡 Mitch <span class="g m" style="font-size:14px">♂</span></div>
+        <div class="dsub">UTR <a href="#">档案 ↗</a> · 单 8.1 / 双 7.6</div>
+        <div class="card">
+          <h3>各赛季参赛 UTR</h3>
+          <table>
+            <tr><th>赛季</th><th>参赛值</th><th>状态</th></tr>
+            <tr><td>2026</td><td class="mono">7.42</td><td class="ro">已认证</td></tr>
+            <tr><td>2025</td><td class="mono">7.30/7.10</td><td><span class="tag warn">未裁决</span></td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>所在队伍（只读）</h3>
+          <table><tr><td>2026 银</td><td>PKU 北大</td></tr><tr><td>2025 银</td><td>PKU 北大</td></tr></table>
+        </div>
+        <div class="editbtns"><button class="btn pri">保存资料</button><button class="btn">裁决</button><button class="btn">合并</button><button class="btn dgr">拆分</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
