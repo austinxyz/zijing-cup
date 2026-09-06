@@ -17,7 +17,7 @@
 - [x] 1.6 GREEN — `_filtered` 加 `year`（两子查询 id.in_ 的 OR）
 - [x] 1.7 RED — 测 `count_players` 带新筛选返回真实总数（造 >?? 行，断言 count 与 list 去重后一致、不受 limit 影响）；测多维 AND（gender+year）
 - [x] 1.8 GREEN — 确认 `count_players` 复用 `_filtered`；`routers/players.py` 列表加 `gender`/`team`/`year` Query 参数透传
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs/player-registry/spec.md + design.md + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS else FIX + retry
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs/player-registry/spec.md + design.md + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS else FIX + retry
 
 ## 2. 前端 api 层：PlayerFilters 加 gender / team / year
 
@@ -28,8 +28,8 @@
 - **Threshold**: 80
 
 - [ ] 2.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — `lib/api.test.ts` 加测：`getPlayers({gender,team,year})` 请求 URL 含 `gender=`/`team=`/`year=`；无值不设。断言失败
-- [ ] 2.2 GREEN — `PlayerFilters`/`PlayerPageFilters` 加字段；`getPlayers`/`getPlayersPage` 拼参数
+- [x] 2.1 RED — `lib/api.test.ts` 加测：`getPlayers({gender,team,year})` 请求 URL 含 `gender=`/`team=`/`year=`；无值不设。断言失败
+- [x] 2.2 GREEN — `PlayerFilters`/`PlayerPageFilters` 加字段；`getPlayers`/`getPlayersPage` 拼参数
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + diff; review + score; ≥80 PASS else FIX + retry
 
 ## 3. 前端：查看/编辑双模式 + 去掉 layout gate

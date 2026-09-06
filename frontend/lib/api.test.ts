@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getDivisionTeams,
   getHealth,
+  getPlayers,
+  getPlayersPage,
   getTeamLineups,
   getTeamRoster,
 } from "./api";
@@ -211,5 +213,62 @@ describe("getTeamLineups pin encoding", () => {
     expect(url).toContain("pin=MD%3Ap9");
     expect(url).toContain("lock=D1%3Ap1%2Cp2");
     expect(url).toContain("exclude=p3");
+  });
+});
+
+describe("getPlayers / getPlayersPage filters", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  function stubFetch(body: unknown) {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: () => "0" },
+      json: () => Promise.resolve(body),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("puts gender, team and year into the query string", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const fetchMock = stubFetch([]);
+
+    await getPlayers({ gender: "F", team: "北大", year: 2025 });
+
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("gender=F");
+    expect(url).toContain(`team=${encodeURIComponent("北大")}`);
+    expect(url).toContain("year=2025");
+  });
+
+  it("omits the new params when not given", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const fetchMock = stubFetch([]);
+
+    await getPlayers({ query: "hu" });
+
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).not.toContain("gender=");
+    expect(url).not.toContain("team=");
+    expect(url).not.toContain("year=");
+  });
+
+  it("getPlayersPage forwards the same filters", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const fetchMock = stubFetch([]);
+
+    await getPlayersPage({ gender: "M", team: "PKU", year: 2026, limit: 1 });
+
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("gender=M");
+    expect(url).toContain("team=PKU");
+    expect(url).toContain("year=2026");
   });
 });

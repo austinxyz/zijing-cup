@@ -613,6 +613,12 @@ export interface PlayerFilters {
   query?: string;
   season?: number | string;
   teamId?: number | string;
+  /** Exact gender match (the value域 the backend stores). */
+  gender?: string;
+  /** Fuzzy: matches team code or Chinese display name. */
+  team?: string;
+  /** Either a participation UTR that year OR a team membership that year. */
+  year?: number | string;
 }
 
 /** Players, with their season values and every team they belong to. */
@@ -621,6 +627,9 @@ export async function getPlayers(filters: PlayerFilters = {}): Promise<Player[]>
   if (filters.query) params.set("q", filters.query);
   if (filters.season !== undefined) params.set("season", String(filters.season));
   if (filters.teamId !== undefined) params.set("team_id", String(filters.teamId));
+  if (filters.gender) params.set("gender", filters.gender);
+  if (filters.team) params.set("team", filters.team);
+  if (filters.year !== undefined) params.set("year", String(filters.year));
   const query = params.toString();
 
   const res = await fetch(
@@ -668,6 +677,9 @@ export async function getPlayersPage(
   if (filters.query) params.set("q", filters.query);
   if (filters.season !== undefined) params.set("season", String(filters.season));
   if (filters.teamId !== undefined) params.set("team_id", String(filters.teamId));
+  if (filters.gender) params.set("gender", filters.gender);
+  if (filters.team) params.set("team", filters.team);
+  if (filters.year !== undefined) params.set("year", String(filters.year));
   if (filters.unresolved) params.set("unresolved", "true");
   if (filters.limit !== undefined) params.set("limit", String(filters.limit));
   const query = params.toString();
