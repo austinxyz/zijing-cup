@@ -9,6 +9,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return { ...actual, getPlayersPage: vi.fn() };
 });
 
+vi.mock("@/lib/admin", () => ({ canEdit: vi.fn(async () => true) }));
 vi.mock("./actions", () => ({ ruleOnSeason: vi.fn() }));
 
 function contested(id: number, first: string, high: string, low: string): Player {

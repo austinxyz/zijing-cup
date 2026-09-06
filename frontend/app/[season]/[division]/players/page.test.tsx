@@ -1,20 +1,33 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getPlayers, type Player } from "@/lib/api";
+import { getPlayers, getPlayer, type Player } from "@/lib/api";
 import Page from "./page";
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return {
     ...actual,
-    getPlayers: vi.fn(),
+    getPlayers: vi.fn(async () => []),
+    getPlayer: vi.fn(async () => null),
     getPlayersPage: vi.fn(async () => ({ players: [], total: 0, truncated: false })),
+    getSeasons: vi.fn(async () => [
+      {
+        year: 2026,
+        edition_name: "第十一届",
+        divisions: [{ code: "silver", display_name: "银组" }],
+      },
+      {
+        year: 2025,
+        edition_name: "第十届",
+        divisions: [{ code: "silver", display_name: "银组" }],
+      },
+    ]),
   };
 });
 
 vi.mock("@/lib/admin", () => ({
-  isSignedIn: vi.fn(async () => true),
+  isSignedIn: vi.fn(async () => false),
   canEdit: vi.fn(async () => false),
 }));
 
@@ -33,73 +46,44 @@ function player(overrides: Partial<Player> = {}): Player {
     doubles_utr: "6.38",
     doubles_status: "rated",
     utr_profile_id: "3872011",
-    season_utrs: [],
-    memberships: [],
+    season_utrs: [
+      {
+        season_year: 2025,
+        value: "6.38",
+        alt_value: null,
+        is_unresolved: false,
+        value_division: null,
+        alt_value_division: null,
+        status: "verified",
+        under_appeal: false,
+        source: "committee_sheet",
+      },
+    ],
+    memberships: [
+      {
+        id: 1,
+        team_id: 1,
+        team_code: "THU-UOC",
+        season_year: 2025,
+        division_code: "gold",
+        representing_school: "清华",
+        is_borrowed_player: null,
+        is_wildcard: null,
+      },
+      {
+        id: 2,
+        team_id: 2,
+        team_code: "THU-I",
+        season_year: 2025,
+        division_code: "silver",
+        representing_school: "清华",
+        is_borrowed_player: null,
+        is_wildcard: null,
+      },
+    ],
     ...overrides,
   };
 }
-
-const CONTESTED = player({
-  season_utrs: [
-    {
-      season_year: 2025,
-      value: "6.38",
-      alt_value: "6.25",
-      is_unresolved: true,
-      value_division: null,
-      alt_value_division: null,
-      status: "verified",
-      under_appeal: false,
-      source: "committee_sheet",
-    },
-  ],
-  memberships: [
-    {
-      id: 1,
-      team_id: 1,
-      team_code: "THU-UOC",
-      season_year: 2025,
-      division_code: "gold",
-      representing_school: "清华",
-      is_borrowed_player: null,
-      is_wildcard: null,
-    },
-    {
-      id: 2,
-      team_id: 2,
-      team_code: "THU-I",
-      season_year: 2025,
-      division_code: "silver",
-      representing_school: "清华",
-      is_borrowed_player: null,
-      is_wildcard: null,
-    },
-  ],
-});
-
-const PREFILLED = player({
-  id: 2,
-  last_name: "Zhang",
-  first_name: "Qingyang",
-  utr_profile_id: null,
-  singles_utr: null,
-  singles_status: "unrated",
-  doubles_utr: null,
-  doubles_status: "unrated",
-  season_utrs: [
-    {
-      season_year: 2026,
-      value: "4.25",
-      alt_value: null,
-      is_unresolved: false,
-      value_division: null,
-      alt_value_division: null,
-      status: null,
-      under_appeal: false,
-      source: "prefilled",
-    },
-  ],
-});
 
 function renderPage(query: Record<string, string> = {}) {
   return Page({
@@ -110,133 +94,69 @@ function renderPage(query: Record<string, string> = {}) {
 
 afterEach(() => vi.clearAllMocks());
 
-describe("the player list", () => {
-  it("lists every team a player belongs to, not just one", async () => {
-    vi.mocked(getPlayers).mockResolvedValue([CONTESTED]);
-
+describe("workbench left column: search", () => {
+  it("offers name, gender, team and year search fields", async () => {
     render(await renderPage());
-
-    const row = screen.getByRole("row", { name: /Zong Qingqing/ });
-    // The rules let one person play gold and silver in the same season, so
-    // showing a single team would answer "where is this person" wrongly.
-    expect(within(row).getByText(/THU-UOC/)).toBeTruthy();
-    expect(within(row).getByText(/THU-I/)).toBeTruthy();
+    expect(screen.getByLabelText("姓名")).toBeTruthy();
+    expect(screen.getByLabelText("性别")).toBeTruthy();
+    expect(screen.getByLabelText("所在队伍")).toBeTruthy();
+    expect(screen.getByLabelText("参赛年份")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "搜索" })).toBeTruthy();
   });
 
-  it("marks an unresolved value and a prefilled one the same way", async () => {
-    vi.mocked(getPlayers).mockResolvedValue([CONTESTED, PREFILLED]);
-
-    render(await renderPage());
-
-    // Scoped to the table: the queue link in the header carries the same word,
-    // and it is a destination rather than a marker on a value.
-    const table = screen.getByRole("table");
-    const unresolved = within(table).getByText("未裁决");
-    const prefilled = within(table).getByText("预填");
-    // Same tier of warning: both say "this number has not been confirmed by
-    // the committee", which is one fact, not two.
-    expect(unresolved.className).toBe(prefilled.className);
+  it("submits as GET and does NOT carry a selection (a new search clears it)", async () => {
+    const { container } = render(await renderPage({ sel: "1" }));
+    const form = container.querySelector("form")!;
+    expect(form.getAttribute("method")).toBe("get");
+    // No hidden sel input: submitting the search drops the current selection.
+    expect(form.querySelector('input[name="sel"]')).toBeNull();
   });
 
-  it("shows a missing UTR link without calling it an error", async () => {
-    vi.mocked(getPlayers).mockResolvedValue([PREFILLED]);
-
-    render(await renderPage());
-
-    const row = screen.getByRole("row", { name: /Zhang Qingyang/ });
-    const marker = within(row).getByText("无");
-    // Nobody has filled it in yet — that is a gap to close, not a fault, and
-    // it is the evidence a future merge would rest on.
-    expect(marker.className).not.toMatch(/danger/);
-  });
-
-  it("makes a present UTR link openable rather than a yes/no marker", async () => {
-    vi.mocked(getPlayers).mockResolvedValue([CONTESTED]);
-
-    render(await renderPage());
-
-    const row = screen.getByRole("row", { name: /Zong Qingqing/ });
-    const link = within(row).getByRole("link", { name: "有" });
-    expect(link.getAttribute("href")).toBe(
-      "https://app.utrsports.net/profiles/3872011",
-    );
-    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
-  });
-
-  it("does not turn a missing UTR link into a dead link", async () => {
-    vi.mocked(getPlayers).mockResolvedValue([PREFILLED]);
-
-    render(await renderPage());
-
-    const row = screen.getByRole("row", { name: /Zhang Qingyang/ });
-    expect(within(row).queryByRole("link", { name: "无" })).toBeNull();
-  });
-
-  it("offers the unresolved queue as a destination", async () => {
-    vi.mocked(getPlayers).mockResolvedValue([CONTESTED, PREFILLED]);
-
-    render(await renderPage());
-
-    // The count itself comes from the server — see "counts the page cannot
-    // see" below. What this checks is that the queue is reachable from here.
-    const link = screen.getByRole("link", { name: /未裁决/ });
-    expect(link.getAttribute("href")).toBe("/2026/silver/players/unresolved");
-  });
-
-  it("keeps the search box filled with what was searched", async () => {
-    vi.mocked(getPlayers).mockResolvedValue([]);
-
-    render(await renderPage({ q: "Zong" }));
-
+  it("passes the four filters through to getPlayers", async () => {
+    await renderPage({ q: "Zong", gender: "F", team: "北大", year: "2025" });
     expect(getPlayers).toHaveBeenCalledWith(
-      expect.objectContaining({ query: "Zong" }),
+      expect.objectContaining({
+        query: "Zong",
+        gender: "F",
+        team: "北大",
+        year: "2025",
+      }),
     );
-    expect(
-      (screen.getByLabelText("搜索队员") as HTMLInputElement).defaultValue,
-    ).toBe("Zong");
-  });
-
-  it("says so when nothing matches, instead of showing an empty table", async () => {
-    vi.mocked(getPlayers).mockResolvedValue([]);
-
-    render(await renderPage({ q: "nobody" }));
-
-    expect(screen.getByText(/没有匹配的队员/)).toBeTruthy();
-    expect(screen.queryByRole("table")).toBeNull();
   });
 });
 
-describe("counts the page cannot see", () => {
-  it("takes the unresolved count from the server, not from the rows it drew", async () => {
-    vi.mocked(getPlayers).mockResolvedValue([CONTESTED]);
-    const { getPlayersPage } = await import("@/lib/api");
-    vi.mocked(getPlayersPage).mockResolvedValue({
-      players: [],
-      total: 17,
-      truncated: false,
-    });
+describe("workbench left column: result rows", () => {
+  it("shows name, gender, latest participation UTR and team, and links with ?sel", async () => {
+    vi.mocked(getPlayers).mockResolvedValue([player()]);
+    render(await renderPage({ q: "Zong" }));
 
-    render(await renderPage());
-
-    // The list is capped; counting unresolved rows inside it would report 7
-    // when the answer is 17, and nothing on screen would say the number was a
-    // guess.
-    expect(screen.getByRole("link", { name: /未裁决/ }).textContent).toMatch(/17/);
+    const link = screen.getByRole("link", { name: /Zong Qingqing/ });
+    // Selecting keeps the current search and adds sel.
+    expect(link.getAttribute("href")).toContain("sel=1");
+    expect(link.getAttribute("href")).toContain("q=Zong");
+    expect(within(link).getByText(/6\.38/)).toBeTruthy(); // latest participation UTR
+    expect(within(link).getByText(/THU-UOC/)).toBeTruthy();
   });
 
-  it("says when it is showing only part of the roster", async () => {
-    const { getPlayersPage } = await import("@/lib/api");
-    vi.mocked(getPlayersPage).mockResolvedValue({
-      players: [],
-      total: 17,
-      truncated: false,
-    });
-    vi.mocked(getPlayers).mockResolvedValue(
-      Array.from({ length: 200 }, (_, i) => player({ id: i + 1 })),
-    );
+  it("says so when nothing matches, instead of an empty list", async () => {
+    vi.mocked(getPlayers).mockResolvedValue([]);
+    render(await renderPage({ q: "nobody" }));
+    expect(screen.getByText(/没有匹配的队员/)).toBeTruthy();
+  });
+});
 
+describe("workbench right column: detail", () => {
+  it("shows an empty state when nothing is selected", async () => {
     render(await renderPage());
+    expect(screen.getByText(/从左边选一个队员/)).toBeTruthy();
+    expect(getPlayer).not.toHaveBeenCalled();
+  });
 
-    expect(screen.queryByText(/只显示前/)).toBeTruthy();
+  it("shows the selected player's detail when sel is set", async () => {
+    vi.mocked(getPlayer).mockResolvedValue(player());
+    render(await renderPage({ sel: "1" }));
+    expect(getPlayer).toHaveBeenCalledWith("1");
+    // Detail renders the player's name (appears in the right pane heading).
+    expect(screen.getAllByText(/Zong Qingqing/).length).toBeGreaterThan(0);
   });
 });

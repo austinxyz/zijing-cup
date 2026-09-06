@@ -17,6 +17,7 @@ vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 
+vi.mock("@/lib/admin", () => ({ canEdit: vi.fn(async () => true) }));
 vi.mock("./actions", () => ({ splitPlayer: vi.fn() }));
 
 const PLAYER: Player = {

@@ -1,6 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { getPlayer } from "@/lib/api";
+import { canEdit as canEditCompetition } from "@/lib/admin";
 import { playerName } from "@/lib/name";
 import { SplitForm } from "./SplitForm";
 
@@ -17,6 +18,9 @@ function numbers(value: string | string[] | undefined): number[] {
 
 export default async function SplitPage({ params, searchParams }: PageProps) {
   const { season, division, id } = await params;
+  if (!(await canEditCompetition(season, division))) {
+    redirect(`/${season}/${division}/players/${id}`);
+  }
   const query = searchParams ? await searchParams : {};
 
   const player = await getPlayer(id);

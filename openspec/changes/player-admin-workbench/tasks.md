@@ -40,14 +40,14 @@
 - **Code**: 新 `PlayerEditContext`（`{canEdit, editing, setEditing}`，**默认 editing=false**——合并/拆分不可逆，默认只读更稳）+ `PlayerEditHeaderControl`（镜像 `TeamEditHeaderControl`：未 canEdit→`EditModeToggle` 带 season/division；canEdit→编辑/查看开关+登出）；`players/layout.tsx` **去掉 canEdit 重定向**改 pass-through；写控件按 `editing` 显隐。跨 server→client 边界只传序列化 server action + `canEdit` 数据，不传 render-prop 函数（既有 pitfall）。
 - **Threshold**: 70
 
-- [ ] 3.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-3.md with the ### Contract block above
+- [x] 3.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-3.md with the ### Contract block above
 - [x] 3.1 MOCK — open docs/superpowers/specs/mocks/2026-09-05-player-admin-workbench-mocks.html（桌面查看模式 / 编辑模式两块）；记 token 与页头文案（「编辑模式/查看模式」「✓ 已解锁」「未裁决」）
 - [x] 3.2 RED — 测 `players/layout.tsx` 不再对非 canEdit 重定向（渲染 children）；测未 canEdit 时页面出「编辑模式」解锁入口、无写控件
 - [x] 3.3 GREEN — 去 layout 重定向；加 `PlayerEditContext` + `PlayerEditHeaderControl`
 - [x] 3.4 RED — 测查看模式隐写控件、编辑模式显；默认 editing=false（canEdit 时仍先查看）
 - [x] 3.5 GREEN — 写控件按 `editing` 显隐；默认查看
 - [x] 3.6 VISUAL DIFF — bring up dev stack (project.dev_stack_command)；登录该比赛；比对页头开关/解锁态与 mock 桌面两块；修 token/文案漂移
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + specs/player-admin-ui/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + specs/player-admin-ui/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
 
 ## 4. 前端：左右两栏工作台（搜索 + 结果列表 + 就地详情）
 
@@ -58,12 +58,12 @@
 - **Threshold**: 70
 
 - [ ] 4.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-4.md with the ### Contract block above
-- [ ] 4.1 MOCK — open mock（桌面双栏 + 移动两屏）；记左栏字段顺序、结果行四项、右栏详情要素、空态文案
-- [ ] 4.2 RED — 测左栏搜索表单含 姓名/性别/队伍/年份 四控件、提交为 GET 且不带 sel；结果行显示 姓名·性别·最新参赛UTR·所在队伍
-- [ ] 4.3 GREEN — 实现左栏搜索表单 + 精简结果列表（`<Link ?sel>`）
-- [ ] 4.4 RED — 测右栏：无 sel 出空态；有 sel 出该人 `PlayerDetail`；切换 sel 右栏按 key remount（不残留上一人）
-- [ ] 4.5 GREEN — 抽 `PlayerDetail`，`page.tsx` 右栏按 sel 渲染 + key；`[id]` 路由改用 `PlayerDetail`
-- [ ] 4.6 VISUAL DIFF — dev stack；比对桌面双栏 + 移动两屏（<768 堆叠、返回）与 mock；修漂移；核对最长数据下列表滚动（自带滚动容器、不静默裁切）
+- [x] 4.1 MOCK — open mock（桌面双栏 + 移动两屏）；记左栏字段顺序、结果行四项、右栏详情要素、空态文案
+- [x] 4.2 RED — 测左栏搜索表单含 姓名/性别/队伍/年份 四控件、提交为 GET 且不带 sel；结果行显示 姓名·性别·最新参赛UTR·所在队伍
+- [x] 4.3 GREEN — 实现左栏搜索表单 + 精简结果列表（`<Link ?sel>`）
+- [x] 4.4 RED — 测右栏：无 sel 出空态；有 sel 出该人 `PlayerDetail`；切换 sel 右栏按 key remount（不残留上一人）
+- [x] 4.5 GREEN — 抽 `PlayerDetail`，`page.tsx` 右栏按 sel 渲染 + key；`[id]` 路由改用 `PlayerDetail`
+- [x] 4.6 VISUAL DIFF — dev stack；比对桌面双栏 + 移动两屏（<768 堆叠、返回）与 mock；修漂移；核对最长数据下列表滚动（自带滚动容器、不静默裁切）
 - [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + specs/player-admin-ui/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
 
 ## 5. 验证

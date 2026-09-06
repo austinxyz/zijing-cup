@@ -14,7 +14,10 @@ vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
+  useRouter: () => ({ refresh: () => {} }),
 }));
+
+vi.mock("@/lib/admin", () => ({ canEdit: vi.fn(async () => false) }));
 
 const PLAYER: Player = {
   id: 42,

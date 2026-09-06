@@ -1,6 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { getPlayer, type Player } from "@/lib/api";
+import { canEdit as canEditCompetition } from "@/lib/admin";
 import { playerName } from "@/lib/name";
 import { mergePlayers } from "./actions";
 
@@ -65,6 +66,12 @@ function Section({
 
 export default async function MergePage({ params, searchParams }: PageProps) {
   const { season, division, id } = await params;
+  // Write-only flow: unlike the read workbench, a non-editor has no business
+  // here. The section layout no longer gates the subtree, so each write page
+  // guards itself — send a viewer back to the read detail.
+  if (!(await canEditCompetition(season, division))) {
+    redirect(`/${season}/${division}/players/${id}`);
+  }
   const query = await searchParams;
 
   const keep = await getPlayer(id);

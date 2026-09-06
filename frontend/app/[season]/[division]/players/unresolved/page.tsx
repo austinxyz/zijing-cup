@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { getPlayersPage, type Player, type PlayerSeasonUtr } from "@/lib/api";
+import { canEdit as canEditCompetition } from "@/lib/admin";
 import { playerName } from "@/lib/name";
 import { ruleOnSeason } from "./actions";
 
@@ -157,6 +159,10 @@ function Row({
 
 export default async function UnresolvedPage({ params }: PageProps) {
   const { season, division } = await params;
+  // Write-only ruling queue: viewers go back to the read workbench.
+  if (!(await canEditCompetition(season, division))) {
+    redirect(`/${season}/${division}/players`);
+  }
 
   const page = await getPlayersPage({ unresolved: true, limit: 500 });
   const rows = page.players.flatMap((player) =>
