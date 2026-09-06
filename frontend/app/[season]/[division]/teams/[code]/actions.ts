@@ -3,7 +3,103 @@
 import { revalidatePath } from "next/cache";
 
 import { adminWrite } from "@/lib/admin";
+import { getPlayer, getPlayers } from "@/lib/api";
 import type { CurrentUtrEdit } from "./RosterTable";
+
+/** Refresh every team page under this competition. The add/remove actions are
+ *  addressed by team id, not code, so revalidate the subtree rather than one
+ *  path — the roster page re-reads on the client's next refresh. */
+function revalidateTeams(season: string, division: string): void {
+  revalidatePath(`/${season}/${division}/teams`, "layout");
+}
+
+/** A compact search hit for the "add player" control. */
+export interface PlayerSearchHit {
+  id: number;
+  last_name: string;
+  first_name: string;
+  gender: string | null;
+}
+
+/** Search the whole registry (cross-season/division) by name, for adding an
+ *  existing player to a team. Blank query returns nothing rather than the whole
+ *  roster. */
+export async function searchPlayersForAdd(
+  query: string,
+): Promise<PlayerSearchHit[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const players = await getPlayers({ query: q });
+  return players.map((p) => ({
+    id: p.id,
+    last_name: p.last_name,
+    first_name: p.first_name,
+    gender: p.gender,
+  }));
+}
+
+/** Add an existing player to this team (a new membership). Duplicate (already on
+ *  team) and locked-season are 409s from the backend — they surface as the
+ *  action's error, not a silent no-op. */
+export async function addExistingPlayerToTeam(
+  season: string,
+  division: string,
+  teamId: number,
+  playerId: number,
+): Promise<void> {
+  await adminWrite(
+    "POST",
+    `/api/players/${playerId}/memberships`,
+    { team_id: teamId },
+    { season, division },
+  );
+  revalidateTeams(season, division);
+}
+
+/** Create a brand-new global player, then add them to this team. gender ""
+ *  becomes null (the backend vocabulary check accepts only M/F/null). */
+export async function createAndAddPlayer(
+  season: string,
+  division: string,
+  teamId: number,
+  fields: { last_name: string; first_name: string; gender: string },
+): Promise<void> {
+  const created = (await adminWrite(
+    "POST",
+    "/api/players",
+    {
+      last_name: fields.last_name.trim(),
+      first_name: fields.first_name.trim(),
+      gender: fields.gender ? fields.gender : null,
+    },
+    { season, division },
+  )) as { id: number };
+  await addExistingPlayerToTeam(season, division, teamId, created.id);
+}
+
+/** Remove a player from this team. The DELETE route is keyed by membership id,
+ *  which the roster row does not carry — resolve it via `getPlayer` (each player
+ *  has at most one membership per team, so the team id locates it uniquely). The
+ *  player, their participation UTR and other teams stay. */
+export async function removePlayerFromTeam(
+  season: string,
+  division: string,
+  teamId: number,
+  playerId: number,
+): Promise<void> {
+  const player = await getPlayer(playerId);
+  const membership = player?.memberships.find((m) => m.team_id === teamId);
+  if (!membership) {
+    throw new Error("该队员已不在本队（可能已被移出）");
+  }
+  await adminWrite(
+    "DELETE",
+    `/api/players/${playerId}/memberships/${membership.id}`,
+    undefined,
+    { season, division },
+  );
+  revalidateTeams(season, division);
+}
 
 /**
  * Save one player's current UTR from the roster page.

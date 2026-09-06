@@ -8,15 +8,15 @@
 - **Code**: `addExistingPlayerToTeam`/`createAndAddPlayer`/`removePlayerFromTeam`/`searchPlayersForAdd` 加进 `teams/[code]/actions.ts`，均经 `adminWrite`（scope `{season,division}`）；`createAndAddPlayer` gender `""→null`（词表只收 M/F/null）；`removePlayerFromTeam` 用 `getPlayer` 按 `team_id` 定位 membership_id 再 DELETE，找不到抛清晰错误；成功 `revalidatePath` 队伍页；错误 detail 冒泡不吞。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/team-add-remove-player/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
-- [ ] 1.1 RED — `teams/[code]/actions.test.ts` 加测：`addExistingPlayerToTeam` 调 `adminWrite("POST","/api/players/<id>/memberships",{team_id},{season,division})`。断言失败（函数未定义）
-- [ ] 1.2 GREEN — 实现 `addExistingPlayerToTeam`
-- [ ] 1.3 RED — 测 `createAndAddPlayer`：先 POST /players（gender ""→null）取回 id，再 POST membership；两次 adminWrite 顺序/参数
-- [ ] 1.4 GREEN — 实现 `createAndAddPlayer`
-- [ ] 1.5 RED — 测 `removePlayerFromTeam`：`getPlayer` 返回带本队 membership 的人 → DELETE 该 membership_id；找不到本队 membership → 抛错不 DELETE
-- [ ] 1.6 GREEN — 实现 `removePlayerFromTeam`（getPlayer 解析 + DELETE）
-- [ ] 1.7 RED — 测 `searchPlayersForAdd(query)` 调 `getPlayers({query})` 返回精简结果
-- [ ] 1.8 GREEN — 实现 `searchPlayersForAdd`
+- [x] 1.0 CONTRACT — write openspec/changes/team-add-remove-player/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
+- [x] 1.1 RED — `teams/[code]/actions.test.ts` 加测：`addExistingPlayerToTeam` 调 `adminWrite("POST","/api/players/<id>/memberships",{team_id},{season,division})`。断言失败（函数未定义）
+- [x] 1.2 GREEN — 实现 `addExistingPlayerToTeam`
+- [x] 1.3 RED — 测 `createAndAddPlayer`：先 POST /players（gender ""→null）取回 id，再 POST membership；两次 adminWrite 顺序/参数
+- [x] 1.4 GREEN — 实现 `createAndAddPlayer`
+- [x] 1.5 RED — 测 `removePlayerFromTeam`：`getPlayer` 返回带本队 membership 的人 → DELETE 该 membership_id；找不到本队 membership → 抛错不 DELETE
+- [x] 1.6 GREEN — 实现 `removePlayerFromTeam`（getPlayer 解析 + DELETE）
+- [x] 1.7 RED — 测 `searchPlayersForAdd(query)` 调 `getPlayers({query})` 返回精简结果
+- [x] 1.8 GREEN — 实现 `searchPlayersForAdd`
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs/team-roster-ui/spec.md + design.md + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS else FIX + retry
 
 ## 2. TeamEditPanel：加入控件 + 行内移出确认
