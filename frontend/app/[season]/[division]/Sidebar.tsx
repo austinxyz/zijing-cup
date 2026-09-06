@@ -24,6 +24,10 @@ interface SidebarProps {
    *  an identity only when there really is one — a logged-out reader seeing
    *  one would misread who can change things. */
   signedIn?: boolean;
+  /** Whether the session is the super admin (scope "*"). Gates the 比赛密码
+   *  link — only super can set competition passwords; a scoped captain would
+   *  reach only the notice at /admin, so the door is not shown to them. */
+  isSuper?: boolean;
 }
 
 function NavIcon({ path }: { path: string }) {
@@ -114,6 +118,7 @@ export function Sidebar({
   section = "rules",
   teamCode,
   signedIn = false,
+  isSuper = false,
 }: SidebarProps) {
   // EVERY (season, division) pair, including the one already open — which is
   // marked rather than omitted. Hiding the current pair made the option set
@@ -221,19 +226,41 @@ export function Sidebar({
       </nav>
 
       {signedIn ? (
-        <form
-          action={logout}
-          className="flex items-center justify-between gap-2 border-t border-sidebar-border px-3.5 py-2.5"
-        >
-          <span className="text-[12px] text-sidebar-foreground-bright">管理员</span>
-          <button
-            type="submit"
-            className="font-mono text-[10.5px] text-sidebar-foreground-dim underline"
+        <div className="flex flex-col gap-0.5 border-t border-sidebar-border px-2 pb-1 pt-1.5">
+          {isSuper ? (
+            <Link
+              href="/admin"
+              className="flex h-[34px] items-center gap-[9px] rounded-token px-2.5 text-[13px] text-sidebar-foreground no-underline hover:bg-sidebar-active"
+            >
+              {/* A key: this is where competition passwords are minted. */}
+              <NavIcon path="M10.5 2.5a3 3 0 0 0-2.83 4L2.5 11.67V13.5H4.33l.5-.5v-1h1v-1h1l1.34-1.34a3 3 0 1 0 2.83-6.16zM11.5 5a1 1 0 1 1-1-1" />
+              <span>比赛密码</span>
+            </Link>
+          ) : null}
+          <form
+            action={logout}
+            className="flex items-center justify-between gap-2 px-1.5 py-1"
           >
-            登出
-          </button>
-        </form>
-      ) : null}
+            <span className="text-[12px] text-sidebar-foreground-bright">管理员</span>
+            <button
+              type="submit"
+              className="font-mono text-[10.5px] text-sidebar-foreground-dim underline"
+            >
+              登出
+            </button>
+          </form>
+        </div>
+      ) : (
+        // Signed-out: the one way into an admin session from the sidebar. The
+        // in-place 编辑模式 unlock on data pages is for scoped captains; this
+        // link goes to /login, which only the super password satisfies.
+        <Link
+          href="/login"
+          className="flex items-center gap-2 border-t border-sidebar-border px-3.5 py-2.5 text-[12px] text-sidebar-foreground no-underline hover:bg-sidebar-active"
+        >
+          管理员登录
+        </Link>
+      )}
 
       <div className="flex flex-col gap-0.5 border-t border-sidebar-border px-3.5 py-2.5">
         <div className="font-mono text-[11px] leading-relaxed text-sidebar-foreground/80">

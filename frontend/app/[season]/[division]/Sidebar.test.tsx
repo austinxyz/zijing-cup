@@ -344,4 +344,69 @@ describe("Sidebar 队员管理 and the signed-in state", () => {
     expect(screen.queryByText("管理员")).toBeNull();
     expect(screen.queryByRole("button", { name: "登出" })).toBeNull();
   });
+
+  it("offers a login link at the bottom when signed out", () => {
+    renderSidebar();
+
+    // A signed-out reader has no way to become admin from the sidebar
+    // otherwise — the in-place unlock lives on the data pages, but the sidebar
+    // is where the identity affordance belongs.
+    const link = screen.getByRole("link", { name: "管理员登录" });
+    expect(link.getAttribute("href")).toBe("/login");
+  });
+
+  it("does not offer a login link once signed in", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        signedIn
+      />,
+    );
+
+    expect(screen.queryByRole("link", { name: "管理员登录" })).toBeNull();
+  });
+});
+
+describe("Sidebar 比赛密码 link (super only)", () => {
+  it("shows the 比赛密码 link to a super admin", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        signedIn
+        isSuper
+      />,
+    );
+
+    const link = screen.getByRole("link", { name: /比赛密码/ });
+    expect(link.getAttribute("href")).toBe("/admin");
+  });
+
+  it("hides the 比赛密码 link from a scoped (non-super) admin", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        signedIn
+        isSuper={false}
+      />,
+    );
+
+    // A competition captain cannot set passwords, so the door to /admin must
+    // not even appear — it renders only the notice for them anyway.
+    expect(screen.queryByRole("link", { name: /比赛密码/ })).toBeNull();
+  });
+
+  it("hides the 比赛密码 link from a signed-out reader", () => {
+    renderSidebar();
+
+    expect(screen.queryByRole("link", { name: /比赛密码/ })).toBeNull();
+  });
 });

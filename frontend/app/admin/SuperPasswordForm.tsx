@@ -12,9 +12,17 @@ export function SuperPasswordForm({
   const [season, setSeason] = useState("2026");
   const [division, setDivision] = useState("silver");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
+
+  // A masked field with no confirm is how a set-time typo stored a password
+  // nobody could unlock — the unlock then reads a generic "口令不对" and there
+  // is no way to tell it was mistyped here. Require the two to match, and only
+  // enable the submit when they do.
+  const mismatch = confirm !== "" && password !== confirm;
+  const canSubmit = password.trim() !== "" && password === confirm;
 
   return (
     <div className="flex max-w-md flex-col gap-3">
@@ -49,9 +57,24 @@ export function SuperPasswordForm({
           className="h-9 rounded-token border border-border bg-surface px-2.5 text-[13px]"
         />
       </label>
+      <label className="flex flex-col gap-1 text-[13px] text-foreground">
+        确认密码
+        <input
+          type="password"
+          aria-label="确认密码"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          className="h-9 rounded-token border border-border bg-surface px-2.5 text-[13px]"
+        />
+      </label>
+      {mismatch ? (
+        <p role="alert" className="text-[12px] text-danger">
+          两次输入不一致
+        </p>
+      ) : null}
       <button
         type="button"
-        disabled={pending || password.trim() === ""}
+        disabled={pending || !canSubmit}
         onClick={() => {
           setMsg(null);
           setErr(null);
@@ -59,6 +82,7 @@ export function SuperPasswordForm({
             try {
               await action(season, division, password);
               setPassword("");
+              setConfirm("");
               setMsg(`已为 ${season} ${division} 设置新密码。`);
             } catch {
               setErr("设置失败——请重试。");

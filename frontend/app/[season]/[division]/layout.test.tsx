@@ -8,7 +8,10 @@ import RulesError from "./rules/error";
 // The layout now asks whether an admin session exists. That reads a cookie,
 // which needs a request scope this test does not have — and the session is not
 // what these assertions are about.
-vi.mock("@/lib/admin", () => ({ isSignedIn: vi.fn(async () => false) }));
+vi.mock("@/lib/admin", () => ({
+  isSignedIn: vi.fn(async () => false),
+  isSuper: vi.fn(async () => false),
+}));
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();

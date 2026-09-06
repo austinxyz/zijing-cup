@@ -16,13 +16,19 @@ import { TopNav } from "./TopNav";
  * selected segments. Derived from the URL on every render rather than held in
  * state, so they cannot drift from the address bar.
  */
-export function ActiveSidebar(props: {
+export function ActiveSidebar({
+  isSuper,
+  ...props
+}: {
   season: string;
   division: string;
   divisionName: string;
   seasons: SeasonIndex[];
   /** Read on the server in the layout; this component only forwards it. */
   signedIn?: boolean;
+  /** super scope; forwarded to the sidebar only (the top bar has no admin
+   *  identity affordance), so it is destructured out of the spread. */
+  isSuper?: boolean;
 }) {
   const segment = useSelectedLayoutSegment();
   // Empty rather than null-checked at each use: there is no team in scope at
@@ -55,7 +61,7 @@ export function ActiveSidebar(props: {
   return (
     <>
       <TopNav {...props} section={section} teamCode={teamCode} />
-      <Sidebar {...props} section={section} teamCode={teamCode} />
+      <Sidebar {...props} isSuper={isSuper} section={section} teamCode={teamCode} />
     </>
   );
 }
