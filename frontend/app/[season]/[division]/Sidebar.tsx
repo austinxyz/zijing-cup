@@ -14,8 +14,10 @@ interface SidebarProps {
   divisionName: string;
   seasons: SeasonIndex[];
   /** Derived from the route, never held as state. Defaults to the rules page
-   *  because that is the division's index route. */
-  section?: NavSection;
+   *  because that is the division's index route. `"admin"` is the /admin page,
+   *  which is outside the competition nav — no nav item is current there, and
+   *  the 比赛密码 link is marked instead. */
+  section?: NavSection | "admin";
   /** The team the URL is on, when it is on one. 阵容 then opens that team's
    *  lineup directly instead of sending you through a picker to choose the
    *  team already on screen. */
@@ -230,7 +232,13 @@ export function Sidebar({
           {isSuper ? (
             <Link
               href="/admin"
-              className="flex h-[34px] items-center gap-[9px] rounded-token px-2.5 text-[13px] text-sidebar-foreground no-underline hover:bg-sidebar-active"
+              aria-current={section === "admin" ? "page" : undefined}
+              className={cn(
+                "flex h-[34px] items-center gap-[9px] rounded-token px-2.5 no-underline",
+                section === "admin"
+                  ? "border-l-2 border-l-[#c9502f] bg-sidebar-active pl-2 text-[13px] font-medium text-sidebar-foreground-bright"
+                  : "text-[13px] text-sidebar-foreground hover:bg-sidebar-active",
+              )}
             >
               {/* A key: this is where competition passwords are minted. */}
               <NavIcon path="M10.5 2.5a3 3 0 0 0-2.83 4L2.5 11.67V13.5H4.33l.5-.5v-1h1v-1h1l1.34-1.34a3 3 0 1 0 2.83-6.16zM11.5 5a1 1 0 1 1-1-1" />

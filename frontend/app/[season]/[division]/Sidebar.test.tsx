@@ -409,4 +409,28 @@ describe("Sidebar 比赛密码 link (super only)", () => {
 
     expect(screen.queryByRole("link", { name: /比赛密码/ })).toBeNull();
   });
+
+  it("marks 比赛密码 current on /admin and highlights no competition item", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        signedIn
+        isSuper
+        section="admin"
+      />,
+    );
+
+    // /admin is outside the competition nav: 比赛密码 is where you are, and no
+    // 赛制规则/队伍/阵容 item may claim to be current (the app has been bitten
+    // by a nav item highlighted on a page you are not on).
+    expect(
+      screen.getByRole("link", { name: /比赛密码/ }).getAttribute("aria-current"),
+    ).toBe("page");
+    for (const name of ["赛制规则", "队伍", "阵容"]) {
+      expect(screen.getByText(name).closest("[aria-current]")).toBeNull();
+    }
+  });
 });
