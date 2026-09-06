@@ -215,3 +215,25 @@ describe("TeamEditPanel add / remove player", () => {
     expect(screen.queryByRole("button", { name: "移出" })).toBeNull();
   });
 });
+
+describe("TeamEditPanel add / remove errors surface inline", () => {
+  it("shows the backend detail when a remove is refused (e.g. season locked)", async () => {
+    removePlayerFromTeam.mockRejectedValueOnce(new Error("本赛季已锁定"));
+    show();
+    fireEvent.click(screen.getAllByRole("button", { name: "移出" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "确认移出" }));
+    expect(await screen.findByText(/本赛季已锁定/)).toBeTruthy();
+  });
+
+  it("shows the backend detail when an add is refused (e.g. already on team)", async () => {
+    searchPlayersForAdd.mockResolvedValueOnce([
+      { id: 9, last_name: "Hu", first_name: "Mitch", gender: "M" },
+    ]);
+    addExistingPlayerToTeam.mockRejectedValueOnce(new Error("已在本队"));
+    show();
+    fireEvent.change(screen.getByLabelText("加入队员搜索"), { target: { value: "Hu" } });
+    fireEvent.click(screen.getByRole("button", { name: "搜索" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入本队" }));
+    expect(await screen.findByText(/已在本队/)).toBeTruthy();
+  });
+});

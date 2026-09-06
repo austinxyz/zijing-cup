@@ -32,7 +32,7 @@
 - [x] 2.2 RED — 测：编辑模式渲染出「加入队员」搜索控件 + 「新建」入口；点某行「移出」出就地确认（确认/取消）、未确认不触发删除
 - [x] 2.3 GREEN — 实现加入控件 + 行内移出确认，接 server actions
 - [x] 2.4 VISUAL DIFF — bring up dev stack；登录该比赛进编辑模式；比对加入控件（搜现有/新建）+ 行内移出确认与 mock；修 token/文案漂移
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs/team-roster-ui/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs/team-roster-ui/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
 
 ## 3. 验证
 
