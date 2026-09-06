@@ -42,4 +42,4 @@
 - **Code**: 交付后本地实测（补种真实 2025 数据）：往某队加一个别队的人、建一个新人加入、移出一人，三者各自生效并正确刷新；查看模式无加/移出；重复加入/锁季显示后端理由。注意 pitfall：先测→再补种→再视觉核对；本机后端起裸 uvicorn 不带 --reload、改完杀进程重起（防僵尸持旧代码）。
 - **Threshold**: 80
 
-- [ ] 3.1 Run superpowers:verification-before-completion — 前端 vitest + tsc + 后端 pytest 回归 + console.log 审计全过；本地真实数据 e2e（加现有 / 建新人 / 移出 / 模式门 / 重复与锁季提示）实测；修任何失败再收工
+- [x] 3.1 Run superpowers:verification-before-completion — 前端 vitest + tsc + 后端 pytest 回归 + console.log 审计全过；本地真实数据 e2e（加现有 / 建新人 / 移出 / 模式门 / 重复与锁季提示）实测；修任何失败再收工
