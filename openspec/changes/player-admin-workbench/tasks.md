@@ -30,7 +30,7 @@
 - [ ] 2.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-2.md with the ### Contract block above
 - [x] 2.1 RED — `lib/api.test.ts` 加测：`getPlayers({gender,team,year})` 请求 URL 含 `gender=`/`team=`/`year=`；无值不设。断言失败
 - [x] 2.2 GREEN — `PlayerFilters`/`PlayerPageFilters` 加字段；`getPlayers`/`getPlayersPage` 拼参数
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + diff; review + score; ≥80 PASS else FIX + retry
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + diff; review + score; ≥80 PASS else FIX + retry
 
 ## 3. 前端：查看/编辑双模式 + 去掉 layout gate
 
@@ -41,12 +41,12 @@
 - **Threshold**: 70
 
 - [ ] 3.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 MOCK — open docs/superpowers/specs/mocks/2026-09-05-player-admin-workbench-mocks.html（桌面查看模式 / 编辑模式两块）；记 token 与页头文案（「编辑模式/查看模式」「✓ 已解锁」「未裁决」）
-- [ ] 3.2 RED — 测 `players/layout.tsx` 不再对非 canEdit 重定向（渲染 children）；测未 canEdit 时页面出「编辑模式」解锁入口、无写控件
-- [ ] 3.3 GREEN — 去 layout 重定向；加 `PlayerEditContext` + `PlayerEditHeaderControl`
-- [ ] 3.4 RED — 测查看模式隐写控件、编辑模式显；默认 editing=false（canEdit 时仍先查看）
-- [ ] 3.5 GREEN — 写控件按 `editing` 显隐；默认查看
-- [ ] 3.6 VISUAL DIFF — bring up dev stack (project.dev_stack_command)；登录该比赛；比对页头开关/解锁态与 mock 桌面两块；修 token/文案漂移
+- [x] 3.1 MOCK — open docs/superpowers/specs/mocks/2026-09-05-player-admin-workbench-mocks.html（桌面查看模式 / 编辑模式两块）；记 token 与页头文案（「编辑模式/查看模式」「✓ 已解锁」「未裁决」）
+- [x] 3.2 RED — 测 `players/layout.tsx` 不再对非 canEdit 重定向（渲染 children）；测未 canEdit 时页面出「编辑模式」解锁入口、无写控件
+- [x] 3.3 GREEN — 去 layout 重定向；加 `PlayerEditContext` + `PlayerEditHeaderControl`
+- [x] 3.4 RED — 测查看模式隐写控件、编辑模式显；默认 editing=false（canEdit 时仍先查看）
+- [x] 3.5 GREEN — 写控件按 `editing` 显隐；默认查看
+- [x] 3.6 VISUAL DIFF — bring up dev stack (project.dev_stack_command)；登录该比赛；比对页头开关/解锁态与 mock 桌面两块；修 token/文案漂移
 - [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + specs/player-admin-ui/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
 
 ## 4. 前端：左右两栏工作台（搜索 + 结果列表 + 就地详情）

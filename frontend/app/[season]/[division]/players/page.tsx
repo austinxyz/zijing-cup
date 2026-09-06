@@ -1,7 +1,10 @@
 import Link from "next/link";
 
 import { getPlayers, getPlayersPage } from "@/lib/api";
+import { canEdit as canEditCompetition } from "@/lib/admin";
 import { PlayerTable } from "./PlayerTable";
+import { PlayerEditProvider } from "./PlayerEditContext";
+import { PlayerEditHeaderControl } from "./PlayerEditHeaderControl";
 
 interface PageProps {
   params: Promise<{ season: string; division: string }>;
@@ -25,6 +28,7 @@ export default async function PlayersPage({ params, searchParams }: PageProps) {
 
   const search = one(query.q);
   const seasonFilter = one(query.season);
+  const canEdit = await canEditCompetition(season, division);
 
   // Two calls on purpose. The list is capped, so counting unresolved rows
   // inside it would report however many happened to land on this page — 7 of
@@ -49,6 +53,7 @@ export default async function PlayersPage({ params, searchParams }: PageProps) {
   const truncated = players.length >= 200;
 
   return (
+    <PlayerEditProvider canEdit={canEdit}>
     <main className="flex flex-1 min-w-0 flex-col overflow-hidden bg-background">
       <div className="flex flex-none items-center justify-between gap-2.5 border-b border-border bg-surface px-5 py-[11px]">
         <div className="flex min-w-0 flex-col gap-0.5">
@@ -72,6 +77,7 @@ export default async function PlayersPage({ params, searchParams }: PageProps) {
               {unresolved}
             </span>
           </Link>
+          <PlayerEditHeaderControl season={season} division={division} />
         </div>
       </div>
 
@@ -109,5 +115,6 @@ export default async function PlayersPage({ params, searchParams }: PageProps) {
         )}
       </div>
     </main>
+    </PlayerEditProvider>
   );
 }

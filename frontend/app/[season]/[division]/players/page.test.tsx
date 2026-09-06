@@ -13,7 +13,14 @@ vi.mock("@/lib/api", async (importOriginal) => {
   };
 });
 
-vi.mock("@/lib/admin", () => ({ isSignedIn: vi.fn(async () => true) }));
+vi.mock("@/lib/admin", () => ({
+  isSignedIn: vi.fn(async () => true),
+  canEdit: vi.fn(async () => false),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: () => {} }),
+}));
 
 function player(overrides: Partial<Player> = {}): Player {
   return {
