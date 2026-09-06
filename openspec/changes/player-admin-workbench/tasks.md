@@ -64,7 +64,7 @@
 - [x] 4.4 RED — 测右栏：无 sel 出空态；有 sel 出该人 `PlayerDetail`；切换 sel 右栏按 key remount（不残留上一人）
 - [x] 4.5 GREEN — 抽 `PlayerDetail`，`page.tsx` 右栏按 sel 渲染 + key；`[id]` 路由改用 `PlayerDetail`
 - [x] 4.6 VISUAL DIFF — dev stack；比对桌面双栏 + 移动两屏（<768 堆叠、返回）与 mock；修漂移；核对最长数据下列表滚动（自带滚动容器、不静默裁切）
-- [ ] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + specs/player-admin-ui/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
+- [x] 4.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-4.md + specs/player-admin-ui/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
 
 ## 5. 验证
 
@@ -74,4 +74,4 @@
 - **Code**: 交付后本地实测（真实 2025 数据）：按性别、按中文队名模糊、按某年分别搜出预期集合；未解锁只读无写控件、解锁后可改/裁决/合并/拆分；`?sel` 切人右栏不残留。注意 pitfall：跑 pytest 会清库→跑完须补种再做视觉核对，顺序固定「先测→再补种→再视觉」。
 - **Threshold**: 80
 
-- [ ] 5.1 Run superpowers:verification-before-completion — 后端 pytest + 前端 vitest + tsc + console.log 审计全过；本地真实数据 e2e（搜索三维 + 双模式 + ?sel 切换）实测；修任何失败再收工
+- [x] 5.1 Run superpowers:verification-before-completion — 后端 pytest + 前端 vitest + tsc + console.log 审计全过；本地真实数据 e2e（搜索三维 + 双模式 + ?sel 切换）实测；修任何失败再收工
