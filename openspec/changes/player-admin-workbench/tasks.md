@@ -27,7 +27,7 @@
 - **Code**: `PlayerFilters` 加 `gender?: string`、`team?: string`、`year?: number|string`；`PlayerPageFilters` 继承；`getPlayers`/`getPlayersPage` 各自 `params.set`（有值才设）。契约字段用 literal / 明确类型，避免后端漂移静默。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-2.md with the ### Contract block above
+- [x] 2.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-2.md with the ### Contract block above
 - [x] 2.1 RED — `lib/api.test.ts` 加测：`getPlayers({gender,team,year})` 请求 URL 含 `gender=`/`team=`/`year=`；无值不设。断言失败
 - [x] 2.2 GREEN — `PlayerFilters`/`PlayerPageFilters` 加字段；`getPlayers`/`getPlayersPage` 拼参数
 - [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + diff; review + score; ≥80 PASS else FIX + retry
@@ -57,7 +57,7 @@
 - **Code**: `page.tsx` 读 searchParams（q/gender/team/year + sel）→ 左 `list_players`、右 `getPlayer(sel)`；行是 `<Link href="?…&sel=id">`（软导航保留条件）、搜索 `<form method=get>` 不含 sel（新搜索清选中）；抽 `PlayerDetail`（server 组件）右栏与 `[id]` 路由共用，`merge`/`split` 仍走 `[id]` 子路由；右栏按 `sel` 加 `key` remount 防陈旧；结果行「最新参赛UTR」取 `season_utrs[0]`（筛年则该年值），队伍「最新一支+N」；列表自带 `overflow-y-auto`。
 - **Threshold**: 70
 
-- [ ] 4.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-4.md with the ### Contract block above
+- [x] 4.0 CONTRACT — write openspec/changes/player-admin-workbench/contracts/group-4.md with the ### Contract block above
 - [x] 4.1 MOCK — open mock（桌面双栏 + 移动两屏）；记左栏字段顺序、结果行四项、右栏详情要素、空态文案
 - [x] 4.2 RED — 测左栏搜索表单含 姓名/性别/队伍/年份 四控件、提交为 GET 且不带 sel；结果行显示 姓名·性别·最新参赛UTR·所在队伍
 - [x] 4.3 GREEN — 实现左栏搜索表单 + 精简结果列表（`<Link ?sel>`）
