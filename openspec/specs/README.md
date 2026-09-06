@@ -238,6 +238,21 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **验收标准**: 无凭据的写请求返回 401/403；`ADMIN_SECRET` 未配置时全部写请求被拒；新增一条不声明任何鉴权的写路由同样受保护（拆掉中间件的写检查后守卫立刻变红，验证过不是空转）；读路由不受影响；客户端 bundle 不含任何凭据；会话 cookie 是 httpOnly 且两小时过期。
 
+**scoped-admin-auth（2026-09-05）**: 会话 cookie 的签名载荷加 `scope`（`"*"` = super 全部，或 `"<赛季>:<组别>"` = 单个比赛）；`canEdit(season, division)` 与 `adminWrite` 按比赛判权（scope 盖不住即拒、不发 `X-Admin-Secret`，默认 super-only fail-closed）。后端**不变**——仍共享密钥 + 按方法判权，分级只在前端。见 [`admin-credentials`](#admin-credentials--已实现--已上线)。
+
+---
+
+### `admin-credentials` ✅ 已实现 · 🌐 已上线
+**用户故事**: 作为项目负责人，我想按比赛（赛季+组别）分密码——2026 银组一个、2026 金组一个，各自只解锁对应比赛的编辑权，交给该组队长；我自己有一个 super 密码解锁全部，且只有我能设置各比赛密码。
+
+**覆盖需求**: docs/superpowers/specs/2026-09-05-scoped-admin-auth-requirements.md（会话作用域、比赛密码存 DB、super 复用现有 env、按比赛认证、作用域前端强制、super 专属改密码页）
+
+**后台**: 新表 `admin_credentials(season_year, division_code, password_hash, updated_at)`（`zijing_cup` schema，`(season_year, division_code)` 唯一）。两端点：GET 读某比赛 hash（受 `X-Backend-Secret`，只有 Next 服务端能取，故登录前也能读）、PUT upsert（写方法，按方法判权自动加 `X-Admin-Secret`）。后端只存/回 `salt:hash` 字符串，**MUST NOT** 计算或校验密码——明文绝不入库，hash 只在 Next 侧 scrypt 算。
+
+**前台**: `authenticate(season, division, password)` 先比 super（现有 `ADMIN_PASSWORD_HASH`，命中 → scope `"*"`），否则取该比赛 DB hash 比对（命中 → scope `"<season>:<division>"`），都不中按原样失败（沿用限速）。就地解锁表单（`EditModeToggle`）带 season/division。`/admin` 是 super 专属改密码页（双门：页面 `isSuper` 门 + server action 再校验 scope `"*"`）；侧边栏未登录出「管理员登录」→ `/login`，super 出「比赛密码」→ `/admin`。设密码要两次一致（masked 输入手滑会存错、解锁只报「口令不对」看不出）。
+
+**验收标准**: 用 2026 银组密码解锁只能编辑 2026 银组，越权写被前端拒；super 密码（现有 `ADMIN_PASSWORD_HASH`，无新增 env）解锁全部；非 super 打不开 `/admin` 也调不动改密码 action；后端不带 `X-Backend-Secret` 读 hash 被拒、不带 `X-Admin-Secret` 写被拒；明文不入库。实测：super 设 2026 银组密码→落 DB（`salt:hash`）、该密码解锁银组、同会话金组只读。
+
 ---
 
 ### `player-admin-ui` ✅ 已实现 · 🌐 已上线
