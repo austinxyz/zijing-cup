@@ -4,7 +4,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RosterPlayer, TeamRoster } from "@/lib/api";
 
 const saveTeamEdits = vi.fn<(...args: any[]) => Promise<void>>(async () => {});
-vi.mock("./actions", () => ({ saveTeamEdits: (...a: any[]) => saveTeamEdits(...a), saveCurrentUtr: vi.fn() }));
+const removePlayerFromTeam = vi.fn<(...args: any[]) => Promise<void>>(async () => {});
+const searchPlayersForAdd = vi.fn<(...args: any[]) => Promise<any[]>>(async () => []);
+const addExistingPlayerToTeam = vi.fn<(...args: any[]) => Promise<void>>(async () => {});
+const createAndAddPlayer = vi.fn<(...args: any[]) => Promise<void>>(async () => {});
+vi.mock("./actions", () => ({
+  saveTeamEdits: (...a: any[]) => saveTeamEdits(...a),
+  saveCurrentUtr: vi.fn(),
+  removePlayerFromTeam: (...a: any[]) => removePlayerFromTeam(...a),
+  searchPlayersForAdd: (...a: any[]) => searchPlayersForAdd(...a),
+  addExistingPlayerToTeam: (...a: any[]) => addExistingPlayerToTeam(...a),
+  createAndAddPlayer: (...a: any[]) => createAndAddPlayer(...a),
+}));
 // EditModeToggle pulls in server actions + router; stub it — its own behaviour
 // is covered in the lineup change's tests.
 vi.mock("@/app/[season]/[division]/lineup/[code]/EditModeToggle", () => ({
@@ -161,5 +172,46 @@ describe("TeamEditPanel", () => {
     await screen.findByText(/保存失败/);
     // dirty state kept — the button still offers to save the change
     expect(screen.getByRole("button", { name: /保存 1 处改动/ })).toBeTruthy();
+  });
+});
+
+describe("TeamEditPanel add / remove player", () => {
+  it("shows the add-player control and a 新建 entry in edit mode", () => {
+    show();
+    expect(screen.getByLabelText("加入队员搜索")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /新建/ })).toBeTruthy();
+  });
+
+  it("shows a 移出 button on each roster row in edit mode", () => {
+    show();
+    expect(screen.getAllByRole("button", { name: "移出" }).length).toBe(3);
+  });
+
+  it("requires confirmation before removing, and cancel aborts", () => {
+    show();
+    fireEvent.click(screen.getAllByRole("button", { name: "移出" })[0]);
+    // inline confirm appears
+    const confirm = screen.getByRole("button", { name: "确认移出" });
+    expect(confirm).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "取消" }));
+    expect(removePlayerFromTeam).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "确认移出" })).toBeNull();
+  });
+
+  it("removes with (season, division, teamId, playerId) after confirming", async () => {
+    show();
+    fireEvent.click(screen.getAllByRole("button", { name: "移出" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "确认移出" }));
+    expect(removePlayerFromTeam).toHaveBeenCalledWith("2026", "silver", 7, 1);
+  });
+
+  it("hides add and remove controls in view mode", () => {
+    render(
+      <TeamEditProvider canEdit initialEditing={false}>
+        <TeamEditPanel roster={roster()} season="2026" division="silver" teamCode="T" />
+      </TeamEditProvider>,
+    );
+    expect(screen.queryByLabelText("加入队员搜索")).toBeNull();
+    expect(screen.queryByRole("button", { name: "移出" })).toBeNull();
   });
 });

@@ -17,7 +17,7 @@
 - [x] 1.6 GREEN — 实现 `removePlayerFromTeam`（getPlayer 解析 + DELETE）
 - [x] 1.7 RED — 测 `searchPlayersForAdd(query)` 调 `getPlayers({query})` 返回精简结果
 - [x] 1.8 GREEN — 实现 `searchPlayersForAdd`
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs/team-roster-ui/spec.md + design.md + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS else FIX + retry
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs/team-roster-ui/spec.md + design.md + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS else FIX + retry
 
 ## 2. TeamEditPanel：加入控件 + 行内移出确认
 
@@ -28,10 +28,10 @@
 - **Threshold**: 70
 
 - [ ] 2.0 CONTRACT — write openspec/changes/team-add-remove-player/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-05-team-add-remove-player-mocks.html；记 token 与文案（「加入队员」「加入本队」「新建队员」「移出」「确认移出」「取消」，确认条提示语）
-- [ ] 2.2 RED — 测：编辑模式渲染出「加入队员」搜索控件 + 「新建」入口；点某行「移出」出就地确认（确认/取消）、未确认不触发删除
-- [ ] 2.3 GREEN — 实现加入控件 + 行内移出确认，接 server actions
-- [ ] 2.4 VISUAL DIFF — bring up dev stack；登录该比赛进编辑模式；比对加入控件（搜现有/新建）+ 行内移出确认与 mock；修 token/文案漂移
+- [x] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-05-team-add-remove-player-mocks.html；记 token 与文案（「加入队员」「加入本队」「新建队员」「移出」「确认移出」「取消」，确认条提示语）
+- [x] 2.2 RED — 测：编辑模式渲染出「加入队员」搜索控件 + 「新建」入口；点某行「移出」出就地确认（确认/取消）、未确认不触发删除
+- [x] 2.3 GREEN — 实现加入控件 + 行内移出确认，接 server actions
+- [x] 2.4 VISUAL DIFF — bring up dev stack；登录该比赛进编辑模式；比对加入控件（搜现有/新建）+ 行内移出确认与 mock；修 token/文案漂移
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs/team-roster-ui/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
 
 ## 3. 验证

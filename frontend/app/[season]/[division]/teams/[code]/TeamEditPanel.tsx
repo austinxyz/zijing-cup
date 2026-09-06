@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 
 import type { RosterPlayer, TeamRoster } from "@/lib/api";
 import { RosterTable } from "./RosterTable";
-import { saveTeamEdits } from "./actions";
+import { saveTeamEdits, removePlayerFromTeam } from "./actions";
+import { AddPlayerControl } from "./AddPlayerControl";
 import { capsFor, borrowedCountWith, rosterOverCap } from "./teamEdit";
 import { useTeamEdit } from "./TeamEditContext";
 
@@ -35,6 +36,25 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
   const [schools, setSchools] = useState<Record<number, string>>({});
   const [schoolCount, setSchoolCount] = useState<number | null>(roster.school_count);
   const [error, setError] = useState<string | null>(null);
+
+  // Remove flow: which row is awaiting confirmation, its own transition/error.
+  const [removingId, setRemovingId] = useState<number | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  const [removing, startRemove] = useTransition();
+
+  function confirmRemove(playerId: number) {
+    setRemoveError(null);
+    startRemove(async () => {
+      try {
+        await removePlayerFromTeam(season, division, roster.team.id, playerId);
+        setRemovingId(null);
+      } catch (e) {
+        setRemoveError(
+          e instanceof Error && e.message ? e.message : "移出失败——请重试",
+        );
+      }
+    });
+  }
 
   const schoolCountChanged = schoolCount !== roster.school_count;
   const caps = capsFor(roster.borrowed_limits, schoolCount);
@@ -198,6 +218,8 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
         ) : null}
       </div>
 
+      <AddPlayerControl season={season} division={division} teamId={roster.team.id} />
+
       {/* Both axes scroll inside this box: the seven edit columns are wider
           than the team pane, so without overflow-x the last columns (外卡,
           代表学校) are silently clipped with no scrollbar. */}
@@ -205,7 +227,7 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
         <table className="w-full min-w-[800px] border-collapse text-[12.5px]">
           <thead>
             <tr>
-              {["队员", "性别", "参赛 UTR", "当前双打", "双打状态", "UTR 链接", "外援", "外卡", "代表学校"].map((h) => (
+              {["队员", "性别", "参赛 UTR", "当前双打", "双打状态", "UTR 链接", "外援", "外卡", "代表学校", "操作"].map((h) => (
                 <th
                   key={h}
                   className="sticky top-0 z-10 h-[34px] whitespace-nowrap border-b border-border bg-surface-muted px-3 text-left font-mono text-[11px] font-medium text-muted"
@@ -330,6 +352,38 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
                       className="h-8 w-24 rounded-token border border-border bg-surface px-2 text-[12px] disabled:bg-surface-muted disabled:text-muted"
                     />
                   </td>
+                  <td className="whitespace-nowrap border-b border-border/60 px-3 py-1.5">
+                    {removingId === p.player_id ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => confirmRemove(p.player_id)}
+                          disabled={removing}
+                          className="h-7 rounded-token border border-danger-border bg-danger-surface px-2 text-[11.5px] text-danger disabled:opacity-50"
+                        >
+                          确认移出
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRemovingId(null)}
+                          className="h-7 rounded-token border border-border bg-surface px-2 text-[11.5px]"
+                        >
+                          取消
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRemoveError(null);
+                          setRemovingId(p.player_id);
+                        }}
+                        className="h-7 rounded-token border border-danger-border bg-danger-surface px-2 text-[11.5px] text-danger"
+                      >
+                        移出
+                      </button>
+                    )}
+                  </td>
                 </tr>
               );
             })}
@@ -359,6 +413,11 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
         {error ? (
           <span role="alert" className="text-[12px] text-danger">
             {error}
+          </span>
+        ) : null}
+        {removeError ? (
+          <span role="alert" className="text-[12px] text-danger">
+            {removeError}
           </span>
         ) : null}
       </div>
