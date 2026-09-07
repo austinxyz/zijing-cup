@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>opponent-compare mocks</title>
+<style>
+  :root{
+    --bg:#f6f4f0;--fg:#1a1917;--surface:#fff;--surface-muted:#f2efe9;--border:#e4e0d8;
+    --primary:#9c3417;--primary-fg:#fff;--muted:#6b665d;--muted-fg:#706a61;
+    --danger:#b3261e;--danger-surface:#fbf0ee;--danger-border:#f0cfc9;
+    --success:#3a6b4d;--success-surface:#eef4f0;--success-border:#cfe2d6;
+    --warning:#8a6508;--warning-surface:#fbf5e6;--warning-border:#ecd9a4;
+    --male:#1f5fd0;--female:#ab237f;--r:8px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 -apple-system,"Segoe UI",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;padding:28px}
+  h1{font-size:18px;margin:0 0 4px}
+  h2.section{font-size:14px;margin:30px 0 8px}
+  .caption{color:var(--muted-fg);font:11px/1.5 ui-monospace,Menlo,monospace;margin:0 0 12px}
+  .mono{font-family:ui-monospace,Menlo,monospace}
+  .g{font-weight:700}.g.m{color:var(--male)}.g.f{color:var(--female)}
+  .frame{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);max-width:900px;overflow:hidden}
+
+  .pickers{display:flex;gap:12px;padding:14px;border-bottom:1px solid var(--border);background:var(--surface-muted)}
+  .side{flex:1;display:flex;flex-direction:column;gap:6px}
+  .side .lbl{font-size:11px;color:var(--muted)}
+  .sel{height:32px;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:0 8px;font-size:12.5px;width:100%}
+  .badge{display:inline-block;font-size:10.5px;border-radius:999px;padding:1px 7px;border:1px solid var(--warning-border);background:var(--warning-surface);color:var(--warning);margin-left:6px}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{font:10.5px ui-monospace;color:var(--muted-fg);font-weight:500;text-align:left;background:var(--surface-muted)}
+  .line{font-family:ui-monospace;font-weight:600;white-space:nowrap}
+  .pair{display:flex;flex-direction:column;gap:1px}
+  .pair .nm{font-size:12.5px}
+  .sum{font-family:ui-monospace;color:var(--muted-foreground);font-size:11.5px}
+  .diff{font-family:ui-monospace;font-weight:600;text-align:center;white-space:nowrap}
+  .diff.up{color:var(--success)} .diff.down{color:var(--danger)} .diff.zero{color:var(--muted)}
+  .mid{text-align:center;color:var(--muted-foreground)}
+  .totrow td{background:var(--surface-muted);font-weight:600}
+  .empty{padding:24px;text-align:center;color:var(--muted)}
+  .phone{width:360px}
+  .pcard{border-bottom:1px solid var(--border);padding:10px 12px}
+  .pcard .ln{font-family:ui-monospace;font-weight:600;font-size:11.5px;color:var(--muted);margin-bottom:4px}
+  .pcard .two{display:flex;justify-content:space-between;gap:8px}
+</style>
+</head>
+<body>
+
+<h1>opponent-compare — 视觉稿</h1>
+<div class="caption">分区级 /compare。两侧各选「队+已存阵容」，逐线并排、只摆事实。需解锁本比赛（已存阵容机密），无游客视图。</div>
+
+<h2 class="section">桌面 · 已选两队两套阵容</h2>
+<div class="frame">
+  <div class="pickers">
+    <div class="side">
+      <span class="lbl">我方</span>
+      <select class="sel"><option>PKU 北大</option></select>
+      <select class="sel"><option>主力 A（有效）</option><option>保守阵</option></select>
+    </div>
+    <div class="side">
+      <span class="lbl">对手</span>
+      <select class="sel"><option>THU 清华</option></select>
+      <select class="sel"><option>预判主力（UTR 已变）</option></select>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th style="width:52px">线位</th><th>我方 · PKU 北大</th><th style="width:76px">差距</th><th>对手 · THU 清华 <span class="badge">UTR 已变</span></th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="line">D1</td>
+        <td><div class="pair"><span class="nm">Chen Yilun <span class="g m">♂</span> · Hu Mitch <span class="g m">♂</span></span><span class="sum">线和 13.96</span></div></td>
+        <td class="diff up">+0.72</td>
+        <td><div class="pair"><span class="nm">Li Ming <span class="g m">♂</span> · Wang Lei <span class="g m">♂</span></span><span class="sum">线和 13.24</span></div></td>
+      </tr>
+      <tr>
+        <td class="line">D2</td>
+        <td><div class="pair"><span class="nm">Zhao Kun <span class="g m">♂</span> · Sun Hao <span class="g m">♂</span></span><span class="sum">线和 12.40</span></div></td>
+        <td class="diff down">−0.85</td>
+        <td><div class="pair"><span class="nm">Zhou Bo <span class="g m">♂</span> · Xu Gang <span class="g m">♂</span></span><span class="sum">线和 13.25</span></div></td>
+      </tr>
+      <tr>
+        <td class="line">D3</td>
+        <td><div class="pair"><span class="nm">Ma Tao <span class="g m">♂</span> · Lin Yu <span class="g m">♂</span></span><span class="sum">线和 11.80</span></div></td>
+        <td class="diff zero">0.00</td>
+        <td><div class="pair"><span class="nm">Guo Wei <span class="g m">♂</span> · Tan Jie <span class="g m">♂</span></span><span class="sum">线和 11.80</span></div></td>
+      </tr>
+      <tr>
+        <td class="line">MD</td>
+        <td><div class="pair"><span class="nm">Hu Mitch <span class="g m">♂</span> · Zong Qingqing <span class="g f">♀</span></span><span class="sum">线和 13.36</span></div></td>
+        <td class="diff up">+1.10</td>
+        <td><div class="pair"><span class="nm">Xu Gang <span class="g m">♂</span> · Li Amy <span class="g f">♀</span></span><span class="sum">线和 12.26</span></div></td>
+      </tr>
+      <tr>
+        <td class="line">WD</td>
+        <td><div class="pair"><span class="nm">Zong Qingqing <span class="g f">♀</span> · Ye Ling <span class="g f">♀</span></span><span class="sum">线和 12.10</span></div></td>
+        <td class="diff down">−0.40</td>
+        <td><div class="pair"><span class="nm">Li Amy <span class="g f">♀</span> · Wu Nan <span class="g f">♀</span></span><span class="sum">线和 12.50</span></div></td>
+      </tr>
+      <tr class="totrow">
+        <td class="line">总和</td>
+        <td class="mono">63.62</td>
+        <td class="diff up">+0.57</td>
+        <td class="mono">63.05</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="caption" style="padding:8px 12px;margin:0">差距 = 我方线和 − 对手线和（绿=我方高、红=对手高）。只是 UTR 和的对比，不代表胜负。对手这套「UTR 已变」——存档后有人改过参赛 UTR，用的是当前重算值。</div>
+</div>
+
+<h2 class="section">桌面 · 一侧未选 / 该队无已存阵容</h2>
+<div class="frame">
+  <div class="pickers">
+    <div class="side"><span class="lbl">我方</span><select class="sel"><option>PKU 北大</option></select><select class="sel"><option>主力 A</option></select></div>
+    <div class="side"><span class="lbl">对手</span><select class="sel"><option>选一支队…</option></select><select class="sel" disabled><option>该队暂无已存阵容</option></select></div>
+  </div>
+  <div class="empty">选好两侧的「队 + 已存阵容」后在这里逐线并排。</div>
+</div>
+
+<h2 class="section">移动 · 逐线卡片（&lt;768：每线一张卡，我方在上/对手在下）</h2>
+<div class="frame phone">
+  <div class="pickers" style="flex-direction:column">
+    <div class="side"><span class="lbl">我方</span><select class="sel"><option>PKU 北大 · 主力 A</option></select></div>
+    <div class="side"><span class="lbl">对手</span><select class="sel"><option>THU 清华 · 预判主力</option></select></div>
+  </div>
+  <div class="pcard">
+    <div class="ln">D1 · 差距 <span style="color:var(--success)">+0.72</span></div>
+    <div class="two"><span>我 Chen Yilun♂·Hu Mitch♂</span><span class="mono">13.96</span></div>
+    <div class="two"><span>敌 Li Ming♂·Wang Lei♂</span><span class="mono">13.24</span></div>
+  </div>
+  <div class="pcard">
+    <div class="ln">D2 · 差距 <span style="color:var(--danger)">−0.85</span></div>
+    <div class="two"><span>我 Zhao Kun♂·Sun Hao♂</span><span class="mono">12.40</span></div>
+    <div class="two"><span>敌 Zhou Bo♂·Xu Gang♂</span><span class="mono">13.25</span></div>
+  </div>
+  <div class="pcard" style="background:var(--surface-muted);font-weight:600">
+    <div class="two"><span>总和 差 <span style="color:var(--success)">+0.57</span></span><span class="mono">63.62 / 63.05</span></div>
+  </div>
+</div>
+
+</body>
+</html>
