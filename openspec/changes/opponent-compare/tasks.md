@@ -25,10 +25,10 @@
 - **Code**: `compare/page.tsx`（server）读 searchParams→并发取 teams/rules + 每已选队 savedLineups+roster→`buildComparison`；`CompareControls`（client）两队+两阵容 select，改动 `router.push` 改 URL（改队清阵容 id），受控/按参数 key remount 防陈旧回填；起手 `canEdit` 否则 redirect；配 `compare/error.tsx`；`nav.ts` 的 opponents 项 `pending:false` + `href:${base}/compare`。名单实力对比不做。
 - **Threshold**: 70
 
-- [ ] 2.0 CONTRACT — write openspec/changes/opponent-compare/contracts/group-2.md with the ### Contract block above
+- [x] 2.0 CONTRACT — write openspec/changes/opponent-compare/contracts/group-2.md with the ### Contract block above
 - [x] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-06-opponent-compare-mocks.html；记 token 与文案（「我方」「对手」「线位」「差距」「总和」「选一支队…」空态、陈旧状态徽标、移动卡片）
-- [ ] 2.2 RED — 测 `nav.ts`：opponents 项 `pending:false` 且 href 指向 `/{s}/{d}/compare`；测 Sidebar「对手对比」是链接不再未开放
-- [ ] 2.3 GREEN — 改 `nav.ts` 点亮 opponents
+- [x] 2.2 RED — 测 `nav.ts`：opponents 项 `pending:false` 且 href 指向 `/{s}/{d}/compare`；测 Sidebar「对手对比」是链接不再未开放
+- [x] 2.3 GREEN — 改 `nav.ts` 点亮 opponents
 - [x] 2.4 RED — 测 `/compare` page：未 canEdit 重定向；canEdit 且未选满出引导空态；选满两侧出逐线并排（getSavedLineups/getTeamRoster 走 mock）
 - [x] 2.5 GREEN — 实现 `compare/page.tsx` + `CompareControls` + `compare/error.tsx`
 - [x] 2.6 VISUAL DIFF — bring up dev stack；解锁本比赛；给同组两队各存一套阵容后开 /compare，比对逐线表 + 选择器 + 陈旧标注 + 空态与 mock；修 token/文案漂移
@@ -44,4 +44,4 @@
 - **Code**: 交付后本地实测（补种真实 2025 数据 + 解锁该组 + 给同组两队各存一套阵容）：/compare 选两侧后逐线并排正确、差算对、总和差对；未解锁进不去；某队无阵容空态；侧栏「对手对比」可点。pitfall：先测→再补种→再视觉；本机后端裸 uvicorn 不带 --reload、改完杀进程重起。
 - **Threshold**: 80
 
-- [ ] 3.1 Run superpowers:verification-before-completion — 前端 vitest + tsc + 后端 pytest 回归 + console.log 审计全过；本地真实数据 e2e（两队各存阵容→/compare 逐线 + gate + 空态 + 侧栏链接）实测；修任何失败再收工
+- [x] 3.1 Run superpowers:verification-before-completion — 前端 vitest + tsc + 后端 pytest 回归 + console.log 审计全过；本地真实数据 e2e（两队各存阵容→/compare 逐线 + gate + 空态 + 侧栏链接）实测；修任何失败再收工
