@@ -11,14 +11,21 @@ status codes. No rules live here.
 """
 
 from decimal import Decimal
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from pydantic import BaseModel, Field
-from sqlmodel import Session
+from pydantic import BaseModel, Field, field_validator
+from sqlmodel import Session, select
 
 from app.db import get_session
-from app.models import CURRENT_UTR_STATUSES, SEASON_UTR_SOURCES, SEASON_UTR_STATUSES
+from app.models import (
+    CURRENT_UTR_STATUSES,
+    NOTE_CATEGORIES,
+    SEASON_UTR_SOURCES,
+    SEASON_UTR_STATUSES,
+    Player,
+    PlayerNote,
+)
 from app.players import command
 from app.players.query import PlayerOut, count_players, get_player, list_players
 
@@ -419,3 +426,78 @@ def rule_on_season(
         "under_appeal": row.under_appeal,
         "source": row.source,
     }
+
+
+# --- Player notes (球员评价) -------------------------------------------------
+#
+# Append-only scouting record. No update endpoint on purpose: a note is an
+# observation at a point in time, and the history is the point. GET lists
+# newest-first; POST appends; DELETE removes one. Auth is by HTTP method in
+# middleware — GET behind the shared secret, POST/DELETE additionally behind the
+# admin secret — so nothing is declared here for it.
+
+
+class NoteIn(BaseModel):
+    # Single source of truth: the category vocabulary lives on the model (and
+    # the DB CHECK). Derived here so adding a category can never leave this
+    # validator out of sync — the whole reason NOTE_CATEGORIES exists.
+    category: Literal[*NOTE_CATEGORIES]
+    # max_length mirrors the DB CHECK (1..2000) so an over-long body is a 422
+    # here, not an IntegrityError 500 from the commit.
+    body: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("body")
+    @classmethod
+    def _body_not_blank(cls, value: str) -> str:
+        trimmed = value.strip()
+        if not trimmed:
+            raise ValueError("body must not be empty")
+        return trimmed
+
+
+def _note_out(note: PlayerNote) -> dict:
+    return {
+        "id": note.id,
+        "category": note.category,
+        "body": note.body,
+        "created_at": note.created_at.isoformat() if note.created_at else None,
+    }
+
+
+@router.get("/{player_id}/notes")
+def list_player_notes(player_id: int, session: Session = Depends(get_session)):
+    if session.get(Player, player_id) is None:
+        raise HTTPException(status_code=404, detail="player not found")
+    notes = session.exec(
+        select(PlayerNote)
+        .where(PlayerNote.player_id == player_id)
+        .order_by(PlayerNote.created_at.desc(), PlayerNote.id.desc())
+    ).all()
+    return [_note_out(note) for note in notes]
+
+
+@router.post("/{player_id}/notes", status_code=201)
+def add_player_note(
+    player_id: int, payload: NoteIn, session: Session = Depends(get_session)
+):
+    if session.get(Player, player_id) is None:
+        raise HTTPException(status_code=404, detail="player not found")
+    note = PlayerNote(
+        player_id=player_id, category=payload.category, body=payload.body
+    )
+    session.add(note)
+    session.commit()
+    session.refresh(note)
+    return _note_out(note)
+
+
+@router.delete("/{player_id}/notes/{note_id}", status_code=204)
+def delete_player_note(
+    player_id: int, note_id: int, session: Session = Depends(get_session)
+) -> Response:
+    note = session.get(PlayerNote, note_id)
+    if note is None or note.player_id != player_id:
+        raise HTTPException(status_code=404, detail="note not found")
+    session.delete(note)
+    session.commit()
+    return Response(status_code=204)

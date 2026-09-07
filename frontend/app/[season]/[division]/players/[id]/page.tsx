@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getPlayer, type Player } from "@/lib/api";
+import { getPlayer, getPlayerNotes, type Player } from "@/lib/api";
 import { canEdit as canEditCompetition } from "@/lib/admin";
 
 import { PlayerDetail } from "../PlayerDetail";
@@ -25,6 +25,8 @@ export default async function PlayerDetailPage({ params }: PageProps) {
   if (player === null) notFound();
 
   const canEdit = await canEditCompetition(season, division);
+  // Confidential: fetch notes only for an unlocked viewer; null = locked.
+  const notes = canEdit ? await getPlayerNotes(id) : null;
 
   return (
     <PlayerEditProvider canEdit={canEdit}>
@@ -39,7 +41,12 @@ export default async function PlayerDetailPage({ params }: PageProps) {
           <PlayerEditHeaderControl season={season} division={division} />
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
-          <PlayerDetail player={player} season={season} division={division} />
+          <PlayerDetail
+            player={player}
+            season={season}
+            division={division}
+            notes={notes}
+          />
         </div>
       </main>
     </PlayerEditProvider>

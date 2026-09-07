@@ -1,6 +1,12 @@
 import Link from "next/link";
 
-import { getPlayer, getPlayers, getPlayersPage, getSeasons } from "@/lib/api";
+import {
+  getPlayer,
+  getPlayerNotes,
+  getPlayers,
+  getPlayersPage,
+  getSeasons,
+} from "@/lib/api";
 import { canEdit as canEditCompetition } from "@/lib/admin";
 import { PlayerEditProvider } from "./PlayerEditContext";
 import { PlayerEditHeaderControl } from "./PlayerEditHeaderControl";
@@ -49,7 +55,7 @@ export default async function PlayersPage({ params, searchParams }: PageProps) {
   }
 
   // Left list + honest unresolved count + (only when selected) the detail.
-  const [players, unresolvedPage, selected] = await Promise.all([
+  const [players, unresolvedPage, selected, notes] = await Promise.all([
     getPlayers({
       query: filters.q || undefined,
       gender: filters.gender || undefined,
@@ -65,6 +71,10 @@ export default async function PlayersPage({ params, searchParams }: PageProps) {
       limit: 1,
     }),
     sel ? getPlayer(sel) : Promise.resolve(null),
+    // Notes are confidential: fetched only for an unlocked viewer, and only for
+    // the selected player. `null` (not []) means "locked" — the detail shows
+    // the 机密 placeholder rather than an empty timeline.
+    sel && canEdit ? getPlayerNotes(sel) : Promise.resolve(null),
   ]);
 
   const unresolved = unresolvedPage.total;
@@ -154,6 +164,7 @@ export default async function PlayersPage({ params, searchParams }: PageProps) {
                 player={selected}
                 season={season}
                 division={division}
+                notes={notes}
               />
             ) : sel ? (
               <div className="flex h-full items-center justify-center text-[12.5px] text-muted">

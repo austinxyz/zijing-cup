@@ -653,6 +653,42 @@ export async function getPlayer(id: number | string): Promise<Player | null> {
   return res.json();
 }
 
+/** A category is one of a fixed set. A literal union rather than a bare string
+ *  so a backend that grows a new category surfaces as a tsc error here (a
+ *  missing label) instead of being silently rendered raw. */
+export type PlayerNoteCategory = "strength" | "weakness" | "partner" | "other";
+
+export interface PlayerNote {
+  id: number;
+  category: PlayerNoteCategory;
+  body: string;
+  /** ISO 8601, the database's clock. */
+  created_at: string;
+}
+
+/** A player's scouting notes, newest first.
+ *
+ *  Degrades to an empty list on ANY failure rather than throwing. Notes are a
+ *  confidential enhancement on the player detail page, and their table is
+ *  applied to the shared database by hand after deploy (see CLAUDE.md's
+ *  no-CLI-push rule) — so between a deploy and that manual migration the
+ *  endpoint 500s. A missing notes table must not take the detail page down;
+ *  "no notes yet" is the correct thing to show until the table exists. */
+export async function getPlayerNotes(
+  playerId: number | string,
+): Promise<PlayerNote[]> {
+  try {
+    const res = await fetch(
+      backendUrl(`/api/players/${encodeURIComponent(String(playerId))}/notes`),
+      backendRequestInit(),
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 export interface PlayerPage {
   players: Player[];
   /** How many match in total, regardless of how many this page holds. */

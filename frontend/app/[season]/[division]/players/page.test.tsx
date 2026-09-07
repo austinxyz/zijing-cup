@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getPlayers, getPlayer, type Player } from "@/lib/api";
+import { getPlayers, getPlayer, getPlayerNotes, type Player } from "@/lib/api";
 import Page from "./page";
 
 vi.mock("@/lib/api", async (importOriginal) => {
@@ -10,6 +10,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     ...actual,
     getPlayers: vi.fn(async () => []),
     getPlayer: vi.fn(async () => null),
+    getPlayerNotes: vi.fn(async () => []),
     getPlayersPage: vi.fn(async () => ({ players: [], total: 0, truncated: false })),
     getSeasons: vi.fn(async () => [
       {
@@ -158,5 +159,38 @@ describe("workbench right column: detail", () => {
     expect(getPlayer).toHaveBeenCalledWith("1");
     // Detail renders the player's name (appears in the right pane heading).
     expect(screen.getAllByText(/Zong Qingqing/).length).toBeGreaterThan(0);
+  });
+});
+
+describe("评价 confidentiality gate", () => {
+  it("does NOT fetch notes and shows only the 机密 placeholder when locked", async () => {
+    // canEdit defaults to false in this suite's admin mock.
+    vi.mocked(getPlayer).mockResolvedValue(player());
+    render(await renderPage({ sel: "1" }));
+
+    expect(getPlayerNotes).not.toHaveBeenCalled();
+    expect(screen.getByText(/评价是机密/)).toBeTruthy();
+    // The append form and timeline never render for a locked viewer.
+    expect(screen.queryByRole("list", { name: "评价时间线" })).toBeNull();
+  });
+
+  it("fetches notes for the selected player and renders them when unlocked", async () => {
+    const { canEdit } = await import("@/lib/admin");
+    vi.mocked(canEdit).mockResolvedValue(true);
+    vi.mocked(getPlayer).mockResolvedValue(player());
+    vi.mocked(getPlayerNotes).mockResolvedValue([
+      {
+        id: 5,
+        category: "strength",
+        body: "正手很重",
+        created_at: "2026-08-28T20:03:00Z",
+      },
+    ]);
+
+    render(await renderPage({ sel: "1" }));
+
+    expect(getPlayerNotes).toHaveBeenCalledWith("1");
+    expect(screen.getByText("正手很重")).toBeTruthy();
+    expect(screen.queryByText(/评价是机密/)).toBeNull();
   });
 });

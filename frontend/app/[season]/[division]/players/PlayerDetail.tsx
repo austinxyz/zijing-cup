@@ -1,7 +1,8 @@
-import type { Player, PlayerSeasonUtr } from "@/lib/api";
+import type { Player, PlayerNote, PlayerSeasonUtr } from "@/lib/api";
 import { playerName } from "@/lib/name";
 
 import { savePlayerFields } from "./actions";
+import { NotesSection } from "./NotesSection";
 import { PlayerProfileSection } from "./PlayerProfileSection";
 import { PlayerDetailActions } from "./PlayerDetailActions";
 
@@ -49,10 +50,15 @@ export function PlayerDetail({
   player,
   season,
   division,
+  notes,
 }: {
   player: Player;
   season: string;
   division: string;
+  /** Confidential scouting notes. `null` means the viewer has not unlocked this
+   *  competition — the page did not fetch them, and the 评价 section shows only
+   *  the "机密" placeholder rather than any content. */
+  notes: PlayerNote[] | null;
 }) {
   const contested = player.season_utrs.find((utr) => utr.is_unresolved);
 
@@ -216,6 +222,27 @@ export function PlayerDetail({
           当前学校、需组委会同意，不影响上场资格。两者不要混。
         </div>
       </section>
+
+      {notes === null ? (
+        <section
+          aria-label="评价"
+          className="flex flex-none flex-col rounded-token border border-border bg-surface"
+        >
+          <div className="border-b border-border px-3.5 py-2.5 text-[12.5px] font-semibold text-foreground">
+            评价
+          </div>
+          <div className="px-3.5 py-5 text-center text-[12.5px] text-muted">
+            评价是机密，解锁本比赛后可见。
+          </div>
+        </section>
+      ) : (
+        <NotesSection
+          season={season}
+          division={division}
+          playerId={player.id}
+          notes={notes}
+        />
+      )}
 
       <PlayerDetailActions
         season={season}

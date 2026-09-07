@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { adminWrite } from "@/lib/admin";
+import type { PlayerNoteCategory } from "@/lib/api";
 
 /**
  * Edit a player's identity fields (name / gender / UTR link). Gated by the
@@ -39,5 +40,48 @@ export async function savePlayerFields(
     season,
     division,
   });
-  revalidatePath(`/${season}/${division}/players`);
+  revalidatePath(`/${season}/${division}/players`, "layout");
+}
+
+/**
+ * Append a scouting note to a player. Confidential and append-only: there is no
+ * edit — a new observation is a new note. Scoped to the competition in context.
+ *
+ * An empty (or whitespace-only) body is a no-op rather than a write: the UI
+ * already disables the button, this is the second line of defense so a blank
+ * note can never reach the backend.
+ */
+export async function addPlayerNote(
+  season: string,
+  division: string,
+  playerId: number,
+  category: PlayerNoteCategory,
+  body: string,
+): Promise<void> {
+  const trimmed = body.trim();
+  if (!trimmed) return;
+
+  await adminWrite(
+    "POST",
+    `/api/players/${playerId}/notes`,
+    { category, body: trimmed },
+    { season, division },
+  );
+  revalidatePath(`/${season}/${division}/players`, "layout");
+}
+
+/** Remove one note. Scoped to the competition in context. */
+export async function deletePlayerNote(
+  season: string,
+  division: string,
+  playerId: number,
+  noteId: number,
+): Promise<void> {
+  await adminWrite(
+    "DELETE",
+    `/api/players/${playerId}/notes/${noteId}`,
+    undefined,
+    { season, division },
+  );
+  revalidatePath(`/${season}/${division}/players`, "layout");
 }

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getDivisionTeams,
   getHealth,
+  getPlayerNotes,
   getPlayers,
   getPlayersPage,
   getTeamLineups,
@@ -270,5 +271,56 @@ describe("getPlayers / getPlayersPage filters", () => {
     expect(url).toContain("gender=M");
     expect(url).toContain("team=PKU");
     expect(url).toContain("year=2026");
+  });
+});
+
+describe("getPlayerNotes", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("requests the player's notes endpoint and returns the parsed list", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const payload = [
+      { id: 2, category: "weakness", body: "反手薄弱", created_at: "2026-09-06T10:00:00Z" },
+      { id: 1, category: "strength", body: "正手很重", created_at: "2026-09-06T09:00:00Z" },
+    ];
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(payload),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const notes = await getPlayerNotes(42);
+
+    expect(notes).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://backend.test/api/players/42/notes",
+      expect.objectContaining({
+        headers: { "X-Backend-Secret": "s3cr3t" },
+      }),
+    );
+  });
+
+  it("degrades to an empty list when the endpoint is not ok (migration lag)", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 500 }),
+    );
+
+    // A missing player_notes table (remote migration not yet applied) must not
+    // throw and take the player detail page down — notes are an enhancement.
+    await expect(getPlayerNotes(42)).resolves.toEqual([]);
+  });
+
+  it("degrades to an empty list when fetch rejects", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
+
+    await expect(getPlayerNotes(42)).resolves.toEqual([]);
   });
 });
