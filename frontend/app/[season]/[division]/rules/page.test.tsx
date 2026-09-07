@@ -125,6 +125,12 @@ describe("Rules page — silver", () => {
     expect(screen.getByText(/五线超出量之和也不得超过 0.50/)).toBeInTheDocument();
   });
 
+  it("does not add the open-line gap caveat when every line is capped", async () => {
+    mockRules({ "2026-silver": SILVER_2026, "2025-silver": SILVER_2025 });
+    render(await Page(params("2026", "silver")));
+    expect(screen.queryByText(/不受此限/)).toBeNull();
+  });
+
   it("shows the eligibility limits and shared constraints", async () => {
     mockRules({ "2026-silver": SILVER_2026, "2025-silver": SILVER_2025 });
 
@@ -137,6 +143,12 @@ describe("Rules page — silver", () => {
 });
 
 describe("Rules page — gold", () => {
+  it("notes the partner-gap applies only to capped lines when open lines exist", async () => {
+    mockRules({ "2026-gold": GOLD_2026, "2025-gold": GOLD_2026 });
+    render(await Page(params("2026", "gold")));
+    expect(screen.getByText(/开放线（无 UTR 上限）不受此限/)).toBeInTheDocument();
+  });
+
   it("shows open lines as open, never as a number", async () => {
     mockRules({ "2026-gold": GOLD_2026, "2025-gold": GOLD_2026 });
 

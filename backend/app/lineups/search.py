@@ -178,7 +178,8 @@ def check_locks(
             ))
 
         gap = abs(pair[0].match_utr - pair[1].match_utr)
-        if gap > rules.partner_gap_max:
+        # Open lines (no cap) are unrestricted — no gap limit either.
+        if rule.cap is not None and gap > rules.partner_gap_max:
             problems.append(Violation(
                 code="partner_gap", line=code, amount=gap - rules.partner_gap_max,
                 message=f"{code} 锁定的搭档差距 {gap} 超过上限 {rules.partner_gap_max}",
@@ -271,7 +272,8 @@ def legal_pairs(rules: RuleSet, rule: LineRule, pool: Sequence[Candidate]) -> li
     for a, b in combinations(pool, 2):
         if not _slot_ok(rule, a, b):
             continue
-        if abs(a.match_utr - b.match_utr) > rules.partner_gap_max:
+        # Open lines (no cap) have no gap limit; only capped lines are gap-checked.
+        if rule.cap is not None and abs(a.match_utr - b.match_utr) > rules.partner_gap_max:
             continue
         if rule.cap is not None:
             headroom = min(rules.buffer_per_line, rules.buffer_total)
@@ -375,7 +377,8 @@ def _diagnose_pinned(
     restricted: dict[str, tuple[Candidate, EligibilityLimit]] = {}
     for other in slot_partners:
         pair = (pinned, other)
-        if abs(pinned.match_utr - other.match_utr) > rules.partner_gap_max:
+        # Open lines (no cap) have no gap limit.
+        if rule.cap is not None and abs(pinned.match_utr - other.match_utr) > rules.partner_gap_max:
             over_gap.append(pair)
             continue
         if rule.cap is not None and pinned.match_utr + other.match_utr > rule.cap + headroom:

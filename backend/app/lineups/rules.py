@@ -187,7 +187,10 @@ def _check_partner_gap(rules: RuleSet, lineup: Lineup) -> list[Violation]:
     violations: list[Violation] = []
     for rule in rules.lines:
         pair = lineup.get(rule.code)
-        if pair is None:
+        # An open line (no cap) is fully unrestricted — no UTR ceiling AND no
+        # partner-gap limit. Only capped lines are gap-checked. (2026 gold's
+        # D1/MD are the only open lines in any division.)
+        if pair is None or rule.cap is None:
             continue
         gap = abs(pair[0].match_utr - pair[1].match_utr)
         if gap > rules.partner_gap_max:

@@ -276,9 +276,20 @@ class TestOpenLines:
 
         assert report.is_legal, report.violations
 
-    def test_an_open_line_still_obeys_the_partner_gap(self):
+    def test_an_open_line_has_no_partner_gap_limit(self):
+        # An open line (no cap) is fully unrestricted: no UTR ceiling AND no
+        # partner-gap limit. 2026 gold's D1/MD are the only open lines, and this
+        # is what "open" means for them — a 4.0 gap on D1 is legal.
         report = check_lineup(
             self.GOLD, self.gold_lineup(D1=(player("a", "12.00"), player("b", "8.00")))
+        )
+
+        assert report.is_legal, report.violations
+
+    def test_a_capped_line_still_obeys_the_partner_gap(self):
+        # The gap limit still applies to lines that DO have a cap.
+        report = check_lineup(
+            self.GOLD, self.gold_lineup(D3=(player("e", "7.00"), player("f", "3.40")))
         )
 
         assert not report.is_legal

@@ -216,11 +216,18 @@ export default async function RulesPage({ params }: PageProps) {
                 </div>
               ))}
 
-              <div className="flex items-baseline justify-between gap-3">
-                <dt className="font-sans text-[13px] text-muted">搭档 UTR 差距</dt>
-                <dd className="m-0 font-mono text-[13px]">
-                  {`≤ ${rules.division.partner_gap_max}`}
-                </dd>
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="font-sans text-[13px] text-muted">搭档 UTR 差距</dt>
+                  <dd className="m-0 font-mono text-[13px]">
+                    {`≤ ${rules.division.partner_gap_max}`}
+                  </dd>
+                </div>
+                {rules.lines.some((line) => line.cap === null) && (
+                  <div className="font-sans text-[11.5px] text-muted-foreground">
+                    仅限有 Cap 的线；开放线（无 UTR 上限）不受此限。
+                  </div>
+                )}
               </div>
 
               {rules.division.mens_doubles_must_be_ordered && (
