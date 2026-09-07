@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>notes-surfacing — 评价展示到排阵/对手对比/roster</title>
+<style>
+  :root{
+    --surface:#ffffff; --surface-muted:#f2efe9; --border:#e4e0d8;
+    --foreground:#221f1a; --muted:#6b665d; --muted-fg:#706a61; --background:#f6f4f0;
+    --primary:#9c3417;
+    --danger:#b3261e; --danger-surface:#fbf0ee; --danger-border:#f0cfc9;
+    --success:#3a6b4d; --success-surface:#eef4f0; --success-border:#cfe2d6;
+    --warning:#8a6508; --warning-surface:#fbf5e6; --warning-border:#ecd9a4;
+    --partner:#3a5a86; --partner-surface:#eef2f8; --partner-border:#c9d6ea;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--background);color:var(--foreground);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;padding:24px}
+  h1{font-size:18px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:12.5px;margin:0 0 22px;max-width:760px}
+  h2.section{font-size:13px;color:var(--muted);margin:28px 0 8px;border-top:1px solid var(--border);padding-top:14px}
+  .caption{color:var(--muted);font-size:12px;margin:6px 0 14px;max-width:720px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;max-width:720px}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)}
+  .row:last-child{border-bottom:0}
+  .nm{font-size:13px;min-width:120px}
+  .g{color:var(--muted);font-size:12px}
+  .utr{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;margin-left:auto}
+  /* badges */
+  .badges{display:inline-flex;gap:5px;align-items:center}
+  .bd{display:inline-flex;align-items:center;gap:3px;font-size:11px;line-height:1;
+    padding:2px 6px;border-radius:999px;border:1px solid;cursor:default}
+  .bd .dot{width:7px;height:7px;border-radius:50%}
+  .bd.s{color:var(--success);background:var(--success-surface);border-color:var(--success-border)}
+  .bd.s .dot{background:var(--success)}
+  .bd.w{color:var(--warning);background:var(--warning-surface);border-color:var(--warning-border)}
+  .bd.w .dot{background:var(--warning)}
+  .bd.p{color:var(--partner);background:var(--partner-surface);border-color:var(--partner-border)}
+  .bd.p .dot{background:var(--partner)}
+  .bd.o{color:var(--muted);background:var(--surface-muted);border-color:var(--border)}
+  .bd.o .dot{background:var(--muted)}
+  .bd .n{font-variant-numeric:tabular-nums;opacity:.8}
+  /* popover */
+  .pop{max-width:320px;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.12);overflow:hidden}
+  .pop .ph{padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .pop ul{list-style:none;margin:0;padding:0;max-height:240px;overflow:auto}
+  .pop li{padding:9px 12px;border-bottom:1px solid var(--border)}
+  .pop li:last-child{border-bottom:0}
+  .pop .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .pop .when{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted-fg)}
+  .pop .body{font-size:12.5px;margin-top:4px;line-height:1.5}
+  .tag{font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid}
+  .tag.s{color:var(--success);background:var(--success-surface);border-color:var(--success-border)}
+  .tag.w{color:var(--warning);background:var(--warning-surface);border-color:var(--warning-border)}
+  .tag.p{color:var(--partner);background:var(--partner-surface);border-color:var(--partner-border)}
+  .lockrow{padding:9px 14px;color:var(--muted);font-size:12px;border-bottom:1px solid var(--border)}
+  /* compare */
+  .cmp{display:grid;grid-template-columns:1fr 54px 1fr;gap:0;max-width:720px;background:var(--surface);
+    border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .cmp .lh{grid-column:1/-1;background:var(--surface-muted);font-size:11px;color:var(--muted);
+    padding:6px 12px;border-bottom:1px solid var(--border);font-family:ui-monospace,monospace}
+  .cmp .side{padding:9px 12px;border-bottom:1px solid var(--border)}
+  .cmp .mid{padding:9px 4px;border-bottom:1px solid var(--border);text-align:center;color:var(--muted);
+    font-family:ui-monospace,monospace;font-size:12px;background:var(--surface-muted)}
+  .cmp .p1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .cmp .p1 .nm{min-width:0}
+  .frame{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+  .m{max-width:380px;border:1px dashed var(--border);border-radius:12px;padding:12px;background:var(--surface)}
+  .m .lbl{font-size:11px;color:var(--muted);margin-bottom:8px}
+  .phone{width:340px;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface)}
+</style>
+</head>
+<body>
+
+<h1>notes-surfacing — 球员评价展示到三个界面</h1>
+<p class="sub">已有评价（机密、挂人、跨赛季）只读地呈现到排阵候选、对手对比、队伍 roster。分类小标（优点●正色 /
+弱点▲警示 / 搭档◆ / 其他）一眼可辨，悬停(桌面)/点开(移动)看倒序时间线。展示 + 轻提示，不改引擎。
+仅解锁本比赛时取数与显示。</p>
+
+<h2 class="section">1 · 排阵页 seat —— 候选卡 + 已存阵容（共享 LineBlock，已解锁）</h2>
+<p class="caption">seat 极窄、已有 外/▲/估 内联标记。notes 用<b>单标记「评」</b>与它们同族：含弱点=警示色（Zhang Jean），
+否则中性色（Hu Mitch）；无评价不显示（Wu Kai）。点/悬停「评」→ 同款时间线弹层。改共享 LineBlock 一处，
+候选与已存同时生效。</p>
+<style>
+  .lb{display:inline-flex;flex-direction:column;min-width:150px;border:1px solid var(--border);
+    border-radius:8px;overflow:hidden;background:var(--surface)}
+  .lb .h{display:flex;justify-content:space-between;background:var(--surface-muted);
+    padding:3px 8px;font-family:ui-monospace,monospace;font-size:9.5px;color:var(--muted)}
+  .seat{display:flex;align-items:baseline;gap:5px;border-top:1px solid var(--border);
+    padding:4px 8px;font-size:11.5px}
+  .seat .gm{color:var(--muted);font-size:10px;width:10px}
+  .seat .sn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .seat .su{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted-fg)}
+  .mk{margin-left:2px;font-size:10px;cursor:default}
+  .mk.est{color:var(--warning)} .mk.hot{color:var(--success)} .mk.bor{color:#8a5a00}
+  .mk.note{color:var(--muted)}          /* 有评价、无弱点：中性 */
+  .mk.note.warn{color:var(--danger);font-weight:600}  /* 含弱点：警示 */
+  .cardgrid{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;max-width:720px}
+  .lineup-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:10px 12px}
+  .lineup-card .ct{font-family:ui-monospace,monospace;font-size:12px;margin-bottom:8px;color:var(--foreground)}
+</style>
+<div class="cardgrid">
+  <div class="lineup-card">
+    <div class="ct">候选 #1 · 68.4</div>
+    <div class="lb">
+      <div class="h"><span>D1</span><span>和 13.9</span></div>
+      <div class="seat"><span class="gm">♂</span><span class="sn">Hu Mitch</span>
+        <span class="mk note" title="有评价（点看）">评</span><span class="su">7.24</span></div>
+      <div class="seat"><span class="gm">♂</span><span class="sn">Lin Bo</span>
+        <span class="mk hot" title="状态好">▲</span>
+        <span class="mk note warn" title="含弱点（点看）">评</span><span class="su">6.66</span></div>
+    </div>
+  </div>
+  <div class="lineup-card">
+    <div class="ct">已存 · 主力阵</div>
+    <div class="lb">
+      <div class="h"><span>WD</span><span>和 12.5</span></div>
+      <div class="seat"><span class="gm">♀</span><span class="sn">Zhang Jean</span>
+        <span class="mk est" title="估算值">估</span>
+        <span class="mk note warn" title="含弱点（点看）">评</span><span class="su">6.10</span></div>
+      <div class="seat"><span class="gm">♀</span><span class="sn">Wu Kai</span>
+        <span class="su">6.40</span></div>
+    </div>
+  </div>
+</div>
+<p class="caption" style="margin-top:8px">对比现有内联标记：<span class="mk bor">外</span>外援 ·
+<span class="mk hot">▲</span>状态好 · <span class="mk est">估</span>估算 ·
+<span class="mk note">评</span>有评价 · <span class="mk note warn">评</span>含弱点。</p>
+
+<h2 class="section">2 · 对手对比逐线（两侧都显示）</h2>
+<p class="caption">看对手评价正是侦查目的：两侧球员各带自己的小标。只摆事实不判胜负。</p>
+<div class="cmp">
+  <div class="lh">D1 · 第一男双</div>
+  <div class="side">
+    <div class="p1"><span class="nm">我方 · Hu Mitch</span>
+      <span class="bd s"><span class="dot"></span>优点<span class="n">1</span></span></div>
+    <div class="p1" style="margin-top:6px"><span class="nm">我方 · Lin Bo</span>
+      <span class="bd w"><span class="dot"></span>弱点<span class="n">1</span></span></div>
+  </div>
+  <div class="mid">和<br>13.9</div>
+  <div class="side">
+    <div class="p1"><span class="nm">对手 · Chen Yi</span>
+      <span class="bd p"><span class="dot"></span>搭档<span class="n">1</span></span>
+      <span class="bd w"><span class="dot"></span>弱点<span class="n">1</span></span></div>
+    <div class="p1" style="margin-top:6px"><span class="nm">对手 · Sun Lei</span></div>
+  </div>
+</div>
+
+<h2 class="section">3 · 队伍 roster 行（已解锁）</h2>
+<div class="card">
+  <div class="row">
+    <span class="nm">Zong Qingqing</span><span class="g">女</span>
+    <span class="badges">
+      <span class="bd s"><span class="dot"></span>优点<span class="n">2</span></span>
+      <span class="bd w"><span class="dot"></span>弱点<span class="n">1</span></span>
+      <span class="bd p"><span class="dot"></span>搭档<span class="n">1</span></span>
+    </span>
+    <span class="utr">6.38</span>
+  </div>
+  <div class="row">
+    <span class="nm">An Michael</span><span class="g">男</span>
+    <span class="badges"><span class="bd o"><span class="dot"></span>其他<span class="n">1</span></span></span>
+    <span class="utr">9.02</span>
+  </div>
+</div>
+
+<h2 class="section">4 · 悬停/点开 → 评价时间线弹层（只读）</h2>
+<p class="caption">倒序（最新在上）：类别中文标签 + 文本 + 时间。只读——追加/删除仍只在球员详情页。</p>
+<div class="pop">
+  <div class="ph">Zong Qingqing · 评价</div>
+  <ul>
+    <li><div class="top"><span class="tag p">适合搭档</span><span class="when">2026-09-06 14:20</span></div>
+      <div class="body">和左手将配合好，一二号位互补</div></li>
+    <li><div class="top"><span class="tag w">弱点</span><span class="when">2026-09-02 09:11</span></div>
+      <div class="body">反手上旋不稳，二发偏保守</div></li>
+    <li><div class="top"><span class="tag s">优点</span><span class="when">2026-08-28 20:03</span></div>
+      <div class="body">正手很重，落点深</div></li>
+  </ul>
+</div>
+
+<h2 class="section">5 · 未解锁本比赛（三处一致）</h2>
+<p class="caption">机密：不取数、不显示任何小标。行照常展示球员，只是没有评价信号。无占位、无锁图标堆砌。</p>
+<div class="card">
+  <div class="row"><span class="nm">Zong Qingqing</span><span class="g">女</span>
+    <span class="badges"></span><span class="utr">6.38</span></div>
+  <div class="lockrow">评价机密：解锁本比赛后，这里会显示每名球员的评价小标。</div>
+</div>
+
+<h2 class="section">6 · 移动端</h2>
+<p class="caption">悬停不可用 → 点小标区展开/弹层。弹层自带滚动，不撑破壳。</p>
+<div class="frame">
+  <div class="m"><div class="lbl">移动 · 候选行（小标换行到名字下）</div>
+    <div class="phone">
+      <div class="row" style="flex-wrap:wrap">
+        <span class="nm">Hu Mitch</span><span class="g">男</span><span class="utr">7.24</span>
+        <span class="badges" style="flex-basis:100%;margin-top:6px">
+          <span class="bd s"><span class="dot"></span>优点<span class="n">1</span></span>
+          <span class="bd p"><span class="dot"></span>搭档<span class="n">1</span></span>
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="m"><div class="lbl">移动 · 点开弹层（同桌面，全宽）</div>
+    <div class="phone">
+      <div class="pop" style="max-width:none;border:0;box-shadow:none">
+        <div class="ph">Hu Mitch · 评价</div>
+        <ul>
+          <li><div class="top"><span class="tag s">优点</span><span class="when">08-28 20:03</span></div>
+            <div class="body">正手很重，落点深</div></li>
+          <li><div class="top"><span class="tag p">适合搭档</span><span class="when">08-20 11:00</span></div>
+            <div class="body">和 Lin Bo 一二号位互补</div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
