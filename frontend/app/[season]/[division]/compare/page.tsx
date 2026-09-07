@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-
 import {
   getDivisionRules,
   getDivisionTeams,
@@ -9,6 +7,7 @@ import {
   type SavedLineup,
 } from "@/lib/api";
 import { canEdit as canEditCompetition } from "@/lib/admin";
+import { EditModeToggle } from "@/app/[season]/[division]/lineup/[code]/EditModeToggle";
 
 import { CompareControls } from "./CompareControls";
 import { buildComparison, type CompareSide } from "./compareBuild";
@@ -53,8 +52,26 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
   const { season, division } = await params;
   const q = await searchParams;
 
+  // Locked state — NOT a redirect: bouncing to the team list reads as "why did
+  // it jump?". Stay on /compare, show a lock notice + the in-place unlock, and
+  // render NO saved-lineup content (they are confidential).
   if (!(await canEditCompetition(season, division))) {
-    redirect(`/${season}/${division}/teams`);
+    return (
+      <main className="flex flex-1 min-w-0 flex-col overflow-hidden bg-background">
+        <div className="flex flex-none flex-col gap-0.5 border-b border-border bg-surface px-5 py-[11px]">
+          <h1 className="text-base font-semibold text-foreground">对手对比</h1>
+          <span className="font-mono text-[11px] text-muted-foreground">
+            两侧各选一支队与它的一套已存阵容 · 逐线只摆 UTR 事实，不判胜负
+          </span>
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-5 text-center">
+          <p className="max-w-sm text-[13px] text-muted">
+            对手对比要看两队的已存阵容，属管理员机密。解锁本比赛后才能使用。
+          </p>
+          <EditModeToggle signedIn={false} season={season} division={division} />
+        </div>
+      </main>
+    );
   }
 
   const a = one(q.a);

@@ -19,12 +19,14 @@ vi.mock("@/lib/api", () => ({
 }));
 vi.mock("@/lib/admin", () => ({ canEdit: vi.fn() }));
 vi.mock("next/navigation", () => ({
-  redirect: vi.fn(() => {
-    throw new Error("REDIRECT");
-  }),
   useRouter: () => ({ push: () => {}, refresh: () => {} }),
   usePathname: () => "/2025/silver/compare",
   useSearchParams: () => new URLSearchParams(),
+}));
+// Stub the in-place unlock — its own behaviour is tested with the lineup change;
+// here we only need the locked state to render without pulling server actions.
+vi.mock("@/app/[season]/[division]/lineup/[code]/EditModeToggle", () => ({
+  EditModeToggle: () => <div data-testid="unlock">编辑模式</div>,
 }));
 
 const TEAMS = [
@@ -64,11 +66,17 @@ function renderPage(query: Record<string, string> = {}) {
 afterEach(() => vi.clearAllMocks());
 
 describe("compare page gate", () => {
-  it("redirects when the viewer cannot edit this competition", async () => {
+  it("shows a locked state with an unlock prompt (not a redirect) when the viewer cannot edit", async () => {
     vi.mocked(canEdit).mockResolvedValue(false);
-    vi.mocked(getDivisionTeams).mockResolvedValue(TEAMS as never);
-    vi.mocked(getDivisionRules).mockResolvedValue(RULES);
-    await expect(renderPage()).rejects.toThrow("REDIRECT");
+    render(await renderPage({ a: "PKU", al: "1", b: "THU", bl: "2" }));
+    // Stays on the compare page with an unlock entry, and shows no saved-lineup
+    // content (confidential).
+    expect(screen.getByText(/管理员机密/)).toBeTruthy();
+    expect(screen.getByTestId("unlock")).toBeTruthy();
+    expect(screen.queryByRole("table")).toBeNull();
+    // Confidential fetches are never made for a locked viewer.
+    expect(getSavedLineups).not.toHaveBeenCalled();
+    expect(getTeamLineups).not.toHaveBeenCalled();
   });
 });
 
