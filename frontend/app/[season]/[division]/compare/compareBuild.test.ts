@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { SavedLineup } from "@/lib/api";
 import { buildComparison, type CompareSide } from "./compareBuild";
 
-type Named = { last_name: string; first_name: string; gender: string | null };
+type Named = {
+  last_name: string;
+  first_name: string;
+  gender: string | null;
+  player_id: number;
+};
 
 function byKey(entries: Record<string, Named>): Map<string, Named> {
   return new Map(Object.entries(entries));
@@ -27,14 +32,14 @@ function lineup(over: Partial<SavedLineup>): SavedLineup {
 }
 
 function side(over: Partial<SavedLineup>, keys: Record<string, Named>): CompareSide {
-  return { savedLineup: lineup(over), byKey: byKey(keys) };
+  return { savedLineup: lineup(over), byKey: byKey(keys), notesByPlayer: {} };
 }
 
 const NAMES = {
-  a1: { last_name: "Chen", first_name: "Yilun", gender: "M" },
-  a2: { last_name: "Hu", first_name: "Mitch", gender: "M" },
-  b1: { last_name: "Li", first_name: "Ming", gender: "M" },
-  b2: { last_name: "Wang", first_name: "Lei", gender: "M" },
+  a1: { last_name: "Chen", first_name: "Yilun", gender: "M", player_id: 1 },
+  a2: { last_name: "Hu", first_name: "Mitch", gender: "M", player_id: 2 },
+  b1: { last_name: "Li", first_name: "Ming", gender: "M", player_id: 3 },
+  b2: { last_name: "Wang", first_name: "Lei", gender: "M", player_id: 4 },
 };
 
 describe("buildComparison — per line", () => {
@@ -52,8 +57,8 @@ describe("buildComparison — per line", () => {
     const row = cmp.rows[0];
     expect(row.line).toBe("D1");
     expect(row.a.players).toEqual([
-      { name: "Chen Yilun", gender: "M" },
-      { name: "Hu Mitch", gender: "M" },
+      { name: "Chen Yilun", gender: "M", notes: [] },
+      { name: "Hu Mitch", gender: "M", notes: [] },
     ]);
     expect(row.a.sum).toBe("13.96");
     expect(row.b.sum).toBe("13.24");
@@ -102,7 +107,7 @@ describe("buildComparison — edges", () => {
     const a = side({ assignment: { D1: ["ghost", "a1"] }, line_totals: { D1: { total: "6.0", cap: null, over: "0" } } }, { a1: NAMES.a1 });
     const b = side({ assignment: { D1: [] }, line_totals: {} }, {});
     const cmp = buildComparison(["D1"], a, b);
-    expect(cmp.rows[0].a.players[0]).toEqual({ name: "（缺）", gender: null });
-    expect(cmp.rows[0].a.players[1]).toEqual({ name: "Chen Yilun", gender: "M" });
+    expect(cmp.rows[0].a.players[0]).toEqual({ name: "（缺）", gender: null, notes: [] });
+    expect(cmp.rows[0].a.players[1]).toEqual({ name: "Chen Yilun", gender: "M", notes: [] });
   });
 });

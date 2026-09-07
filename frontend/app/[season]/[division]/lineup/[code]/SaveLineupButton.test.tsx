@@ -6,7 +6,7 @@ import { SaveLineupButton } from "./SaveLineupButton";
 
 function player(key: string): LineupPlayer {
   return {
-    key, last_name: key, first_name: "x", gender: "M",
+    key, player_id: Number(String(key).replace(/\D/g, "")) || 0, last_name: key, first_name: "x", gender: "M",
     match_utr: "6.00", origin: "frozen", origin_year: null, is_unresolved: false,
   };
 }

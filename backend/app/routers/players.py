@@ -159,6 +159,70 @@ def read_players(
     )
 
 
+#: Cap on how many ids one batch request may ask for — a surfacing surface
+#: shows at most ~16 players; this is a generous ceiling that stops a caller
+#: turning the endpoint into an unbounded dump.
+_BATCH_IDS_MAX = 200
+
+
+def _parse_ids(raw: str) -> list[int]:
+    """Comma-separated ids → a de-duplicated list of ints, ignoring blanks and
+    non-numeric entries, clamped to the batch ceiling. Order is not significant
+    (the result is a map), so first-seen order is kept for determinism.
+
+    Beyond the ceiling ids are **dropped, not rejected** — the request still
+    succeeds. The surfacing surfaces show ~16 players so never approach it; a
+    caller that did exceed it would see the overflow ids simply absent from the
+    map (same as "no notes"), not an error."""
+    seen: set[int] = set()
+    out: list[int] = []
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            value = int(part)
+        except ValueError:
+            continue
+        if value not in seen:
+            seen.add(value)
+            out.append(value)
+        if len(out) >= _BATCH_IDS_MAX:
+            break
+    return out
+
+
+@router.get("/notes")
+def batch_player_notes(
+    ids: str = Query(default="", description="Comma-separated player ids"),
+    session: Session = Depends(get_session),
+) -> dict[int, list[dict]]:
+    """Notes for many players in one round trip, for the surfacing surfaces
+    (lineup / compare / roster) that show 10-16 players at once.
+
+    Declared BEFORE `/{player_id}`: a route `/notes` would otherwise be captured
+    by `/{player_id}` and 422 on the int parse. Returns a map keyed by player_id,
+    each player's notes newest first, and only for ids that actually have notes —
+    a missing key means "no notes", which the client reads as "show nothing".
+    """
+    wanted = _parse_ids(ids)
+    if not wanted:
+        return {}
+    rows = session.exec(
+        select(PlayerNote)
+        .where(PlayerNote.player_id.in_(wanted))
+        .order_by(
+            PlayerNote.player_id,
+            PlayerNote.created_at.desc(),
+            PlayerNote.id.desc(),
+        )
+    ).all()
+    grouped: dict[int, list[dict]] = {}
+    for note in rows:
+        grouped.setdefault(note.player_id, []).append(_note_out(note))
+    return grouped
+
+
 @router.get("/{player_id}", response_model=PlayerOut)
 def read_player(
     player_id: int, session: Session = Depends(get_session)

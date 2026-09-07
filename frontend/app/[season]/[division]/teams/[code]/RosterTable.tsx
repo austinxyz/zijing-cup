@@ -3,7 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui";
-import type { RosterPlayer } from "@/lib/api";
+import { PlayerNotesBadges } from "@/components/notes/PlayerNotesBadges";
+import type { PlayerNote, RosterPlayer } from "@/lib/api";
 import { playerName } from "@/lib/name";
 import { profileUrl } from "@/lib/utr";
 import { formatWinLoss } from "@/lib/winLoss";
@@ -63,10 +64,13 @@ export function RosterTable({
   players,
   canEdit = false,
   locked = false,
+  notesByPlayer = {},
   onSave,
 }: {
   players: RosterPlayer[];
   canEdit?: boolean;
+  /** Confidential notes by player_id (empty for a locked viewer). */
+  notesByPlayer?: Record<number, PlayerNote[]>;
   /** Whether the season is frozen. While false, saving a doubles UTR also
    *  overwrites the participation UTR, and the editor says so. */
   locked?: boolean;
@@ -115,6 +119,10 @@ export function RosterTable({
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="text-[14px] text-foreground">
                 <PlayerNameMaybeLink player={player} />
+                <PlayerNotesBadges
+                  notes={notesByPlayer[player.player_id] ?? []}
+                  label={`${playerName(player)} · 评价`}
+                />
                 {player.gender ? (
                   <span className="ml-1.5 text-[11px] text-muted">
                     {GENDER_LABEL[player.gender] ?? player.gender}
@@ -226,7 +234,13 @@ export function RosterTable({
               {index + 1}
             </Td>
             <Td className="text-[13px] text-foreground">
-              <PlayerNameMaybeLink player={player} />
+              <span className="inline-flex flex-wrap items-center gap-1.5">
+                <PlayerNameMaybeLink player={player} />
+                <PlayerNotesBadges
+                  notes={notesByPlayer[player.player_id] ?? []}
+                  label={`${playerName(player)} · 评价`}
+                />
+              </span>
             </Td>
             <Td className="text-[12.5px] text-muted">
               {player.gender ? GENDER_LABEL[player.gender] ?? player.gender : ""}

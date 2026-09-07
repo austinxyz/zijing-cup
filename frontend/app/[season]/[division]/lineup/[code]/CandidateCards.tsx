@@ -1,4 +1,4 @@
-import type { LineupCandidate } from "@/lib/api";
+import type { LineupCandidate, PlayerNote } from "@/lib/api";
 import { playerName } from "@/lib/name";
 import { estimateSentence, estimatesIn, isEstimate, money } from "./candidate";
 import { LineBlock, type LineSeat } from "./LineBlock";
@@ -9,10 +9,15 @@ interface CandidateCardsProps {
   bufferTotal: string;
   lineOrder: string[];
   canEdit?: boolean;
+  /** Confidential notes by player_id (empty for a locked viewer). */
+  notesByPlayer?: Record<number, PlayerNote[]>;
   saveAction?: SaveLineupAction;
 }
 
-function seatOf(player: LineupCandidate["lines"][string][number]): LineSeat {
+function seatOf(
+  player: LineupCandidate["lines"][string][number],
+  notesByPlayer: Record<number, PlayerNote[]>,
+): LineSeat {
   return {
     name: playerName(player),
     gender: player.gender,
@@ -21,6 +26,7 @@ function seatOf(player: LineupCandidate["lines"][string][number]): LineSeat {
     borrowed: player.is_borrowed_player === true,
     wins: player.wins ?? null,
     losses: player.losses ?? null,
+    notes: notesByPlayer[player.player_id],
   };
 }
 
@@ -39,6 +45,7 @@ export function CandidateCards({
   bufferTotal,
   lineOrder,
   canEdit,
+  notesByPlayer = {},
   saveAction,
 }: CandidateCardsProps) {
   return (
@@ -89,7 +96,10 @@ export function CandidateCards({
                     total={lt.total}
                     cap={lt.cap}
                     over={lt.over}
-                    seats={[seatOf(pair[0]), seatOf(pair[1])]}
+                    seats={[
+                      seatOf(pair[0], notesByPlayer),
+                      seatOf(pair[1], notesByPlayer),
+                    ]}
                   />
                 );
               })}

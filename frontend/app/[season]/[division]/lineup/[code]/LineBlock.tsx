@@ -1,3 +1,5 @@
+import { NotesPopover } from "@/components/notes/NotesPopover";
+import type { PlayerNote } from "@/lib/api";
 import { formatWinLoss, isHotHand } from "@/lib/winLoss";
 
 import { money, overOf } from "./candidate";
@@ -17,6 +19,10 @@ export interface LineSeat {
    *  win-rate hover on every seat. null/absent = never imported (NOT 0-0). */
   wins?: number | null;
   losses?: number | null;
+  /** This player's scouting notes (confidential; only supplied when the viewer
+   *  has unlocked the competition). Present + non-empty → a 「评」 marker opening
+   *  the read-only timeline. Absent/empty → no marker. */
+  notes?: PlayerNote[];
 }
 
 interface LineBlockProps {
@@ -85,6 +91,25 @@ export function LineBlock({ line, total, over, seats }: LineBlockProps) {
               {s.estimate ? (
                 <span title="估算值" className="ml-0.5 text-warning">
                   估
+                </span>
+              ) : null}
+              {s.notes && s.notes.length > 0 ? (
+                // A single「评」marker in the existing 外/▲/估 family — the seat
+                // is far too narrow for category pills. Warning-tinted when a
+                // weakness note exists (the signal a captain most wants to
+                // avoid), neutral otherwise. Opens the shared read-only timeline.
+                <span className="ml-0.5">
+                  <NotesPopover notes={s.notes} label={`${s.name} · 评价`}>
+                    <span
+                      className={
+                        s.notes.some((n) => n.category === "weakness")
+                          ? "text-danger"
+                          : "text-muted"
+                      }
+                    >
+                      评
+                    </span>
+                  </NotesPopover>
                 </span>
               ) : null}
             </span>

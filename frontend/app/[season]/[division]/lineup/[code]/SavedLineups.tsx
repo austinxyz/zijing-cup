@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 
-import type { LineupPlayer, LineupViolation, SavedLineup } from "@/lib/api";
+import type { LineupPlayer, LineupViolation, PlayerNote, SavedLineup } from "@/lib/api";
 import { savedStaleRefs } from "./savedLoad";
 import { money } from "./candidate";
 import { LineBlock, type LineSeat } from "./LineBlock";
@@ -19,6 +19,9 @@ interface SavedLineupsProps {
   basePath: string;
   /** Line order (D1…WD) for the editor's rows; from the division rules. */
   lineOrder?: string[];
+  /** Confidential notes by player_id (empty for a locked viewer). Threaded to
+   *  each saved-lineup seat's 「评」 marker. */
+  notesByPlayer?: Record<number, PlayerNote[]>;
   deleteAction?: (id: number) => Promise<void>;
   /** Judge an edited assignment against current UTRs. Admin only. */
   validateAction?: (assignment: Assignment) => Promise<LineupViolation[]>;
@@ -67,6 +70,7 @@ export function SavedLineups({
   canEdit,
   basePath,
   lineOrder,
+  notesByPlayer = {},
   deleteAction,
   validateAction,
   saveBackAction,
@@ -187,6 +191,7 @@ export function SavedLineups({
       borrowed: p?.is_borrowed_player === true,
       wins: p?.wins ?? null,
       losses: p?.losses ?? null,
+      notes: p ? notesByPlayer[p.player_id] : undefined,
     };
   }
 

@@ -5,6 +5,7 @@ import {
   getDivisionTeams,
   getHealth,
   getPlayerNotes,
+  getPlayerNotesBatch,
   getPlayers,
   getPlayersPage,
   getTeamLineups,
@@ -322,5 +323,56 @@ describe("getPlayerNotes", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
 
     await expect(getPlayerNotes(42)).resolves.toEqual([]);
+  });
+});
+
+describe("getPlayerNotesBatch", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("requests the batch endpoint and returns the grouped map", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const payload = {
+      "7": [{ id: 1, category: "strength", body: "正手重", created_at: "2026-09-06T09:00:00Z" }],
+      "9": [{ id: 2, category: "weakness", body: "反手弱", created_at: "2026-09-06T10:00:00Z" }],
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(payload),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const map = await getPlayerNotesBatch([7, 9]);
+
+    expect(map).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://backend.test/api/players/notes?ids=7%2C9",
+      expect.objectContaining({ headers: { "X-Backend-Secret": "s3cr3t" } }),
+    );
+  });
+
+  it("does not fetch for an empty id list", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getPlayerNotesBatch([])).resolves.toEqual({});
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("degrades to an empty map when the endpoint is not ok", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(getPlayerNotesBatch([7])).resolves.toEqual({});
+  });
+
+  it("degrades to an empty map when fetch rejects", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
+    await expect(getPlayerNotesBatch([7])).resolves.toEqual({});
   });
 });

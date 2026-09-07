@@ -9,7 +9,7 @@ import {
 
 function player(key: string): LineupPlayer {
   return {
-    key,
+    key, player_id: Number(String(key).replace(/\D/g, "")) || 0,
     last_name: key,
     first_name: "x",
     gender: "M",

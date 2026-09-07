@@ -281,6 +281,9 @@ export interface LineupPlayer {
   /** The key a lock or exclusion sends back. Names repeat on a real roster,
    *  so they cannot identify a player. */
   key: string;
+  /** Numeric players.id, for overlays that key on it (notes-surfacing). Equals
+   *  the id embedded in `key` (`p{id}`). */
+  player_id: number;
   last_name: string;
   first_name: string;
   /** Shown on every candidate: the high-UTR limits are written per gender,
@@ -686,6 +689,29 @@ export async function getPlayerNotes(
     return await res.json();
   } catch {
     return [];
+  }
+}
+
+/** Notes for many players in one round trip, grouped by player id — for the
+ *  surfacing surfaces (lineup / compare / roster) that show 10-16 players at
+ *  once. A missing key means "no notes" for that player.
+ *
+ *  Empty id list → no request, `{}`. Any failure degrades to `{}` (same reason
+ *  as getPlayerNotes: a confidential read-only overlay must never take the host
+ *  page down). */
+export async function getPlayerNotesBatch(
+  ids: number[],
+): Promise<Record<number, PlayerNote[]>> {
+  if (ids.length === 0) return {};
+  try {
+    const res = await fetch(
+      backendUrl(`/api/players/notes?ids=${encodeURIComponent(ids.join(","))}`),
+      backendRequestInit(),
+    );
+    if (!res.ok) return {};
+    return await res.json();
+  } catch {
+    return {};
   }
 }
 

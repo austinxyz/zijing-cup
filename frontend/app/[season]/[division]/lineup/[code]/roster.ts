@@ -13,6 +13,7 @@ import type { LineupPlayer, TeamRoster } from "@/lib/api";
 export function rosterFromTeam(team: TeamRoster): LineupPlayer[] {
   return team.players.map((p) => ({
     key: `p${p.player_id}`,
+    player_id: p.player_id,
     last_name: p.last_name,
     first_name: p.first_name,
     gender: p.gender,

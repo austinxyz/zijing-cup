@@ -16,7 +16,7 @@ const LINES: RuleLine[] = [
 
 function player(key: string, first: string, gender = "M"): LineupPlayer {
   return {
-    key, last_name: "南", first_name: first, gender,
+    key, player_id: Number(String(key).replace(/\D/g, "")) || 0, last_name: "南", first_name: first, gender,
     match_utr: "6.00", origin: "frozen", origin_year: 2025, is_unresolved: false,
   };
 }

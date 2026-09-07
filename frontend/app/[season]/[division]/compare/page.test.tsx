@@ -16,6 +16,7 @@ vi.mock("@/lib/api", () => ({
   getDivisionRules: vi.fn(),
   getSavedLineups: vi.fn(),
   getTeamLineups: vi.fn(),
+  getPlayerNotesBatch: vi.fn(async () => ({})),
 }));
 vi.mock("@/lib/admin", () => ({ canEdit: vi.fn() }));
 vi.mock("next/navigation", () => ({
@@ -36,15 +37,15 @@ const TEAMS = [
 const RULES = { lines: [{ code: "D1", kind: "MD", sort_order: 0, cap: null, points: 1 }] } as never;
 
 function teamLineups(prefix: string) {
-  const p = (key: string, last: string, first: string) => ({
-    key, last_name: last, first_name: first, gender: "M", match_utr: "7",
+  const p = (key: string, pid: number, last: string, first: string) => ({
+    key, player_id: pid, last_name: last, first_name: first, gender: "M", match_utr: "7",
     origin: "frozen", origin_year: 2025, is_unresolved: false,
   });
   return {
     roster:
       prefix === "PKU"
-        ? [p("PKUk1", "Chen", "Yilun"), p("PKUk2", "Hu", "Mitch")]
-        : [p("THUk1", "Li", "Ming"), p("THUk2", "Wang", "Lei")],
+        ? [p("PKUk1", 101, "Chen", "Yilun"), p("PKUk2", 102, "Hu", "Mitch")]
+        : [p("THUk1", 201, "Li", "Ming"), p("THUk2", 202, "Wang", "Lei")],
   } as never;
 }
 function lineup(id: number, prefix: string, sum: string): SavedLineup {
@@ -107,5 +108,27 @@ describe("compare page content", () => {
     // diff mine - opp = 13.96 - 13.24 = +0.72, shown with sign + 2 decimals
     // (appears twice here: the single line's diff and the total diff)
     expect(screen.getAllByText(/\+0\.72/).length).toBeGreaterThan(0);
+  });
+
+  it("shows notes badges on BOTH sides when unlocked, and fetches them", async () => {
+    const { getPlayerNotesBatch } = await import("@/lib/api");
+    vi.mocked(canEdit).mockResolvedValue(true);
+    vi.mocked(getDivisionTeams).mockResolvedValue(TEAMS as never);
+    vi.mocked(getDivisionRules).mockResolvedValue(RULES);
+    vi.mocked(getSavedLineups).mockImplementation(async (_y, _d, code) =>
+      code === "PKU" ? [lineup(1, "PKU", "13.96")] : [lineup(2, "THU", "13.24")],
+    );
+    vi.mocked(getTeamLineups).mockImplementation(async (_y, _d, code) => teamLineups(code));
+    vi.mocked(getPlayerNotesBatch).mockResolvedValue({
+      101: [{ id: 1, category: "weakness", body: "反手弱", created_at: "2026-09-02T09:00:00Z" }],
+      201: [{ id: 2, category: "strength", body: "正手重", created_at: "2026-09-02T09:00:00Z" }],
+    });
+
+    render(await renderPage({ a: "PKU", al: "1", b: "THU", bl: "2" }));
+
+    expect(getPlayerNotesBatch).toHaveBeenCalled();
+    // Side A player 101 has a weakness; side B player 201 has a strength.
+    expect(screen.getByText("弱点")).toBeTruthy();
+    expect(screen.getByText("优点")).toBeTruthy();
   });
 });

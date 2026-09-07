@@ -7,7 +7,7 @@ import { LineupMobileControls } from "./LineupMobileControls";
 
 function player(key: string, last: string, first: string): LineupPlayer {
   return {
-    key,
+    key, player_id: Number(String(key).replace(/\D/g, "")) || 0,
     last_name: last,
     first_name: first,
     gender: "M",

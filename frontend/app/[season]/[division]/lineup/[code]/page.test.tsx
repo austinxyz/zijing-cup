@@ -24,6 +24,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     getTeamPresets: vi.fn(async () => []),
     getTeamRoster: vi.fn(),
     getSavedLineups: vi.fn(async () => []),
+    getPlayerNotesBatch: vi.fn(async () => ({})),
   };
 });
 
@@ -74,7 +75,7 @@ const RULES: DivisionRules = {
 
 function player(key: string, first: string, gender: string, utr: string): LineupPlayer {
   return {
-    key,
+    key, player_id: Number(String(key).replace(/\D/g, "")) || 0,
     last_name: "南",
     first_name: first,
     gender,
@@ -566,5 +567,38 @@ describe("constraintsFromQuery: three states per line", () => {
     const c = constraintsFromQuery([...LINES2], {});
     expect(c.locks).toEqual({});
     expect(c.pins).toEqual({});
+  });
+});
+
+describe("notes surfacing on the lineup page", () => {
+  it("fetches notes for an unlocked viewer and marks a candidate seat", async () => {
+    const { getPlayerNotesBatch, getTeamLineups, getDivisionRules } = await import("@/lib/api");
+    vi.mocked(canEdit).mockResolvedValue(true);
+    vi.mocked(getDivisionRules).mockResolvedValue(RULES);
+    vi.mocked(getTeamLineups).mockResolvedValue(SEARCH);
+    vi.mocked(getPlayerNotesBatch).mockResolvedValue({
+      1: [{ id: 9, category: "weakness", body: "反手弱", created_at: "2026-09-02T09:00:00Z" }],
+    });
+
+    render(await renderPage());
+
+    // Batch fetched for the roster's player ids.
+    expect(getPlayerNotesBatch).toHaveBeenCalled();
+    const ids = vi.mocked(getPlayerNotesBatch).mock.calls[0][0];
+    expect(ids).toEqual(expect.arrayContaining([1, 2, 10]));
+    // Player 1 (has a note) shows a 评 marker in the candidate results.
+    expect(screen.getAllByText("评").length).toBeGreaterThan(0);
+  });
+
+  it("does NOT fetch notes for a locked viewer", async () => {
+    const { getPlayerNotesBatch, getTeamLineups, getDivisionRules } = await import("@/lib/api");
+    vi.mocked(canEdit).mockResolvedValue(false);
+    vi.mocked(getDivisionRules).mockResolvedValue(RULES);
+    vi.mocked(getTeamLineups).mockResolvedValue(SEARCH);
+
+    render(await renderPage());
+
+    expect(getPlayerNotesBatch).not.toHaveBeenCalled();
+    expect(screen.queryByText("评")).toBeNull();
   });
 });

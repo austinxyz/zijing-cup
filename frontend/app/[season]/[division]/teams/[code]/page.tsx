@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { canEdit as canEditCompetition } from "@/lib/admin";
-import { getTeamRoster } from "@/lib/api";
+import { getPlayerNotesBatch, getTeamRoster, type PlayerNote } from "@/lib/api";
 import { TeamEditPanel } from "./TeamEditPanel";
 import { TeamEditProvider } from "./TeamEditContext";
 import { TeamEditHeaderControl } from "./TeamEditHeaderControl";
@@ -23,6 +23,12 @@ export default async function TeamRosterPage({ params }: PageProps) {
   // unauthenticated caller on its own; this keeps the page from showing a
   // button that cannot work.
   const canEdit = await canEditCompetition(season, division);
+
+  // Confidential notes overlay: fetched only for an unlocked viewer, one batch
+  // for the whole roster. Locked → empty map, no request, no markers.
+  const notesByPlayer: Record<number, PlayerNote[]> = canEdit
+    ? await getPlayerNotesBatch(roster.players.map((p) => p.player_id))
+    : {};
 
   const men = roster.players.filter((p) => p.gender === "M").length;
   const women = roster.players.filter((p) => p.gender === "F").length;
@@ -102,6 +108,7 @@ export default async function TeamRosterPage({ params }: PageProps) {
         season={season}
         division={division}
         teamCode={code}
+        notesByPlayer={notesByPlayer}
       />
     </TeamEditProvider>
   );

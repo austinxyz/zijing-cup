@@ -2,11 +2,13 @@ import { notFound } from "next/navigation";
 
 import {
   getDivisionRules,
+  getPlayerNotesBatch,
   getSavedLineups,
   getTeamLineups,
   getTeamPresets,
   getTeamRoster,
   type LineupPlayer,
+  type PlayerNote,
   type LineupSearch,
   type RuleLine,
 } from "@/lib/api";
@@ -168,6 +170,15 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
     roster = rosterFromTeam(team);
   }
 
+  // Confidential notes overlay: fetched only for an unlocked viewer, once, for
+  // every player on the roster (candidates and saved lineups both draw from it,
+  // so one batch covers every seat). A locked viewer gets an empty map — no
+  // request, no markers. Failure inside getPlayerNotesBatch already degrades to
+  // {}, so it can never take the lineup page down.
+  const notesByPlayer: Record<number, PlayerNote[]> = canEdit
+    ? await getPlayerNotesBatch(roster.map((p) => p.player_id))
+    : {};
+
   const basePath = `/${season}/${division}/lineup/${encodeURIComponent(code)}`;
   // Bound server actions: the client supplies only the name / id. The current
   // locks and exclusions travel with the save, captured here on the server.
@@ -294,6 +305,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
                 canEdit={canEdit}
                 basePath={basePath}
                 lineOrder={lines.map((line) => line.code)}
+                notesByPlayer={notesByPlayer}
                 deleteAction={deleteSavedAction}
                 validateAction={validateSavedAction}
                 saveBackAction={saveBackSavedAction}
@@ -322,6 +334,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
                 lineOrder={lines.map((line) => line.code)}
                 unconstrainedCeiling={baseline?.ceiling ?? null}
                 canEdit={canEdit}
+                notesByPlayer={notesByPlayer}
                 saveAction={saveLineupAction}
               />
             ) : null}

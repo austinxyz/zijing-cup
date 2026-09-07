@@ -5,7 +5,7 @@ import { buildLoadHref, presetSize, staleLockRefs } from "./presetLoad";
 
 function player(key: string): LineupPlayer {
   return {
-    key, last_name: "南", first_name: key, gender: "M",
+    key, player_id: Number(String(key).replace(/\D/g, "")) || 0, last_name: "南", first_name: key, gender: "M",
     match_utr: "6.00", origin: "frozen", origin_year: 2025, is_unresolved: false,
   };
 }

@@ -55,6 +55,10 @@ class PlayerOut(BaseModel):
     #: Stable identifier a caller echoes back to lock or exclude this player.
     #: Names repeat on a real roster, so they cannot serve as the key.
     key: str
+    #: The numeric players.id, so overlays (e.g. notes-surfacing) can look this
+    #: player up. Equals the id embedded in `key` (f"p{id}"); surfaced as its own
+    #: field rather than making callers strip the prefix.
+    player_id: int
     last_name: str
     first_name: str
 
@@ -377,6 +381,9 @@ def _player_out(
     resolved = provenance[candidate.key]
     return PlayerOut(
         key=candidate.key,
+        # key is f"{KEY_PREFIX}{player.id}" — recover the id from it rather than
+        # threading player.id through Candidate, which the engine never needs.
+        player_id=int(candidate.key[len(KEY_PREFIX):]),
         last_name=last,
         first_name=first,
         gender=candidate.gender,

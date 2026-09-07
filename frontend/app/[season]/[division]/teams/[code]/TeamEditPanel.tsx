@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 
-import type { RosterPlayer, TeamRoster } from "@/lib/api";
+import type { PlayerNote, RosterPlayer, TeamRoster } from "@/lib/api";
 import { RosterTable } from "./RosterTable";
 import { saveTeamEdits, removePlayerFromTeam } from "./actions";
 import { AddPlayerControl } from "./AddPlayerControl";
@@ -14,6 +14,8 @@ interface Props {
   season: string;
   division: string;
   teamCode: string;
+  /** Confidential notes by player_id (empty for a locked viewer). */
+  notesByPlayer?: Record<number, PlayerNote[]>;
 }
 
 /** "姓 名", the shared display form. */
@@ -21,7 +23,13 @@ function displayName(p: RosterPlayer): string {
   return `${p.last_name} ${p.first_name}`;
 }
 
-export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
+export function TeamEditPanel({
+  roster,
+  season,
+  division,
+  teamCode,
+  notesByPlayer = {},
+}: Props) {
   const { canEdit, editing } = useTeamEdit();
   const players = roster.players;
   const [pending, startTransition] = useTransition();
@@ -182,7 +190,12 @@ export function TeamEditPanel({ roster, season, division, teamCode }: Props) {
           </div>
         ) : null}
         <div className="min-h-0 flex-1 overflow-auto">
-          <RosterTable players={players} canEdit={false} locked={roster.locked} />
+          <RosterTable
+            players={players}
+            canEdit={false}
+            locked={roster.locked}
+            notesByPlayer={notesByPlayer}
+          />
         </div>
       </div>
     );

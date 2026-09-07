@@ -12,6 +12,7 @@ const LINES: RuleLine[] = [
 function person(overrides: Partial<LineupPlayer> = {}): LineupPlayer {
   return {
     key: "p1",
+    player_id: 1,
     last_name: "南",
     first_name: "望舒",
     gender: "M",
@@ -25,7 +26,7 @@ function person(overrides: Partial<LineupPlayer> = {}): LineupPlayer {
 
 function search(overrides: Partial<LineupSearch> = {}): LineupSearch {
   const a = person({ key: "p1" });
-  const b = person({ key: "p2", first_name: "方朔" });
+  const b = person({ key: "p2", player_id: 2, first_name: "方朔" });
   return {
     candidates: [
       {
@@ -120,6 +121,7 @@ describe("estimated numbers inside a lineup", () => {
   it("marks the individual number", () => {
     const derived = person({
       key: "p2",
+      player_id: 2,
       first_name: "方朔",
       origin: "prior_season",
       origin_year: 2024,
@@ -147,6 +149,7 @@ describe("estimated numbers inside a lineup", () => {
     // is legal" itself an estimate.
     const derived = person({
       key: "p2",
+      player_id: 2,
       first_name: "方朔",
       origin: "current_doubles",
       origin_year: null,
@@ -181,6 +184,7 @@ describe("estimated numbers inside a lineup", () => {
     // The single number most likely to be quoted on its own.
     const derived = person({
       key: "p2",
+      player_id: 2,
       first_name: "方朔",
       origin: "prior_season",
       origin_year: 2024,
@@ -202,8 +206,8 @@ describe("estimated numbers inside a lineup", () => {
 });
 
 function threeCandidates() {
-  const a = person({ key: "p1", first_name: "望舒" });
-  const b = person({ key: "p2", first_name: "方朔" });
+  const a = person({ key: "p1", player_id: 1, first_name: "望舒" });
+  const b = person({ key: "p2", player_id: 2, first_name: "方朔" });
   const mk = (total: string) => ({
     total,
     buffer_spent: "0.00",
@@ -241,7 +245,7 @@ describe("candidate cards (3-row line blocks)", () => {
     show({
       candidates: [{
         total: "13.30", buffer_spent: "0.30",
-        lines: { D1: [person(), person({ key: "p2", first_name: "方朔" })] },
+        lines: { D1: [person(), person({ key: "p2", player_id: 2, first_name: "方朔" })] },
         line_totals: { D1: { total: "13.30", cap: "13.00", over: "0.30" } },
       }],
     });
@@ -249,7 +253,7 @@ describe("candidate cards (3-row line blocks)", () => {
   });
 
   it("marks an estimated number and carries the full sentence on the set badge", () => {
-    const derived = person({ key: "p2", first_name: "方朔", origin: "prior_season", origin_year: 2024 });
+    const derived = person({ key: "p2", player_id: 2, first_name: "方朔", origin: "prior_season", origin_year: 2024 });
     show({
       candidates: [{
         total: "13.00", buffer_spent: "0.00",
@@ -275,7 +279,7 @@ describe("candidate cards (3-row line blocks)", () => {
 
 describe("borrowed players", () => {
   it("marks a borrowed player in a candidate line block", () => {
-    const borrowed = person({ key: "p2", first_name: "方朔", is_borrowed_player: true });
+    const borrowed = person({ key: "p2", player_id: 2, first_name: "方朔", is_borrowed_player: true });
     show({
       candidates: [{
         total: "13.00", buffer_spent: "0.00",

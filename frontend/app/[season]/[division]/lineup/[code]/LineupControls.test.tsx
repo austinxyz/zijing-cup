@@ -11,7 +11,7 @@ const LINES: RuleLine[] = [
 
 function roster(count: number): LineupPlayer[] {
   return Array.from({ length: count }, (_, i) => ({
-    key: `p${i + 1}`,
+    key: `p${i + 1}`, player_id: i + 1,
     last_name: "南",
     first_name: `队员${i + 1}`,
     origin: "frozen",
@@ -25,12 +25,12 @@ function roster(count: number): LineupPlayer[] {
 describe("the lock and exclude panel", () => {
   it("marks a hot-hand player (≥60%) with ▲ in the select options and exclude chips", () => {
     const hot: LineupPlayer = {
-      key: "p1", last_name: "南", first_name: "热手",
+      key: "p1", player_id: 1, last_name: "南", first_name: "热手",
       origin: "frozen", origin_year: 2026, is_unresolved: false,
       gender: "M", match_utr: "6.00", wins: 67, losses: 20,
     };
     const cold: LineupPlayer = {
-      key: "p2", last_name: "南", first_name: "平手",
+      key: "p2", player_id: 2, last_name: "南", first_name: "平手",
       origin: "frozen", origin_year: 2026, is_unresolved: false,
       gender: "M", match_utr: "5.80", wins: 1, losses: 1,
     };
@@ -120,7 +120,7 @@ import { orderForSelect } from "./LineupControls";
 
 function p(key: string, gender: string | null, utr: string): LineupPlayer {
   return {
-    key, last_name: "南", first_name: key, gender,
+    key, player_id: Number(String(key).replace(/\D/g, "")) || 0, last_name: "南", first_name: key, gender,
     match_utr: utr, origin: "frozen", origin_year: 2025, is_unresolved: false,
   };
 }

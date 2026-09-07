@@ -212,3 +212,75 @@ class TestNotesAuth:
         pid = make_player(client)["id"]
         resp = client.delete(f"/api/players/{pid}/notes/1", headers=READ)
         assert resp.status_code == 403, resp.text
+
+
+class TestNotesBatch:
+    """Batch read for the surfacing surfaces (lineup/compare/roster): one round
+    trip returns notes grouped by player_id, newest first, only for ids that
+    actually have notes."""
+
+    def _add(self, client, pid, category, body):
+        r = client.post(
+            f"/api/players/{pid}/notes",
+            json={"category": category, "body": body},
+            headers=WRITE,
+        )
+        assert r.status_code == 201, r.text
+
+    def test_batch_groups_notes_by_player_newest_first(self, client):
+        a = make_player(client, first_name="甲")["id"]
+        b = make_player(client, first_name="乙")["id"]
+        self._add(client, a, "strength", "a-旧")
+        self._add(client, a, "weakness", "a-新")
+        self._add(client, b, "partner", "b-一条")
+
+        resp = client.get(f"/api/players/notes?ids={a},{b}", headers=READ)
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+
+        # Keyed by player_id (JSON keys are strings).
+        assert set(body.keys()) == {str(a), str(b)}
+        # a's two notes, newest first (weakness written last).
+        assert [n["category"] for n in body[str(a)]] == ["weakness", "strength"]
+        assert [n["body"] for n in body[str(a)]] == ["a-新", "a-旧"]
+        assert [n["body"] for n in body[str(b)]] == ["b-一条"]
+
+    def test_batch_omits_ids_with_no_notes_and_handles_empty(self, client):
+        a = make_player(client, first_name="有")["id"]
+        b = make_player(client, first_name="无")["id"]  # no notes
+        self._add(client, a, "other", "x")
+
+        resp = client.get(f"/api/players/notes?ids={a},{b},999999", headers=READ)
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        # Only ids that actually have notes appear; b and the unknown id do not.
+        assert set(body.keys()) == {str(a)}
+
+    def test_batch_empty_ids_returns_empty_map(self, client):
+        assert client.get("/api/players/notes", headers=READ).json() == {}
+        assert client.get("/api/players/notes?ids=", headers=READ).json() == {}
+        # Non-numeric junk is ignored, not an error.
+        assert client.get("/api/players/notes?ids=abc,,", headers=READ).json() == {}
+
+    def test_batch_clamps_id_count(self, client):
+        # More than the ceiling is clamped, not rejected — request still 200.
+        many = ",".join(str(i) for i in range(1, 500))
+        resp = client.get(f"/api/players/notes?ids={many}", headers=READ)
+        assert resp.status_code == 200, resp.text
+
+    def test_batch_without_backend_secret_is_401(self, client):
+        # Read endpoint: needs the shared secret, does NOT need admin.
+        resp = client.get("/api/players/notes?ids=1")
+        assert resp.status_code == 401, resp.text
+
+
+def test_parse_ids_dedupes_ignores_junk_and_keeps_first_within_cap():
+    from app.routers.players import _BATCH_IDS_MAX, _parse_ids
+
+    # dedupe (first-seen order), ignore blanks/non-numeric
+    assert _parse_ids("3, 3 ,abc,,1,2,1") == [3, 1, 2]
+    # clamp keeps the FIRST N, not the last
+    over = ",".join(str(i) for i in range(1, _BATCH_IDS_MAX + 51))
+    parsed = _parse_ids(over)
+    assert len(parsed) == _BATCH_IDS_MAX
+    assert parsed[0] == 1 and parsed[-1] == _BATCH_IDS_MAX

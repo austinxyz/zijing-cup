@@ -12,7 +12,7 @@ const LINES: RuleLine[] = [
 
 function person(overrides: Partial<LineupPlayer> = {}): LineupPlayer {
   return {
-    key: "w4",
+    key: "w4", player_id: Number("w4".replace(/\D/g, "")) || 0,
     last_name: "西",
     first_name: "四",
     gender: "F",

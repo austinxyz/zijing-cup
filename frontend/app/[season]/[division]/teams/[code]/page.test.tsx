@@ -15,7 +15,11 @@ vi.mock("@/lib/admin", () => ({
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
-  return { ...actual, getTeamRoster: vi.fn() };
+  return {
+    ...actual,
+    getTeamRoster: vi.fn(),
+    getPlayerNotesBatch: vi.fn(async () => ({})),
+  };
 });
 
 vi.mock("next/navigation", () => ({
@@ -163,5 +167,37 @@ describe("team roster page", () => {
 
     await expect(Page({ params: params() })).rejects.toThrow("NEXT_NOT_FOUND");
     expect(notFound).toHaveBeenCalled();
+  });
+});
+
+describe("team roster — notes surfacing gate", () => {
+  afterEach(() => vi.clearAllMocks());
+
+  it("fetches notes and shows a badge for an unlocked viewer", async () => {
+    const { getPlayerNotesBatch } = await import("@/lib/api");
+    const { canEdit } = await import("@/lib/admin");
+    vi.mocked(canEdit).mockResolvedValue(true);
+    vi.mocked(getTeamRoster).mockResolvedValue(ROSTER);
+    vi.mocked(getPlayerNotesBatch).mockResolvedValue({
+      1: [{ id: 7, category: "weakness", body: "反手弱", created_at: "2026-09-02T09:00:00Z" }],
+    });
+
+    render(await Page({ params: params() }));
+
+    expect(getPlayerNotesBatch).toHaveBeenCalled();
+    // player 1 has a weakness note → 弱点 badge (appears in mobile + desktop paths)
+    expect(screen.getAllByText("弱点").length).toBeGreaterThan(0);
+  });
+
+  it("does NOT fetch notes for a locked viewer", async () => {
+    const { getPlayerNotesBatch } = await import("@/lib/api");
+    const { canEdit } = await import("@/lib/admin");
+    vi.mocked(canEdit).mockResolvedValue(false);
+    vi.mocked(getTeamRoster).mockResolvedValue(ROSTER);
+
+    render(await Page({ params: params() }));
+
+    expect(getPlayerNotesBatch).not.toHaveBeenCalled();
+    expect(screen.queryByText("弱点")).toBeNull();
   });
 });

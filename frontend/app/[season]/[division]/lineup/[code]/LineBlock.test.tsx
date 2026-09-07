@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { LineBlock, type LineSeat } from "./LineBlock";
@@ -103,5 +103,38 @@ describe("LineBlock", () => {
     expect(within(block).getByText(/估/)).toBeTruthy();
     // missing gender renders a neutral dash, not a crash
     expect(within(block).getByText("—")).toBeTruthy();
+  });
+});
+
+describe("LineBlock seat notes marker", () => {
+  const withNotes: [LineSeat, LineSeat] = [
+    {
+      name: "有弱点", gender: "M", utr: "6.00", estimate: false,
+      notes: [
+        { id: 2, category: "weakness", body: "反手弱", created_at: "2026-09-02T09:00:00Z" },
+        { id: 1, category: "strength", body: "正手重", created_at: "2026-08-28T09:00:00Z" },
+      ],
+    },
+    { name: "无评价", gender: "M", utr: "5.80", estimate: false },
+  ];
+
+  it("shows a 评 marker for a seat with notes, none for a seat without", () => {
+    render(<LineBlock line="D1" seats={withNotes} />);
+    const block = screen.getByLabelText("D1");
+    // exactly one 评 marker (the seat with notes)
+    expect(within(block).getAllByText("评")).toHaveLength(1);
+  });
+
+  it("tints the 评 marker as a warning when a weakness note exists", () => {
+    render(<LineBlock line="D1" seats={withNotes} />);
+    const mark = screen.getByText("评");
+    // warning/danger family colour class present
+    expect(mark.className).toMatch(/text-(danger|warning)/);
+  });
+
+  it("opens the read-only timeline on clicking 评", () => {
+    render(<LineBlock line="D1" seats={withNotes} />);
+    fireEvent.click(screen.getByText("评"));
+    expect(screen.getByRole("list", { name: "评价时间线" })).toBeTruthy();
   });
 });

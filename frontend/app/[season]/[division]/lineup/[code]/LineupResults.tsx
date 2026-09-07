@@ -1,4 +1,4 @@
-import type { LineupSearch, RuleLine } from "@/lib/api";
+import type { LineupSearch, PlayerNote, RuleLine } from "@/lib/api";
 import type { SaveLineupAction } from "./SaveLineupButton";
 import {
   BorrowedPlayersNotice,
@@ -29,6 +29,9 @@ interface LineupResultsProps {
   /** Admin: enables the per-candidate 「保存此阵容」 entry. UI only — the write
    *  route is method-gated. */
   canEdit?: boolean;
+  /** Confidential notes by player_id (only populated for an unlocked viewer).
+   *  Threaded to each candidate seat's 「评」 marker. */
+  notesByPlayer?: Record<number, PlayerNote[]>;
   /** Server action bound to (season,division,team); a candidate row supplies
    *  the name and assignment. A server action is serializable across the
    *  server→client boundary — a plain render function is NOT, which is why the
@@ -58,6 +61,7 @@ export function LineupResults({
   lineOrder,
   unconstrainedCeiling,
   canEdit,
+  notesByPlayer,
   saveAction,
 }: LineupResultsProps) {
   const gapToRules = difference(search.ceiling, search.rules_ceiling);
@@ -184,6 +188,7 @@ export function LineupResults({
         bufferTotal={bufferTotal}
         lineOrder={lineOrder}
         canEdit={canEdit}
+        notesByPlayer={notesByPlayer}
         saveAction={saveAction}
       />
 

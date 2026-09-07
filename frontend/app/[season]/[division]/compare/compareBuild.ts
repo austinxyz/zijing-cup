@@ -1,17 +1,24 @@
-import type { LineupPlayer, SavedLineup } from "@/lib/api";
+import type { LineupPlayer, PlayerNote, SavedLineup } from "@/lib/api";
 import { playerName } from "@/lib/name";
 
 /** One side of the comparison: a saved lineup plus its team's roster indexed by
  *  the player key the assignment uses. The key-bearing roster is the lineup
  *  roster (`LineupPlayer`, from getTeamLineups) — saved lineups' assignment uses
- *  those keys, and RosterPlayer (getTeamRoster) has no key. */
+ *  those keys, and RosterPlayer (getTeamRoster) has no key. `player_id` is kept
+ *  so confidential notes can be attached per player. */
 export interface CompareSide {
   savedLineup: SavedLineup;
-  byKey: Map<string, Pick<LineupPlayer, "last_name" | "first_name" | "gender">>;
+  byKey: Map<
+    string,
+    Pick<LineupPlayer, "last_name" | "first_name" | "gender" | "player_id">
+  >;
+  /** Confidential notes by player_id (empty for a locked viewer — but the whole
+   *  compare page is canEdit-gated, so this is populated whenever it renders). */
+  notesByPlayer: Record<number, PlayerNote[]>;
 }
 
 export interface CompareCell {
-  players: { name: string; gender: string | null }[];
+  players: { name: string; gender: string | null; notes: PlayerNote[] }[];
   /** The line's current participation-UTR sum (Decimal string), or null when
    *  this side has no total for the line. */
   sum: string | null;
@@ -49,8 +56,12 @@ function cell(side: CompareSide, line: string): CompareCell {
     // A key with no roster row: the person is gone or the key drifted. Say so
     // rather than render an empty name.
     return p
-      ? { name: playerName(p), gender: p.gender }
-      : { name: "（缺）", gender: null };
+      ? {
+          name: playerName(p),
+          gender: p.gender,
+          notes: side.notesByPlayer[p.player_id] ?? [],
+        }
+      : { name: "（缺）", gender: null, notes: [] };
   });
   const sum = side.savedLineup.line_totals?.[line]?.total ?? null;
   return { players, sum };

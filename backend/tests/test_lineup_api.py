@@ -605,3 +605,23 @@ class TestUnknownTargetsAndTheAbsenceOfWrites:
                 assert method.lower() in {"get", "head", "options"}, (
                     f"{method.upper()} {path} is a write method"
                 )
+
+
+class TestSeatPlayerId:
+    """Seats and roster carry a numeric player_id so the notes-surfacing overlay
+    can look each player up. It must equal the id embedded in the `p{id}` key."""
+
+    def test_candidate_and_roster_seats_expose_player_id(self, client):
+        body = search(client).json()
+
+        def check(player):
+            assert isinstance(player["player_id"], int)
+            # key is f"p{player.id}" — the two must agree.
+            assert player["key"] == f"p{player['player_id']}"
+
+        for player in body["roster"]:
+            check(player)
+        for candidate in body["candidates"]:
+            for pair in candidate["lines"].values():
+                for player in pair:
+                    check(player)

@@ -1,13 +1,16 @@
 import {
   getDivisionRules,
   getDivisionTeams,
+  getPlayerNotesBatch,
   getSavedLineups,
   getTeamLineups,
   type LineupPlayer,
+  type PlayerNote,
   type SavedLineup,
 } from "@/lib/api";
 import { canEdit as canEditCompetition } from "@/lib/admin";
 import { EditModeToggle } from "@/app/[season]/[division]/lineup/[code]/EditModeToggle";
+import { PlayerNotesBadges } from "@/components/notes/PlayerNotesBadges";
 
 import { CompareControls } from "./CompareControls";
 import { buildComparison, type CompareSide } from "./compareBuild";
@@ -104,6 +107,16 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
   }
   const [sideAData, sideBData] = await Promise.all([loadSide(a), loadSide(b)]);
 
+  // Confidential notes for both sides' players, one batch. Reaching here means
+  // the viewer is unlocked (the gate above returned otherwise). Notes are shown
+  // on BOTH sides — reading an opponent's notes is the point of scouting.
+  const notesIds = [
+    ...(sideAData.roster ?? []),
+    ...(sideBData.roster ?? []),
+  ].map((p) => p.player_id);
+  const notesByPlayer: Record<number, PlayerNote[]> =
+    notesIds.length > 0 ? await getPlayerNotesBatch(notesIds) : {};
+
   const lineupA = sideAData.lineups.find((l) => String(l.id) === al) ?? null;
   const lineupB = sideBData.lineups.find((l) => String(l.id) === bl) ?? null;
 
@@ -113,7 +126,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
   ): CompareSide | null {
     if (!lineup || !roster) return null;
     const byKey = new Map<string, LineupPlayer>(roster.map((p) => [p.key, p]));
-    return { savedLineup: lineup, byKey };
+    return { savedLineup: lineup, byKey, notesByPlayer };
   }
   const sideA = makeSide(lineupA, sideAData.roster);
   const sideB = makeSide(lineupB, sideBData.roster);
@@ -186,16 +199,29 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
   );
 }
 
-function Pair({ cell }: { cell: { players: { name: string; gender: string | null }[]; sum: string | null } }) {
+function Pair({
+  cell,
+}: {
+  cell: {
+    players: { name: string; gender: string | null; notes: PlayerNote[] }[];
+    sum: string | null;
+  };
+}) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[12.5px]">
+      <span className="flex flex-wrap items-center gap-x-1 gap-y-1 text-[12.5px]">
         {cell.players.length === 0
           ? "—"
           : cell.players.map((p, i) => (
-              <span key={i}>
-                {i > 0 ? " · " : ""}
-                {p.name} <span className={`font-bold ${gcls(p.gender)}`}>{gtoken(p.gender)}</span>
+              <span key={i} className="inline-flex items-center gap-1">
+                {i > 0 ? <span className="text-muted-foreground">·</span> : null}
+                <span>
+                  {p.name}{" "}
+                  <span className={`font-bold ${gcls(p.gender)}`}>
+                    {gtoken(p.gender)}
+                  </span>
+                </span>
+                <PlayerNotesBadges notes={p.notes} label={`${p.name} · 评价`} />
               </span>
             ))}
       </span>
