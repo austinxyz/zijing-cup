@@ -51,18 +51,10 @@ describe("Sidebar navigation", () => {
     expect(link.textContent).not.toContain("未开放");
   });
 
-  it("renders the unavailable destination as disabled, not as a link", () => {
+  it("has no unavailable nav items left (对手对比 is now a link)", () => {
     renderSidebar();
-
-    // 分析 was replaced by 阵容 (which exists) and 对手对比 (which does not).
-    const item = screen.getByText("对手对比").closest("div");
-    expect(item).not.toBeNull();
-    // A dead link that navigates to a blank or erroring page is worse than
-    // an honestly disabled item — this app has been bitten by one before.
-    expect(item!.querySelector("a")).toBeNull();
-    expect(item).toHaveAttribute("aria-disabled", "true");
-
-    expect(screen.getAllByText("未开放")).toHaveLength(1);
+    // 对手对比 was the last pending item; it now points at /compare.
+    expect(screen.queryByText("未开放")).toBeNull();
   });
 
   it("does not paint the season switcher with the light page background", () => {
@@ -245,35 +237,16 @@ describe("Sidebar 阵容 and 对手对比", () => {
     );
   });
 
-  it("renders 对手对比 as disabled, and no longer offers 分析", () => {
+  it("links 对手对比 to the division's compare page, and no longer offers 分析", () => {
     renderSidebar();
 
-    // 分析 was ambiguous: comparing opponents is exactly what this change
-    // does NOT do, and one item named for both would claim it does.
+    // 分析 was ambiguous: comparing opponents is exactly what this does, but
+    // one item named for both would claim it does. 对手对比 is now implemented.
     expect(screen.queryByText("分析")).toBeNull();
 
-    const item = screen.getByText("对手对比").closest("div");
-    expect(item).not.toBeNull();
-    expect(item!.querySelector("a")).toBeNull();
-    expect(item).toHaveAttribute("aria-disabled", "true");
-  });
-
-  it("says 对手对比 is disabled with colour, not with opacity", () => {
-    renderSidebar();
-
-    // Opacity blends the token into whatever is behind it, so the contrast a
-    // reader actually gets cannot be worked out from the source. This row was
-    // text-sidebar-foreground-dim at opacity-45 — #413f38 on #1c1b18, 1.63:1,
-    // which is close to invisible. Disabled has to be said in colour.
-    // Only the text-carrying elements. The nav icon keeps opacity-85, which
-    // every row uses including the enabled ones — it is not how this row says
-    // "disabled", and it measures 3.98:1, above the 3:1 non-text needs.
-    const item = screen.getByText("对手对比").closest("div")!;
-    const textNodes = [item, ...item.querySelectorAll("span")];
-    for (const node of textNodes) {
-      expect(node.getAttribute("class") ?? "").not.toMatch(/opacity-/);
-    }
-    expect(item.getAttribute("class")).toMatch(/text-sidebar-foreground-dim/);
+    const link = screen.getByRole("link", { name: /对手对比/ });
+    expect(link.getAttribute("href")).toBe("/2026/silver/compare");
+    expect(link.textContent).not.toContain("未开放");
   });
 
   it("marks 阵容 as the current page on the lineup section", () => {

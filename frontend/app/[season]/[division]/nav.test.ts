@@ -16,10 +16,10 @@ describe("navItems", () => {
     expect(admins).toHaveLength(1);
   });
 
-  it("gives 对手对比 no href because it does not exist yet", () => {
+  it("links 对手对比 to the division's compare page", () => {
     const opp = navItems("2025", "silver").find((i) => i.key === "opponents");
-    expect(opp?.href).toBeNull();
-    expect(opp?.pending).toBe(true);
+    expect(opp?.href).toBe("/2025/silver/compare");
+    expect(opp?.pending).toBe(false);
   });
 
   it("opens 阵容 on the team in scope rather than a picker", () => {

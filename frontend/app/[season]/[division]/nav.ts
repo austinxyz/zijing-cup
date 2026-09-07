@@ -8,7 +8,7 @@
  */
 
 /** Which nav destination the current URL is under. */
-export type NavSection = "teams" | "lineup" | "rules" | "players";
+export type NavSection = "teams" | "lineup" | "rules" | "players" | "opponents";
 
 export interface NavItem {
   /** Stable id; also the section it highlights on. */
@@ -70,8 +70,8 @@ export function navItems(
       key: "opponents",
       label: "对手对比",
       icon: SWAP_ICON,
-      href: null,
-      pending: true,
+      href: `${base}/compare`,
+      pending: false,
       admin: false,
     },
     {

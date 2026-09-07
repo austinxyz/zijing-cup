@@ -15,7 +15,7 @@
 - [x] 1.4 GREEN — 补总和/总和差
 - [x] 1.5 RED — 测边界：某侧 `player_gone`（total null 不硬凑、标 status）、某线缺失（占位、差「—」）、缺 key（姓名占位）
 - [x] 1.6 GREEN — 补 status/缺线/缺 key 处理
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs/opponent-compare/spec.md + design.md + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS else FIX + retry
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs/opponent-compare/spec.md + design.md + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS else FIX + retry
 
 ## 2. /compare 页 + 选择器 + gate + 点亮侧栏
 
@@ -26,12 +26,12 @@
 - **Threshold**: 70
 
 - [ ] 2.0 CONTRACT — write openspec/changes/opponent-compare/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-06-opponent-compare-mocks.html；记 token 与文案（「我方」「对手」「线位」「差距」「总和」「选一支队…」空态、陈旧状态徽标、移动卡片）
+- [x] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-06-opponent-compare-mocks.html；记 token 与文案（「我方」「对手」「线位」「差距」「总和」「选一支队…」空态、陈旧状态徽标、移动卡片）
 - [ ] 2.2 RED — 测 `nav.ts`：opponents 项 `pending:false` 且 href 指向 `/{s}/{d}/compare`；测 Sidebar「对手对比」是链接不再未开放
 - [ ] 2.3 GREEN — 改 `nav.ts` 点亮 opponents
-- [ ] 2.4 RED — 测 `/compare` page：未 canEdit 重定向；canEdit 且未选满出引导空态；选满两侧出逐线并排（getSavedLineups/getTeamRoster 走 mock）
-- [ ] 2.5 GREEN — 实现 `compare/page.tsx` + `CompareControls` + `compare/error.tsx`
-- [ ] 2.6 VISUAL DIFF — bring up dev stack；解锁本比赛；给同组两队各存一套阵容后开 /compare，比对逐线表 + 选择器 + 陈旧标注 + 空态与 mock；修 token/文案漂移
+- [x] 2.4 RED — 测 `/compare` page：未 canEdit 重定向；canEdit 且未选满出引导空态；选满两侧出逐线并排（getSavedLineups/getTeamRoster 走 mock）
+- [x] 2.5 GREEN — 实现 `compare/page.tsx` + `CompareControls` + `compare/error.tsx`
+- [x] 2.6 VISUAL DIFF — bring up dev stack；解锁本比赛；给同组两队各存一套阵容后开 /compare，比对逐线表 + 选择器 + 陈旧标注 + 空态与 mock；修 token/文案漂移
 - [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs/opponent-compare/spec.md + specs/app-shell/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
 
 ## 3. 验证

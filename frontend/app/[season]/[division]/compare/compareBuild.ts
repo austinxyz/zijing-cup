@@ -1,11 +1,13 @@
-import type { RosterPlayer, SavedLineup } from "@/lib/api";
+import type { LineupPlayer, SavedLineup } from "@/lib/api";
 import { playerName } from "@/lib/name";
 
 /** One side of the comparison: a saved lineup plus its team's roster indexed by
- *  the player key the assignment uses (saved lineups store keys, not names). */
+ *  the player key the assignment uses. The key-bearing roster is the lineup
+ *  roster (`LineupPlayer`, from getTeamLineups) — saved lineups' assignment uses
+ *  those keys, and RosterPlayer (getTeamRoster) has no key. */
 export interface CompareSide {
   savedLineup: SavedLineup;
-  byKey: Map<string, Pick<RosterPlayer, "last_name" | "first_name" | "gender">>;
+  byKey: Map<string, Pick<LineupPlayer, "last_name" | "first_name" | "gender">>;
 }
 
 export interface CompareCell {
