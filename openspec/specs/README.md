@@ -314,6 +314,15 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 ---
 
+### `player-notes` ✅ 已实现 · 🌐 待远程迁移
+**用户故事**: 作为队长，我想给一名球员记主观教练评价——优点、弱点、适合谁搭档等——并让它随时间叠加（一条条追加、带时间），日后排阵/裁决时回看；这些评价是机密，只有解锁本比赛的人能看/写。
+**覆盖需求**: docs/superpowers/specs/2026-09-06-player-notes-requirements.md（分类标签+文本、追加式时间线不覆盖不就地编辑、机密按 canEdit gate、挂球员全局跨赛季、新表+GET/POST/DELETE）
+**后台**: `zijing_cup.player_notes` 单表（`player_id` FK players on delete cascade、`category` check in(strength/weakness/partner/other)、`body` check 长度 1–2000、`created_at` server_default now() not null、`(player_id, created_at desc)` 索引）。`routers/players.py`：GET 列出（`created_at desc, id desc`）、POST 追加（`NoteIn` 用 `Literal[*NOTE_CATEGORIES]` 单一来源 + body trim 非空 + max_length 2000 挡 422 不落 500）、DELETE 按 (player_id, note_id) 删一条——**无编辑端点**（时间线保真）；写路由靠 `WRITE_METHODS` admin 中间件自动受保护。
+**前台**: 球员详情右栏「评价」区（`NotesSection`）：追加表单（类别下拉+文本+追加，`EditOnly` gate）+ 倒序时间线（类别中文标签+文本+时间+就地确认删除）+ 空态。机密门在 page 层：仅 `canEdit` 时 `getPlayerNotes` 取数并传入，未解锁传 `null` → 只渲染「评价是机密」占位、不发取数请求。`lib/api.ts` `getPlayerNotes` 非 ok 降级 `[]`（远程迁移滞后不打崩详情页）；server actions `addPlayerNote`/`deletePlayerNote` 经 `adminWrite` scope `{season,division}`、`revalidatePath(..., "layout")` 刷新列表页与 `[id]` 深链两条路由。
+**验收标准**: 追加不覆盖/倒序/category 约束/空 body 拒/超长拒 422/删一条其余保留/跨玩家不可删/鉴权（GET 需 backend secret、POST/DELETE 需 admin secret）全绿；本地真实数据 e2e 三类追加+删除+机密门（未解锁不发取数请求）实测过。**远程共享 Supabase 需去 Dashboard SQL Editor 手动执行 `20260906120000_create_player_notes.sql` 后写入才生效**（前端读降级为空、详情页不 500，但追加/删除在建表前会 500）。
+
+---
+
 ## 规划中的能力（路线图）
 
 `lineup-engine`、`lineup-ui` 与 `current-utr-source` 曾列在这里，现已实现，条目见上方。
