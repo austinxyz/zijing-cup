@@ -32,7 +32,7 @@
 - [x] 2.4 RED — 测 `/compare` page：未 canEdit 重定向；canEdit 且未选满出引导空态；选满两侧出逐线并排（getSavedLineups/getTeamRoster 走 mock）
 - [x] 2.5 GREEN — 实现 `compare/page.tsx` + `CompareControls` + `compare/error.tsx`
 - [x] 2.6 VISUAL DIFF — bring up dev stack；解锁本比赛；给同组两队各存一套阵容后开 /compare，比对逐线表 + 选择器 + 陈旧标注 + 空态与 mock；修 token/文案漂移
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs/opponent-compare/spec.md + specs/app-shell/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + specs/opponent-compare/spec.md + specs/app-shell/spec.md + design.md + diff; review + score (threshold 70); ≥70 PASS else FIX + retry
 - [x] 2.F1 FIX — TopNav.test.tsx: update line 65-71 test to expect link instead of disabled (match Sidebar.test.tsx changes)
 - [x] 2.F2 AUDIT — CompareControls: verify soft-nav controlled-select sync or add key pattern
 

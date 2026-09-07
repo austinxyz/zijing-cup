@@ -3,9 +3,10 @@
 import { Button, Card, CardDescription, CardHeader, CardTitle } from "@/components/ui";
 
 /**
- * Scoped to the player workbench so a failed fetch replaces only this pane —
- * the sidebar and nav stay. Without a route-local boundary a cold-backend
- * timeout would blow past to the app-wide boundary and blank the whole window.
+ * Scoped to the compare page so a failed fetch (teams / saved lineups / roster)
+ * replaces only this pane — the sidebar and nav stay. Without a route-local
+ * boundary a cold-backend timeout would blow past to the app-wide boundary and
+ * blank the whole window.
  */
 export default function CompareError({
   error,
