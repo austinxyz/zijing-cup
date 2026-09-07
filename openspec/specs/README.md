@@ -108,6 +108,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **player-win-loss（2026-09-04）**: 只读花名册加「胜率」列——`胜-负` + 百分比（`胜/(胜+负)` 前端派生、四舍五入），任一为 null（从未导入）显示 `—`（**不**显示 `0-0`/`0%`），真的 0-0 显示 `0-0` 但百分比 `—`（不除零）。桌面表 + 手机卡片共用 `lib/winLoss.ts` 的 `formatWinLoss`（`== null` 松判，兼容旧响应缺字段避免 `NaN%`）；`RosterPlayer` 类型加 `wins/losses`（后端漂移红 tsc）。导入差异屏字段计数标签补胜/负。
 
+**team-add-remove-player（2026-09-06）**: 队伍页编辑模式加「加入队员」控件与逐行「移出」——接既有后端端点（`add_membership`/`remove_membership`/`create_player`），**无后端改动、无 migration**。加入：`AddPlayerControl` 搜全库姓名（`searchPlayersForAdd`→`getPlayers`）选中 → `addExistingPlayerToTeam`（POST membership，body 带 `team_id`）；搜不到「新建」（姓/名/性别，gender `""→null`）→ `createAndAddPlayer`（先 POST /players 取 id 再 POST membership）。移出：行内「移出」→ 就地「确认移出/取消」→ `removePlayerFromTeam`；DELETE 需 `membership_id` 而 `RosterPlayer` 不带它，故 server action 用 `getPlayer(player_id)` 按 `team_id` 定位那条 membership 再删（每队每人至多一条，唯一）——**前端解析、不改后端 roster 响应**。加/移出经 `adminWrite` 按比赛 scope 判权，成功靠 server action 的 `revalidatePath` 自动刷新（不拼本地陈旧态）；后端拒绝（已在本队 409 / 锁季 409）就地 role=alert 显示 detail。只在编辑模式渲染，查看模式无控件。队员本人与参赛 UTR 在移出后保留（离队非离赛事），可再加回。**与 CSV 名单导入不同**：那边按规范化姓名自动匹配（`players.migrate`+`merge_rules.identity_key`，匹配不到才新建）；这里是人显式选已有或显式新建。
+
 ### `lineup-search` ✅ 已实现 · 🌐 已上线
 **用户故事**: 作为队长，我想给出几对已经定下的搭档和本场上不了的人，让系统在剩下的空间里把五条线补齐，并告诉我这套限制下最强能排到多少、有多少种十人组合能达到它；如果根本凑不出合法阵容，我要知道是哪条线卡住了，而不是收到一个空列表让我猜是没搜到还是没有解。
 
