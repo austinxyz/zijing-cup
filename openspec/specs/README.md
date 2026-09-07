@@ -314,7 +314,7 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 ---
 
-### `player-notes` ✅ 已实现 · 🌐 待远程迁移
+### `player-notes` ✅ 已实现 · 🌐 已上线
 **用户故事**: 作为队长，我想给一名球员记主观教练评价——优点、弱点、适合谁搭档等——并让它随时间叠加（一条条追加、带时间），日后排阵/裁决时回看；这些评价是机密，只有解锁本比赛的人能看/写。
 **覆盖需求**: docs/superpowers/specs/2026-09-06-player-notes-requirements.md（分类标签+文本、追加式时间线不覆盖不就地编辑、机密按 canEdit gate、挂球员全局跨赛季、新表+GET/POST/DELETE）
 **后台**: `zijing_cup.player_notes` 单表（`player_id` FK players on delete cascade、`category` check in(strength/weakness/partner/other)、`body` check 长度 1–2000、`created_at` server_default now() not null、`(player_id, created_at desc)` 索引）。`routers/players.py`：GET 列出（`created_at desc, id desc`）、POST 追加（`NoteIn` 用 `Literal[*NOTE_CATEGORIES]` 单一来源 + body trim 非空 + max_length 2000 挡 422 不落 500）、DELETE 按 (player_id, note_id) 删一条——**无编辑端点**（时间线保真）；写路由靠 `WRITE_METHODS` admin 中间件自动受保护。
