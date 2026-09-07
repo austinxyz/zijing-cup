@@ -62,12 +62,12 @@ describe("TopNav", () => {
     expect(current.getAttribute("aria-current")).toBe("page");
   });
 
-  it("renders 对手对比 as disabled, not a link", () => {
+  it("renders 对手对比 as a link to the compare page", () => {
     renderTopNav();
-    const opp = screen.getByText("对手对比").closest("[aria-disabled]");
-    expect(opp).not.toBeNull();
-    expect(opp!.querySelector("a")).toBeNull();
-    expect(screen.getByText("未开放")).toBeTruthy();
+    const link = screen.getByRole("link", { name: /对手对比/ });
+    expect(link.getAttribute("href")).toBe("/2025/silver/compare");
+    // 对手对比 was the last pending tab; nothing is 未开放 now.
+    expect(screen.queryByText("未开放")).toBeNull();
   });
 
   it("gives every tab a 44px touch target", () => {
