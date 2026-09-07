@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>player-notes mocks</title>
+<style>
+  :root{
+    --bg:#f6f4f0;--fg:#1a1917;--surface:#fff;--surface-muted:#f2efe9;--border:#e4e0d8;
+    --primary:#9c3417;--primary-fg:#fff;--muted:#6b665d;--muted-fg:#706a61;
+    --danger:#b3261e;--danger-surface:#fbf0ee;--danger-border:#f0cfc9;
+    --success:#3a6b4d;--success-surface:#eef4f0;--success-border:#cfe2d6;
+    --warning:#8a6508;--warning-surface:#fbf5e6;--warning-border:#ecd9a4;
+    --male:#1f5fd0;--r:8px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 -apple-system,"Segoe UI",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;padding:28px}
+  h1{font-size:18px;margin:0 0 4px}
+  h2.section{font-size:14px;margin:30px 0 8px}
+  .caption{color:var(--muted-fg);font:11px/1.5 ui-monospace,Menlo,monospace;margin:0 0 12px}
+  .mono{font-family:ui-monospace,Menlo,monospace}
+  .card{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);max-width:620px;overflow:hidden}
+  .head{border-bottom:1px solid var(--border);px:12;padding:8px 14px;font-size:12.5px;font-weight:600}
+  .add{border-bottom:1px solid var(--border);background:var(--surface-muted);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .row{display:flex;gap:8px}
+  .sel{height:32px;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:0 8px;font-size:12.5px}
+  .ta{flex:1;min-height:36px;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:6px 8px;font-size:12.5px;resize:vertical;font-family:inherit}
+  .btn{height:32px;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:0 12px;font-size:12.5px;cursor:pointer}
+  .btn.pri{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+  .btn.sm{height:24px;padding:0 8px;font-size:11px}
+  .btn.dgr{border-color:var(--danger-border);background:var(--danger-surface);color:var(--danger)}
+  ul{list-style:none;margin:0;padding:0}
+  li{padding:10px 14px;border-bottom:1px solid var(--border)}
+  li:last-child{border-bottom:0}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
+  .tag{font-size:10.5px;border-radius:999px;padding:1px 8px;border:1px solid var(--border)}
+  .tag.s{background:var(--success-surface);border-color:var(--success-border);color:var(--success)}
+  .tag.w{background:var(--danger-surface);border-color:var(--danger-border);color:var(--danger)}
+  .tag.p{background:#eef2fb;border-color:#cfdcf5;color:var(--male)}
+  .tag.o{background:var(--surface-muted);color:var(--muted)}
+  .when{font:10.5px ui-monospace;color:var(--muted-foreground);color:var(--muted-fg)}
+  .body{font-size:12.5px;color:var(--fg)}
+  .confirm{display:inline-flex;align-items:center;gap:6px;background:var(--danger-surface);border:1px solid var(--danger-border);border-radius:6px;padding:2px 8px;color:var(--danger);font-size:11px}
+  .phone{max-width:340px}
+</style>
+</head>
+<body>
+
+<h1>player-notes — 视觉稿</h1>
+<div class="caption">队员详情右栏新增「评价」区。分类标签 + 文本 + 时间，追加式时间线（最新在上）。机密：解锁本比赛才看得到/写。</div>
+
+<h2 class="section">桌面 · 评价区（编辑模式，已解锁）</h2>
+<div class="card">
+  <div class="head" style="padding:8px 14px">评价</div>
+  <div class="add">
+    <div class="row">
+      <select class="sel"><option>优点</option><option>弱点</option><option>适合搭档</option><option>其他</option></select>
+      <textarea class="ta" placeholder="写一条评价…（如：反手稳，网前果断）"></textarea>
+    </div>
+    <button class="btn pri" style="align-self:flex-start">追加</button>
+  </div>
+  <ul>
+    <li>
+      <div class="top"><span class="tag p">适合搭档</span><span class="when">2026-09-06 14:20</span></div>
+      <div class="body">和 Zong Qingqing 打混双很稳，她网前他后场压制。</div>
+      <div style="margin-top:5px"><button class="btn sm dgr">删除</button></div>
+    </li>
+    <li>
+      <div class="top"><span class="tag w">弱点</span><span class="when">2026-09-02 09:11</span></div>
+      <div class="body">二发偏软，遇强对手容易被压反手。</div>
+      <div style="margin-top:5px"><span class="confirm">删除这条？<button class="btn sm dgr">确认</button><button class="btn sm">取消</button></span></div>
+    </li>
+    <li>
+      <div class="top"><span class="tag s">优点</span><span class="when">2026-08-28 20:03</span></div>
+      <div class="body">正手进攻强，跑动积极，关键分心态好。</div>
+      <div style="margin-top:5px"><button class="btn sm dgr">删除</button></div>
+    </li>
+  </ul>
+</div>
+
+<h2 class="section">桌面 · 还没有评价（空态）</h2>
+<div class="card">
+  <div class="head" style="padding:8px 14px">评价</div>
+  <div class="add">
+    <div class="row">
+      <select class="sel"><option>优点</option><option>弱点</option><option>适合搭档</option><option>其他</option></select>
+      <textarea class="ta" placeholder="写一条评价…"></textarea>
+    </div>
+    <button class="btn pri" style="align-self:flex-start">追加</button>
+  </div>
+  <div style="padding:18px 14px;text-align:center;color:var(--muted);font-size:12.5px">还没有评价，追加第一条。</div>
+</div>
+
+<h2 class="section">未解锁（查看模式 / 未解锁本比赛）</h2>
+<div class="card">
+  <div class="head" style="padding:8px 14px">评价</div>
+  <div style="padding:18px 14px;text-align:center;color:var(--muted);font-size:12.5px">评价是机密，解锁本比赛后可见。</div>
+</div>
+<div class="caption" style="max-width:620px">未解锁时整个评价区不取数、不渲染任何评价内容，只有这行提示（与已存阵容一致）。</div>
+
+<h2 class="section">移动 · 评价区</h2>
+<div class="card phone">
+  <div class="head" style="padding:8px 14px">评价</div>
+  <div class="add">
+    <select class="sel" style="width:100%"><option>优点</option><option>弱点</option><option>适合搭档</option><option>其他</option></select>
+    <textarea class="ta" placeholder="写一条评价…"></textarea>
+    <button class="btn pri">追加</button>
+  </div>
+  <ul>
+    <li>
+      <div class="top"><span class="tag s">优点</span><span class="when">08-28</span></div>
+      <div class="body">正手进攻强，关键分心态好。</div>
+      <div style="margin-top:5px"><button class="btn sm dgr">删除</button></div>
+    </li>
+  </ul>
+</div>
+
+</body>
+</html>
