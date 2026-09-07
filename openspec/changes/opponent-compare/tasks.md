@@ -8,13 +8,13 @@
 - **Code**: 纯函数 `buildComparison(lineOrder, sideA, sideB)`（side = {savedLineup, byKey:Map<key,RosterPlayer>}）→ 逐线 rows + totals；UTR 差用 `Number(值字符串)` 相减**仅供显示**（两位小数、不回写、不判定），两侧该线都有 `line_totals[line].value` 才算差否则「—」；总和差同理（两侧 total 非 null）；`player_gone`→total null 不硬凑；姓名经 byKey 解析，缺 key→占位。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/opponent-compare/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
-- [ ] 1.1 RED — `compare/compareBuild.test.ts`：两侧各一套阵容 + byKey，`buildComparison` 逐线返回两对（姓名+性别+线和）与差（我−对手）。断言失败（函数未定义）
-- [ ] 1.2 GREEN — 实现 `buildComparison`（逐线配对 + 姓名解析 + 线和/差）
-- [ ] 1.3 RED — 测底部总和 + 总和差；两侧 total 都在才算，缺则 null/「—」
-- [ ] 1.4 GREEN — 补总和/总和差
-- [ ] 1.5 RED — 测边界：某侧 `player_gone`（total null 不硬凑、标 status）、某线缺失（占位、差「—」）、缺 key（姓名占位）
-- [ ] 1.6 GREEN — 补 status/缺线/缺 key 处理
+- [x] 1.0 CONTRACT — write openspec/changes/opponent-compare/contracts/group-1.md with the ### Contract block above; confirm all three fields non-empty
+- [x] 1.1 RED — `compare/compareBuild.test.ts`：两侧各一套阵容 + byKey，`buildComparison` 逐线返回两对（姓名+性别+线和）与差（我−对手）。断言失败（函数未定义）
+- [x] 1.2 GREEN — 实现 `buildComparison`（逐线配对 + 姓名解析 + 线和/差）
+- [x] 1.3 RED — 测底部总和 + 总和差；两侧 total 都在才算，缺则 null/「—」
+- [x] 1.4 GREEN — 补总和/总和差
+- [x] 1.5 RED — 测边界：某侧 `player_gone`（total null 不硬凑、标 status）、某线缺失（占位、差「—」）、缺 key（姓名占位）
+- [x] 1.6 GREEN — 补 status/缺线/缺 key 处理
 - [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + specs/opponent-compare/spec.md + design.md + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores; ≥80 PASS else FIX + retry
 
 ## 2. /compare 页 + 选择器 + gate + 点亮侧栏
