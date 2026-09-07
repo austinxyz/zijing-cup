@@ -48,6 +48,21 @@ HTTP 侧只读：`GET /api/seasons`（赛季×组别索引，驱动切换器）�
 
 **mobile-shell（2026-08-31）**: < 768px 时侧栏变形为顶栏 + 一条 tab 导航（队伍 / 阵容 / 对手对比 / 赛制规则；队员管理**不上** tab 条，管理界面不做手机版式，代价是手机上无入口到达它）。一份 nav 数据源喂两个呈现组件（`Sidebar` / `TopNav`），tab 少一项是消费侧显式过滤而非漏列。壳的高度模型重定：`100dvh`（保留 `100vh` 回退）、窄视口不施加 `min-h-[640px]`、滚动容器放在顶栏之下那层——三者缺一，内容会被 `overflow-hidden` 静默裁掉且不出滚动条。顺带修三个既有对比度缺陷（见下），并把 token×底色对比度写成承重测试 `globals.contrast.test.ts`。
 
+**opponent-compare（2026-09-06）**: 「对手对比」从禁用占位点亮为真链接（`nav.ts` 的 opponents `pending:false` + `href:${base}/compare`；`NavSection` 加 `opponents`；`ActiveSidebar` 把 `compare` 段映射到 opponents 高亮）。**一份 nav 数据、两个消费组件**这条这次咬了一口：改了 `pending` 标志后 `Sidebar.test`/`nav.test` 更新了、`TopNav.test` 漏了（仍断言「对手对比」禁用），group-2 评审才抓到——动共享 nav 标志时两个消费者的测试都要一起改。此后再无禁用 nav 项。
+
+---
+
+### `opponent-compare` ✅ 已实现 · 🌐 已上线
+**用户故事**: 作为队长/负责人（已解锁本比赛），我想把自己准备的一套阵容和预判对手会上的一套（提前给对手队存好的某套已存阵容）逐线摆一起，看每条线领先/落后多少，据此调整排布。
+
+**覆盖需求**: docs/superpowers/specs/2026-09-06-opponent-compare-requirements.md（/compare 页、两侧队+已存阵容选择、逐线只摆事实、当前值+陈旧标注、canEdit gate）
+
+**后台**: 无（全只读复用现有端点）。无新表、无 migration。
+
+**前台**: `app/[season]/[division]/compare/`。`page.tsx`（server）读 searchParams（`a`/`al`/`b`/`bl`）→ 并发取 `getDivisionTeams`/`getDivisionRules` + 每已选队 `getSavedLineups` + `getTeamLineups`（后者 `.roster` 是带 `key` 的 `LineupPlayer[]`——已存阵容 `assignment` 用的是这个 key，`getTeamRoster` 的 `RosterPlayer` **没有** key）→ 纯函数 `buildComparison(lineOrder, sideA, sideB)` 逐线配对。`CompareControls`（client）两侧「队+阵容」select，状态全在 URL、软导航、改队清该侧阵容 id。逐线差 = 我方线和 − 对手线和，`Number()` 相减仅供显示（带符号两位小数），两侧该线都有值才算否则「—」；总和差同理。已存阵容是**管理员机密**，故整页按 `canEdit` gate——未解锁**就地渲染锁定态 + `EditModeToggle` 解锁入口**（不 redirect、不显示任何阵容、不发机密请求），解锁刷新即进对比。线位按规则线序对齐；某侧 `utr_moved`/`illegal`/`player_gone` 标状态、`player_gone` 不显示假总和。
+
+**验收标准**: 未解锁看到锁定态而非被弹走；选两侧后逐线并排（姓名+性别+线和 | 带符号差 | 对手）+ 底部总和差；名字经各队 roster 解析、线序按规则；陈旧/非法阵容标状态；条件在 URL 可分享。真实数据实测（2025 银组 BUAA vs HUST，各 seed 一套阵容）：逐线 + 差 + 已非法徽标正确。**不做**：名单实力对比（后续）、胜负预测、引擎解对手最优。
+
 ---
 
 ### `team-roster` ✅ 已实现 · 🌐 已上线
