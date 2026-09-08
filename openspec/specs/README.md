@@ -177,6 +177,8 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 **mobile-shell（2026-08-31）**: 窄视口下排阵页**结果打底**，锁定/排除控件收进底部抽屉（`role=dialog`）；关闭态一条摘要**点名到人**（「已锁 陈嘉禾·吴普强 · 排除 …」，不只给数量——受约束结果与无约束最优在屏上长得一样）。改约束不自动搜索（沿用既有 GET form 的显式提交，一次搜索在冷启动免费实例上是整解）。抽屉自带滚动、44px 目标；桌面仍是左栏控件。
 
+**mobile-polish（2026-09-07）**: 排阵页顶部信息条在 mobile 竖排堆叠（`flex-col` → `md:flex-row`），`五线 cap … · 全队 buffer … · 搭档差距 …` 那行拿到整宽后按词折行（之前逐字竖成一长列），`参赛 UTR · 赛前冻结` 注解 `hidden md:inline`；已存阵容卡片与线块网格补 `min-w-0`（+ LineBlock 既有 `truncate`）消窄屏横向溢出，线块保持两列。只加 mobile-first 基类 + `md:` 覆盖，桌面 no-op。
+
 **infeasibility-detail（2026-09-01）**: `NoSolution` 从光秃秃的「{线}没有任何合法搭档」升级成**原因 + 归因**：读后端 `infeasibility.reasons`，客观原因走 warning 档（`warning`/`warning-surface`/`warning-border`）、资格类规则原因走中性档（`muted`/`surface-muted`），归因 chips 只在有 `attributed` 时出现，点名 + 去向（排除用 danger），固定顺序人手→cap→差距→资格。既有免责声明句保留；后端没给 `infeasibility` 时退回原 `placements` 呈现。数值原样取自后端字符串，前端不做数值比较。对比度实测桌面与 375 全 ≥4.5（reason 16.15 / danger chip 6.54 / 中性档 4.66），无横向溢出。归因显示名由后端把 `Candidate.name`（tab 拼 last/first）格成 `playerName` 同款 `last first`。
 
 **lineup-results-redesign（2026-09-01）**: 候选阵容从 20 张叠卡改成**桌面对比表**（真 `<table>`+`table-fixed`：行=候选、列=名次/总和/buffer + 五线；列对齐可竖扫「谁在 D1」，同分不同搭配一眼分辨；名字不换行截断带 `title`，表头滚动钉住，表体自带滚动）与**手机紧凑行**（名次+总和+D1 签名+代价角标，点开展开五线纵向 + buffer）。既有合法性信号不丢，但密集视图里逐字「估算」改成紧凑角标（数字 `˟`、整套「估」badge / 含估算 flag），完整句「含 N 个估算值，合法性待总表确认」挪到图例/悬停/手机展开态保留一处——标记不省略、整句不删只挪（spec MODIFIED 放宽了这一条）。判定 helper 抽 `candidate.ts` 两套 DOM 共用，`CandidateCard` 退役；不重排候选（`keep=20`）。纯前端，不动后端。另：锁定搭档的下拉选人改成先按性别（男→女→未填）、组内按 UTR 从高到低（`orderForSelect`，数值比非字符串比；排除 checkbox 仍按后端序）。
