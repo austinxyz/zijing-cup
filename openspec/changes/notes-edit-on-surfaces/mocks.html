@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>notes-edit-on-surfaces — roster 编辑模式就地改评价</title>
+<style>
+  :root{
+    --surface:#ffffff; --surface-muted:#f2efe9; --border:#e4e0d8;
+    --foreground:#221f1a; --muted:#6b665d; --muted-fg:#706a61; --background:#f6f4f0;
+    --primary:#9c3417; --primary-fg:#fff;
+    --danger:#b3261e; --danger-surface:#fbf0ee; --danger-border:#f0cfc9;
+    --success:#3a6b4d; --success-surface:#eef4f0; --success-border:#cfe2d6;
+    --warning:#8a6508; --warning-surface:#fbf5e6; --warning-border:#ecd9a4;
+    --partner:#3a5a86; --partner-surface:#eef2f8; --partner-border:#c9d6ea;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--background);color:var(--foreground);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;padding:24px}
+  h1{font-size:18px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:12.5px;margin:0 0 20px;max-width:760px}
+  h2.section{font-size:13px;color:var(--muted);margin:26px 0 8px;border-top:1px solid var(--border);padding-top:14px}
+  .caption{color:var(--muted);font-size:12px;margin:6px 0 14px;max-width:720px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;max-width:640px}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)}
+  .row:last-child{border-bottom:0}
+  .nm{font-size:13px;min-width:120px}
+  .g{color:var(--muted);font-size:12px}
+  .utr{font-family:ui-monospace,monospace;font-size:12.5px;margin-left:auto}
+  .bd{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 6px;border-radius:999px;border:1px solid;cursor:pointer}
+  .bd .dot{width:7px;height:7px;border-radius:50%}
+  .bd.w{color:var(--warning);background:var(--warning-surface);border-color:var(--warning-border)} .bd.w .dot{background:var(--warning)}
+  .bd.s{color:var(--success);background:var(--success-surface);border-color:var(--success-border)} .bd.s .dot{background:var(--success)}
+  .bd .n{font-variant-numeric:tabular-nums;opacity:.8}
+  /* new: add-note entry for a note-less player, edit mode only */
+  .addnote{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 8px;border-radius:999px;
+    border:1px dashed var(--border);background:var(--surface);color:var(--muted);cursor:pointer}
+  /* editable popover */
+  .pop{max-width:300px;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.12);overflow:hidden}
+  .pop .ph{padding:8px 12px;border-bottom:1px solid var(--border);font-size:11.5px;color:var(--muted)}
+  .form{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface-muted)}
+  .form select,.form textarea{border:1px solid var(--border);border-radius:6px;background:var(--surface);
+    font:inherit;font-size:12.5px;padding:5px 8px}
+  .form textarea{resize:vertical;min-height:42px}
+  .form .btn{align-self:flex-start;background:var(--primary);color:var(--primary-fg);border:0;border-radius:6px;
+    font-size:12px;padding:5px 12px;cursor:pointer}
+  .pop ul{list-style:none;margin:0;padding:0;max-height:220px;overflow:auto}
+  .pop li{padding:9px 12px;border-bottom:1px solid var(--border)} .pop li:last-child{border-bottom:0}
+  .pop .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .pop .when{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted-fg)}
+  .pop .body{font-size:12.5px;margin-top:4px}
+  .tag{font-size:10.5px;padding:1px 6px;border-radius:999px;border:1px solid}
+  .tag.w{color:var(--warning);background:var(--warning-surface);border-color:var(--warning-border)}
+  .tag.s{color:var(--success);background:var(--success-surface);border-color:var(--success-border)}
+  .del{font-size:11px;color:var(--danger);background:none;border:0;cursor:pointer;padding:0;margin-top:5px}
+  .confirm{font-size:11px;color:var(--muted);margin-top:5px;display:inline-flex;gap:6px;align-items:center}
+  .confirm .yes{color:var(--danger);border:1px solid var(--danger-border);background:var(--danger-surface);border-radius:6px;padding:1px 7px;cursor:pointer}
+  .confirm .no{border:1px solid var(--border);background:var(--surface);border-radius:6px;padding:1px 7px;cursor:pointer}
+  .frame{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  .phone{width:340px;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface)}
+  .modebar{display:flex;gap:8px;align-items:center;padding:8px 14px;background:var(--surface-muted);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .pill{border:1px solid var(--success-border);background:var(--success-surface);color:var(--success);border-radius:999px;padding:1px 8px;font-size:11px}
+</style>
+</head>
+<body>
+
+<h1>notes-edit-on-surfaces — roster 编辑模式就地改评价</h1>
+<p class="sub">只在<b>队伍名单页</b>、只在<b>编辑模式</b>：评价从只读变可就地追加/删除。排阵、对手对比保持只读。
+复用详情页同款追加表单 + 就地确认删除，复用既有 <code>addPlayerNote</code>/<code>deletePlayerNote</code>。</p>
+
+<h2 class="section">1 · roster 编辑模式（已解锁）</h2>
+<p class="caption">有评价的点小标、无评价的点「＋记评价」——都打开同一个<b>可编辑</b>弹层。查看模式下这些入口不显示。</p>
+<div class="card">
+  <div class="modebar"><span class="pill">✓ 编辑模式</span> 名字旁小标可点开改；无评价的显示「＋记评价」</div>
+  <div class="row">
+    <span class="nm">Cai Ying</span><span class="g">男</span>
+    <span class="bd w" title="点开可编辑"><span class="dot"></span>弱点<span class="n">1</span></span>
+    <span class="utr">7.24</span>
+  </div>
+  <div class="row">
+    <span class="nm">Lin Roger</span><span class="g">男</span>
+    <span class="addnote">＋记评价</span>
+    <span class="utr">6.83</span>
+  </div>
+</div>
+
+<h2 class="section">2 · 可编辑弹层（编辑模式）</h2>
+<p class="caption">顶部追加表单（类别下拉 + 文本 + 追加，空文本禁用）；下面倒序时间线，每条可就地确认删除。
+与球员详情页「评价」区同款。</p>
+<div class="pop">
+  <div class="ph">Cai Ying · 评价</div>
+  <div class="form">
+    <select><option>优点</option><option selected>弱点</option><option>适合搭档</option><option>其他</option></select>
+    <textarea placeholder="写一条评价…（如：反手稳，网前果断）"></textarea>
+    <button class="btn">追加</button>
+  </div>
+  <ul>
+    <li>
+      <div class="top"><span class="tag w">弱点</span><span class="when">2026-09-07 15:31</span></div>
+      <div class="body">反手上旋不稳，二发保守</div>
+      <span class="confirm">删除这条？<button class="yes">确认</button><button class="no">取消</button></span>
+    </li>
+    <li>
+      <div class="top"><span class="tag s">优点</span><span class="when">2026-08-28 20:03</span></div>
+      <div class="body">正手落点深</div>
+      <button class="del">删除</button>
+    </li>
+  </ul>
+</div>
+
+<h2 class="section">3 · 查看模式 / 排阵 / 对手对比（仍只读）</h2>
+<p class="caption">同一个弹层，不传可编辑标志：无追加表单、无删除按钮，只有倒序时间线。</p>
+<div class="pop" style="max-width:300px">
+  <div class="ph">Cai Ying · 评价</div>
+  <ul>
+    <li><div class="top"><span class="tag w">弱点</span><span class="when">2026-09-07 15:31</span></div>
+      <div class="body">反手上旋不稳，二发保守</div></li>
+    <li><div class="top"><span class="tag s">优点</span><span class="when">2026-08-28 20:03</span></div>
+      <div class="body">正手落点深</div></li>
+  </ul>
+</div>
+
+<h2 class="section">4 · 移动端（编辑模式）</h2>
+<p class="caption">悬停不可用 → 点小标/「＋记评价」打开全宽弹层；表单与删除同桌面。</p>
+<div class="frame">
+  <div class="phone">
+    <div class="modebar"><span class="pill">✓ 编辑模式</span></div>
+    <div class="row" style="flex-wrap:wrap">
+      <span class="nm">Lin Roger</span><span class="g">男</span><span class="utr">6.83</span>
+      <span class="addnote" style="flex-basis:100%;margin-top:6px">＋记评价</span>
+    </div>
+    <div class="pop" style="max-width:none;border:0;box-shadow:none;border-top:1px solid var(--border)">
+      <div class="form">
+        <select><option>优点</option><option>弱点</option><option>适合搭档</option><option>其他</option></select>
+        <textarea placeholder="写一条评价…"></textarea>
+        <button class="btn">追加</button>
+      </div>
+      <div style="padding:14px 12px;text-align:center;color:var(--muted);font-size:12px">还没有评价，追加第一条。</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
