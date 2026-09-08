@@ -223,7 +223,7 @@ export function SavedLineups({
             onDragStart={canReorder ? () => (dragFrom.current = index) : undefined}
             onDragOver={canReorder ? (e) => e.preventDefault() : undefined}
             onDrop={canReorder ? () => drop(index) : undefined}
-            className="flex flex-col gap-2.5 rounded-token border border-border bg-surface px-4 py-3.5"
+            className="flex min-w-0 flex-col gap-2.5 rounded-token border border-border bg-surface px-4 py-3.5"
           >
             <div className="flex items-center gap-2.5">
               {renamingId === item.id ? (
@@ -338,7 +338,7 @@ export function SavedLineups({
               </p>
             ) : null}
 
-            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+            <div className="grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-5">
               {Object.entries(item.assignment).map(([line, pair]) => {
                 const lt = item.line_totals?.[line];
                 return (

@@ -237,7 +237,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
         deleteAction={deleteAction}
       />
       <main className="flex flex-1 min-w-0 flex-col overflow-hidden bg-background">
-        <div className="flex flex-none items-center justify-between gap-2.5 border-b border-border bg-surface px-5 py-[11px]">
+        <div className="flex flex-none flex-col gap-2 border-b border-border bg-surface px-5 py-[11px] md:flex-row md:items-center md:justify-between md:gap-2.5">
           <div className="flex min-w-0 flex-col gap-0.5">
             <div className="flex items-baseline gap-2.5">
               <span className="text-base font-semibold text-foreground">{code}</span>
@@ -262,7 +262,7 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
             <LineupEditHeaderControl season={season} division={division} />
             {/* The number every lineup is checked against is the frozen one,
                 not today's rating. */}
-            <span className="font-mono text-[11.5px] text-muted-foreground">
+            <span className="hidden font-mono text-[11.5px] text-muted-foreground md:inline">
               参赛 UTR · 赛前冻结
             </span>
           </div>

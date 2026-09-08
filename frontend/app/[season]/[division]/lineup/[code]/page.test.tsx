@@ -602,3 +602,19 @@ describe("notes surfacing on the lineup page", () => {
     expect(screen.queryByText("评")).toBeNull();
   });
 });
+
+describe("lineup header mobile layout", () => {
+  it("stacks the header on mobile and hides the 参赛 UTR caption there", async () => {
+    vi.mocked(getDivisionRules).mockResolvedValue(RULES);
+    vi.mocked(getTeamRoster).mockResolvedValue(TEAM_ROSTER);
+    render(await renderDraft());
+
+    // header outer stacks on mobile (flex-col), returns to a row on desktop
+    const header = screen.getByText(/五线 cap/).closest("div.border-b");
+    expect(header?.className).toMatch(/\bflex-col\b/);
+    expect(header?.className).toMatch(/md:flex-row/);
+    // the frozen-UTR caption is mobile-hidden
+    const cap = screen.getByText(/参赛 UTR · 赛前冻结/);
+    expect(cap.className).toMatch(/(^|\s)hidden(\s|$)/);
+  });
+});
