@@ -333,6 +333,15 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **验收标准**: 三处展示+弹层+机密门（未解锁不发批量取数）+候选集合不受影响 全绿；本地真机 e2e 实测；无 migration、无远程前置（读降级、后端读端点旧前端下无害）。
 **可编辑扩展（notes-edit-on-surfaces，2026-09-07）**: roster **编辑模式**下评价从只读变可就地编辑——`NotesPopover` 加可选 `edit={onAdd,onDelete}`（追加表单+逐条确认删除，复用 `addPlayerNote`/`deletePlayerNote`），`PlayerNotesBadges` 在 editable+无评价时给「＋记评价」入口；gate = `useTeamEdit` 的 `canEdit && editing`。**关键**：roster 编辑模式渲染的是 `TeamEditPanel` 自己的编辑表（不是只读的 `RosterTable`），所以可编辑 badge 接在编辑表的「队员」单元格。排阵/对手对比/roster 查看模式不传 `edit`、保持只读。无后端、无 migration。
 
+---
+
+### `lineup-comments` ✅ 已实现 · 🌐 待远程迁移
+**用户故事**: 作为队长，我把一套阵容存下来，想记「打 THU 用这套，D2 偏弱盯紧」这类随时间叠加的注记（一条条追加、带时间、可删、不就地改），日后翻到这套一眼看到；与球员评价对称——队员看 note，阵容看评论。已存阵容本就是管理员机密，评论随其同门（只有解锁本比赛的人能看/写）。
+**覆盖需求**: docs/superpowers/specs/2026-09-07-lineup-comments-requirements.md（追加式时间线不覆盖不就地编辑、挂 saved_lineup 删级联克隆不带、机密按 canEdit gate、批量读、失败降级、卡片内可展开区）
+**后台**: `zijing_cup.lineup_comments` 单表（`saved_lineup_id` FK saved_lineups on delete cascade、`body` check 长度 1–2000、`created_at` server_default now() not null、`(saved_lineup_id, created_at desc)` 索引）。`routers/lineups.py`：单阵容 GET 列出（`created_at desc, id desc`）、POST 追加（`CommentIn` body trim 非空 + max_length 2000 挡 422 不落 500）、DELETE 按 (saved_lineup_id, comment_id) 删一条（跨阵容 404）——**无编辑端点**；批量 `GET /api/lineup-comments?ids=…`（扁平静态路径不与 `/{id}` 冲突、按 saved_lineup_id 分组倒序、只放有评论的 id、去重/忽略非法/clamp≤200、走 backend secret）。写路由靠 `WRITE_METHODS` admin 中间件自动受保护。克隆不复制评论是后端 clone 的内在行为（逐字节复制 assignment/snapshot、不认识评论表）。
+**前台**: `SavedLineups` 卡片底部 `LineupComments` **卡片内可展开区**（非 body-portal 弹层——躲触屏 hover 坑）：折叠显示「评论 N」计数，展开倒序时间线（文本+时间+删除）+ 编辑模式追加框；追加/删除 gate = `useLineupEdit` 的 `canEdit && editing`，查看模式只读。`lib/api.ts` `getLineupCommentsBatch` 非 ok 降级 `{}`；排阵页/已存阵容页仅 `canEdit` 时按 saved id 批量取并传入，未解锁不取不显。server actions `addLineupComment`/`deleteLineupComment` 经 `adminWrite` scope `{season,division}`、`revalidatePath(.../lineup/{team}, "layout")` 刷新排阵页与 `/saved` 两条路由。
+**验收标准**: 追加不覆盖/倒序/空 body 拒/超长拒 422/删一条其余保留/跨阵容不可删/删阵容级联删评论/克隆不带评论/鉴权（GET 需 backend secret、POST/DELETE 需 admin secret）全绿；本地真机 e2e 追加（中文正确渲染）+就地确认删除+克隆得空评论+批量倒序+级联删实测过。**远程共享 Supabase 需去 Dashboard SQL Editor 手动执行 `20260907120000_create_lineup_comments.sql` 后写入才生效**（前端读降级为空、排阵/已存阵容页不 500，但追加/删除在建表前会 500）。
+
 ## 规划中的能力（路线图）
 
 `lineup-engine`、`lineup-ui` 与 `current-utr-source` 曾列在这里，现已实现，条目见上方。
