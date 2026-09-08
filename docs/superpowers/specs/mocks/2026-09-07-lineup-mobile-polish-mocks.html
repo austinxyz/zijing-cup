@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lineup-mobile-polish — 排阵页手机版式</title>
+<style>
+  :root{
+    --surface:#ffffff; --surface-muted:#f2efe9; --border:#e4e0d8;
+    --foreground:#221f1a; --muted:#6b665d; --muted-fg:#706a61; --background:#f6f4f0;
+    --primary:#9c3417; --danger:#b3261e; --danger-surface:#fbf0ee; --danger-border:#f0cfc9;
+    --warning:#8a6508; --warning-surface:#fbf5e6; --warning-border:#ecd9a4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--background);color:var(--foreground);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px}
+  h1{font-size:17px;margin:0 0 4px} .sub{color:var(--muted);font-size:12px;margin:0 0 18px;max-width:720px}
+  h2{font-size:13px;color:var(--muted);margin:24px 0 8px;border-top:1px solid var(--border);padding-top:12px}
+  .cap{color:var(--muted);font-size:11.5px;margin:4px 0 10px}
+  .frame{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+  .phone{width:340px;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface)}
+  .bad{border-color:var(--danger-border)}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  /* BAD header: current — never stacks, title starved */
+  .hbad{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);padding:10px 14px}
+  .hbad .title{min-width:0;display:flex;flex-direction:column;gap:2px;max-width:90px}
+  .hbad .caps{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted-fg);word-break:break-word}
+  .hbad .ctrl{flex:none;display:flex;align-items:center;gap:8px}
+  .btn{border:1px solid var(--border);background:var(--surface-muted);border-radius:8px;padding:4px 10px;font-size:12px}
+  /* GOOD header: stacked on mobile, caps line full width wraps by word */
+  .hgood{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--border);padding:10px 14px}
+  .hgood .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .hgood .name{font-size:16px;font-weight:600}
+  .hgood .meta{font-size:12px;color:var(--muted-fg)}
+  .hgood .caps{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted-fg);line-height:1.7}
+  /* saved card */
+  .card{padding:10px 12px}
+  .card .ct{font-weight:600;font-size:14px;margin-bottom:2px}
+  .card .tot{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+  .diff{background:#fbf0ee;border-left:2px solid var(--danger-border);border-radius:0 8px 8px 0;
+    padding:6px 10px;font-size:11.5px;line-height:1.6;margin:8px 0}
+  .diff b{color:var(--foreground)} .diff .d{color:var(--danger)}
+  .lines{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+  .lb{min-width:0;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lb .h{display:flex;justify-content:space-between;background:var(--surface-muted);padding:2px 7px;font-family:ui-monospace,monospace;font-size:9px;color:var(--muted)}
+  .seat{display:flex;gap:4px;border-top:1px solid var(--border);padding:3px 7px;font-size:11px;min-width:0}
+  .seat .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .seat .u{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted-fg)}
+</style>
+</head>
+<body>
+<h1>lineup-mobile-polish — 排阵页手机版式（375px）</h1>
+<p class="sub">只改 mobile 响应式类：顶部信息条竖排堆叠 + cap 行整宽按词折行；次要注解 mobile 隐藏；
+已存阵容卡片不横向溢出。桌面（≥768px）不变。</p>
+
+<h2>1 · 顶部信息条</h2>
+<div class="frame">
+  <div>
+    <div class="cap">改前（bug）：header 不堆叠，标题块被压到 ~90px，cap 逐词竖列</div>
+    <div class="phone bad">
+      <div class="hbad">
+        <div class="title">
+          <span style="font-weight:600">HUST-NTU</span>
+          <span class="caps">五线 cap 13.00 / 12.00 / 11.00 / 10.25 / 9.25 · 全队 buffer 0.50 · 搭档差距 ≤3.50</span>
+        </div>
+        <div class="ctrl"><span class="btn">编辑模式</span><span class="btn">登出</span></div>
+      </div>
+      <div style="padding:10px 14px;color:var(--muted);font-size:12px">没有锁定或排除</div>
+    </div>
+  </div>
+  <div>
+    <div class="cap">改后：mobile 竖排；cap 行整宽按词折行；「参赛 UTR · 赛前冻结」注解 mobile 隐藏</div>
+    <div class="phone">
+      <div class="hgood">
+        <div class="row">
+          <span class="name">HUST-NTU</span>
+          <span class="ctrl"><span class="btn">编辑模式</span><span class="btn">登出</span></span>
+        </div>
+        <div class="meta">21 人 · 12 男 · 9 女</div>
+        <div class="caps">五线 cap 13.00 / 12.00 / 11.00 / 10.25 / 9.25 · 全队 buffer 0.50 · 搭档差距 ≤3.50</div>
+      </div>
+      <div style="padding:10px 14px;color:var(--muted);font-size:12px">没有锁定或排除</div>
+    </div>
+  </div>
+</div>
+
+<h2>2 · 已存阵容卡片（改后 · 不横向溢出）</h2>
+<div class="frame">
+  <div class="phone">
+    <div style="padding:8px 12px;border-bottom:1px solid var(--border);font-weight:600">已存阵容 · 8 套</div>
+    <div class="card">
+      <div class="ct">新的阵容 <span class="tot">总和 55.30</span></div>
+      <div class="diff"><b>保存后有人参赛 UTR 变了，按当前值重判仍合法：</b>
+        Ye M <span class="d">6.72→6.69</span>、Ma Xiaoyu <span class="d">6.60→6.53</span>、
+        Li Ning <span class="d">5.55→5.60</span>…</div>
+      <div class="lines">
+        <div class="lb"><div class="h"><span>D1</span><span>和 12.94</span></div>
+          <div class="seat"><span class="n">Ye Ming</span><span class="u">6.69</span></div>
+          <div class="seat"><span class="n">Ma Xiaoyu</span><span class="u">6.53</span></div></div>
+        <div class="lb"><div class="h"><span>D2</span><span>和 11.30</span></div>
+          <div class="seat"><span class="n">Li Ning</span><span class="u">5.60</span></div>
+          <div class="seat"><span class="n">Cao Shihe</span><span class="u">5.34</span></div></div>
+        <div class="lb"><div class="h"><span>D3</span><span>和 11.16</span></div>
+          <div class="seat"><span class="n">Ouyang Yu</span><span class="u">5.70</span></div>
+          <div class="seat"><span class="n">Shen K</span><span class="u">5.46</span></div></div>
+        <div class="lb"><div class="h"><span>MD</span><span>和 10.10</span></div>
+          <div class="seat"><span class="n">Zhang C</span><span class="u">4.48</span></div>
+          <div class="seat"><span class="n">Wang L</span><span class="u">5.62</span></div></div>
+        <div class="lb"><div class="h"><span>WD</span><span>和 9.10</span></div>
+          <div class="seat"><span class="n">Hung D</span><span class="u">4.60</span></div>
+          <div class="seat"><span class="n">Yang J</span><span class="u">4.50</span></div></div>
+      </div>
+      <div class="tot" style="margin-top:8px">全队 buffer 0.30 / 0.50</div>
+    </div>
+  </div>
+  <p class="cap" style="max-width:300px">线块保持两列（5 线 → 2+2+1）；卡片与网格 <code>min-w-0</code>，名字过长省略号，
+  不撑出横向滚动。UTR-diff 说明整宽折行。</p>
+</div>
+</body>
+</html>
