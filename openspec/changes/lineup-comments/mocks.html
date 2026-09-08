@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lineup-comments — 已存阵容评论</title>
+<style>
+  :root{
+    --surface:#ffffff; --surface-muted:#f2efe9; --border:#e4e0d8;
+    --foreground:#221f1a; --muted:#6b665d; --muted-fg:#706a61; --background:#f6f4f0;
+    --primary:#9c3417; --primary-fg:#fff;
+    --danger:#b3261e; --danger-surface:#fbf0ee; --danger-border:#f0cfc9;
+    --success:#3a6b4d; --success-surface:#eef4f0; --success-border:#cfe2d6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--background);color:var(--foreground);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;padding:22px}
+  h1{font-size:17px;margin:0 0 4px} .sub{color:var(--muted);font-size:12px;margin:0 0 18px;max-width:720px}
+  h2{font-size:13px;color:var(--muted);margin:24px 0 8px;border-top:1px solid var(--border);padding-top:12px}
+  .cap{color:var(--muted);font-size:12px;margin:4px 0 10px}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .frame{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+  .card{min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;max-width:460px}
+  .ct{font-weight:600;font-size:14px} .tot{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+  .badge{font-size:11px;padding:1px 8px;border-radius:999px;border:1px solid var(--success-border);background:var(--success-surface);color:var(--success)}
+  .head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .lines{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+  .lb{min-width:0;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lb .h{display:flex;justify-content:space-between;background:var(--surface-muted);padding:2px 7px;font-family:ui-monospace,monospace;font-size:9px;color:var(--muted)}
+  .seat{display:flex;gap:4px;border-top:1px solid var(--border);padding:3px 7px;font-size:11px}
+  .seat .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .seat .u{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted-fg)}
+  /* comments area */
+  .crow{display:flex;align-items:center;gap:6px;border-top:1px solid var(--border);margin-top:8px;padding-top:8px;
+    font-size:12.5px;color:var(--foreground);cursor:pointer;user-select:none}
+  .crow .chev{color:var(--muted);font-size:11px}
+  .crow .cnt{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted-fg)}
+  .cbody{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+  .form{display:flex;flex-direction:column;gap:6px;background:var(--surface-muted);border:1px solid var(--border);border-radius:8px;padding:8px}
+  .form textarea{border:1px solid var(--border);border-radius:6px;background:var(--surface);font:inherit;font-size:12.5px;padding:5px 8px;resize:vertical;min-height:40px}
+  .form .btn{align-self:flex-start;background:var(--primary);color:var(--primary-fg);border:0;border-radius:6px;font-size:12px;padding:5px 12px;cursor:pointer}
+  .clist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .ci{border-left:2px solid var(--border);background:var(--surface-muted);border-radius:0 8px 8px 0;padding:6px 10px}
+  .ci .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .ci .when{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted-fg)}
+  .ci .body{font-size:12.5px;margin-top:3px;white-space:pre-wrap}
+  .del{font-size:11px;color:var(--danger);background:none;border:0;cursor:pointer;padding:0}
+  .confirm{font-size:11px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+  .confirm .yes{color:var(--danger);border:1px solid var(--danger-border);background:var(--danger-surface);border-radius:6px;padding:1px 7px;cursor:pointer}
+  .confirm .no{border:1px solid var(--border);background:var(--surface);border-radius:6px;padding:1px 7px;cursor:pointer}
+  .phone{width:340px;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface);padding:12px}
+</style>
+</head>
+<body>
+<h1>lineup-comments — 已存阵容评论</h1>
+<p class="sub">跟球员 note 对称：队员看 note，阵容看评论。已存阵容卡片底部一个可展开「评论」区——倒序时间线 +
+（编辑模式）追加框 + 就地确认删除。已存阵容本就 admin-only，评论随卡片同门。纯自由文本、追加式、可删、不就地改。</p>
+
+<h2>1 · 折叠态（有评论 → 显示计数）</h2>
+<div class="card">
+  <div class="head"><span class="ct">打 THU 主力 <span class="tot">总和 55.30</span></span><span class="badge">仍合法</span></div>
+  <div class="lines">
+    <div class="lb"><div class="h"><span>D1</span><span>和 12.94</span></div>
+      <div class="seat"><span class="n">Ye Ming</span><span class="u">6.69</span></div><div class="seat"><span class="n">Ma Xiaoyu</span><span class="u">6.53</span></div></div>
+    <div class="lb"><div class="h"><span>D2</span><span>和 11.30</span></div>
+      <div class="seat"><span class="n">Li Ning</span><span class="u">5.60</span></div><div class="seat"><span class="n">Cao Shihe</span><span class="u">5.34</span></div></div>
+  </div>
+  <div class="tot" style="margin-bottom:2px">全队 buffer 0.30 / 0.50</div>
+  <div class="crow"><span class="chev">▸</span>评论 <span class="cnt">2</span></div>
+</div>
+
+<h2>2 · 展开态 · 编辑模式（追加框 + 逐条删除）</h2>
+<div class="frame">
+  <div class="card">
+    <div class="head"><span class="ct">打 THU 主力</span><span class="badge">仍合法</span></div>
+    <div class="tot" style="margin-bottom:2px">…（线块略）… 全队 buffer 0.30 / 0.50</div>
+    <div class="crow"><span class="chev">▾</span>评论 <span class="cnt">2</span></div>
+    <div class="cbody">
+      <div class="form">
+        <textarea placeholder="写一条评论…（如：打 THU 用这套，D2 偏弱盯紧）"></textarea>
+        <button class="btn">追加</button>
+      </div>
+      <ul class="clist">
+        <li class="ci">
+          <div class="top"><span class="when">2026-09-07 15:40</span><span class="confirm">删除这条？<button class="yes">确认</button><button class="no">取消</button></span></div>
+          <div class="body">对上 THU 就用这套，他们 D1 强、我们避锋在 D2/D3 抢分。</div>
+        </li>
+        <li class="ci">
+          <div class="top"><span class="when">2026-09-02 09:11</span><button class="del">删除</button></div>
+          <div class="body">D2 两人搭档差距略大，注意别被针对。</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <p class="cap" style="max-width:280px">追加框空文本时「追加」禁用；删除就地「删除这条？确认/取消」。写失败就近报错、成功靠 revalidate 刷新。</p>
+</div>
+
+<h2>3 · 展开态 · 查看模式（只读）</h2>
+<div class="card">
+  <div class="head"><span class="ct">打 THU 主力</span><span class="badge">仍合法</span></div>
+  <div class="tot" style="margin-bottom:2px">…（线块略）…</div>
+  <div class="crow"><span class="chev">▾</span>评论 <span class="cnt">2</span></div>
+  <div class="cbody">
+    <ul class="clist">
+      <li class="ci"><div class="top"><span class="when">2026-09-07 15:40</span></div><div class="body">对上 THU 就用这套…</div></li>
+      <li class="ci"><div class="top"><span class="when">2026-09-02 09:11</span></div><div class="body">D2 两人搭档差距略大…</div></li>
+    </ul>
+  </div>
+</div>
+<p class="cap">查看模式：无追加框、无删除按钮，只有倒序时间线。未解锁本比赛：整个已存阵容区都不显示（评论一并看不到）。</p>
+
+<h2>4 · 移动端（同结构，全宽）</h2>
+<div class="phone">
+  <div class="head"><span class="ct">打 THU 主力</span><span class="badge">仍合法</span></div>
+  <div class="crow"><span class="chev">▾</span>评论 <span class="cnt">1</span></div>
+  <div class="cbody">
+    <div class="form"><textarea placeholder="写一条评论…"></textarea><button class="btn">追加</button></div>
+    <ul class="clist"><li class="ci"><div class="top"><span class="when">09-07 15:40</span><button class="del">删除</button></div><div class="body">打 THU 用这套。</div></li></ul>
+  </div>
+</div>
+</body>
+</html>
