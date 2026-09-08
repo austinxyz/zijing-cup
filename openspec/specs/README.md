@@ -329,6 +329,7 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **后台**: 复用 `player-notes` 表；`routers/players.py` 加批量读端点 `GET /api/players/notes?ids=…`（按 player_id 分组倒序、只放有评价的 id、ids 去重/忽略非法/clamp≤200、走 backend secret），**无新表无 migration**。`LineupPlayer`/候选 seat 的 `PlayerOut` 加 `player_id`（从 `p{id}` key 还原），供 overlay 按 id 查。
 **前台**: 共享 `components/notes/`——`NotesPopover`（body portal 只读时间线，逃 overflow 裁剪）、`PlayerNotesBadges`（roster/对手对比分类小标）、`notesDisplay` 共享类别常量/颜色；`LineBlock` seat 单标记「评」（含弱点警示色）。`lib/api.ts` `getPlayerNotesBatch` 非 ok 降级 `{}`。三页（排阵候选+已存、对手对比两侧、roster）仅 `canEdit` 时批量取并传入，未解锁不取不显；对手对比两侧都显。两种密度：排阵 seat 单标记 vs roster/对比 分类小标，共用弹层。
 **验收标准**: 三处展示+弹层+机密门（未解锁不发批量取数）+候选集合不受影响 全绿；本地真机 e2e 实测；无 migration、无远程前置（读降级、后端读端点旧前端下无害）。
+**可编辑扩展（notes-edit-on-surfaces，2026-09-07）**: roster **编辑模式**下评价从只读变可就地编辑——`NotesPopover` 加可选 `edit={onAdd,onDelete}`（追加表单+逐条确认删除，复用 `addPlayerNote`/`deletePlayerNote`），`PlayerNotesBadges` 在 editable+无评价时给「＋记评价」入口；gate = `useTeamEdit` 的 `canEdit && editing`。**关键**：roster 编辑模式渲染的是 `TeamEditPanel` 自己的编辑表（不是只读的 `RosterTable`），所以可编辑 badge 接在编辑表的「队员」单元格。排阵/对手对比/roster 查看模式不传 `edit`、保持只读。无后端、无 migration。
 
 ## 规划中的能力（路线图）
 
