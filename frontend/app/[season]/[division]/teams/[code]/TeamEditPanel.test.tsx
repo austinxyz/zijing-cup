@@ -16,6 +16,12 @@ vi.mock("./actions", () => ({
   addExistingPlayerToTeam: (...a: any[]) => addExistingPlayerToTeam(...a),
   createAndAddPlayer: (...a: any[]) => createAndAddPlayer(...a),
 }));
+const addPlayerNote = vi.fn<(...args: any[]) => Promise<void>>(async () => {});
+const deletePlayerNote = vi.fn<(...args: any[]) => Promise<void>>(async () => {});
+vi.mock("@/app/[season]/[division]/players/actions", () => ({
+  addPlayerNote: (...a: any[]) => addPlayerNote(...a),
+  deletePlayerNote: (...a: any[]) => deletePlayerNote(...a),
+}));
 // EditModeToggle pulls in server actions + router; stub it — its own behaviour
 // is covered in the lineup change's tests.
 vi.mock("@/app/[season]/[division]/lineup/[code]/EditModeToggle", () => ({
@@ -63,6 +69,64 @@ function show(props: { roster?: TeamRoster } = {}) {
     </TeamEditProvider>,
   );
 }
+
+function showWithNotes(opts: {
+  editing: boolean;
+  notesByPlayer?: Record<number, any[]>;
+}) {
+  render(
+    <TeamEditProvider canEdit initialEditing={opts.editing}>
+      <TeamEditPanel
+        roster={roster()}
+        season="2026"
+        division="silver"
+        teamCode="T"
+        notesByPlayer={opts.notesByPlayer ?? {}}
+      />
+    </TeamEditProvider>,
+  );
+}
+
+describe("TeamEditPanel — notes editing", () => {
+  it("edit mode: a note-less player shows a 记评价 entry that opens an editable popover", () => {
+    showWithNotes({ editing: true });
+    const entries = screen.getAllByRole("button", { name: /记评价/ });
+    expect(entries.length).toBeGreaterThan(0);
+    fireEvent.click(entries[0]);
+    expect(screen.getByRole("textbox", { name: "评价内容" })).toBeTruthy();
+  });
+
+  it("edit mode: a player with notes gets an editable popover (append form)", () => {
+    showWithNotes({
+      editing: true,
+      notesByPlayer: {
+        1: [{ id: 5, category: "weakness", body: "反手弱", created_at: "2026-09-02T09:00:00Z" }],
+      },
+    });
+    // open the first weakness badge
+    fireEvent.click(screen.getAllByText("弱点")[0]);
+    expect(screen.getByRole("textbox", { name: "评价内容" })).toBeTruthy();
+    // typing + 追加 calls addPlayerNote bound to (season, division, playerId=1)
+    fireEvent.change(screen.getByRole("textbox", { name: "评价内容" }), {
+      target: { value: "二发保守" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "追加" }));
+    expect(addPlayerNote).toHaveBeenCalledWith("2026", "silver", 1, "strength", "二发保守");
+  });
+
+  it("view mode: no 记评价 entry, notes read-only", () => {
+    showWithNotes({
+      editing: false,
+      notesByPlayer: {
+        1: [{ id: 5, category: "weakness", body: "反手弱", created_at: "2026-09-02T09:00:00Z" }],
+      },
+    });
+    expect(screen.queryByRole("button", { name: /记评价/ })).toBeNull();
+    // open the read-only badge → no append form
+    fireEvent.click(screen.getAllByText("弱点")[0]);
+    expect(screen.queryByRole("textbox", { name: "评价内容" })).toBeNull();
+  });
+});
 
 describe("TeamEditPanel", () => {
   it("read-only when not editing: no editable inputs", () => {

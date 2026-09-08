@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { PlayerNote } from "@/lib/api";
 
@@ -48,5 +48,54 @@ describe("NotesPopover", () => {
     );
     const trigger = screen.getByRole("button");
     expect(trigger.tagName).toBe("BUTTON");
+  });
+});
+
+describe("NotesPopover editable", () => {
+  const two: PlayerNote[] = [
+    { id: 2, category: "weakness", body: "反手弱", created_at: "2026-09-02T09:00:00Z" },
+    { id: 1, category: "strength", body: "正手重", created_at: "2026-08-28T09:00:00Z" },
+  ];
+
+  it("renders an append form + per-note delete when edit is passed", () => {
+    const onAdd = vi.fn().mockResolvedValue(undefined);
+    const onDelete = vi.fn().mockResolvedValue(undefined);
+    render(
+      <NotesPopover notes={two} label="x · 评价" edit={{ onAdd, onDelete }}>
+        <span>评</span>
+      </NotesPopover>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "评" }));
+
+    expect(screen.getByRole("combobox", { name: "评价类别" })).toBeTruthy();
+    expect(screen.getByRole("textbox", { name: "评价内容" })).toBeTruthy();
+    const add = screen.getByRole("button", { name: "追加" });
+    expect((add as HTMLButtonElement).disabled).toBe(true); // empty body
+
+    fireEvent.change(screen.getByRole("textbox", { name: "评价内容" }), {
+      target: { value: "网前果断" },
+    });
+    expect((add as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(add);
+    expect(onAdd).toHaveBeenCalledWith("strength", "网前果断");
+
+    // per-note delete with inline confirm
+    const list = screen.getByRole("list", { name: "评价时间线" });
+    const firstDelete = within(list).getAllByRole("button", { name: "删除" })[0];
+    fireEvent.click(firstDelete);
+    fireEvent.click(within(list).getByRole("button", { name: "确认" }));
+    expect(onDelete).toHaveBeenCalledWith(2);
+  });
+
+  it("stays read-only (no form, no delete) when edit is absent", () => {
+    render(
+      <NotesPopover notes={two} label="x · 评价">
+        <span>评</span>
+      </NotesPopover>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "评" }));
+    expect(screen.queryByRole("button", { name: "追加" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "删除" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "评价内容" })).toBeNull();
   });
 });

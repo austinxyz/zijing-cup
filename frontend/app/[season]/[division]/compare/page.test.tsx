@@ -132,3 +132,25 @@ describe("compare page content", () => {
     expect(screen.getByText("优点")).toBeTruthy();
   });
 });
+
+describe("compare notes stay read-only", () => {
+  it("opening a notes badge shows no append form (read-only, no edit passed)", async () => {
+    const { getPlayerNotesBatch } = await import("@/lib/api");
+    vi.mocked(canEdit).mockResolvedValue(true);
+    vi.mocked(getDivisionTeams).mockResolvedValue(TEAMS as never);
+    vi.mocked(getDivisionRules).mockResolvedValue(RULES);
+    vi.mocked(getSavedLineups).mockImplementation(async (_y, _d, code) =>
+      code === "PKU" ? [lineup(1, "PKU", "13.96")] : [lineup(2, "THU", "13.24")],
+    );
+    vi.mocked(getTeamLineups).mockImplementation(async (_y, _d, code) => teamLineups(code));
+    vi.mocked(getPlayerNotesBatch).mockResolvedValue({
+      101: [{ id: 1, category: "weakness", body: "反手弱", created_at: "2026-09-02T09:00:00Z" }],
+    });
+
+    const { fireEvent } = await import("@testing-library/react");
+    render(await renderPage({ a: "PKU", al: "1", b: "THU", bl: "2" }));
+    fireEvent.click(screen.getAllByText("弱点")[0]);
+    expect(screen.queryByRole("textbox", { name: "评价内容" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "追加" })).toBeNull();
+  });
+});

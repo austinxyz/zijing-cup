@@ -1,15 +1,153 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 
-import type { PlayerNote } from "@/lib/api";
+import type { PlayerNote, PlayerNoteCategory } from "@/lib/api";
 
-import { CATEGORY_LABEL, TAG_CLASS, formatWhen } from "./notesDisplay";
+import {
+  CATEGORY_LABEL,
+  CATEGORY_ORDER,
+  TAG_CLASS,
+  formatWhen,
+} from "./notesDisplay";
+
+/** The optional edit capability. Callers on an editable surface (roster edit
+ *  mode) pass bound callbacks; every other surface omits it and the popover is
+ *  read-only. The callbacks wrap the existing addPlayerNote/deletePlayerNote
+ *  server actions (bound to season/division/playerId by the caller). */
+export interface NotesEdit {
+  onAdd: (category: PlayerNoteCategory, body: string) => Promise<void>;
+  onDelete: (noteId: number) => Promise<void>;
+}
+
+function AppendForm({ onAdd }: { onAdd: NotesEdit["onAdd"] }) {
+  const [category, setCategory] = useState<PlayerNoteCategory>("strength");
+  const [body, setBody] = useState("");
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const trimmed = body.trim();
+
+  function onSubmit() {
+    if (!trimmed) return;
+    setError(null);
+    startTransition(async () => {
+      try {
+        await onAdd(category, trimmed);
+        setBody(""); // success only; revalidatePath refreshes the timeline
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "追加失败");
+      }
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-2 border-b border-border bg-surface-muted px-3 py-2.5">
+      <select
+        aria-label="评价类别"
+        value={category}
+        onChange={(e) => setCategory(e.target.value as PlayerNoteCategory)}
+        className="min-h-8 rounded-token border border-border bg-surface px-2 text-[12.5px] text-foreground"
+      >
+        {CATEGORY_ORDER.map((key) => (
+          <option key={key} value={key}>
+            {CATEGORY_LABEL[key]}
+          </option>
+        ))}
+      </select>
+      <textarea
+        aria-label="评价内容"
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        placeholder="写一条评价…（如：反手稳，网前果断）"
+        rows={2}
+        maxLength={2000}
+        className="rounded-token border border-border bg-surface px-2 py-1.5 text-[12.5px] leading-relaxed text-foreground"
+      />
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!trimmed || pending}
+          className="inline-flex min-h-8 items-center self-start rounded-token bg-primary px-3 text-[12px] text-primary-foreground disabled:opacity-50"
+        >
+          追加
+        </button>
+        {error ? <span className="text-[11.5px] text-danger">{error}</span> : null}
+      </div>
+    </div>
+  );
+}
+
+function DeleteControl({
+  noteId,
+  onDelete,
+}: {
+  noteId: number;
+  onDelete: NotesEdit["onDelete"];
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function onConfirm() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await onDelete(noteId); // success refreshes via revalidatePath
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "删除失败");
+        setConfirming(false);
+      }
+    });
+  }
+
+  return (
+    <div className="mt-1 flex items-center gap-2 text-[11.5px]">
+      {confirming ? (
+        <span className="flex items-center gap-2 text-muted">
+          删除这条？
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={pending}
+            className="rounded-token border border-danger-border bg-danger-surface px-2 py-px text-danger disabled:opacity-50"
+          >
+            确认
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            disabled={pending}
+            className="rounded-token border border-border bg-surface px-2 py-px text-foreground"
+          >
+            取消
+          </button>
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          className="rounded-token border border-border bg-surface px-2 py-px text-danger"
+        >
+          删除
+        </button>
+      )}
+      {error ? <span className="text-danger">{error}</span> : null}
+    </div>
+  );
+}
 
 /**
- * A read-only popover showing a player's notes as a timeline. The trigger is a
- * real `<button>` (keyboard/触屏 reachable); the panel opens on hover or click.
+ * A popover showing a player's notes as a timeline. The trigger is a real
+ * `<button>` (keyboard/触屏 reachable); the panel opens on hover or click.
  *
  * The panel is rendered through a portal to `document.body` with fixed
  * positioning, NOT absolutely inside the trigger. Its hosts — a roster table
@@ -17,36 +155,33 @@ import { CATEGORY_LABEL, TAG_CLASS, formatWhen } from "./notesDisplay";
  * absolutely-positioned panel to a 40px-tall row (found in the visual diff).
  * A body portal escapes every overflow ancestor.
  *
- * Read-only on purpose: append/delete live only on the player detail page. This
- * is a decision-surface overlay (lineup / compare / roster), not an editor.
- *
- * `notes` are rendered in the order given — callers pass them newest-first (the
- * batch endpoint already sorts desc). Hover opens; click toggles; clicking away
- * or Escape closes (no mouseleave-close, since the portal panel is not a DOM
- * descendant of the trigger and the mouse cannot bridge to it).
+ * Read-only by default; pass `edit` (roster edit mode only) to add an append
+ * form + per-note delete. `notes` render in the order given (newest first).
+ * Hover opens; click toggles; clicking away or Escape closes.
  */
 export function NotesPopover({
   notes,
   label,
   children,
+  edit,
 }: {
   notes: PlayerNote[];
   /** Popover header, e.g. "张三 · 评价". */
   label: string;
-  /** The trigger content — the seat「评」marker or the category badges. */
+  /** The trigger content — the seat「评」marker, the badges, or a「＋记评价」entry. */
   children: ReactNode;
+  /** Present only on an editable surface (roster edit mode) → append + delete. */
+  edit?: NotesEdit;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Position the panel just under the trigger, clamped into the viewport, in
-  // fixed coordinates (the panel lives on document.body).
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return;
     const r = triggerRef.current.getBoundingClientRect();
-    const width = 256;
+    const width = 272;
     const left = Math.min(Math.max(8, r.left), window.innerWidth - width - 8);
     setPos({ top: r.bottom + 4, left });
   }, [open]);
@@ -55,10 +190,7 @@ export function NotesPopover({
     if (!open) return;
     function onDocClick(e: MouseEvent) {
       const t = e.target as Node;
-      if (
-        !triggerRef.current?.contains(t) &&
-        !panelRef.current?.contains(t)
-      ) {
+      if (!triggerRef.current?.contains(t) && !panelRef.current?.contains(t)) {
         setOpen(false);
       }
     }
@@ -92,35 +224,47 @@ export function NotesPopover({
               ref={panelRef}
               role="dialog"
               aria-label={label}
-              style={{ position: "fixed", top: pos.top, left: pos.left, width: 256 }}
+              style={{ position: "fixed", top: pos.top, left: pos.left, width: 272 }}
               className="z-50 overflow-hidden rounded-token border border-border bg-surface text-left shadow-lg"
             >
               <div className="border-b border-border px-3 py-1.5 text-[11.5px] text-muted">
                 {label}
               </div>
-              <ul
-                aria-label="评价时间线"
-                className="m-0 flex max-h-60 list-none flex-col overflow-auto p-0"
-              >
-                {notes.map((note) => (
-                  <li
-                    key={note.id}
-                    className="flex flex-col gap-1 border-b border-border px-3 py-2 last:border-b-0"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={TAG_CLASS[note.category] ?? TAG_CLASS.other}>
-                        {CATEGORY_LABEL[note.category] ?? note.category}
-                      </span>
-                      <span className="font-mono text-[10.5px] text-muted-foreground">
-                        {formatWhen(note.created_at)}
-                      </span>
-                    </div>
-                    <div className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground">
-                      {note.body}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+
+              {edit ? <AppendForm onAdd={edit.onAdd} /> : null}
+
+              {notes.length === 0 ? (
+                <div className="px-3 py-4 text-center text-[12px] text-muted">
+                  还没有评价，追加第一条。
+                </div>
+              ) : (
+                <ul
+                  aria-label="评价时间线"
+                  className="m-0 flex max-h-60 list-none flex-col overflow-auto p-0"
+                >
+                  {notes.map((note) => (
+                    <li
+                      key={note.id}
+                      className="flex flex-col gap-1 border-b border-border px-3 py-2 last:border-b-0"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={TAG_CLASS[note.category] ?? TAG_CLASS.other}>
+                          {CATEGORY_LABEL[note.category] ?? note.category}
+                        </span>
+                        <span className="font-mono text-[10.5px] text-muted-foreground">
+                          {formatWhen(note.created_at)}
+                        </span>
+                      </div>
+                      <div className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground">
+                        {note.body}
+                      </div>
+                      {edit ? (
+                        <DeleteControl noteId={note.id} onDelete={edit.onDelete} />
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>,
             document.body,
           )

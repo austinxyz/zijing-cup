@@ -2,7 +2,10 @@
 
 import { useState, useTransition } from "react";
 
-import type { PlayerNote, RosterPlayer, TeamRoster } from "@/lib/api";
+import type { PlayerNote, PlayerNoteCategory, RosterPlayer, TeamRoster } from "@/lib/api";
+import type { NotesEdit } from "@/components/notes/NotesPopover";
+import { PlayerNotesBadges } from "@/components/notes/PlayerNotesBadges";
+import { addPlayerNote, deletePlayerNote } from "@/app/[season]/[division]/players/actions";
 import { RosterTable } from "./RosterTable";
 import { saveTeamEdits, removePlayerFromTeam } from "./actions";
 import { AddPlayerControl } from "./AddPlayerControl";
@@ -33,6 +36,19 @@ export function TeamEditPanel({
   const { canEdit, editing } = useTeamEdit();
   const players = roster.players;
   const [pending, startTransition] = useTransition();
+
+  // Notes are editable only in edit mode (same gate as this panel's other
+  // writes). Build a per-player {onAdd,onDelete} bound to the existing player
+  // notes server actions; undefined = read-only (view mode / no edit rights).
+  const notesEditFor =
+    canEdit && editing
+      ? (playerId: number): NotesEdit => ({
+          onAdd: (category: PlayerNoteCategory, body: string) =>
+            addPlayerNote(season, division, playerId, category, body),
+          onDelete: (noteId: number) =>
+            deletePlayerNote(season, division, playerId, noteId),
+        })
+      : undefined;
 
   // Pending edits, keyed by player_id. Absent = unchanged.
   const [matchUtr, setMatchUtr] = useState<Record<number, string>>({});
@@ -258,7 +274,16 @@ export function TeamEditPanel({
               const dChanged = p.player_id in doubles;
               return (
                 <tr key={p.player_id} className={b ? "bg-borrowed-surface" : undefined}>
-                  <td className="border-b border-border/60 px-3 py-1.5">{displayName(p)}</td>
+                  <td className="border-b border-border/60 px-3 py-1.5">
+                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                      {displayName(p)}
+                      <PlayerNotesBadges
+                        notes={notesByPlayer[p.player_id] ?? []}
+                        label={`${displayName(p)} · 评价`}
+                        edit={notesEditFor?.(p.player_id)}
+                      />
+                    </span>
+                  </td>
                   <td className="border-b border-border/60 px-3 py-1.5">
                     {p.gender === "M" ? "♂" : p.gender === "F" ? "♀" : "—"}
                   </td>
