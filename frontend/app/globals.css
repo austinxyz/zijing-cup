@@ -175,3 +175,22 @@ body {
   height: 100vh;
   height: 100dvh;
 }
+
+/*
+ * iOS Safari auto-zooms the whole page when a focused form control has a
+ * font-size < 16px — and a soft navigation (router.refresh after an in-place
+ * unlock) does not reset that zoom, so the page is left magnified and the
+ * fixed-height (100dvh) shell no longer fits the screen. Every text control in
+ * this app is intentionally small (text-[12.5px]/[13px]) for density, which
+ * trips this on every input (unlock password, comment box, rename, search, UTR
+ * cells). On a touch device the density is not worth the zoom trap: force form
+ * controls to 16px on coarse pointers so tapping them never zooms. Desktop
+ * (fine pointer) keeps the compact sizes.
+ */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
