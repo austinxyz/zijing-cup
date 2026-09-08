@@ -9,6 +9,7 @@ from app.models.players import (
     SeasonLock,
 )
 from app.models.player_notes import NOTE_CATEGORIES, PlayerNote
+from app.models.lineup_comments import LineupComment
 from app.models.presets import LineupFilterPreset
 from app.models.roster import RosterEntry, Team
 from app.models.saved import SavedLineup
@@ -27,6 +28,7 @@ __all__ = [
     "DivisionBorrowedLimit",
     "DivisionEligibilityLimit",
     "DivisionLine",
+    "LineupComment",
     "LineupFilterPreset",
     "NOTE_CATEGORIES",
     "Player",

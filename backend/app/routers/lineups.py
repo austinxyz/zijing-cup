@@ -15,7 +15,7 @@ from decimal import Decimal
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from sqlmodel import Session, select
 
 from app.db import get_session
@@ -51,7 +51,7 @@ from app.lineups.saved import (
     revalidate_saved,
     save_lineup,
 )
-from app.models import Team
+from app.models import LineupComment, SavedLineup, Team
 
 router = APIRouter(prefix="/api", tags=["lineups"])
 
@@ -504,4 +504,140 @@ def delete_team_saved_lineup(
 ) -> Response:
     team_id = _resolve_team(session, year, code, team_code)
     delete_saved_lineup(session, team_id, saved_id)
+    return Response(status_code=204)
+
+
+# --- Lineup comments (阵容评论) ----------------------------------------------
+#
+# Append-only free-text remarks on a saved lineup — symmetric to player notes.
+# No update endpoint on purpose: a comment is a remark at a point in time, and
+# the history is the point. GET lists newest-first; POST appends; DELETE removes
+# one. Auth is by HTTP method in middleware — GET behind the shared secret,
+# POST/DELETE additionally behind the admin secret — so nothing is declared here.
+#
+# Comments key on saved_lineup_id (globally unique). The season/division/team
+# path segments locate the lineup in the UI's REST hierarchy but are not
+# re-validated here: cross-lineup safety comes from matching saved_lineup_id, and
+# the batch read is a flat lookup by id.
+
+#: Cap on how many ids one batch request may ask for. A team shows at most ~a
+#: dozen saved lineups at once; this is a generous ceiling that stops a caller
+#: turning the endpoint into an unbounded dump. Overflow ids are dropped, not
+#: rejected — the request still succeeds (they are simply absent from the map).
+_BATCH_IDS_MAX = 200
+
+
+def _parse_ids(raw: str) -> list[int]:
+    """Comma-separated ids → a de-duplicated list of ints, ignoring blanks and
+    non-numeric entries, clamped to the batch ceiling (keeping the FIRST N).
+    Order is not significant (the result is a map); first-seen order is kept for
+    determinism."""
+    seen: set[int] = set()
+    out: list[int] = []
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            value = int(part)
+        except ValueError:
+            continue
+        if value not in seen:
+            seen.add(value)
+            out.append(value)
+        if len(out) >= _BATCH_IDS_MAX:
+            break
+    return out
+
+
+class CommentIn(BaseModel):
+    # max_length mirrors the DB CHECK (1..2000) so an over-long body is a 422
+    # here, not an IntegrityError 500 from the commit.
+    body: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("body")
+    @classmethod
+    def _body_not_blank(cls, value: str) -> str:
+        trimmed = value.strip()
+        if not trimmed:
+            raise ValueError("body must not be empty")
+        return trimmed
+
+
+def _comment_out(comment: LineupComment) -> dict:
+    return {
+        "id": comment.id,
+        "body": comment.body,
+        "created_at": comment.created_at.isoformat() if comment.created_at else None,
+    }
+
+
+@router.get("/lineup-comments")
+def batch_lineup_comments(
+    ids: str = Query(default="", description="Comma-separated saved_lineup ids"),
+    session: Session = Depends(get_session),
+) -> dict[int, list[dict]]:
+    """Comments for many saved lineups in one round trip, for the saved-lineups
+    screen that shows a dozen cards at once.
+
+    A flat static path (`/api/lineup-comments`) so it never collides with the
+    `/{saved_id}/comments` routes. Returns a map keyed by saved_lineup_id, each
+    lineup's comments newest first, and only for ids that actually have comments
+    — a missing key means "no comments", which the client reads as "show none".
+    """
+    wanted = _parse_ids(ids)
+    if not wanted:
+        return {}
+    rows = session.exec(
+        select(LineupComment)
+        .where(LineupComment.saved_lineup_id.in_(wanted))
+        .order_by(
+            LineupComment.saved_lineup_id,
+            LineupComment.created_at.desc(),
+            LineupComment.id.desc(),
+        )
+    ).all()
+    grouped: dict[int, list[dict]] = {}
+    for comment in rows:
+        grouped.setdefault(comment.saved_lineup_id, []).append(_comment_out(comment))
+    return grouped
+
+
+@router.get(_SAVED + "/{saved_id}/comments")
+def list_lineup_comments(
+    year: int, code: str, team_code: str, saved_id: int,
+    session: Session = Depends(get_session),
+):
+    comments = session.exec(
+        select(LineupComment)
+        .where(LineupComment.saved_lineup_id == saved_id)
+        .order_by(LineupComment.created_at.desc(), LineupComment.id.desc())
+    ).all()
+    return [_comment_out(c) for c in comments]
+
+
+@router.post(_SAVED + "/{saved_id}/comments", status_code=201)
+def add_lineup_comment(
+    year: int, code: str, team_code: str, saved_id: int, payload: CommentIn,
+    session: Session = Depends(get_session),
+):
+    if session.get(SavedLineup, saved_id) is None:
+        raise HTTPException(status_code=404, detail="saved lineup not found")
+    comment = LineupComment(saved_lineup_id=saved_id, body=payload.body)
+    session.add(comment)
+    session.commit()
+    session.refresh(comment)
+    return _comment_out(comment)
+
+
+@router.delete(_SAVED + "/{saved_id}/comments/{comment_id}", status_code=204)
+def delete_lineup_comment(
+    year: int, code: str, team_code: str, saved_id: int, comment_id: int,
+    session: Session = Depends(get_session),
+) -> Response:
+    comment = session.get(LineupComment, comment_id)
+    if comment is None or comment.saved_lineup_id != saved_id:
+        raise HTTPException(status_code=404, detail="comment not found")
+    session.delete(comment)
+    session.commit()
     return Response(status_code=204)

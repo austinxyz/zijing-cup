@@ -2,11 +2,13 @@ import { notFound } from "next/navigation";
 
 import {
   getDivisionRules,
+  getLineupCommentsBatch,
   getPlayerNotesBatch,
   getSavedLineups,
   getTeamLineups,
   getTeamPresets,
   getTeamRoster,
+  type LineupComment,
   type LineupPlayer,
   type PlayerNote,
   type LineupSearch,
@@ -23,6 +25,8 @@ import {
   reorderSavedLineups,
   cloneSavedLineup,
   renameSavedLineup,
+  addLineupComment,
+  deleteLineupComment,
 } from "./actions";
 import { CollapsibleSaved } from "./CollapsibleSaved";
 import { LineupEditProvider } from "./LineupEditContext";
@@ -179,6 +183,14 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
     ? await getPlayerNotesBatch(roster.map((p) => p.player_id))
     : {};
 
+  // Comments ride the saved-lineup cards (admin-only): one batch by saved id,
+  // only for an unlocked viewer. getLineupCommentsBatch degrades to {} on any
+  // failure (e.g. the remote table not yet applied), so it can never take the
+  // page down.
+  const commentsByLineup: Record<number, LineupComment[]> = canEdit
+    ? await getLineupCommentsBatch(saved.map((s) => s.id))
+    : {};
+
   const basePath = `/${season}/${division}/lineup/${encodeURIComponent(code)}`;
   // Bound server actions: the client supplies only the name / id. The current
   // locks and exclusions travel with the save, captured here on the server.
@@ -201,6 +213,8 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
   const reorderSavedAction = reorderSavedLineups.bind(null, season, division, code);
   const cloneSavedAction = cloneSavedLineup.bind(null, season, division, code);
   const renameSavedAction = renameSavedLineup.bind(null, season, division, code);
+  const addCommentAction = addLineupComment.bind(null, season, division, code);
+  const deleteCommentAction = deleteLineupComment.bind(null, season, division, code);
 
   const men = roster.filter((p) => p.gender === "M").length;
   const women = roster.filter((p) => p.gender === "F").length;
@@ -312,6 +326,9 @@ export default async function LineupPage({ params, searchParams }: PageProps) {
                 reorderAction={reorderSavedAction}
                 cloneAction={cloneSavedAction}
                 renameAction={renameSavedAction}
+                commentsByLineup={commentsByLineup}
+                addCommentAction={addCommentAction}
+                deleteCommentAction={deleteCommentAction}
               />
             </CollapsibleSaved>
           ) : null}

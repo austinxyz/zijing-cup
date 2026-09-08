@@ -25,6 +25,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     getTeamRoster: vi.fn(),
     getSavedLineups: vi.fn(async () => []),
     getPlayerNotesBatch: vi.fn(async () => ({})),
+    getLineupCommentsBatch: vi.fn(async () => ({})),
   };
 });
 
@@ -43,6 +44,8 @@ vi.mock("./actions", () => ({
   reorderSavedLineups: vi.fn(),
   cloneSavedLineup: vi.fn(),
   renameSavedLineup: vi.fn(),
+  addLineupComment: vi.fn(),
+  deleteLineupComment: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({

@@ -554,6 +554,39 @@ export async function getSavedLineups(
   }
 }
 
+export interface LineupComment {
+  id: number;
+  body: string;
+  /** ISO 8601, the database's clock. */
+  created_at: string;
+}
+
+/** Comments for many saved lineups in one round trip, grouped by saved_lineup
+ *  id — for the saved-lineups screen that shows a dozen cards at once. A missing
+ *  key means "no comments" for that lineup.
+ *
+ *  Empty id list → no request, `{}`. Any failure degrades to `{}` (same reason
+ *  as getSavedLineups: comments ride a table applied to the shared database by
+ *  hand after deploy, so between a deploy and that migration the endpoint 500s —
+ *  a confidential read-only overlay must never take the host page down). */
+export async function getLineupCommentsBatch(
+  ids: number[],
+): Promise<Record<number, LineupComment[]>> {
+  if (ids.length === 0) return {};
+  try {
+    const res = await fetch(
+      backendUrl(
+        `/api/lineup-comments?ids=${encodeURIComponent(ids.join(","))}`,
+      ),
+      backendRequestInit(),
+    );
+    if (!res.ok) return {};
+    return await res.json();
+  } catch {
+    return {};
+  }
+}
+
 export interface PlayerSeasonUtr {
   season_year: number;
   /** What gets read. While a conflict is unresolved this is the LARGER of the

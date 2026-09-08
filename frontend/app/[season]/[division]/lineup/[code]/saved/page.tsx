@@ -1,6 +1,12 @@
 import { notFound } from "next/navigation";
 
-import { getDivisionRules, getSavedLineups, getTeamLineups } from "@/lib/api";
+import {
+  getDivisionRules,
+  getLineupCommentsBatch,
+  getSavedLineups,
+  getTeamLineups,
+  type LineupComment,
+} from "@/lib/api";
 import { canEdit as canEditCompetition } from "@/lib/admin";
 import {
   deleteSavedLineup,
@@ -9,6 +15,8 @@ import {
   reorderSavedLineups,
   cloneSavedLineup,
   renameSavedLineup,
+  addLineupComment,
+  deleteLineupComment,
 } from "../actions";
 import { SavedLineups } from "../SavedLineups";
 
@@ -39,6 +47,11 @@ export default async function SavedLineupsPage({ params }: PageProps) {
   ]);
   if (search === null) notFound();
 
+  // Comments ride the admin-only cards: one batch by saved id, degrading to {}.
+  const commentsByLineup: Record<number, LineupComment[]> = canEdit
+    ? await getLineupCommentsBatch(saved.map((s) => s.id))
+    : {};
+
   const basePath = `/${season}/${division}/lineup/${encodeURIComponent(code)}`;
   const lineOrder = rules?.lines.map((line) => line.code);
   const deleteAction = deleteSavedLineup.bind(null, season, division, code);
@@ -47,6 +60,8 @@ export default async function SavedLineupsPage({ params }: PageProps) {
   const reorderAction = reorderSavedLineups.bind(null, season, division, code);
   const cloneAction = cloneSavedLineup.bind(null, season, division, code);
   const renameAction = renameSavedLineup.bind(null, season, division, code);
+  const addCommentAction = addLineupComment.bind(null, season, division, code);
+  const deleteCommentAction = deleteLineupComment.bind(null, season, division, code);
 
   return (
     <main className="flex flex-1 min-w-0 flex-col overflow-hidden bg-background">
@@ -82,6 +97,9 @@ export default async function SavedLineupsPage({ params }: PageProps) {
             reorderAction={reorderAction}
             cloneAction={cloneAction}
             renameAction={renameAction}
+            commentsByLineup={commentsByLineup}
+            addCommentAction={addCommentAction}
+            deleteCommentAction={deleteCommentAction}
           />
         ) : (
           <p className="text-[13px] text-muted-foreground">

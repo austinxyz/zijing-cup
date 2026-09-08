@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getDivisionTeams,
   getHealth,
+  getLineupCommentsBatch,
   getPlayerNotes,
   getPlayerNotesBatch,
   getPlayers,
@@ -374,5 +375,56 @@ describe("getPlayerNotesBatch", () => {
     vi.stubEnv("BACKEND_URL", "http://backend.test");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
     await expect(getPlayerNotesBatch([7])).resolves.toEqual({});
+  });
+});
+
+describe("getLineupCommentsBatch", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("requests the batch endpoint and returns the grouped map", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const payload = {
+      "3": [{ id: 1, body: "打 THU 用这套", created_at: "2026-09-07T15:40:00Z" }],
+      "5": [{ id: 2, body: "D2 偏弱盯紧", created_at: "2026-09-02T09:11:00Z" }],
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(payload),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const map = await getLineupCommentsBatch([3, 5]);
+
+    expect(map).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://backend.test/api/lineup-comments?ids=3%2C5",
+      expect.objectContaining({ headers: { "X-Backend-Secret": "s3cr3t" } }),
+    );
+  });
+
+  it("does not fetch for an empty id list", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getLineupCommentsBatch([])).resolves.toEqual({});
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("degrades to an empty map when the endpoint is not ok", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(getLineupCommentsBatch([3])).resolves.toEqual({});
+  });
+
+  it("degrades to an empty map when fetch rejects", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
+    await expect(getLineupCommentsBatch([3])).resolves.toEqual({});
   });
 });

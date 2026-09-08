@@ -2,10 +2,17 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 
-import type { LineupPlayer, LineupViolation, PlayerNote, SavedLineup } from "@/lib/api";
+import type {
+  LineupComment,
+  LineupPlayer,
+  LineupViolation,
+  PlayerNote,
+  SavedLineup,
+} from "@/lib/api";
 import { savedStaleRefs } from "./savedLoad";
 import { money } from "./candidate";
 import { LineBlock, type LineSeat } from "./LineBlock";
+import { LineupComments } from "./LineupComments";
 import { LineupEditor } from "./LineupEditor";
 import { useLineupEdit } from "./LineupEditContext";
 
@@ -33,6 +40,13 @@ interface SavedLineupsProps {
   cloneAction?: (id: number) => Promise<void>;
   /** Rename a saved lineup by id. Admin only; enables the 改名 control. */
   renameAction?: (id: number, name: string) => Promise<void>;
+  /** Comments by saved_lineup id (empty for a locked viewer — the whole card is
+   *  admin-only, so comments ride it). Shown in each card's expandable area. */
+  commentsByLineup?: Record<number, LineupComment[]>;
+  /** Append a comment to a saved lineup. Admin only; enables the append form. */
+  addCommentAction?: (savedId: number, body: string) => Promise<void>;
+  /** Delete a comment from a saved lineup. Admin only; enables delete. */
+  deleteCommentAction?: (savedId: number, commentId: number) => Promise<void>;
 }
 
 /** A status the backend sent that this build does not know. Fail closed: a
@@ -77,6 +91,9 @@ export function SavedLineups({
   reorderAction,
   cloneAction,
   renameAction,
+  commentsByLineup = {},
+  addCommentAction,
+  deleteCommentAction,
 }: SavedLineupsProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   // The lineup whose name is being edited inline, and the draft text.
@@ -431,6 +448,21 @@ export function SavedLineups({
                 onDone={() => setEditingId(null)}
               />
             ) : null}
+
+            <LineupComments
+              comments={commentsByLineup[item.id] ?? []}
+              editable={showEdit}
+              onAdd={
+                showEdit && addCommentAction
+                  ? (body) => addCommentAction(item.id, body)
+                  : undefined
+              }
+              onDelete={
+                showEdit && deleteCommentAction
+                  ? (commentId) => deleteCommentAction(item.id, commentId)
+                  : undefined
+              }
+            />
           </article>
         );
       })}

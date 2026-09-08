@@ -159,3 +159,49 @@ export async function renameSavedLineup(
   }, { season, division });
   revalidatePath(`/${season}/${division}/lineup/${team}/saved`);
 }
+
+/**
+ * Append a free-text comment to a saved lineup.
+ *
+ * A blank body is a no-op (never reaches the backend) — the append control is
+ * disabled for empty input, this is the belt to that suspenders. The write
+ * rides adminWrite (scoped to the competition), so an expired login surfaces as
+ * "log in again" rather than a backend 403.
+ *
+ * The card shows on both /lineup/[team] and /lineup/[team]/saved, so revalidate
+ * with "layout" scope to refresh the whole segment, not just one page.
+ */
+export async function addLineupComment(
+  season: string,
+  division: string,
+  team: string,
+  savedId: number,
+  body: string,
+): Promise<void> {
+  const trimmed = body.trim();
+  if (!trimmed) return;
+
+  await adminWrite(
+    "POST",
+    `${savedPath(season, division, team)}/${savedId}/comments`,
+    { body: trimmed },
+    { season, division },
+  );
+  revalidatePath(`/${season}/${division}/lineup/${team}`, "layout");
+}
+
+export async function deleteLineupComment(
+  season: string,
+  division: string,
+  team: string,
+  savedId: number,
+  commentId: number,
+): Promise<void> {
+  await adminWrite(
+    "DELETE",
+    `${savedPath(season, division, team)}/${savedId}/comments/${commentId}`,
+    undefined,
+    { season, division },
+  );
+  revalidatePath(`/${season}/${division}/lineup/${team}`, "layout");
+}
