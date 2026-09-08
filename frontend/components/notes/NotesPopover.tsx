@@ -177,6 +177,43 @@ export function NotesPopover({
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  // Sticky = opened by click; stays until an explicit close (outside/Esc). A
+  // hover-opened popover instead closes when the pointer leaves both the trigger
+  // and the panel — without this, hovering one player then another leaves the
+  // first popover open and they pile up.
+  const stickyRef = useRef(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function cancelClose() {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  }
+  function close() {
+    cancelClose();
+    stickyRef.current = false;
+    setOpen(false);
+  }
+  function scheduleClose() {
+    if (stickyRef.current) return; // click-opened: only outside/Esc closes it
+    cancelClose();
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  }
+  function openByHover() {
+    cancelClose();
+    setOpen(true);
+  }
+  function toggleByClick() {
+    cancelClose();
+    setOpen((v) => {
+      const next = !v;
+      stickyRef.current = next;
+      return next;
+    });
+  }
+
+  useEffect(() => () => cancelClose(), []);
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return;
@@ -191,11 +228,11 @@ export function NotesPopover({
     function onDocClick(e: MouseEvent) {
       const t = e.target as Node;
       if (!triggerRef.current?.contains(t) && !panelRef.current?.contains(t)) {
-        setOpen(false);
+        close();
       }
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") close();
     }
     document.addEventListener("mousedown", onDocClick);
     document.addEventListener("keydown", onKey);
@@ -206,13 +243,17 @@ export function NotesPopover({
   }, [open]);
 
   return (
-    <span className="inline-flex" onMouseEnter={() => setOpen(true)}>
+    <span
+      className="inline-flex"
+      onMouseEnter={openByHover}
+      onMouseLeave={scheduleClose}
+    >
       <button
         ref={triggerRef}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggleByClick}
         className="inline-flex cursor-pointer items-center border-0 bg-transparent p-0"
       >
         {children}
@@ -224,6 +265,8 @@ export function NotesPopover({
               ref={panelRef}
               role="dialog"
               aria-label={label}
+              onMouseEnter={cancelClose}
+              onMouseLeave={scheduleClose}
               style={{ position: "fixed", top: pos.top, left: pos.left, width: 272 }}
               className="z-50 overflow-hidden rounded-token border border-border bg-surface text-left shadow-lg"
             >

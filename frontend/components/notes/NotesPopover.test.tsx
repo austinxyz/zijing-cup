@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { PlayerNote } from "@/lib/api";
@@ -97,5 +97,29 @@ describe("NotesPopover editable", () => {
     expect(screen.queryByRole("button", { name: "追加" })).toBeNull();
     expect(screen.queryByRole("button", { name: "删除" })).toBeNull();
     expect(screen.queryByRole("textbox", { name: "评价内容" })).toBeNull();
+  });
+});
+
+describe("NotesPopover hover dismissal", () => {
+  it("opens on hover and closes when the pointer leaves (no stacking)", () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <NotesPopover notes={NOTES} label="x · 评价">
+          <span>评</span>
+        </NotesPopover>,
+      );
+      const trigger = screen.getByRole("button", { name: "评" });
+      fireEvent.mouseEnter(trigger);
+      expect(screen.getByRole("dialog", { name: "x · 评价" })).toBeTruthy();
+
+      fireEvent.mouseLeave(trigger);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(screen.queryByRole("dialog", { name: "x · 评价" })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
