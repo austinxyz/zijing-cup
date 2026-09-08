@@ -245,8 +245,12 @@ export function NotesPopover({
   return (
     <span
       className="inline-flex"
-      onMouseEnter={openByHover}
-      onMouseLeave={scheduleClose}
+      // Hover open/close only when read-only. An editable popover is click-only
+      // and sticky: on a touch device a tap fires an emulated mouseenter, and a
+      // non-sticky hover-open would then be dismissed by any stray mouseleave
+      // (keyboard appearing, focus shift) — closing the form mid-typing.
+      onMouseEnter={edit ? undefined : openByHover}
+      onMouseLeave={edit ? undefined : scheduleClose}
     >
       <button
         ref={triggerRef}
@@ -265,8 +269,8 @@ export function NotesPopover({
               ref={panelRef}
               role="dialog"
               aria-label={label}
-              onMouseEnter={cancelClose}
-              onMouseLeave={scheduleClose}
+              onMouseEnter={edit ? undefined : cancelClose}
+              onMouseLeave={edit ? undefined : scheduleClose}
               style={{ position: "fixed", top: pos.top, left: pos.left, width: 272 }}
               className="z-50 overflow-hidden rounded-token border border-border bg-surface text-left shadow-lg"
             >

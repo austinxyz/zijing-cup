@@ -123,3 +123,36 @@ describe("NotesPopover hover dismissal", () => {
     }
   });
 });
+
+describe("NotesPopover editable is click-only (stable for typing on touch)", () => {
+  const edit = { onAdd: vi.fn().mockResolvedValue(undefined), onDelete: vi.fn().mockResolvedValue(undefined) };
+
+  it("does NOT open on hover when editable (touch fires emulated mouseenter)", () => {
+    render(
+      <NotesPopover notes={[]} label="x · 评价" edit={edit}>
+        <span>评</span>
+      </NotesPopover>,
+    );
+    fireEvent.mouseEnter(screen.getByRole("button", { name: "评" }));
+    expect(screen.queryByRole("dialog", { name: "x · 评价" })).toBeNull();
+  });
+
+  it("opens on click and stays open when the pointer leaves (typing won't dismiss it)", () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <NotesPopover notes={[]} label="x · 评价" edit={edit}>
+          <span>评</span>
+        </NotesPopover>,
+      );
+      const trigger = screen.getByRole("button", { name: "评" });
+      fireEvent.click(trigger);
+      expect(screen.getByRole("dialog", { name: "x · 评价" })).toBeTruthy();
+      fireEvent.mouseLeave(trigger);
+      act(() => vi.advanceTimersByTime(400));
+      expect(screen.getByRole("dialog", { name: "x · 评价" })).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
