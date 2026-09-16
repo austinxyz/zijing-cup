@@ -16,6 +16,10 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    # Local stdio MCP server (app/mcp_server.py) + its tests. Never imported by
+    # app.main, so it stays out of prod deps — Render does not need it. Pinned
+    # <2 for the FastMCP decorator API (2.x renamed it to MCPServer).
+    "mcp<2",
 ]
 
 [tool.pytest.ini_options]

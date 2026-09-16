@@ -1,0 +1,17 @@
+{
+  "//": "本地 UTR 导入 MCP。复制成 .mcp.json（本机私有，勿提交），或按此在 Claude Code 里注册。",
+  "//secrets": "密钥从环境读，不要在此写明文。运行前在 shell 里 export BACKEND_SECRET / ADMIN_SECRET（与 backend/.env 一致），BACKEND_URL 可选（默认 http://127.0.0.1:8011）。",
+  "//run": "需要本地 FastAPI 在跑：backend/.venv-std/Scripts/python.exe -m uvicorn app.main:app --port 8011",
+  "mcpServers": {
+    "utr-import": {
+      "command": "backend/.venv-std/Scripts/python.exe",
+      "args": ["-m", "app.mcp_server"],
+      "cwd": "backend",
+      "env": {
+        "BACKEND_URL": "http://127.0.0.1:8011",
+        "BACKEND_SECRET": "${BACKEND_SECRET}",
+        "ADMIN_SECRET": "${ADMIN_SECRET}"
+      }
+    }
+  }
+}
