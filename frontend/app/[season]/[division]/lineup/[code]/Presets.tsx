@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import type { LineupFilterPreset, LineupPlayer, RuleLine } from "@/lib/api";
 import {
@@ -61,6 +61,22 @@ export function Presets({
   const { editing } = useLineupEdit();
   const showEdit = canEdit && editing;
   const [name, setName] = useState("");
+
+  // Loading a preset carries its name in ?preset= (buildLoadHref). Seed the
+  // name box from it so "改约束再存回同一套" is one click, not a retype. Keyed on
+  // the param VALUE (not on every render): a new load re-seeds, the user's own
+  // typing overrides it, and a post-save reset to "" does not re-trigger it
+  // (the param is unchanged). The box stays controlled — a defaultValue would
+  // not re-fill on the soft navigation a load performs (see CLAUDE.md).
+  const loadedName = useSearchParams().get("preset");
+  useEffect(() => {
+    if (loadedName) setName(loadedName);
+  }, [loadedName]);
+
+  // The button updates in place when the typed name is one that already exists
+  // (backend save is same-name-updates), otherwise it creates a new preset.
+  const trimmedName = name.trim();
+  const isUpdate = trimmedName.length > 0 && presets.some((p) => p.name === trimmedName);
   const [saveHint, setSaveHint] = useState<string | null>(null);
   //: The preset whose load was refused because a locked player is gone, and
   //: the dead references to show. Cleared when another action runs.
@@ -221,7 +237,7 @@ export function Presets({
             }}
             className="h-9 flex-none rounded-token border border-border bg-surface-muted px-3 text-[12px] text-foreground disabled:opacity-50"
           >
-            存为阵型
+            {isUpdate ? `更新「${trimmedName}」` : "存为阵型"}
           </button>
         </div>
       ) : null}

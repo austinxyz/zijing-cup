@@ -9,10 +9,10 @@
   - `preset` 参数只是携带名字,不进 `constraintsFromQuery`(它只认 locks/pins/ex),不影响搜索/重判。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/preset-name-prefill/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — write failing vitest(扩 presetLoad.test.ts): `buildLoadHref(base, preset{name:"主力", locks/pins/ex}, roster)` 输出含 `preset=%E4%B8%BB%E5%8A%9B`(或解码后 =主力),且 locks/pins/ex 参数不变
-- [ ] 1.2 GREEN — `presetLoad.ts` `buildLoadHref` 加 `params.set("preset", preset.name)`
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.0 CONTRACT — write openspec/changes/preset-name-prefill/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — write failing vitest(扩 presetLoad.test.ts): `buildLoadHref(base, preset{name:"主力", locks/pins/ex}, roster)` 输出含 `preset=%E4%B8%BB%E5%8A%9B`(或解码后 =主力),且 locks/pins/ex 参数不变
+- [x] 1.2 GREEN — `presetLoad.ts` `buildLoadHref` 加 `params.set("preset", preset.name)`
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. Presets 载入回填名字 + 按钮文案随名切换
 
@@ -27,16 +27,16 @@
   - 空名/无约束禁用或提示(现状);仅 `showEdit` 显示(现状)。测试 mock `next/navigation` 的 `useSearchParams`。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/preset-name-prefill/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — write failing vitest(扩 Presets.test.tsx，mock useSearchParams): URL `preset=主力` → 名字框初值「主力」、按钮「更新「主力」」;无 preset → 框空、按钮「存为阵型」
-- [ ] 2.2 GREEN — `Presets.tsx` 加 `useSearchParams` + keyed seed effect + 文案 name-match 推导
-- [ ] 2.3 RED — write failing vitest: 名字框改成新名 → 按钮回「存为阵型」;命中已存名点按钮 → 调 `saveAction(live, name)`(读实时表单);用户打字后不被回灌覆盖
-- [ ] 2.4 GREEN — 收口文案切换 + 确保 seed effect 只按 param 变化触发(不覆盖输入)
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.0 CONTRACT — write openspec/changes/preset-name-prefill/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 RED — write failing vitest(扩 Presets.test.tsx，mock useSearchParams): URL `preset=主力` → 名字框初值「主力」、按钮「更新「主力」」;无 preset → 框空、按钮「存为阵型」
+- [x] 2.2 GREEN — `Presets.tsx` 加 `useSearchParams` + keyed seed effect + 文案 name-match 推导
+- [x] 2.3 RED — write failing vitest: 名字框改成新名 → 按钮回「存为阵型」;命中已存名点按钮 → 调 `saveAction(live, name)`(读实时表单);用户打字后不被回灌覆盖
+- [x] 2.4 GREEN — 收口文案切换 + 确保 seed effect 只按 param 变化触发(不覆盖输入)
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 验证 + 交付
 
-- [ ] 3.1 Run frontend test suite — `cd frontend && npx vitest run` + `cd frontend && npx tsc --noEmit`；确认无回归、tsc 0 错
-- [ ] 3.2 后端无改动——跳过 pytest（本 change 不碰后端）
-- [ ] 3.3 真机核对 — 起前端(+后端)，登录进编辑模式：载入一套阵型 → 名字框自动填该名、按钮显示「更新「X」」→ 改一个锁定 → 点「更新」→ 存回同名（后端覆盖）；改成新名 → 按钮变「存为阵型」新建。（用 useSearchParams 的 Suspense/CSR 行为一并在 `next build` 或真机确认）
-- [ ] 3.4 Run superpowers:verification-before-completion — `cd frontend && npx vitest run` + `npx tsc --noEmit`；`grep -rn 'console.log' frontend/app/[season]/[division]/lineup` 应空；无 migration、无后端、无远程前置
+- [x] 3.1 Run frontend test suite — `cd frontend && npx vitest run` + `cd frontend && npx tsc --noEmit`；确认无回归、tsc 0 错
+- [x] 3.2 后端无改动——跳过 pytest（本 change 不碰后端）
+- [x] 3.3 真机核对 — 起前端(+后端)，登录进编辑模式：载入一套阵型 → 名字框自动填该名、按钮显示「更新「X」」→ 改一个锁定 → 点「更新」→ 存回同名（后端覆盖）；改成新名 → 按钮变「存为阵型」新建。（用 useSearchParams 的 Suspense/CSR 行为一并在 `next build` 或真机确认）
+- [x] 3.4 Run superpowers:verification-before-completion — `cd frontend && npx vitest run` + `npx tsc --noEmit`；`grep -rn 'console.log' frontend/app/[season]/[division]/lineup` 应空；无 migration、无后端、无远程前置

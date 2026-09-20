@@ -51,6 +51,17 @@ describe("buildLoadHref (loading a preset is a draft, not a search)", () => {
     const params = new URLSearchParams(href.split("?")[1]);
     expect(params.getAll("ex")).not.toContain("p9");
   });
+
+  it("carries the preset name so the page can prefill it (locks/ex unchanged)", () => {
+    const href = buildLoadHref("/2026/silver/lineup/PKU", preset(), ROSTER);
+    const params = new URLSearchParams(href.split("?")[1]);
+    // The name rides along, URL-encoded, for the load-then-update flow.
+    expect(params.get("preset")).toBe("主力");
+    // ...and the constraint params are untouched.
+    expect(params.get("D1a")).toBe("p1");
+    expect(params.get("D1b")).toBe("p2");
+    expect(params.getAll("ex")).toContain("p3");
+  });
 });
 
 describe("presetSize / staleLockRefs (unchanged helpers)", () => {

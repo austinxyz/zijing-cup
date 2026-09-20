@@ -59,6 +59,10 @@ export function buildLoadHref(
 ): string {
   const present = new Set(roster.map((p) => p.key));
   const params = new URLSearchParams();
+  // The name rides along (URL-encoded by URLSearchParams) so the page can
+  // prefill it and offer "更新「X」" — load-then-edit-then-save-back to the same
+  // preset. It is not a constraint: constraintsFromQuery ignores it.
+  params.set("preset", preset.name);
   for (const [line, pair] of Object.entries(preset.constraints.locks ?? {})) {
     params.set(`${line}a`, pair[0]);
     params.set(`${line}b`, pair[1]);

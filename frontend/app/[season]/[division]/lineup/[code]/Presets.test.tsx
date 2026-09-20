@@ -1,9 +1,11 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const push = vi.fn();
+let searchParams = new URLSearchParams();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
+  useSearchParams: () => searchParams,
 }));
 
 import type { LineupFilterPreset, LineupPlayer, RuleLine } from "@/lib/api";
@@ -102,5 +104,87 @@ describe("Presets load: stale locks vs navigate", () => {
     expect(href).toContain("D1b=p2");
     // the departed excluded key is dropped, not carried
     expect(href).not.toContain("p9");
+  });
+});
+
+describe("Presets load-then-update: name prefill + 更新 label", () => {
+  beforeEach(() => {
+    searchParams = new URLSearchParams();
+    push.mockClear();
+  });
+
+  it("prefills the name box from the ?preset= param on load", () => {
+    searchParams = new URLSearchParams("preset=" + encodeURIComponent("主力阵"));
+    show({ canEdit: true, presets: [preset({ name: "主力阵" })] });
+    const box = screen.getByLabelText("阵型名") as HTMLInputElement;
+    expect(box.value).toBe("主力阵");
+  });
+
+  it("shows 更新「X」 when the name matches an existing preset", () => {
+    searchParams = new URLSearchParams("preset=" + encodeURIComponent("主力阵"));
+    show({ canEdit: true, presets: [preset({ name: "主力阵" })] });
+    expect(screen.getByRole("button", { name: /更新「主力阵」/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^存为阵型$/ })).toBeNull();
+  });
+
+  it("shows 存为阵型 with no preset param and an empty name", () => {
+    show({ canEdit: true, presets: [preset({ name: "主力阵" })] });
+    expect(screen.getByRole("button", { name: /存为阵型/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /更新/ })).toBeNull();
+  });
+
+  it("switches label live: typing a new name → 存为阵型, typing an existing name → 更新", () => {
+    searchParams = new URLSearchParams("preset=" + encodeURIComponent("主力阵"));
+    show({ canEdit: true, presets: [preset({ name: "主力阵" })] });
+    const box = screen.getByLabelText("阵型名");
+    // loaded → 更新
+    expect(screen.getByRole("button", { name: /更新「主力阵」/ })).toBeTruthy();
+    // type a brand-new name → 存为阵型
+    fireEvent.change(box, { target: { value: "新阵" } });
+    expect(screen.getByRole("button", { name: /存为阵型/ })).toBeTruthy();
+    // back to an existing name → 更新
+    fireEvent.change(box, { target: { value: "主力阵" } });
+    expect(screen.getByRole("button", { name: /更新「主力阵」/ })).toBeTruthy();
+  });
+});
+
+describe("Presets 更新 click saves live form under the same name", () => {
+  beforeEach(() => {
+    searchParams = new URLSearchParams("preset=" + encodeURIComponent("主力阵"));
+  });
+
+  it("calls saveAction with the live-form constraints and the loaded name", () => {
+    const saveAction = vi.fn().mockResolvedValue(undefined);
+    render(
+      <form>
+        {/* live lock on D1 = p1/p2, so hasLiveConstraints is true */}
+        <select name="D1a" defaultValue="p1">
+          <option value="" />
+          <option value="p1">p1</option>
+          <option value="p2">p2</option>
+        </select>
+        <select name="D1b" defaultValue="p2">
+          <option value="" />
+          <option value="p1">p1</option>
+          <option value="p2">p2</option>
+        </select>
+        <Presets
+          presets={[preset({ name: "主力阵" })]}
+          roster={ROSTER}
+          lines={LINES}
+          canEdit
+          hasConstraints
+          basePath="/2025/silver/lineup/PRE-A"
+          saveAction={saveAction}
+        />
+      </form>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /更新「主力阵」/ }));
+
+    expect(saveAction).toHaveBeenCalledTimes(1);
+    const [live, savedName] = saveAction.mock.calls[0];
+    expect(savedName).toBe("主力阵");
+    expect(live.locks).toEqual({ D1: ["p1", "p2"] });
   });
 });
