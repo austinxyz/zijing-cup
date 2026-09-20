@@ -209,6 +209,7 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **后台**: `zijing_cup.lineup_filter_presets` 单表（`team_id` FK teams on delete cascade、`name` check 长度、`constraints` JSONB = 那批 URL query 参数、`unique(team_id,name)`、`created_at`/`updated_at` server_default）。`app/lineups/presets.py`：`save_preset`（同名走 UPDATE 覆盖、空名/长度/每队≤50 守卫）、`list_presets`、`delete_preset`（按 team_id 作用域，删不存在是 no-op）。路由挂在 `routers/lineups.py`：GET 列出（开放）+ POST 存 + DELETE 删（写路由靠 `WRITE_METHODS` admin 中间件自动受保护，不加前缀、不用依赖式鉴权）。
 **前台**: 无独立页面；呈现在 `lineup-ui` 的「已存阵型」块。
 **验收标准**: 存/取/删/同名覆盖/空名拒/长度与数量上限/无 admin 凭据写被拒 全绿；载入等价于把约束变成 URL query 走与手填完全相同的后端校验，不能注入裸 URL 注入不了的东西。**远程共享 Supabase 需去 Dashboard SQL Editor 手动执行 `20260902120000_create_lineup_filter_presets.sql` 后功能才生效**（前端有降级：表未建时列表为空、排阵页不 500）。
+**载入即更新（preset-name-prefill，2026-09-20）**: 载入一套 preset 后「阵型名」框自动带上它的名（`buildLoadHref` 多写一个 `preset=<名>` 参数，`Presets` 用 `useSearchParams` + 按参数值 keyed 的 effect seed）；「存为阵型」按钮按「当前名是否命中已存阵型」变「更新「X」」——载入→改约束→一键存回同名（后端同名即更新），改新名则新建。保存仍读实时表单、不读 URL。**同批修了一个既有 pin 载入 bug**：`buildLoadHref` 原把 pin 写成 `pin=LINE:key`（后端搜索参数格式），但页面 `constraintsFromQuery` 只把单座 `LINEa=key` 当 pin、忽略 `pin=`，于是载入含 pin 的阵型 pin 被静默丢弃、纯 pin 阵载入无反应；改成把 pin 也写成单座 `${line}a=key`（与控件/读取一致，lock 一直如此）。
 
 ---
 
@@ -341,6 +342,15 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **后台**: `zijing_cup.lineup_comments` 单表（`saved_lineup_id` FK saved_lineups on delete cascade、`body` check 长度 1–2000、`created_at` server_default now() not null、`(saved_lineup_id, created_at desc)` 索引）。`routers/lineups.py`：单阵容 GET 列出（`created_at desc, id desc`）、POST 追加（`CommentIn` body trim 非空 + max_length 2000 挡 422 不落 500）、DELETE 按 (saved_lineup_id, comment_id) 删一条（跨阵容 404）——**无编辑端点**；批量 `GET /api/lineup-comments?ids=…`（扁平静态路径不与 `/{id}` 冲突、按 saved_lineup_id 分组倒序、只放有评论的 id、去重/忽略非法/clamp≤200、走 backend secret）。写路由靠 `WRITE_METHODS` admin 中间件自动受保护。克隆不复制评论是后端 clone 的内在行为（逐字节复制 assignment/snapshot、不认识评论表）。
 **前台**: `SavedLineups` 卡片底部 `LineupComments` **卡片内可展开区**（非 body-portal 弹层——躲触屏 hover 坑）：折叠显示「评论 N」计数，展开倒序时间线（文本+时间+删除）+ 编辑模式追加框；追加/删除 gate = `useLineupEdit` 的 `canEdit && editing`，查看模式只读。`lib/api.ts` `getLineupCommentsBatch` 非 ok 降级 `{}`；排阵页/已存阵容页仅 `canEdit` 时按 saved id 批量取并传入，未解锁不取不显。server actions `addLineupComment`/`deleteLineupComment` 经 `adminWrite` scope `{season,division}`、`revalidatePath(.../lineup/{team}, "layout")` 刷新排阵页与 `/saved` 两条路由。
 **验收标准**: 追加不覆盖/倒序/空 body 拒/超长拒 422/删一条其余保留/跨阵容不可删/删阵容级联删评论/克隆不带评论/鉴权（GET 需 backend secret、POST/DELETE 需 admin secret）全绿；本地真机 e2e 追加（中文正确渲染）+就地确认删除+克隆得空评论+批量倒序+级联删实测过。**远程共享 Supabase 需去 Dashboard SQL Editor 手动执行 `20260907120000_create_lineup_comments.sql` 后写入才生效**（前端读降级为空、排阵/已存阵容页不 500，但追加/删除在建表前会 500）。
+
+---
+
+### `utr-import-mcp` ✅ 已实现 · 🖥️ 本机工具
+**用户故事**: 作为本机 operator，抓完某队某组的 UTR 后，让 agent 一次把整队批量写进 app，省掉「写 current-utr.csv → 再导入」的中间步。
+**覆盖需求**: docs/superpowers/specs/2026-09-15-utr-import-mcp-requirements.md（本地 stdio MCP、只走 HTTP 不碰 DB、两工具包现有端点、匹配在 agent 侧、密钥 env fail-closed、错误透传）
+**后台**: `backend/app/mcp_server.py`（官方 `mcp` SDK / FastMCP，`httpx` → 本地 FastAPI，**不 import `app.db`**）。两工具：`read_team_utr_sheet(season,division,team)` 包 `GET .../utr-sheet`（回每人 player_id + 现 UTR + profile id）；`write_team_current_utr(...,updates,season_year?)` 包 `PUT /api/players/current-utr`（按 player_id 批量、全有或全无、传 season_year 时 rated 双打 mirror 进参赛 UTR、exclude_unset 省略vs清空）。`BACKEND_SECRET`/`ADMIN_SECRET` 从 env 读、fail-closed；后端 4xx/5xx `detail` 原样带回。`mcp<2` 在 dev 依赖组（Render 不装、app.main 不 import）。
+**前台**: 无（agent 面工具，非网页）。`.mcp.json.example` 示例注册（`PYTHONPATH` 指 backend/——Claude Code 忽略 cwd）。
+**验收标准**: 读/写工具单测（httpx MockTransport：路径+双密钥头+体、404/422 透传、缺密钥报未配置、import 不碰 DB）全绿；本地真机 smoke（读 sheet→改 doubles→写回→再读落库、未知 id 透传）实测。无 migration、无远程前置（本机工具）。
 
 ## 规划中的能力（路线图）
 
