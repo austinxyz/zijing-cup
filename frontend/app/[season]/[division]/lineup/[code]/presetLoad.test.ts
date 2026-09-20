@@ -31,14 +31,19 @@ describe("buildLoadHref (loading a preset is a draft, not a search)", () => {
     expect(params.get("go")).toBeNull();
   });
 
-  it("carries pins (a single pinned player per line) as pin=LINE:key", () => {
+  it("carries a pin as a single filled seat (LINEa=key) — the same shape the controls write, so constraintsFromQuery reads it back as a pin", () => {
     const href = buildLoadHref(
       "/2026/silver/lineup/PKU",
       preset({ constraints: { locks: {}, pins: { D2: "p4" }, excluded: [] } }),
       ROSTER,
     );
     const params = new URLSearchParams(href.split("?")[1]);
-    expect(params.getAll("pin")).toContain("D2:p4");
+    // A pin = one seat filled, the other empty. constraintsFromQuery reads
+    // `${line}a`/`${line}b`; a `pin=LINE:key` param would be ignored and the
+    // pin silently dropped on load.
+    expect(params.get("D2a")).toBe("p4");
+    expect(params.get("D2b")).toBeNull();
+    expect(params.getAll("pin")).toEqual([]);
     expect(params.get("go")).toBeNull();
   });
 

@@ -67,10 +67,12 @@ export function buildLoadHref(
     params.set(`${line}a`, pair[0]);
     params.set(`${line}b`, pair[1]);
   }
-  // A pin loads to the same `pin=LINE:key` param the controls write; the
-  // partner seat is left for the engine, exactly as when it was pinned by hand.
+  // A pin loads as a SINGLE filled seat (`${line}a`), the partner seat left
+  // empty for the engine — exactly the shape the controls write and the shape
+  // constraintsFromQuery reads back as a pin. (A `pin=LINE:key` param would be
+  // ignored by constraintsFromQuery and the pin silently dropped on load.)
   for (const [line, key] of Object.entries(preset.constraints.pins ?? {})) {
-    if (present.has(key)) params.append("pin", `${line}:${key}`);
+    if (present.has(key)) params.set(`${line}a`, key);
   }
   for (const key of preset.constraints.excluded ?? []) {
     if (present.has(key)) params.append("ex", key);
