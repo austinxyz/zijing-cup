@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>participation-utr-sampling — 参赛 UTR 采样监控</title>
+<style>
+  :root{
+    --surface:#ffffff; --surface-muted:#f2efe9; --border:#e4e0d8;
+    --foreground:#221f1a; --muted:#6b665d; --muted-fg:#706a61; --background:#f6f4f0;
+    --primary:#9c3417; --primary-fg:#fff;
+    --danger:#b3261e; --danger-surface:#fbf0ee; --danger-border:#f0cfc9;
+    --success:#3a6b4d; --success-surface:#eef4f0; --success-border:#cfe2d6;
+    --warning:#8a5a12; --warning-surface:#f7efe0; --warning-border:#e6d4ad;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--background);color:var(--foreground);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;padding:22px}
+  h1{font-size:17px;margin:0 0 4px} .sub{color:var(--muted);font-size:12px;margin:0 0 18px;max-width:760px}
+  h2{font-size:13px;color:var(--muted);margin:26px 0 8px;border-top:1px solid var(--border);padding-top:12px}
+  .cap{color:var(--muted);font-size:12px;margin:4px 0 12px;max-width:760px}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  /* toolbar */
+  .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .bar .grow{flex:1;min-width:0}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .seg button{border:0;background:var(--surface);font:inherit;font-size:12px;padding:5px 12px;cursor:pointer;color:var(--muted-fg)}
+  .seg button.on{background:var(--surface-muted);color:var(--foreground);font-weight:600}
+  .snap{background:var(--primary);color:var(--primary-fg);border:0;border-radius:8px;font-size:12.5px;padding:7px 14px;cursor:pointer}
+  .snaphint{font-size:11px;color:var(--muted-fg)}
+  /* table */
+  .wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px}
+  table{border-collapse:collapse;width:100%;min-width:720px;font-size:12.5px}
+  th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+  thead th{position:sticky;top:0;background:var(--surface-muted);color:var(--muted);font-weight:600;font-size:11px}
+  th.d,td.d{text-align:right;font-family:ui-monospace,monospace}
+  td.name{font-weight:500}
+  td.div{color:var(--muted-fg);font-size:11px}
+  .avg{font-family:ui-monospace,monospace;font-weight:700}
+  .rated{color:var(--foreground)} .nonrated{color:var(--warning)}
+  .miss{color:var(--muted-fg)}
+  .badge{font-size:10.5px;padding:1px 8px;border-radius:999px;border:1px solid;display:inline-block}
+  .b-ok{border-color:var(--success-border);background:var(--success-surface);color:var(--success)}
+  .b-flag{border-color:var(--warning-border);background:var(--warning-surface);color:var(--warning)}
+  .setbtn{background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:11.5px;padding:3px 9px;cursor:pointer;color:var(--foreground)}
+  .setbtn.done{border-color:var(--success-border);background:var(--success-surface);color:var(--success);cursor:default}
+  .needs{font-size:11px;color:var(--warning)}
+  .st{font-size:9px;color:var(--muted-fg);display:block}
+  /* mobile */
+  .phone{width:360px;border:1px solid var(--border);border-radius:16px;background:var(--surface);padding:12px}
+  .pcard{border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+  .pcard .ph{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .pcard .nm{font-weight:600;font-size:13px}
+  .days{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+  .day{flex:none;min-width:52px;border:1px solid var(--border);border-radius:8px;padding:4px 6px;text-align:center}
+  .day .dh{font-size:9px;color:var(--muted-fg);font-family:ui-monospace,monospace}
+  .day .dv{font-size:12.5px;font-family:ui-monospace,monospace}
+  .pcard .foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<h1>participation-utr-sampling — 参赛 UTR 采样监控</h1>
+<p class="sub">9/21–9/25 每天刷新完当前双打 UTR 后点「快照今天」，把该赛季金+银所有队员的当前双打 UTR 存一笔。
+监控页看每人 5 天走势 + <b>rated 天均值</b>；全 rated 才出「定为参赛 UTR」，有任一非 rated 天则打「待核」旗、
+组委会人工核并手工给 match UTR。admin-only。</p>
+
+<h2>1 · 桌面：工具条 + 采样表</h2>
+<p class="cap">工具条：「快照今天」(全赛季一次) + 组筛选。表：每人一行，5 个日期列（rated 黑/非 rated 橙/缺采样灰）、
+rated 均值、状态旗、「定为」。同一天再快照覆盖当天列。</p>
+<div class="bar">
+  <button class="snap">快照今天（9/25）</button>
+  <span class="snaphint">上次快照 09/24 · 已采样 4 / 5 天</span>
+  <span class="grow"></span>
+  <span class="seg">
+    <button class="on">全部</button><button>金组</button><button>银组</button><button>待核</button>
+  </span>
+</div>
+<div class="wrap">
+  <table>
+    <thead><tr>
+      <th>队员</th><th>组</th>
+      <th class="d">09/21</th><th class="d">09/22</th><th class="d">09/23</th><th class="d">09/24</th><th class="d">09/25</th>
+      <th class="d">rated 均值</th><th>状态</th><th>参赛 UTR</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td class="name">叶 明</td><td class="div">金 · ZJU-UCSD</td>
+        <td class="d rated">6.71</td><td class="d rated">6.69</td><td class="d rated">6.70</td><td class="d rated">6.72</td><td class="d rated">6.68</td>
+        <td class="d avg">6.70</td>
+        <td><span class="badge b-ok">正常</span></td>
+        <td><button class="setbtn">定为 6.70</button></td>
+      </tr>
+      <tr>
+        <td class="name">马小宇</td><td class="div">金 · ZJU-UCSD</td>
+        <td class="d rated">6.55</td><td class="d rated">6.53</td><td class="d nonrated">P6.60<span class="st">projected</span></td><td class="d rated">6.54</td><td class="d miss">—</td>
+        <td class="d avg">6.54</td>
+        <td><span class="badge b-flag">待核</span></td>
+        <td><span class="needs">有 projected 天 · 组委会核 match UTR</span></td>
+      </tr>
+      <tr>
+        <td class="name">李 宁</td><td class="div">银 · PKU</td>
+        <td class="d rated">5.60</td><td class="d rated">5.58</td><td class="d rated">5.61</td><td class="d rated">5.59</td><td class="d rated">5.62</td>
+        <td class="d avg">5.60</td>
+        <td><span class="badge b-ok">正常</span></td>
+        <td><button class="setbtn done">✓ 已定 5.60</button></td>
+      </tr>
+      <tr>
+        <td class="name">曹世和</td><td class="div">银 · PKU</td>
+        <td class="d nonrated">U<span class="st">unrated</span></td><td class="d nonrated">U</td><td class="d nonrated">U</td><td class="d nonrated">U</td><td class="d miss">—</td>
+        <td class="d avg miss">—</td>
+        <td><span class="badge b-flag">待核</span></td>
+        <td><span class="needs">无 rated 采样 · 组委会给 match UTR</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<p class="cap">「定为」只在<b>全部采样天都 rated</b> 时出现（点确认才写进参赛 UTR，不自动、不静默覆盖冻结值）；
+已定为显示「✓ 已定 X」。待核行不出「定为」，给一句提示 + 指向既有 UTR 录入。缺采样（未快照该天）= 灰「—」，不进均值。</p>
+
+<h2>2 · 移动端：每人一卡，日期列横向滚动</h2>
+<div class="phone">
+  <div class="bar" style="margin-bottom:10px">
+    <button class="snap">快照今天</button><span class="snaphint">4/5 天</span>
+    <span class="grow"></span><span class="seg"><button class="on">金</button><button>银</button><button>待核</button></span>
+  </div>
+  <div class="pcard">
+    <div class="ph"><span class="nm">叶 明</span><span class="badge b-ok">正常</span></div>
+    <div class="days">
+      <div class="day"><div class="dh">09/21</div><div class="dv">6.71</div></div>
+      <div class="day"><div class="dh">09/22</div><div class="dv">6.69</div></div>
+      <div class="day"><div class="dh">09/23</div><div class="dv">6.70</div></div>
+      <div class="day"><div class="dh">09/24</div><div class="dv">6.72</div></div>
+      <div class="day"><div class="dh">09/25</div><div class="dv">6.68</div></div>
+    </div>
+    <div class="foot"><span class="mono">rated 均值 <b>6.70</b></span><button class="setbtn">定为 6.70</button></div>
+  </div>
+  <div class="pcard">
+    <div class="ph"><span class="nm">马小宇</span><span class="badge b-flag">待核</span></div>
+    <div class="days">
+      <div class="day"><div class="dh">09/21</div><div class="dv">6.55</div></div>
+      <div class="day"><div class="dh">09/22</div><div class="dv">6.53</div></div>
+      <div class="day"><div class="dh">09/23</div><div class="dv" style="color:var(--warning)">P6.60</div></div>
+      <div class="day"><div class="dh">09/24</div><div class="dv">6.54</div></div>
+      <div class="day"><div class="dh">09/25</div><div class="dv" style="color:var(--muted-fg)">—</div></div>
+    </div>
+    <div class="foot"><span class="mono">rated 均值 <b>6.54</b></span><span class="needs">有 projected · 组委会核</span></div>
+  </div>
+</div>
+</body>
+</html>
