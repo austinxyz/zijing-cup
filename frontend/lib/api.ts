@@ -587,6 +587,48 @@ export async function getLineupCommentsBatch(
   }
 }
 
+export interface DailySample {
+  /** ISO date (YYYY-MM-DD). */
+  sample_date: string;
+  /** Decimal string, or null on an unrated day. */
+  doubles_utr: string | null;
+  doubles_status: string | null;
+}
+
+export interface SeasonSamplingRow {
+  player_id: number;
+  last_name: string;
+  first_name: string;
+  /** "gold" | "silver" (the player's team division this season). */
+  division: string | null;
+  samples: DailySample[];
+  /** Mean of the rated days, Decimal string; null when no rated day. */
+  rated_avg: string | null;
+  /** "ok" (all sampled days rated) | "needs_review" (any projected/unrated). */
+  flag: "ok" | "needs_review";
+  /** True when the rated average may be set as the participation UTR. */
+  can_set: boolean;
+}
+
+/** Every season player's daily UTR samples + rated-day average + review flag,
+ *  for the committee monitor page. Degrades to `[]` on ANY failure: the samples
+ *  table is applied to the shared database by hand after deploy, so between a
+ *  deploy and that migration the endpoint 500s — the monitor must not crash. */
+export async function getSeasonSampling(
+  year: number | string,
+): Promise<SeasonSamplingRow[]> {
+  try {
+    const res = await fetch(
+      backendUrl(`/api/seasons/${year}/participation-utr`),
+      backendRequestInit(),
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 export interface PlayerSeasonUtr {
   season_year: number;
   /** What gets read. While a conflict is unresolved this is the LARGER of the

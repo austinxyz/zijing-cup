@@ -5,6 +5,7 @@ import {
   getDivisionTeams,
   getHealth,
   getLineupCommentsBatch,
+  getSeasonSampling,
   getPlayerNotes,
   getPlayerNotesBatch,
   getPlayers,
@@ -426,5 +427,45 @@ describe("getLineupCommentsBatch", () => {
     vi.stubEnv("BACKEND_URL", "http://backend.test");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
     await expect(getLineupCommentsBatch([3])).resolves.toEqual({});
+  });
+});
+
+describe("getSeasonSampling", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("requests the season sampling endpoint and returns the rows", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const payload = [
+      { player_id: 12, last_name: "叶", first_name: "明", division: "gold",
+        samples: [{ sample_date: "2026-09-21", doubles_utr: "6.70", doubles_status: "rated" }],
+        rated_avg: "6.70", flag: "ok", can_set: true },
+    ];
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, json: () => Promise.resolve(payload),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const rows = await getSeasonSampling(2026);
+    expect(rows).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://backend.test/api/seasons/2026/participation-utr",
+      expect.objectContaining({ headers: { "X-Backend-Secret": "s3cr3t" } }),
+    );
+  });
+
+  it("degrades to an empty list when the endpoint is not ok", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(getSeasonSampling(2026)).resolves.toEqual([]);
+  });
+
+  it("degrades to an empty list when fetch rejects", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
+    await expect(getSeasonSampling(2026)).resolves.toEqual([]);
   });
 });

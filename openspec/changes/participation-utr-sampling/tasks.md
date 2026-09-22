@@ -14,14 +14,14 @@
   - 写鉴权靠方法判权中间件；不加前缀判断/依赖。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/participation-utr-sampling/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — write failing pytest: 「快照今天」把某赛季全体队员当前双打值以服务端今日日期写入；同日再快照 → 每人当天仍一行（upsert 覆盖）
-- [ ] 1.2 GREEN — `PlayerDailyUtr` 模型 + migration + 本地 execute；注册；快照端点（服务端日期、upsert、全赛季）
-- [ ] 1.3 RED — write failing pytest: 批量读按赛季回每人每日采样；rated 均值只算 rated 天（2 位 round half-up）、无 rated 天无均值；待核 = 有任一非 rated 天
-- [ ] 1.4 GREEN — 批量读端点 + rated 均值/旗 helper（Decimal 全程）
-- [ ] 1.5 RED — write failing pytest: 「定为」把 rated 均值写进 `PlayerSeasonUtr`（source 标注）；锁季 → 409 透传；快照/定为无 admin → 403、读无 backend secret → 401
-- [ ] 1.6 GREEN — 「定为」端点复用 `set_season_utr`（锁季 409）+ 鉴权透传
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.0 CONTRACT — write openspec/changes/participation-utr-sampling/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — write failing pytest: 「快照今天」把某赛季全体队员当前双打值以服务端今日日期写入；同日再快照 → 每人当天仍一行（upsert 覆盖）
+- [x] 1.2 GREEN — `PlayerDailyUtr` 模型 + migration + 本地 execute；注册；快照端点（服务端日期、upsert、全赛季）
+- [x] 1.3 RED — write failing pytest: 批量读按赛季回每人每日采样；rated 均值只算 rated 天（2 位 round half-up）、无 rated 天无均值；待核 = 有任一非 rated 天
+- [x] 1.4 GREEN — 批量读端点 + rated 均值/旗 helper（Decimal 全程）
+- [x] 1.5 RED — write failing pytest: 「定为」把 rated 均值写进 `PlayerSeasonUtr`（source 标注）；锁季 → 409 透传；快照/定为无 admin → 403、读无 backend secret → 401
+- [x] 1.6 GREEN — 「定为」端点复用 `set_season_utr`（锁季 409）+ 鉴权透传
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 前端：api + actions + 赛季级监控页
 
@@ -36,18 +36,18 @@
   - 均值/旗由后端给，前端只渲染（少重复逻辑）。
 - **Threshold**: 70
 
-- [ ] 2.0 CONTRACT — write openspec/changes/participation-utr-sampling/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-20-participation-utr-sampling-mocks.html; note tokens（surface/border/primary/warning/success/muted-fg）+ verbatim 文案（「快照今天」「定为 X」「✓ 已定」「待核」「正常」「组委会核 match UTR」、筛选「全部/金组/银组/待核」）
-- [ ] 2.2 RED — write failing vitest: `getSeasonSampling([]/未解锁)` 不取 → 空；非 ok → 空；正常 → 每人每日 + 均值 + 旗
-- [ ] 2.3 GREEN — `lib/api.ts` 采样类型 + `getSeasonSampling`（降级）+ server actions（adminWrite、revalidate）
-- [ ] 2.4 RED — write failing vitest: 监控页组件——未解锁不渲染内容；金/银/待核筛选；每人列+均值+旗；全 rated 出「定为」、待核不出
-- [ ] 2.5 GREEN — 监控页（机密门 + 筛选 + 表/卡 + 快照/定为动作）+ 路由 `error.tsx`
-- [ ] 2.6 VISUAL DIFF — bring up dev stack；解锁进监控页；对照 mock（工具条、5 列表、均值、待核旗色、定为按钮、移动端卡横滚）；fix token/color/text 漂移
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.0 CONTRACT — write openspec/changes/participation-utr-sampling/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-09-20-participation-utr-sampling-mocks.html; note tokens（surface/border/primary/warning/success/muted-fg）+ verbatim 文案（「快照今天」「定为 X」「✓ 已定」「待核」「正常」「组委会核 match UTR」、筛选「全部/金组/银组/待核」）
+- [x] 2.2 RED — write failing vitest: `getSeasonSampling([]/未解锁)` 不取 → 空；非 ok → 空；正常 → 每人每日 + 均值 + 旗
+- [x] 2.3 GREEN — `lib/api.ts` 采样类型 + `getSeasonSampling`（降级）+ server actions（adminWrite、revalidate）
+- [x] 2.4 RED — write failing vitest: 监控页组件——未解锁不渲染内容；金/银/待核筛选；每人列+均值+旗；全 rated 出「定为」、待核不出
+- [x] 2.5 GREEN — 监控页（机密门 + 筛选 + 表/卡 + 快照/定为动作）+ 路由 `error.tsx`
+- [x] 2.6 VISUAL DIFF — bring up dev stack；解锁进监控页；对照 mock（工具条、5 列表、均值、待核旗色、定为按钮、移动端卡横滚）；fix token/color/text 漂移
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 验证 + 交付
 
-- [ ] 3.1 Run backend test suite — `backend/.venv-std/Scripts/python.exe -m pytest -q`（先跑测试，再补种——CLAUDE.md）；无回归
-- [ ] 3.2 Run frontend test suite — `cd frontend && npx vitest run` + `npx tsc --noEmit`；无回归、tsc 0
-- [ ] 3.3 E2E — 补种 + 起后端/前端 + 登录：连快照 2 天（改当前双打值制造差异）→ 监控页看 5 列 + rated 均值；对全 rated 队员「定为」→ 查 `PlayerSeasonUtr` 落值；把某人某天设 projected → 该人「待核」、无「定为」；未解锁不取；测完删测试数据
-- [ ] 3.4 Run superpowers:verification-before-completion — 跑 test_commands + `npx tsc --noEmit`；`grep -rn 'console.log' frontend/app frontend/lib` 应空；migration schema-qualified；**push 前远程 Dashboard 建 `player_daily_utr` 的前置在交付说明点明**（读新表后端 push 前先建表）
+- [x] 3.1 Run backend test suite — `backend/.venv-std/Scripts/python.exe -m pytest -q`（先跑测试，再补种——CLAUDE.md）；无回归
+- [x] 3.2 Run frontend test suite — `cd frontend && npx vitest run` + `npx tsc --noEmit`；无回归、tsc 0
+- [x] 3.3 E2E — 补种 + 起后端/前端 + 登录：连快照 2 天（改当前双打值制造差异）→ 监控页看 5 列 + rated 均值；对全 rated 队员「定为」→ 查 `PlayerSeasonUtr` 落值；把某人某天设 projected → 该人「待核」、无「定为」；未解锁不取；测完删测试数据
+- [x] 3.4 Run superpowers:verification-before-completion — 跑 test_commands + `npx tsc --noEmit`；`grep -rn 'console.log' frontend/app frontend/lib` 应空；migration schema-qualified；**push 前远程 Dashboard 建 `player_daily_utr` 的前置在交付说明点明**（读新表后端 push 前先建表）

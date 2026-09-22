@@ -4,7 +4,15 @@ from fastapi import FastAPI
 
 from app.auth import require_shared_secret
 from app.db import check_db_connection
-from app.routers import admin_credentials, lineups, players, rosters, rules, utr
+from app.routers import (
+    admin_credentials,
+    lineups,
+    players,
+    rosters,
+    rules,
+    utr,
+    utr_sampling,
+)
 
 # Opt in to interactive docs rather than switching them off when the
 # environment looks like production — a misread environment leaves docs
@@ -23,6 +31,7 @@ app.include_router(rosters.router)
 app.include_router(lineups.router)
 app.include_router(players.router)
 app.include_router(utr.router)
+app.include_router(utr_sampling.router)
 app.include_router(admin_credentials.router)
 
 
