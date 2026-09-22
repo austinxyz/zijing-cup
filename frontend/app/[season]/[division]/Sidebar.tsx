@@ -23,7 +23,7 @@ interface SidebarProps {
    *  because that is the division's index route. `"admin"` is the /admin page,
    *  which is outside the competition nav — no nav item is current there, and
    *  the 比赛密码 link is marked instead. */
-  section?: NavSection | "admin";
+  section?: NavSection | "admin" | "participation";
   /** The team the URL is on, when it is on one. 阵容 then opens that team's
    *  lineup directly instead of sending you through a picker to choose the
    *  team already on screen. */
@@ -242,7 +242,7 @@ export function Sidebar({
             label="参赛 UTR"
             icon={SAMPLE_ICON}
             href={`/${season}/participation-utr`}
-            current={false}
+            current={section === "participation"}
           />
         ) : (
           <div

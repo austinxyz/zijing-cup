@@ -10,8 +10,9 @@ interface TopNavProps {
   division: string;
   divisionName: string;
   seasons: SeasonIndex[];
-  /** Derived from the route, never held as state. */
-  section?: NavSection;
+  /** Derived from the route, never held as state. `participation` is the
+   *  season-level sampling page: it has no tab here, so nothing highlights. */
+  section?: NavSection | "participation";
   /** The team in scope, so 阵容 opens that roster's lineup directly. */
   teamCode?: string;
   signedIn?: boolean;

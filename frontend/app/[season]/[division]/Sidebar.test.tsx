@@ -362,6 +362,27 @@ describe("Sidebar 参赛 UTR link (super only)", () => {
     expect(link.getAttribute("href")).toBe("/2026/participation-utr");
   });
 
+  it("marks 参赛 UTR current on the sampling page and highlights no competition item", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="gold"
+        divisionName="金组"
+        seasons={SEASONS}
+        signedIn
+        isSuper
+        section="participation"
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /参赛 UTR/ }).getAttribute("aria-current"),
+    ).toBe("page");
+    for (const name of ["赛制规则", "队伍", "阵容"]) {
+      expect(screen.getByText(name).closest("[aria-current]")).toBeNull();
+    }
+  });
+
   it("shows 参赛 UTR as a disabled row (not a link) for a non-super admin", () => {
     render(
       <Sidebar
