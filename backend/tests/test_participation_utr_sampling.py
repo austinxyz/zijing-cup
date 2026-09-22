@@ -19,7 +19,7 @@ os.environ.setdefault(
 os.environ.setdefault("BACKEND_SECRET", "test-secret")
 os.environ.setdefault("ADMIN_SECRET", "admin-secret")
 
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 
 import pytest
@@ -104,6 +104,26 @@ def _snap(client):
     )
 
 
+class TestSamplingDate:
+    """The sample date is the competition's date (Los Angeles), not the server's.
+    Render runs UTC: a snapshot on the evening of 9/21 PT is already 9/22 UTC, and
+    filing it under 9/22 shifts the whole five-day window off by a day."""
+
+    def test_evening_pt_instant_files_under_the_pt_date_not_utc(self):
+        from app.routers.utr_sampling import _sampling_today
+
+        # 9/21 20:00 PT == 9/22 03:00 UTC. The sample belongs to 9/21.
+        instant = datetime(2026, 9, 22, 3, 0, tzinfo=timezone.utc)
+        assert _sampling_today(instant) == date(2026, 9, 21)
+
+    def test_morning_pt_instant_is_same_calendar_day(self):
+        from app.routers.utr_sampling import _sampling_today
+
+        # 9/21 09:00 PT == 9/21 16:00 UTC. Still 9/21 both sides.
+        instant = datetime(2026, 9, 21, 16, 0, tzinfo=timezone.utc)
+        assert _sampling_today(instant) == date(2026, 9, 21)
+
+
 class TestSnapshot:
     def test_snapshot_writes_todays_current_doubles_for_all_season_players(self, client):
         c, ids = client
@@ -116,7 +136,9 @@ class TestSnapshot:
             ).all()
         # Both divisions' players covered.
         assert {r.player_id for r in rows} == set(ids.values())
-        today = date.today()
+        from app.routers.utr_sampling import _sampling_today
+
+        today = _sampling_today()
         assert all(r.sample_date == today for r in rows)
         by_id = {r.player_id: r for r in rows}
         assert by_id[ids["g_rated"]].doubles_utr == Decimal("6.70")

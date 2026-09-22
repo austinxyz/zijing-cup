@@ -8,9 +8,10 @@ is behind the shared secret. "Set" reuses the players command's set_season_utr,
 so it refuses on a locked season exactly like every other participation write.
 """
 
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
@@ -23,6 +24,17 @@ from app.players import command
 router = APIRouter(prefix="/api", tags=["utr-sampling"])
 
 _SEASON = "/seasons/{year}/participation-utr"
+
+# The sampling window (9/21-9/25) is stated in the competition's local time.
+# Render runs UTC, so date.today() there rolls over ~5pm PT — a snapshot taken
+# on the evening of 9/21 PT would file under 9/22 and shift the whole window.
+SAMPLING_TZ = ZoneInfo("America/Los_Angeles")
+
+
+def _sampling_today(now: Optional[datetime] = None) -> date:
+    """Today's calendar date in the competition timezone (LA), not the server's."""
+    moment = now or datetime.now(timezone.utc)
+    return moment.astimezone(SAMPLING_TZ).date()
 
 
 def _season_player_ids(session: Session, year: int) -> list[int]:
@@ -50,7 +62,7 @@ def snapshot_today(year: int, session: Session = Depends(get_session)) -> dict:
     if session.get(Season, year) is None:
         raise HTTPException(status_code=404, detail=f"no season {year}")
 
-    today = date.today()
+    today = _sampling_today()
     player_ids = _season_player_ids(session, year)
     people = {
         p.id: p
