@@ -352,6 +352,17 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 **前台**: 无（agent 面工具，非网页）。`.mcp.json.example` 示例注册（`PYTHONPATH` 指 backend/——Claude Code 忽略 cwd）。
 **验收标准**: 读/写工具单测（httpx MockTransport：路径+双密钥头+体、404/422 透传、缺密钥报未配置、import 不碰 DB）全绿；本地真机 smoke（读 sheet→改 doubles→写回→再读落库、未知 id 透传）实测。无 migration、无远程前置（本机工具）。
 
+---
+
+### `participation-utr-sampling` ✅ 已实现 · 🌐 待远程迁移
+**用户故事**: 作为组委会，2026 参赛 UTR 取 9/21–9/25 五天双打 UTR 均值。我想每天把金+银所有队员当前双打 UTR 存一笔，在一页看每人 5 天走势与 rated 均值，全 rated 就一键「定为参赛 UTR」；projected/unrated 打「待核」旗、走既有录入人工核 match UTR。
+**覆盖需求**: docs/superpowers/specs/2026-09-20-participation-utr-sampling-requirements.md（每日采样表、快照今天、批量读、rated 均值/待核旗、定为复用锁季 409、赛季级 super-only 监控页）
+**后台**: `zijing_cup.player_daily_utr` 单表（`season_year` FK seasons、`player_id` FK players on delete cascade、`sample_date` date、`doubles_utr`/`doubles_status` 可空、`unique(season_year,player_id,sample_date)`、`created_at` server_default now() not null、`(season_year,sample_date)` 索引）。`routers/utr_sampling.py`（`prefix=/api`）：POST `…/participation-utr/snapshot`（服务端 `date.today()` 一个时钟、按赛季全体队员 upsert 当前双打值、全有或全无一次 commit）、GET `…/participation-utr`（backend secret，按赛季回每人 samples + rated 均值 + 待核旗 + can_set）、POST `…/participation-utr/{player_id}/set`（rated 均值写 `PlayerSeasonUtr` 复用 `set_season_utr`、source=admin_ruling/status=committee、**锁季 409 透传不加旁路**、非全 rated 或无均值 422）。均值只算 rated 天（Decimal 全程、`quantize(0.01,ROUND_HALF_UP)`）；待核 = 有任一非 rated 采样天或无采样。写路由靠 `WRITE_METHODS` admin 中间件自动受保护。
+**前台**: 赛季级路由 `app/[season]/participation-utr/`（**门用 `isSuper` 非 canEdit**——跨金银、赛季级组委会工具，canEdit 按组盖不住跨组；非 super 只见提示+登录链接、不取数）+ 自带 `error.tsx`。`SamplingMonitor`（client）：金/银/待核筛选、快照今天、每人日期列（rated 前景色 / 非 rated `P值` warning / null `U` / 缺 `—`）+ rated 均值 + 状态旗（待核 warning / 正常 success）+「定为 {均值}」（仅全 rated 出，否则「组委会核 match UTR」）。`lib/api.ts` `getSeasonSampling` 非 ok/异常降级 `[]`（远程迁移滞后不打崩页）；server actions 经 `adminWrite` scope super-only + `revalidatePath`。侧栏（`Sidebar`）加「参赛 UTR」入口：super 会话为链接指向 `/{season}/participation-utr`，非 super/未登录为灰行 + 「仅组委会」徽标——赛季级故不走 navItems（按组）；移动 TopNav 不含此项（手机 super 手输 URL）。
+**验收标准**: 快照 upsert 同日覆盖 + 服务端日期 + 全赛季覆盖、批量读分组、rated 均值只算 rated 天/无 rated 无均值/2 位、待核判定、定为写 PlayerSeasonUtr、锁季 409、鉴权 401/403 全绿；前端机密门（未解锁不取）、金/银/待核筛选、每人列+均值+旗、全 rated 才出「定为」、降级空 全绿 + tsc 0；本地真机 e2e（快照 375 行、待核/正常、定为落值 6.70 source=admin_ruling status=committee、无重复行）实测。**远程共享 Supabase 需去 Dashboard SQL Editor 手动执行 `20260921120000_create_player_daily_utr.sql` 后功能才生效**（前端读降级为空、监控页不 500，但快照/定为在建表前会 500）。
+
+---
+
 ## 规划中的能力（路线图）
 
 `lineup-engine`、`lineup-ui` 与 `current-utr-source` 曾列在这里，现已实现，条目见上方。
