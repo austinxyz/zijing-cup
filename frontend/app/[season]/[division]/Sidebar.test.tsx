@@ -343,6 +343,51 @@ describe("Sidebar 队员管理 and the signed-in state", () => {
   });
 });
 
+describe("Sidebar 参赛 UTR link (super only)", () => {
+  it("links 参赛 UTR to the season-level sampling page for a super admin", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        signedIn
+        isSuper
+      />,
+    );
+
+    // Season-level (cross-division) committee tool: the href drops the
+    // division, unlike the rest of the nav.
+    const link = screen.getByRole("link", { name: /参赛 UTR/ });
+    expect(link.getAttribute("href")).toBe("/2026/participation-utr");
+  });
+
+  it("shows 参赛 UTR as a disabled row (not a link) for a non-super admin", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        signedIn
+        isSuper={false}
+      />,
+    );
+
+    // A scoped captain sees it exists but cannot open it — it is a committee
+    // tool. Greyed, not hidden, so its existence is honest.
+    expect(screen.queryByRole("link", { name: /参赛 UTR/ })).toBeNull();
+    expect(screen.getByText("参赛 UTR")).toBeTruthy();
+  });
+
+  it("shows 参赛 UTR as a disabled row for a signed-out reader", () => {
+    renderSidebar();
+
+    expect(screen.queryByRole("link", { name: /参赛 UTR/ })).toBeNull();
+    expect(screen.getByText("参赛 UTR")).toBeTruthy();
+  });
+});
+
 describe("Sidebar 比赛密码 link (super only)", () => {
   it("shows the 比赛密码 link to a super admin", () => {
     render(

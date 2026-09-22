@@ -7,6 +7,12 @@ import { navItems, type NavSection } from "./nav";
 
 export type { NavSection };
 
+// A calendar with a tick: the five-day sampling that gets confirmed. Defined
+// here, not in nav.ts, because 参赛 UTR is season-level (cross-division) and
+// super-only — it is not one of the per-division nav destinations.
+const SAMPLE_ICON =
+  "M3 3.6h10v9.8H3zM3 6.2h10M5.4 2.4v2.4M10.6 2.4v2.4M5.6 9.6l1.4 1.4 2.8-2.8";
+
 interface SidebarProps {
   season: string;
   division: string;
@@ -224,6 +230,33 @@ export function Sidebar({
               current={section === item.key}
             />
           ),
+        )}
+
+        {/* 参赛 UTR sampling: season-level (金+银), super-only committee tool,
+            so it sits apart from the per-division nav above and does not go
+            through navItems. Greyed for a non-super session rather than hidden,
+            so a captain sees it exists but knows it is not theirs. The href
+            drops the division on purpose — the page is /{season}/participation-utr. */}
+        {isSuper ? (
+          <NavLink
+            label="参赛 UTR"
+            icon={SAMPLE_ICON}
+            href={`/${season}/participation-utr`}
+            current={false}
+          />
+        ) : (
+          <div
+            aria-disabled="true"
+            className="flex h-[34px] items-center justify-between gap-2 rounded-token px-2.5 text-[13px] text-sidebar-foreground-dim"
+          >
+            <span className="flex min-w-0 items-center gap-[9px]">
+              <NavIcon path={SAMPLE_ICON} />
+              <span>参赛 UTR</span>
+            </span>
+            <span className="flex-none rounded-token border border-sidebar-border px-1.5 font-mono text-[9.5px] leading-relaxed text-sidebar-foreground-dim">
+              仅组委会
+            </span>
+          </div>
         )}
       </nav>
 
