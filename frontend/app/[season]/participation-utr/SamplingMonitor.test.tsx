@@ -8,7 +8,7 @@ const DATES = ["2026-09-21", "2026-09-22"];
 
 function row(over: Partial<SeasonSamplingRow> = {}): SeasonSamplingRow {
   return {
-    player_id: 1, last_name: "叶", first_name: "明", divisions: ["gold"],
+    player_id: 1, last_name: "叶", first_name: "明", gender: "M", divisions: ["gold"],
     samples: [
       { sample_date: "2026-09-21", doubles_utr: "6.70", doubles_status: "rated" },
       { sample_date: "2026-09-22", doubles_utr: "6.74", doubles_status: "rated" },

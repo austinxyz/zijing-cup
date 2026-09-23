@@ -218,6 +218,28 @@ class TestReadAndAverage:
         assert len(rows) == 1
         assert set(rows[0]["divisions"]) == {"gold", "silver"}
 
+    def test_rows_ordered_by_gender_then_utr_desc(self, client):
+        # Men first, then women; within a gender, UTR high→low. A woman with the
+        # highest UTR still sorts after every man.
+        c, ids = client
+        with Session(engine) as s:
+            gold = s.exec(select(Team).where(Team.code == "GA")).one()
+            f = Player(last_name="王", first_name="芳", gender="F",
+                       doubles_utr=Decimal("7.90"), doubles_status="rated")
+            s.add(f); s.commit(); s.refresh(f)
+            s.add(PlayerTeamMembership(player_id=f.id, team_id=gold.id)); s.commit()
+            fid = f.id
+            _add_sample(s, TEST_YEAR, ids["g_rated"], date(2026, 9, 21), "6.70", "rated")
+            _add_sample(s, TEST_YEAR, ids["s_rated"], date(2026, 9, 21), "5.60", "rated")
+            _add_sample(s, TEST_YEAR, fid, date(2026, 9, 21), "7.90", "rated")
+
+        resp = c.get(f"/api/seasons/{TEST_YEAR}/participation-utr", headers=READ)
+        order = [r["player_id"] for r in resp.json()]
+        # males by UTR desc (6.70, 5.60), then the female (7.90) despite her value
+        assert order == [ids["g_rated"], ids["s_rated"], fid]
+        assert resp.json()[0]["gender"] == "M"
+        assert resp.json()[-1]["gender"] == "F"
+
     def test_no_rated_days_gives_no_average(self, client):
         c, ids = client
         pid = ids["g_rated"]

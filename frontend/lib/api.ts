@@ -599,6 +599,8 @@ export interface SeasonSamplingRow {
   player_id: number;
   last_name: string;
   first_name: string;
+  /** "M" | "F" | null. Rows arrive sorted men→women→unmarked, then UTR desc. */
+  gender: string | null;
   /** Every division the player has a team in this season ("gold"/"silver"),
    *  ordered gold before silver. A player on both surfaces under both. */
   divisions: string[];

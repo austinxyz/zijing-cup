@@ -156,6 +156,7 @@ def read_season_sampling(
             "player_id": pid,
             "last_name": person.last_name,
             "first_name": person.first_name,
+            "gender": person.gender,
             "divisions": divisions.get(pid, []),
             "samples": [
                 {
@@ -169,6 +170,27 @@ def read_season_sampling(
             "flag": flag,
             "can_set": can_set,
         })
+
+    # Men first, then women, then unmarked; within a gender, UTR high→low. The
+    # sort UTR is the rated average when there is one, else the latest sampled
+    # doubles value, else none (those sort last within their gender).
+    def _gender_rank(code: Optional[str]) -> int:
+        return {"M": 0, "F": 1}.get(code or "", 2)
+
+    def _sort_utr(row: dict) -> Optional[Decimal]:
+        if row["rated_avg"] is not None:
+            return Decimal(row["rated_avg"])
+        for s in reversed(row["samples"]):
+            if s["doubles_utr"] is not None:
+                return Decimal(s["doubles_utr"])
+        return None
+
+    def _key(row: dict):
+        utr = _sort_utr(row)
+        # (gender rank, has-a-value-first, UTR descending)
+        return (_gender_rank(row["gender"]), 0 if utr is not None else 1, -(utr or Decimal(0)))
+
+    out.sort(key=_key)
     return out
 
 

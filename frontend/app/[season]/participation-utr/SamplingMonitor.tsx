@@ -19,6 +19,15 @@ interface SamplingMonitorProps {
 
 const DIV_LABEL: Record<string, string> = { gold: "金", silver: "银" };
 
+/** Gender as a coloured symbol, matching the lineup views: ♂ / ♀ / neutral. */
+function GenderMark({ gender }: { gender: string | null }) {
+  if (gender === "M")
+    return <span className="text-male" aria-label="男">♂</span>;
+  if (gender === "F")
+    return <span className="text-female" aria-label="女">♀</span>;
+  return <span className="text-muted-foreground" aria-hidden="true">·</span>;
+}
+
 function shortDate(iso: string): string {
   // YYYY-MM-DD → MM/DD
   const [, m, d] = iso.split("-");
@@ -132,7 +141,10 @@ export function SamplingMonitor({
                     className="border-t border-border"
                   >
                     <td className="px-2.5 py-2 font-medium text-foreground">
-                      {displayName(r)}
+                      <span className="inline-flex items-center gap-1.5">
+                        <GenderMark gender={r.gender} />
+                        {displayName(r)}
+                      </span>
                     </td>
                     <td className="px-2.5 py-2 text-[11px] text-muted-foreground">
                       {(r.divisions ?? []).length

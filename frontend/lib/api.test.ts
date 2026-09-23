@@ -440,7 +440,7 @@ describe("getSeasonSampling", () => {
     vi.stubEnv("BACKEND_URL", "http://backend.test");
     vi.stubEnv("BACKEND_SECRET", "s3cr3t");
     const payload = [
-      { player_id: 12, last_name: "叶", first_name: "明", divisions: ["gold"],
+      { player_id: 12, last_name: "叶", first_name: "明", gender: "M", divisions: ["gold"],
         samples: [{ sample_date: "2026-09-21", doubles_utr: "6.70", doubles_status: "rated" }],
         rated_avg: "6.70", flag: "ok", can_set: true },
     ];
