@@ -47,7 +47,7 @@ export default async function ParticipationUtrPage({ params }: PageProps) {
   const setOne = setParticipationFromSampling.bind(null, season);
 
   return (
-    <main className="flex flex-1 flex-col gap-3 bg-background px-6 py-6">
+    <main className="flex flex-1 flex-col gap-3 overflow-y-auto bg-background px-6 py-6 min-h-0">
       <div className="flex flex-col gap-0.5">
         <div className="flex items-baseline gap-2.5">
           <h1 className="text-base font-semibold text-foreground">{season} 参赛 UTR 采样</h1>
