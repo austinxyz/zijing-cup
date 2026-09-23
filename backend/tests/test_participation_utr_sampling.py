@@ -201,6 +201,23 @@ class TestReadAndAverage:
         assert sflag["flag"] == "needs_review"  # has a projected day
         assert sflag["can_set"] is False
 
+    def test_dual_division_player_carries_both_divisions_in_one_row(self, client):
+        # A player on both a gold and a silver team must surface under both
+        # divisions, not just whichever membership the query saw last.
+        c, ids = client
+        pid = ids["g_rated"]  # already on the gold team
+        with Session(engine) as s:
+            silver = s.exec(select(Team).where(Team.code == "SA")).one()
+            s.add(PlayerTeamMembership(player_id=pid, team_id=silver.id))
+            s.commit()
+            _add_sample(s, TEST_YEAR, pid, date(2026, 9, 21), "6.70", "rated")
+
+        resp = c.get(f"/api/seasons/{TEST_YEAR}/participation-utr", headers=READ)
+        rows = [r for r in resp.json() if r["player_id"] == pid]
+        # One row for the player, but tagged with both divisions.
+        assert len(rows) == 1
+        assert set(rows[0]["divisions"]) == {"gold", "silver"}
+
     def test_no_rated_days_gives_no_average(self, client):
         c, ids = client
         pid = ids["g_rated"]

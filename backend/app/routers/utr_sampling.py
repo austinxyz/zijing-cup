@@ -119,13 +119,22 @@ def read_season_sampling(
         p.id: p
         for p in session.exec(select(Player).where(Player.id.in_(player_ids))).all()
     }
-    # player_id -> division_code (first membership's team division)
+    # player_id -> every division the player has a team in (a player can be on
+    # both a gold and a silver team; keying by a single code would drop one and
+    # hide the player from that division's filter). Ordered gold before silver.
     div_rows = session.exec(
         select(PlayerTeamMembership.player_id, Team.division_code)
         .join(Team, PlayerTeamMembership.team_id == Team.id)
         .where(Team.season_year == year)
     ).all()
-    division = {pid: code for pid, code in div_rows}
+    _DIV_ORDER = {"gold": 0, "silver": 1}
+    divisions: dict[int, list[str]] = {}
+    for pid, code in div_rows:
+        codes = divisions.setdefault(pid, [])
+        if code not in codes:
+            codes.append(code)
+    for codes in divisions.values():
+        codes.sort(key=lambda c: (_DIV_ORDER.get(c, 99), c))
 
     samples_by_player: dict[int, list[PlayerDailyUtr]] = {}
     for s in session.exec(
@@ -147,7 +156,7 @@ def read_season_sampling(
             "player_id": pid,
             "last_name": person.last_name,
             "first_name": person.first_name,
-            "division": division.get(pid),
+            "divisions": divisions.get(pid, []),
             "samples": [
                 {
                     "sample_date": s.sample_date.isoformat(),

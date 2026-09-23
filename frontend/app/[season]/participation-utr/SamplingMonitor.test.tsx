@@ -8,7 +8,7 @@ const DATES = ["2026-09-21", "2026-09-22"];
 
 function row(over: Partial<SeasonSamplingRow> = {}): SeasonSamplingRow {
   return {
-    player_id: 1, last_name: "叶", first_name: "明", division: "gold",
+    player_id: 1, last_name: "叶", first_name: "明", divisions: ["gold"],
     samples: [
       { sample_date: "2026-09-21", doubles_utr: "6.70", doubles_status: "rated" },
       { sample_date: "2026-09-22", doubles_utr: "6.74", doubles_status: "rated" },
@@ -68,12 +68,23 @@ describe("SamplingMonitor filter + actions", () => {
 
   it("filters by division (金组)", () => {
     show([
-      row({ player_id: 1, first_name: "金人", division: "gold" }),
-      row({ player_id: 2, first_name: "银人", division: "silver" }),
+      row({ player_id: 1, first_name: "金人", divisions: ["gold"] }),
+      row({ player_id: 2, first_name: "银人", divisions: ["silver"] }),
     ]);
     fireEvent.click(screen.getByRole("button", { name: "金组" }));
     expect(screen.getByRole("row", { name: /金人/ })).toBeTruthy();
     expect(screen.queryByRole("row", { name: /银人/ })).toBeNull();
+  });
+
+  it("shows a dual-division player under both 金组 and 银组 filters", () => {
+    show([row({ player_id: 3, first_name: "两栖", divisions: ["gold", "silver"] })]);
+    fireEvent.click(screen.getByRole("button", { name: "金组" }));
+    expect(screen.getByRole("row", { name: /两栖/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "银组" }));
+    expect(screen.getByRole("row", { name: /两栖/ })).toBeTruthy();
+    // the 组 cell names both
+    const r = screen.getByRole("row", { name: /两栖/ });
+    expect(within(r).getByText("金/银")).toBeTruthy();
   });
 
   it("定为 click calls setAction with the player id", () => {

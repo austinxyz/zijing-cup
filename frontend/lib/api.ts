@@ -599,8 +599,9 @@ export interface SeasonSamplingRow {
   player_id: number;
   last_name: string;
   first_name: string;
-  /** "gold" | "silver" (the player's team division this season). */
-  division: string | null;
+  /** Every division the player has a team in this season ("gold"/"silver"),
+   *  ordered gold before silver. A player on both surfaces under both. */
+  divisions: string[];
   samples: DailySample[];
   /** Mean of the rated days, Decimal string; null when no rated day. */
   rated_avg: string | null;

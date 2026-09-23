@@ -43,7 +43,10 @@ export function SamplingMonitor({
   const shown = useMemo(() => {
     if (filter === "all") return rows;
     if (filter === "needs_review") return rows.filter((r) => r.flag === "needs_review");
-    return rows.filter((r) => r.division === filter);
+    // Nullish-guarded: during a deploy skew the backend may still omit the
+    // field (old shape had a single `division`), and a bare `.includes` would
+    // crash the page rather than just show nothing.
+    return rows.filter((r) => (r.divisions ?? []).includes(filter));
   }, [rows, filter]);
 
   function run(fn: () => Promise<void>) {
@@ -132,7 +135,9 @@ export function SamplingMonitor({
                       {displayName(r)}
                     </td>
                     <td className="px-2.5 py-2 text-[11px] text-muted-foreground">
-                      {r.division ? DIV_LABEL[r.division] ?? r.division : "—"}
+                      {(r.divisions ?? []).length
+                        ? (r.divisions ?? []).map((d) => DIV_LABEL[d] ?? d).join("/")
+                        : "—"}
                     </td>
                     {dates.map((d) => {
                       const s = byDate.get(d);
