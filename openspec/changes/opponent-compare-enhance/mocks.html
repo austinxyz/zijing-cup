@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>opponent-compare-enhance mocks</title>
+<style>
+  :root{
+    --bg:#f6f4f0; --surface:#ffffff; --surface-muted:#f2efe9; --border:#e4e0d8;
+    --fg:#1c1a17; --muted:#6b665d; --muted-fg:#706a61;
+    --primary:#9c3417; --primary-fg:#fff;
+    --warning:#8a6508; --warning-surface:#fbf5e6; --warning-border:#ecd9a4;
+    --success:#3a6b4d; --success-surface:#eef4f0; --success-border:#cfe2d6;
+    --danger:#b3261e; --danger-surface:#fbf0ee; --danger-border:#f0cfc9;
+    --male:#1f5fd0; --female:#ab237f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 -apple-system,"Segoe UI",system-ui,"Microsoft YaHei",sans-serif;padding:24px}
+  h2{font:600 15px/1.4 inherit;margin:28px 0 10px}
+  .cap{font:11px/1.4 ui-monospace,monospace;color:var(--muted-fg)}
+  .frame{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);max-width:880px;margin-bottom:8px}
+  .hd{border-bottom:1px solid var(--border);background:var(--surface);padding:11px 20px}
+  .hd h1{font:600 16px/1.2 inherit;margin:0}
+  .hd .sub{font:11px/1.4 ui-monospace,monospace;color:var(--muted-fg);margin-top:2px}
+
+  /* saved comparisons = collapsible cards */
+  .saved{border-bottom:1px solid var(--border);background:var(--surface-muted);padding:12px 20px}
+  .saved .lbl{font:11px inherit;color:var(--muted);margin-bottom:7px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden}
+  .card .row{display:flex;align-items:center;gap:10px;padding:9px 11px;cursor:pointer}
+  .card .tw{width:14px;color:var(--muted-fg);font-size:11px}
+  .card .nm{font-weight:600}
+  .card .pair{font:11px ui-monospace,monospace;color:var(--muted-fg);flex:1}
+  .card .del{font:11px inherit;border:1px solid var(--border);background:var(--surface);border-radius:6px;padding:3px 9px;cursor:pointer;color:var(--fg)}
+  .card .body{border-top:1px solid var(--border);padding:10px 12px}
+
+  /* comparison table (inside expanded card) */
+  table{width:100%;min-width:520px;border-collapse:collapse;font-size:12.5px}
+  th{background:var(--surface-muted);border-bottom:1px solid var(--border);padding:7px 10px;text-align:left;font:10.5px ui-monospace,monospace;color:var(--muted-fg)}
+  td{border-bottom:1px solid rgba(228,224,216,.6);padding:7px 10px;vertical-align:top}
+  td.ln{font:600 12px ui-monospace,monospace}
+  td.diff{text-align:center;font:600 12px ui-monospace,monospace}
+  .pos{color:var(--success)}.neg{color:var(--danger)}.zero{color:var(--muted)}
+  .seat .g{font-weight:700}.m{color:var(--male)}.f{color:var(--female)}
+  .utr{font:11px ui-monospace,monospace;color:var(--muted-fg)}
+  .badge{display:inline-block;border-radius:999px;padding:0 7px;font:10.5px inherit;border:1px solid var(--warning-border);background:var(--warning-surface);color:var(--warning);margin-left:6px}
+  .notecell{min-width:150px}
+  .note-edit{width:100%;min-height:28px;border:1px dashed var(--border);border-radius:6px;background:var(--surface);padding:4px 7px;font:12px inherit;color:var(--fg)}
+  .note-empty{font:11.5px inherit;color:var(--muted-fg);font-style:italic}
+  .totalrow td{background:var(--surface-muted);font-weight:600;font-family:ui-monospace,monospace}
+  .gone{color:var(--warning);background:var(--warning-surface);border:1px solid var(--warning-border);border-radius:6px;padding:8px;font:12px inherit;text-align:center;margin:6px 0}
+  .tblwrap{overflow:auto}
+
+  /* picker (新建 only) + side preview */
+  .pick{display:flex;gap:16px;background:var(--surface-muted);padding:12px 20px}
+  .side{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .side>.lbl{font:11px inherit;color:var(--muted)}
+  .side select{height:32px;width:100%;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:0 8px;font:12.5px inherit;color:var(--fg)}
+  .preview{margin-top:4px;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:8px}
+  .preview .ttl{font:10.5px ui-monospace,monospace;color:var(--muted-fg);margin-bottom:6px}
+  .lineblk{display:flex;align-items:center;gap:8px;padding:3px 0;border-top:1px solid var(--border)}
+  .lineblk:first-of-type{border-top:0}
+  .lineblk .ln{width:34px;font:600 11px ui-monospace,monospace;color:var(--muted-fg)}
+  .lineblk .ppl{flex:1;display:flex;flex-wrap:wrap;gap:2px 10px}.ppl .p{white-space:nowrap}
+  .lineblk .sum{font:11px ui-monospace,monospace;color:var(--muted-fg);width:52px;text-align:right}
+  .saverow{display:flex;gap:8px;align-items:center;background:var(--surface-muted);padding:0 20px 14px}
+  .saverow input{flex:1;height:30px;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:0 9px;font:12.5px inherit}
+  .saverow button{height:30px;padding:0 14px;border:0;border-radius:6px;background:var(--primary);color:var(--primary-fg);font:12.5px inherit;cursor:pointer}
+  .note{font:11px/1.5 inherit;color:var(--muted-fg);max-width:880px;margin:6px 2px 0}
+  .phone{max-width:380px}.phone .pick{flex-direction:column}.phone table{min-width:0}
+</style>
+</head>
+<body>
+
+<h2>桌面 · /compare 加强（已解锁）</h2>
+<p class="cap">已存对比 = 可展开/折叠卡（展开即就地看逐线对比 + 每线备注）· 下方 picker 只用于新建保存</p>
+<div class="frame">
+  <div class="hd"><h1>对手对比</h1><div class="sub">已存对比就地展开查看 · 逐线只摆 UTR 事实，不判胜负</div></div>
+
+  <!-- 特性2: collapsible saved-comparison cards -->
+  <div class="saved">
+    <div class="lbl">已存对比</div>
+
+    <!-- collapsed card -->
+    <div class="card">
+      <div class="row"><span class="tw">▸</span><span class="nm">缺主力备案</span><span class="pair">UCSD-ZJU-UCB 备用 · vs · SJTU-SJSU-CMU 主力</span><button class="del">删除</button></div>
+    </div>
+
+    <!-- expanded card: inline comparison + per-line notes (特性3) -->
+    <div class="card">
+      <div class="row"><span class="tw">▾</span><span class="nm">打 THU 预案</span><span class="pair">UCSD-ZJU-UCB 主力 · vs · THU-MIT 强阵</span><button class="del">删除</button></div>
+      <div class="body">
+        <div class="tblwrap">
+        <table>
+          <thead><tr><th style="width:48px">线位</th><th>我方</th><th style="width:70px">差距</th><th>对手</th><th class="notecell">本线备注</th></tr></thead>
+          <tbody>
+            <tr><td class="ln">D1</td>
+              <td class="seat">陈嘉禾 <span class="g m">♂</span> · 吴普强 <span class="g m">♂</span><div class="utr">线和 14.08</div></td>
+              <td class="diff pos">+0.28</td>
+              <td class="seat">Chen Yilun <span class="g m">♂</span> · Lu Xiang <span class="g m">♂</span><div class="utr">线和 13.80</div></td>
+              <td class="notecell"><div class="note-edit">我方略强，稳打</div></td></tr>
+            <tr><td class="ln">D2</td>
+              <td class="seat">高铭 <span class="g m">♂</span> · 李伟 <span class="g m">♂</span><div class="utr">线和 12.52</div></td>
+              <td class="diff neg">-0.18</td>
+              <td class="seat">Ge Zhenbin <span class="g m">♂</span> · Li Fred <span class="g m">♂</span><div class="utr">线和 12.70</div></td>
+              <td class="notecell"><div class="note-edit note-empty">＋ 记本线备注</div></td></tr>
+            <tr><td class="ln">MD</td>
+              <td class="seat">刘洋 <span class="g m">♂</span> · 王芳 <span class="g f">♀</span><div class="utr">线和 11.40</div></td>
+              <td class="diff pos">+0.30</td>
+              <td class="seat">Ma Dongning <span class="g m">♂</span> · Wu Yue <span class="g f">♀</span><div class="utr">线和 11.10</div></td>
+              <td class="notecell"><div class="note-edit">对手女将偏弱，主攻</div></td></tr>
+            <tr class="totalrow"><td class="ln">总和</td><td>59.45</td><td class="diff pos">+2.15</td><td>57.30</td><td></td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 特性1: picker (新建) with signature + side preview -->
+  <div class="pick">
+    <div class="side">
+      <span class="lbl">我方</span>
+      <select><option>UCSD-ZJU-UCB 浙大联队</option></select>
+      <select><option>主力 · D1 陈·吴 / MD 高·李 …</option></select>
+      <div class="preview">
+        <div class="ttl">上场 10 人 · 5 线</div>
+        <div class="lineblk"><span class="ln">D1</span><span class="ppl"><span class="p">陈嘉禾 <span class="m">♂</span> <span class="utr">7.10</span></span><span class="p">吴普强 <span class="m">♂</span> <span class="utr">6.98</span></span></span><span class="sum">14.08</span></div>
+        <div class="lineblk"><span class="ln">D2</span><span class="ppl"><span class="p">高铭 <span class="m">♂</span> <span class="utr">6.40</span></span><span class="p">李伟 <span class="m">♂</span> <span class="utr">6.12</span></span></span><span class="sum">12.52</span></div>
+        <div class="lineblk"><span class="ln">MD</span><span class="ppl"><span class="p">刘洋 <span class="m">♂</span> <span class="utr">6.30</span></span><span class="p">王芳 <span class="f">♀</span> <span class="utr">5.10</span></span></span><span class="sum">11.40</span></div>
+      </div>
+    </div>
+    <div class="side">
+      <span class="lbl">对手</span>
+      <select><option>THU-MIT 清华联队</option></select>
+      <select><option>强阵 · D1 Chen·Lu / MD Ma·Wu …</option></select>
+      <div class="preview">
+        <div class="ttl">上场 10 人 · 5 线</div>
+        <div class="lineblk"><span class="ln">D1</span><span class="ppl"><span class="p">Chen Yilun <span class="m">♂</span> <span class="utr">7.00</span></span><span class="p">Lu Xiang <span class="m">♂</span> <span class="utr">6.80</span></span></span><span class="sum">13.80</span></div>
+        <div class="lineblk"><span class="ln">D2</span><span class="ppl"><span class="p">Ge Zhenbin <span class="m">♂</span> <span class="utr">6.50</span></span><span class="p">Li Fred <span class="m">♂</span> <span class="utr">6.20</span></span></span><span class="sum">12.70</span></div>
+        <div class="lineblk"><span class="ln">MD</span><span class="ppl"><span class="p">Ma Dongning <span class="m">♂</span> <span class="utr">6.10</span></span><span class="p">Wu Yue <span class="f">♀</span> <span class="utr">5.00</span></span></span><span class="sum">11.10</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="saverow"><input placeholder="给当前搭配起个名，保存成一张对比卡…"><button>保存对比</button></div>
+</div>
+<p class="note">已存对比是折叠卡：点行展开就地看逐线对比（按引用实时重算）+ 每线备注，再点折叠。下方 picker 只用来新建、保存；即席预览不带每线备注（要先存成卡）。</p>
+
+<h2>桌面 · 展开卡里某侧阵容已删</h2>
+<div class="frame">
+  <div class="saved">
+    <div class="card">
+      <div class="row"><span class="tw">▾</span><span class="nm">旧预案</span><span class="pair">UCSD-ZJU-UCB 主力 · vs · THU-MIT（已删）</span><button class="del">删除</button></div>
+      <div class="body">
+        <div class="gone">对手那套阵容已删除，无法展示对比。请重建此对比或删除它。</div>
+        <div class="tblwrap"><table><thead><tr><th style="width:48px">线位</th><th>我方</th><th style="width:70px">差距</th><th>对手</th><th class="notecell">本线备注</th></tr></thead>
+          <tbody><tr><td class="ln">D1</td><td class="seat">陈嘉禾 <span class="g m">♂</span> · 吴普强 <span class="g m">♂</span></td><td class="diff zero">—</td><td class="note-empty">阵容已删</td><td class="notecell"><div class="note-edit">（对手缺，仅记我方）</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>移动 · 竖排</h2>
+<div class="frame phone">
+  <div class="hd"><h1>对手对比</h1><div class="sub">卡片展开看对比</div></div>
+  <div class="saved">
+    <div class="lbl">已存对比</div>
+    <div class="card"><div class="row"><span class="tw">▸</span><span class="nm">缺主力备案</span><button class="del">删</button></div></div>
+    <div class="card">
+      <div class="row"><span class="tw">▾</span><span class="nm">打 THU 预案</span><button class="del">删</button></div>
+      <div class="body"><div class="tblwrap"><table><thead><tr><th>线</th><th>我方</th><th>差</th><th>对手</th></tr></thead>
+        <tbody>
+          <tr><td class="ln">D1</td><td class="seat">陈·吴</td><td class="diff pos">+.28</td><td class="seat">Chen·Lu</td></tr>
+          <tr><td colspan="4" style="padding-top:0"><div class="note-edit">本线备注：我方略强</div></td></tr>
+        </tbody></table></div></div>
+    </div>
+  </div>
+  <div class="pick">
+    <div class="side"><span class="lbl">我方</span><select><option>UCSD-ZJU-UCB</option></select><select><option>主力 · D1 陈·吴…</option></select>
+      <div class="preview"><div class="ttl">上场 10 人</div><div class="lineblk"><span class="ln">D1</span><span class="ppl"><span class="p">陈嘉禾 <span class="m">♂</span> <span class="utr">7.10</span></span><span class="p">吴普强 <span class="m">♂</span> <span class="utr">6.98</span></span></span></div></div>
+    </div>
+    <div class="side"><span class="lbl">对手</span><select><option>THU-MIT</option></select><select><option>强阵…</option></select></div>
+  </div>
+  <div class="saverow"><input placeholder="起名保存…"><button>存</button></div>
+</div>
+
+</body>
+</html>
