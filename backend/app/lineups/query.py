@@ -490,6 +490,26 @@ def to_output(
     )
 
 
+def team_roster(
+    session: Session, year: int, code: str, team_code: str
+) -> Optional[list[PlayerOut]]:
+    """The team's key-bearing roster (name/gender/participation UTR per key),
+    WITHOUT running the lineup search.
+
+    The compare page and the lineup UI only need these keys to resolve a saved
+    lineup's assignment; going through the full branch-and-bound search just to
+    read the roster made /compare re-solve every referenced team on each edit.
+    None when the team does not exist.
+    """
+    loaded = load_roster(session, year, code, team_code)
+    if loaded is None:
+        return None
+    return [
+        _player_out(player, loaded.provenance, loaded.win_loss)
+        for player in loaded.candidates
+    ]
+
+
 def _borrowed_on_court_cap(
     session: Session, year: int, code: str, school_count: Optional[int]
 ) -> Optional[int]:

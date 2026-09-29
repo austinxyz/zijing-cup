@@ -632,6 +632,30 @@ export async function getSeasonSampling(
   }
 }
 
+/** A team's key-bearing roster WITHOUT running the lineup search — the cheap
+ *  path used to resolve saved-lineup assignments (compare page). Degrades to
+ *  null on any failure so a slow/failed side-load never crashes the host page.
+ *  Returns the same `LineupPlayer` shape as `getTeamLineups().roster`. */
+export async function getTeamRosterKeys(
+  year: number | string,
+  code: string,
+  teamCode: string,
+): Promise<LineupPlayer[] | null> {
+  try {
+    const res = await fetch(
+      backendUrl(
+        `/api/seasons/${year}/divisions/${code}/teams/` +
+          `${encodeURIComponent(teamCode)}/lineup-roster`,
+      ),
+      backendRequestInit(),
+    );
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export interface SavedComparison {
   id: number;
   name: string;

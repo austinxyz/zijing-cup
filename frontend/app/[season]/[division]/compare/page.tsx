@@ -4,7 +4,7 @@ import {
   getPlayerNotesBatch,
   getSavedComparisons,
   getSavedLineups,
-  getTeamLineups,
+  getTeamRosterKeys,
   type LineupPlayer,
   type PlayerNote,
   type SavedLineup,
@@ -104,13 +104,14 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
     team: string,
   ): Promise<{ lineups: SavedLineup[]; roster: LineupPlayer[] | null }> {
     if (!team) return { lineups: [], roster: null };
-    const [lineups, teamLineups] = await Promise.all([
+    const [lineups, roster] = await Promise.all([
       getSavedLineups(season, division, team),
-      // Its `.roster` (LineupPlayer[]) carries the player `key` the saved
-      // lineup's assignment uses; getTeamRoster's RosterPlayer has no key.
-      getTeamLineups(season, division, team),
+      // The key-bearing roster the saved lineup's assignment uses. The cheap
+      // no-search endpoint — going through getTeamLineups here re-ran the whole
+      // branch-and-bound solve for EVERY referenced team on every edit.
+      getTeamRosterKeys(season, division, team),
     ]);
-    return { lineups, roster: teamLineups?.roster ?? null };
+    return { lineups, roster };
   }
   const comparisons = await getSavedComparisons(season, division);
 

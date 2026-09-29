@@ -29,11 +29,13 @@ from app.lineups.presets import (
 from app.lineups.query import (
     LineTotalOut,
     LineupSearchOut,
+    PlayerOut,
     UnknownReference,
     ViolationOut,
     load_roster,
     load_ruleset,
     search_team_lineups,
+    team_roster,
 )
 from app.lineups.saved import (
     BadReorder,
@@ -156,6 +158,23 @@ def search_lineups_for_team(
         # one has its own field.
         raise HTTPException(status_code=404, detail="team not found")
     return result
+
+
+@router.get(
+    "/seasons/{year}/divisions/{code}/teams/{team_code}/lineup-roster",
+    response_model=list[PlayerOut],
+)
+def team_lineup_roster(
+    year: int, code: str, team_code: str,
+    session: Session = Depends(get_session),
+) -> list[PlayerOut]:
+    """The team's key-bearing roster WITHOUT running the search — cheap enough to
+    load many teams at once (the compare page resolves saved-lineup assignments
+    against these keys). 404 for an unknown team."""
+    roster = team_roster(session, year, code, team_code)
+    if roster is None:
+        raise HTTPException(status_code=404, detail="team not found")
+    return roster
 
 
 # --- Saved filter presets ---------------------------------------------------

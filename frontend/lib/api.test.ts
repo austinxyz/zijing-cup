@@ -6,6 +6,7 @@ import {
   getHealth,
   getLineupCommentsBatch,
   getSavedComparisons,
+  getTeamRosterKeys,
   getSeasonSampling,
   getPlayerNotes,
   getPlayerNotesBatch,
@@ -512,5 +513,33 @@ describe("getSavedComparisons", () => {
     vi.stubEnv("BACKEND_URL", "http://backend.test");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
     await expect(getSavedComparisons(2026, "gold")).resolves.toEqual([]);
+  });
+});
+
+describe("getTeamRosterKeys", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("returns the keyed roster from the cheap (no-search) endpoint", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const payload = [{ key: "p1", player_id: 1, last_name: "陈", first_name: "一", gender: "M", match_utr: "7.0", origin: "frozen", origin_year: 2026, is_unresolved: false }];
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve(payload) });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const rows = await getTeamRosterKeys(2026, "gold", "PKU");
+    expect(rows).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://backend.test/api/seasons/2026/divisions/gold/teams/PKU/lineup-roster",
+      expect.objectContaining({ headers: { "X-Backend-Secret": "s3cr3t" } }),
+    );
+  });
+
+  it("returns null on a not-ok response (degrade, do not crash the page)", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 404 }));
+    await expect(getTeamRosterKeys(2026, "gold", "GHOST")).resolves.toBeNull();
   });
 });

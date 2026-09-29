@@ -5,7 +5,7 @@ import {
   getDivisionRules,
   getDivisionTeams,
   getSavedLineups,
-  getTeamLineups,
+  getTeamRosterKeys,
   type SavedLineup,
 } from "@/lib/api";
 import { canEdit } from "@/lib/admin";
@@ -15,7 +15,7 @@ vi.mock("@/lib/api", () => ({
   getDivisionTeams: vi.fn(),
   getDivisionRules: vi.fn(),
   getSavedLineups: vi.fn(),
-  getTeamLineups: vi.fn(),
+  getTeamRosterKeys: vi.fn(),
   getPlayerNotesBatch: vi.fn(async () => ({})),
   getSavedComparisons: vi.fn(async () => []),
 }));
@@ -47,12 +47,11 @@ function teamLineups(prefix: string) {
     key, player_id: pid, last_name: last, first_name: first, gender: "M", match_utr: "7",
     origin: "frozen", origin_year: 2025, is_unresolved: false,
   });
-  return {
-    roster:
-      prefix === "PKU"
-        ? [p("PKUk1", 101, "Chen", "Yilun"), p("PKUk2", 102, "Hu", "Mitch")]
-        : [p("THUk1", 201, "Li", "Ming"), p("THUk2", 202, "Wang", "Lei")],
-  } as never;
+  return (
+    prefix === "PKU"
+      ? [p("PKUk1", 101, "Chen", "Yilun"), p("PKUk2", 102, "Hu", "Mitch")]
+      : [p("THUk1", 201, "Li", "Ming"), p("THUk2", 202, "Wang", "Lei")]
+  ) as never;
 }
 function lineup(id: number, prefix: string, sum: string): SavedLineup {
   return {
@@ -83,7 +82,7 @@ describe("compare page gate", () => {
     expect(screen.queryByRole("table")).toBeNull();
     // Confidential fetches are never made for a locked viewer.
     expect(getSavedLineups).not.toHaveBeenCalled();
-    expect(getTeamLineups).not.toHaveBeenCalled();
+    expect(getTeamRosterKeys).not.toHaveBeenCalled();
   });
 });
 
@@ -104,7 +103,7 @@ describe("compare page content", () => {
     vi.mocked(getSavedLineups).mockImplementation(async (_y, _d, code) =>
       code === "PKU" ? [lineup(1, "PKU", "13.96")] : [lineup(2, "THU", "13.24")],
     );
-    vi.mocked(getTeamLineups).mockImplementation(async (_y, _d, code) => teamLineups(code));
+    vi.mocked(getTeamRosterKeys).mockImplementation(async (_y, _d, code) => teamLineups(code));
 
     render(await renderPage({ a: "PKU", al: "1", b: "THU", bl: "2" }));
 
@@ -126,7 +125,7 @@ describe("compare page content", () => {
     vi.mocked(getSavedLineups).mockImplementation(async (_y, _d, code) =>
       code === "PKU" ? [lineup(1, "PKU", "13.96")] : [lineup(2, "THU", "13.24")],
     );
-    vi.mocked(getTeamLineups).mockImplementation(async (_y, _d, code) => teamLineups(code));
+    vi.mocked(getTeamRosterKeys).mockImplementation(async (_y, _d, code) => teamLineups(code));
     vi.mocked(getPlayerNotesBatch).mockResolvedValue({
       101: [{ id: 1, category: "weakness", body: "反手弱", created_at: "2026-09-02T09:00:00Z" }],
       201: [{ id: 2, category: "strength", body: "正手重", created_at: "2026-09-02T09:00:00Z" }],
@@ -150,7 +149,7 @@ describe("compare notes stay read-only", () => {
     vi.mocked(getSavedLineups).mockImplementation(async (_y, _d, code) =>
       code === "PKU" ? [lineup(1, "PKU", "13.96")] : [lineup(2, "THU", "13.24")],
     );
-    vi.mocked(getTeamLineups).mockImplementation(async (_y, _d, code) => teamLineups(code));
+    vi.mocked(getTeamRosterKeys).mockImplementation(async (_y, _d, code) => teamLineups(code));
     vi.mocked(getPlayerNotesBatch).mockResolvedValue({
       101: [{ id: 1, category: "weakness", body: "反手弱", created_at: "2026-09-02T09:00:00Z" }],
     });

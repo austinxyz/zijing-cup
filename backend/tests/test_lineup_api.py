@@ -625,3 +625,28 @@ class TestSeatPlayerId:
             for pair in candidate["lines"].values():
                 for player in pair:
                     check(player)
+
+
+class TestLineupRosterEndpoint:
+    """The cheap key-bearing roster: same players as the search's roster, but
+    without running the search (the compare page loads many teams at once)."""
+
+    def test_returns_the_keyed_roster_without_candidates(self, client):
+        resp = client.get(
+            f"/api/seasons/{TEST_YEAR}/divisions/silver/teams/LINEUP-A/lineup-roster",
+            headers=AUTH,
+        )
+        assert resp.status_code == 200, resp.text
+        roster = resp.json()
+        assert isinstance(roster, list) and len(roster) > 0
+        # same shape as the search roster: prefixed keys + name/gender/utr
+        assert all(p["key"].startswith("p") for p in roster)
+        search_keys = {p["key"] for p in search(client).json()["roster"]}
+        assert {p["key"] for p in roster} == search_keys
+
+    def test_unknown_team_is_404(self, client):
+        resp = client.get(
+            f"/api/seasons/{TEST_YEAR}/divisions/silver/teams/NO-SUCH/lineup-roster",
+            headers=AUTH,
+        )
+        assert resp.status_code == 404
