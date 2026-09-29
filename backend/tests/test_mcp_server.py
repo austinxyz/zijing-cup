@@ -216,6 +216,29 @@ class TestWriteTeamCurrentUtr:
         assert "singles_utr" not in row  # omitted → not sent → endpoint leaves it
         assert "doubles_utr" in row and row["doubles_utr"] is None  # explicit clear
 
+    def test_forwards_wins_and_losses_verbatim(self, monkeypatch):
+        monkeypatch.setenv("BACKEND_SECRET", "test-secret")
+        monkeypatch.setenv("ADMIN_SECRET", "admin-secret")
+        from app import mcp_server
+
+        seen = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            import json
+
+            seen["body"] = json.loads(request.content)
+            return httpx.Response(200, json={"updated": 1})
+
+        mcp_server.write_team_current_utr(
+            2025,
+            "silver",
+            "PKU",
+            updates=[{"player_id": 12, "wins": 40, "losses": 12}],
+            client=_client(handler),
+        )
+        row = seen["body"]["updates"][0]
+        assert row["wins"] == 40 and row["losses"] == 12
+
     def test_missing_admin_secret_is_a_clear_config_error_no_request(self, monkeypatch):
         monkeypatch.setenv("BACKEND_SECRET", "test-secret")
         monkeypatch.delenv("ADMIN_SECRET", raising=False)

@@ -13,7 +13,7 @@ from decimal import Decimal
 from typing import Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from app.db import get_session
@@ -312,9 +312,10 @@ class CurrentUtrUpdate(BaseModel):
     """One player's new values.
 
     Every field is optional and absent means "leave it alone" — the sheet's
-    blank cell, carried through. Only these five exist on purpose: an import
-    that could also rewrite a name would dismantle the check that the name
-    beside each id still matches.
+    blank cell, carried through. The name is deliberately NOT writable here: an
+    import that could also rewrite a name would dismantle the check that the name
+    beside each id still matches. Win/loss are player stats the roster shows and
+    the utr-import MCP forwards, so they are writable (non-negative).
     """
 
     player_id: int
@@ -323,6 +324,8 @@ class CurrentUtrUpdate(BaseModel):
     doubles_utr: Optional[Decimal] = None
     doubles_status: Optional[str] = None
     utr_profile_id: Optional[str] = None
+    wins: Optional[int] = Field(default=None, ge=0)
+    losses: Optional[int] = Field(default=None, ge=0)
 
 
 class CurrentUtrBatch(BaseModel):

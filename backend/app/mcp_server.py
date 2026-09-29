@@ -126,9 +126,13 @@ def write_team_current_utr(
 
     `season`/`division`/`team` are the agent's context; the endpoint writes by
     player_id, so only `updates` (+ `season_year`) go on the wire. Each update is
-    forwarded VERBATIM: a key you include is written, a key you omit is left
-    alone, and an explicit null clears that value — the backend's exclude_unset
-    tells those apart, so this function must not "helpfully" fill in omitted keys.
+    a dict of `{player_id, ...fields}`; the writable fields are `singles_utr`,
+    `singles_status`, `doubles_utr`, `doubles_status`, `utr_profile_id`, and the
+    career record `wins` / `losses` (non-negative ints, shown as 胜率 on the
+    roster). Each update is forwarded VERBATIM: a key you include is written, a
+    key you omit is left alone, and an explicit null clears that value — the
+    backend's exclude_unset tells those apart, so this function must not
+    "helpfully" fill in omitted keys.
 
     Pass `season_year` to let a rated doubles UTR mirror into that season's
     participation UTR (the endpoint's existing rule; projected/unrated or a
@@ -195,7 +199,7 @@ def write_team_current_utr_tool(
     season_year: Optional[int] = None,
 ) -> dict[str, Any]:
     """Write a batch of current UTR by player_id (all-or-nothing). Each update is
-    `{player_id, doubles_utr?, doubles_status?, singles_utr?, singles_status?,
+    `{player_id, doubles_utr?, doubles_status?, singles_utr?, singles_status?, wins?, losses?,
     utr_profile_id?}` — include a field to set it, omit to leave it alone, use
     null to clear it. Pass season_year to mirror a rated doubles UTR into that
     season's participation UTR (backend rule). First call read_team_utr_sheet to

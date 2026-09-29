@@ -733,3 +733,42 @@ class TestParticipationMirror:
         assert after["冥子"]["doubles_status"] == "projected"
         # …but the participation UTR is untouched.
         assert self._season_utr(gao["player_id"]).value == Decimal("6.10")
+
+
+class TestWinLossWrite:
+    """Career win/loss is a player stat the roster shows; the batch write must be
+    able to set it (the utr-import MCP forwards these fields)."""
+
+    def test_writes_wins_and_losses(self, client):
+        ids = ids_by_name(client)
+        resp = client.put(
+            "/api/players/current-utr",
+            headers=WRITE,
+            json={"updates": [{"player_id": ids["望舒"], "wins": 40, "losses": 12}]},
+        )
+        assert resp.status_code == 200, resp.text
+        with Session(engine) as s:
+            p = s.get(Player, ids["望舒"])
+            assert (p.wins, p.losses) == (40, 12)
+
+    def test_absent_winloss_leaves_it_alone(self, client):
+        ids = ids_by_name(client)
+        with Session(engine) as s:
+            p = s.get(Player, ids["望舒"]); p.wins, p.losses = 7, 3; s.add(p); s.commit()
+        client.put(
+            "/api/players/current-utr",
+            headers=WRITE,
+            json={"updates": [{"player_id": ids["望舒"], "singles_utr": "6.10"}]},
+        )
+        with Session(engine) as s:
+            p = s.get(Player, ids["望舒"])
+            assert (p.wins, p.losses) == (7, 3)
+
+    def test_negative_winloss_rejected(self, client):
+        ids = ids_by_name(client)
+        resp = client.put(
+            "/api/players/current-utr",
+            headers=WRITE,
+            json={"updates": [{"player_id": ids["望舒"], "wins": -1}]},
+        )
+        assert resp.status_code == 422, resp.text
