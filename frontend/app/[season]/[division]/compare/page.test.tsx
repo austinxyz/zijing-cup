@@ -17,6 +17,12 @@ vi.mock("@/lib/api", () => ({
   getSavedLineups: vi.fn(),
   getTeamLineups: vi.fn(),
   getPlayerNotesBatch: vi.fn(async () => ({})),
+  getSavedComparisons: vi.fn(async () => []),
+}));
+vi.mock("./actions", () => ({
+  setLineNote: vi.fn(),
+  deleteComparison: vi.fn(),
+  saveComparison: vi.fn(),
 }));
 vi.mock("@/lib/admin", () => ({ canEdit: vi.fn() }));
 vi.mock("next/navigation", () => ({
@@ -102,9 +108,11 @@ describe("compare page content", () => {
 
     render(await renderPage({ a: "PKU", al: "1", b: "THU", bl: "2" }));
 
-    expect(screen.getByText("D1")).toBeTruthy();
-    expect(screen.getByText(/Chen Yilun/)).toBeTruthy();
-    expect(screen.getByText(/Li Ming/)).toBeTruthy();
+    // "D1" and the names now also appear in the per-side on-court preview, so
+    // assert presence (getAll) rather than uniqueness.
+    expect(screen.getAllByText("D1").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Chen Yilun/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Li Ming/).length).toBeGreaterThan(0);
     // diff mine - opp = 13.96 - 13.24 = +0.72, shown with sign + 2 decimals
     // (appears twice here: the single line's diff and the total diff)
     expect(screen.getAllByText(/\+0\.72/).length).toBeGreaterThan(0);

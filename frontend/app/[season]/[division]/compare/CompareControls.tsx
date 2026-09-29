@@ -17,11 +17,17 @@ export function CompareControls({
   lineupsA,
   lineupsB,
   sel,
+  signaturesA = {},
+  signaturesB = {},
 }: {
   teams: TeamSummary[];
   lineupsA: SavedLineup[];
   lineupsB: SavedLineup[];
   sel: { a: string; al: string; b: string; bl: string };
+  /** lineup id -> a short on-court signature for the option label, so the sets
+   *  are distinguishable before selecting. Falls back to the name. */
+  signaturesA?: Record<number, string>;
+  signaturesB?: Record<number, string>;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -46,6 +52,7 @@ export function CompareControls({
     team,
     lineup,
     lineups,
+    signatures,
   }: {
     label: string;
     teamKey: "a" | "b";
@@ -53,6 +60,7 @@ export function CompareControls({
     team: string;
     lineup: string;
     lineups: SavedLineup[];
+    signatures: Record<number, string>;
   }) {
     return (
       <div className="flex flex-1 flex-col gap-1.5">
@@ -86,7 +94,7 @@ export function CompareControls({
           </option>
           {lineups.map((l) => (
             <option key={l.id} value={String(l.id)}>
-              {l.name}
+              {signatures[l.id] ?? l.name}
             </option>
           ))}
         </select>
@@ -96,8 +104,8 @@ export function CompareControls({
 
   return (
     <div className="flex flex-none gap-3 border-b border-border bg-surface-muted px-5 py-3">
-      <Side label="我方" teamKey="a" lineupKey="al" team={sel.a} lineup={sel.al} lineups={lineupsA} />
-      <Side label="对手" teamKey="b" lineupKey="bl" team={sel.b} lineup={sel.bl} lineups={lineupsB} />
+      <Side label="我方" teamKey="a" lineupKey="al" team={sel.a} lineup={sel.al} lineups={lineupsA} signatures={signaturesA} />
+      <Side label="对手" teamKey="b" lineupKey="bl" team={sel.b} lineup={sel.bl} lineups={lineupsB} signatures={signaturesB} />
     </div>
   );
 }

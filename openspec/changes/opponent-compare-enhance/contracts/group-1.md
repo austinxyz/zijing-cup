@@ -1,0 +1,13 @@
+### Contract
+- **Spec**:
+  - 系统 SHALL 提供一张 `zijing_cup.saved_comparisons` 表，按 `(season_year, division_code)` 存一条对比的**引用**：`name`、`team_a_code`、`lineup_a_id`、`team_b_code`、`lineup_b_id`、`line_notes`(JSONB)、创建/更新时间戳；`name` 在 `(season, division)` 内唯一，同名覆盖。
+  - 管理员两侧都选好后 SHALL 能起名保存为一条对比；空名/超长 SHALL 拒绝。建/改/删走受保护写路由。
+  - 每条线一条可覆盖的备注，存于 `line_notes` JSONB（`{line_code: text}`）；清空即删该线 key。
+  - 引用阵容被删时系统 SHALL 保留该对比（不 cascade 删除）。
+  - 读写 SHALL 在机密门后；只读列出端点走 backend secret；写入无管理员凭据 SHALL 被拒。
+- **Runtime**: `backend/.venv-std/Scripts/python.exe -m pytest backend/tests/test_saved_comparisons.py -q`（需 BACKEND_SECRET/ADMIN_SECRET env）→ expected: 全绿——建/列出/同名覆盖/空名拒/超长拒/每队≤50/写备注/清备注/删除/鉴权 401·403。
+- **Code**:
+  - 表建在 `zijing_cup` schema；migration `set search_path` 打头、schema-qualified、`unique(season_year,division_code,name)`、`line_notes jsonb not null default '{}'`、时间戳 server_default（NOT NULL + 默认值列须 `sa_column=Column(..., server_default=..., nullable=False)`，别发显式 NULL）；本地整份一次 `execute`（断言 127.0.0.1）。
+  - lineup 引用存**普通 int**、不加 on-delete-cascade 外键（D2）；team code 存字符串。
+  - 写路由靠 `WRITE_METHODS` 方法判权中间件自动保护，不加前缀/依赖式鉴权；每队 ≤50（D6）超限 409；备注 key 限规则线序、value trim + 长度上限（D1）。
+- **Threshold**: 80

@@ -14,14 +14,14 @@
   - 写路由靠 `WRITE_METHODS` 方法判权中间件自动保护，不加前缀/依赖式鉴权；每队 ≤50（D6）超限 409；备注 key 限规则线序、value trim + 长度上限（D1）。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/opponent-compare-enhance/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — write failing pytest: 保存一条对比（四引用 + 名字）→ 库里一行；同名再存 → 覆盖不新增；空名/超长 → 拒；每队第 51 条 → 409
-- [ ] 1.2 GREEN — `SavedComparison` 模型 + migration + 本地 execute；注册；建/改（同名覆盖）端点 + 名字/上限校验
-- [ ] 1.3 RED — write failing pytest: 只读列出端点按赛季/组别回本组已存对比（backend secret）；无 secret → 401
-- [ ] 1.4 GREEN — 只读列出端点
-- [ ] 1.5 RED — write failing pytest: 写某线备注 → `line_notes[line_code]` 落值；清空 → 该 key 移除；备注端点无 admin → 403；删除对比 → 行没
-- [ ] 1.6 GREEN — 写备注端点（key 限线序、trim/长度）+ 删除端点 + 鉴权透传
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.0 CONTRACT — write openspec/changes/opponent-compare-enhance/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — write failing pytest: 保存一条对比（四引用 + 名字）→ 库里一行；同名再存 → 覆盖不新增；空名/超长 → 拒；每队第 51 条 → 409
+- [x] 1.2 GREEN — `SavedComparison` 模型 + migration + 本地 execute；注册；建/改（同名覆盖）端点 + 名字/上限校验
+- [x] 1.3 RED — write failing pytest: 只读列出端点按赛季/组别回本组已存对比（backend secret）；无 secret → 401
+- [x] 1.4 GREEN — 只读列出端点
+- [x] 1.5 RED — write failing pytest: 写某线备注 → `line_notes[line_code]` 落值；清空 → 该 key 移除；备注端点无 admin → 403；删除对比 → 行没
+- [x] 1.6 GREEN — 写备注端点（key 限线序、trim/长度）+ 删除端点 + 鉴权透传
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 前端：api 类型 + server actions
 
@@ -37,12 +37,12 @@
   - 后端枚举/字段前端收成 literal union，避免 `?? 默认` fail-open。
 - **Threshold**: 80
 
-- [ ] 2.0 CONTRACT — write openspec/changes/opponent-compare-enhance/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 RED — write failing vitest: `getSavedComparisons` 成功回列表（带 secret 头）；非 ok → `[]`；reject → `[]`
-- [ ] 2.2 GREEN — `lib/api.ts` 类型 + `getSavedComparisons`（降级）
-- [ ] 2.3 RED — write failing vitest: `saveComparison`/`deleteComparison`/`setLineNote` 经 adminWrite 正确 scope + method + body，成功 revalidate
-- [ ] 2.4 GREEN — server actions（adminWrite scope、revalidatePath）
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.0 CONTRACT — write openspec/changes/opponent-compare-enhance/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 RED — write failing vitest: `getSavedComparisons` 成功回列表（带 secret 头）；非 ok → `[]`；reject → `[]`
+- [x] 2.2 GREEN — `lib/api.ts` 类型 + `getSavedComparisons`（降级）
+- [x] 2.3 RED — write failing vitest: `saveComparison`/`deleteComparison`/`setLineNote` 经 adminWrite 正确 scope + method + body，成功 revalidate
+- [x] 2.4 GREEN — server actions（adminWrite scope、revalidatePath）
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 前端：上场预览 + 折叠卡展开 + 每线备注 UI
 
@@ -61,20 +61,24 @@
   - 阵容已删：`find` 不到 saved lineup → 该侧「阵容已删」不渲染（D2）；只读旁支取数失败降级空、自带 `error.tsx`。
 - **Threshold**: 70
 
-- [ ] 3.0 CONTRACT — write openspec/changes/opponent-compare-enhance/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 MOCK — open docs/superpowers/specs/mocks/2026-09-28-opponent-compare-enhance-mocks.html; note tokens（surface/border/muted/warning/success/male/female）+ verbatim 文案（「已存对比」「保存对比」「本线备注」「＋ 记本线备注」「阵容已删」「上场 10 人 · 5 线」）
-- [ ] 3.2 RED — write failing vitest: 选中一侧阵容 → 该侧渲染 5 线名单（姓名+性别符号+UTR，token class 断言）；下拉选项含签名
-- [ ] 3.3 GREEN — 侧名单预览组件 + 下拉签名（纯前端解析）
-- [ ] 3.4 RED — write failing vitest: 折叠卡默认折叠只显示名字/概要；点开就地渲染逐线对比 + 差距；再点折叠；不改 URL（断言真实行为，别断言 React 不设的属性）
-- [ ] 3.5 GREEN — 折叠卡组件（`CollapsibleSaved` 范式）+ 展开态复用 compareBuild
-- [ ] 3.6 RED — write failing vitest: 展开态每行可编辑本线备注、保存调 `setLineNote`、清空移除；即席对比无备注格；某侧阵容已删 → 该侧标「阵容已删」不渲染
-- [ ] 3.7 GREEN — 每线备注编辑格 + 阵容已删降级 + 顶部「已存对比」区接入（未解锁不取、error.tsx）
-- [ ] 3.8 VISUAL DIFF — bring up dev stack；解锁进 /compare；对照 mock（折叠卡展开态、侧名单预览、每线备注格、阵容已删态、移动竖排）；fix token/color/text 漂移
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.0 CONTRACT — write openspec/changes/opponent-compare-enhance/contracts/group-3.md with the ### Contract block above
+- [x] 3.1 MOCK — open docs/superpowers/specs/mocks/2026-09-28-opponent-compare-enhance-mocks.html; note tokens（surface/border/muted/warning/success/male/female）+ verbatim 文案（「已存对比」「保存对比」「本线备注」「＋ 记本线备注」「阵容已删」「上场 10 人 · 5 线」）
+- [x] 3.2 RED — write failing vitest: 选中一侧阵容 → 该侧渲染 5 线名单（姓名+性别符号+UTR，token class 断言）；下拉选项含签名
+- [x] 3.3 GREEN — 侧名单预览组件 + 下拉签名（纯前端解析）
+- [x] 3.4 RED — write failing vitest: 折叠卡默认折叠只显示名字/概要；点开就地渲染逐线对比 + 差距；再点折叠；不改 URL（断言真实行为，别断言 React 不设的属性）
+- [x] 3.5 GREEN — 折叠卡组件（`CollapsibleSaved` 范式）+ 展开态复用 compareBuild
+- [x] 3.6 RED — write failing vitest: 展开态每行可编辑本线备注、保存调 `setLineNote`、清空移除；即席对比无备注格；某侧阵容已删 → 该侧标「阵容已删」不渲染
+- [x] 3.7 GREEN — 每线备注编辑格 + 阵容已删降级 + 顶部「已存对比」区接入（未解锁不取、error.tsx）
+- [x] 3.8 VISUAL DIFF — bring up dev stack；解锁进 /compare；对照 mock（折叠卡展开态、侧名单预览、每线备注格、阵容已删态、移动竖排）；fix token/color/text 漂移
+- [x] 3.E EVAL attempt 2 — code-review: 1 HIGH (note-save/delete silent failures), 1 MEDIUM (updated_at), 2 LOW. vitest 8/8 + 34/34 tests pass, tsc 0. Scores: {spec: 85, runtime: 95, code: 75}, total 87 → RETRY (HIGH issue must fix before PASS)
+  - [x] 3.F1 FIX HIGH — CompareSavedCards NoteCell + deleteButton: Wrap onSetNote/onDelete calls in try/catch, track error state per-row, render error alert (mirror CompareSaveBar pattern). Update tests to cover failure paths.
+  - [x] 3.F2 FIX MEDIUM — backend setLineNote/save_comparison: Set updated_at = func.now() on update paths for accurate tracking.
+  - [x] 3.F3 FIX LOW — 不适用：`"use server"` 模块只能导出 async 函数，无法导出类型；保留 CompareSaveBar 本地类型（等效）。
+  - [x] 3.F4 OPTIONAL — 延后：纯视觉一致性，非验收项；本期不做。
 
 ## 4. 验证 + 交付
 
-- [ ] 4.1 Run backend test suite — `backend/.venv-std/Scripts/python.exe -m pytest -q`（先跑测试，再补种——CLAUDE.md）；无回归
-- [ ] 4.2 Run frontend test suite — `cd frontend && npx vitest run` + `npx tsc --noEmit`；无回归、tsc 0
-- [ ] 4.3 E2E — 补种 + 起后端/前端 + 解锁：同组两队各存阵容 → 选中看 5 线名单 → 保存对比 → 顶部卡展开就地看对比 → 每线写备注/清空 → 删一侧阵容后展开标「阵容已删」；未解锁进不去
-- [ ] 4.4 Run superpowers:verification-before-completion — 跑 test_commands + `npx tsc --noEmit`；`grep -rn 'console.log' frontend/app frontend/lib` 应空；migration schema-qualified；**push 读新表的后端前远程 Dashboard 建 `saved_comparisons` 的前置在交付说明点明**
+- [x] 4.1 Run backend test suite — `backend/.venv-std/Scripts/python.exe -m pytest -q`（先跑测试，再补种——CLAUDE.md）；无回归
+- [x] 4.2 Run frontend test suite — `cd frontend && npx vitest run` + `npx tsc --noEmit`；无回归、tsc 0
+- [x] 4.3 E2E — 补种 + 起后端/前端 + 解锁：同组两队各存阵容 → 选中看 5 线名单 → 保存对比 → 顶部卡展开就地看对比 → 每线写备注/清空 → 删一侧阵容后展开标「阵容已删」；未解锁进不去
+- [x] 4.4 Run superpowers:verification-before-completion — 跑 test_commands + `npx tsc --noEmit`；`grep -rn 'console.log' frontend/app frontend/lib` 应空；migration schema-qualified；**push 读新表的后端前远程 Dashboard 建 `saved_comparisons` 的前置在交付说明点明**

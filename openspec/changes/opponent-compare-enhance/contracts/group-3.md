@@ -1,0 +1,14 @@
+### Contract
+- **Spec**:
+  - 选一侧后系统 SHALL 在该侧 picker 下方就地显示这套阵容上场人员（姓名+性别+参赛 UTR，按线序），不必等另一侧；下拉选项带上场签名。
+  - /compare 顶部 SHALL 把已存对比列为可展开/折叠卡：折叠只显示名字与两侧概要；展开就地渲染实时重算的逐线对比 + 差距 + 总和；展开 SHALL NOT 跳转/改 URL/动 picker；每卡可删。
+  - 展开态逐线表每行 SHALL 有「本线备注」格供管理员就地编辑/清空；非编辑态只读；即席对比不提供备注。
+  - 引用阵容被删：对比保留，展开时该侧标「阵容已删」不渲染该侧，不崩页。
+  - 未解锁维持就地锁定态、不发取机密数据请求。
+- **Runtime**: `cd frontend && npx vitest run app/[season]/[division]/compare` 且 `cd frontend && npx tsc --noEmit` → expected: 新增用例全绿、tsc 0——选完一侧出 5 线名单、下拉带签名、折叠卡展开/折叠、展开就地对比、每线备注编辑/清空、阵容已删标记、未解锁不取。
+- **Code**:
+  - 上场预览纯前端：把选中阵容 `assignment` 按线序解析成 5 线名单（复用 `getTeamLineups().roster` 的 key→player），仿 `LineBlock` 呈现（`--color-male/--color-female` 实测 ≥4.5:1）；下拉签名取首线搭档拼串（D5）。
+  - 折叠卡仿 `CollapsibleSaved`：展开态是 client 局部 state、不进 URL（D4）；展开就地复用 `compareBuild`（D3）；picker 仍用 URL。
+  - 每线备注格：编辑态虚线框可改、空态「＋ 记本线备注」、只读态纯文本（空不显示）；新面板显式 `bg-surface`。
+  - 阵容已删：`find` 不到 saved lineup → 该侧「阵容已删」不渲染（D2）；只读旁支取数失败降级空、自带 `error.tsx`。
+- **Threshold**: 70

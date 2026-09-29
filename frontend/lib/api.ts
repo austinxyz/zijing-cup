@@ -632,6 +632,41 @@ export async function getSeasonSampling(
   }
 }
 
+export interface SavedComparison {
+  id: number;
+  name: string;
+  team_a_code: string;
+  /** A saved-lineup id (plain int reference). May point at a since-deleted
+   *  lineup — the compare page shows "阵容已删" rather than dropping the row. */
+  lineup_a_id: number;
+  team_b_code: string;
+  lineup_b_id: number;
+  /** { line_code: text }. One editable note per line. */
+  line_notes: Record<string, string>;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+/** Every saved comparison for a (season, division), for the compare page's
+ *  「已存对比」 cards. Degrades to `[]` on ANY failure: the table is applied to
+ *  the shared database by hand after deploy, so between a deploy and that
+ *  migration the endpoint 500s — the page must not crash. */
+export async function getSavedComparisons(
+  year: number | string,
+  code: string,
+): Promise<SavedComparison[]> {
+  try {
+    const res = await fetch(
+      backendUrl(`/api/seasons/${year}/divisions/${code}/comparisons`),
+      backendRequestInit(),
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 export interface PlayerSeasonUtr {
   season_year: number;
   /** What gets read. While a conflict is unresolved this is the LARGER of the

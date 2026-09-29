@@ -1,0 +1,11 @@
+### Contract
+- **Spec**:
+  - 存的是引用而非快照——展开查看时按引用**实时重算**对比。
+  - 建/改/删走受保护写路由（`adminWrite` scope `{season,division}`）。
+  - 只读列出端点/取数失败或表未建时，前端 SHALL 降级为空（顶部「已存对比」为空）、页面其余照常，不得 500。
+- **Runtime**: `cd frontend && npx vitest run lib` 且 `cd frontend && npx tsc --noEmit` → expected: 新增用例全绿、tsc 0——`getSavedComparisons` 成功回列表 / 非 ok → `[]` / 异常 → `[]`；server actions 走 adminWrite scope + 成功 revalidate。
+- **Code**:
+  - `lib/api.ts` 加 `SavedComparison` 类型（含 `line_notes` map、两侧引用）+ `getSavedComparisons(season,division)`（非 ok/异常降级 `[]`，带 X-Backend-Secret）。
+  - `lib/admin.ts` / compare actions：`saveComparison` / `deleteComparison` / `setLineNote`，经 `adminWrite("POST|DELETE", …, scope {season,division})`，成功 `revalidatePath(.../compare, "layout")`。
+  - 后端枚举/字段前端收成 literal union，避免 `?? 默认` fail-open。
+- **Threshold**: 80

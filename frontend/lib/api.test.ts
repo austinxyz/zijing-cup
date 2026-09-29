@@ -5,6 +5,7 @@ import {
   getDivisionTeams,
   getHealth,
   getLineupCommentsBatch,
+  getSavedComparisons,
   getSeasonSampling,
   getPlayerNotes,
   getPlayerNotesBatch,
@@ -467,5 +468,49 @@ describe("getSeasonSampling", () => {
     vi.stubEnv("BACKEND_URL", "http://backend.test");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
     await expect(getSeasonSampling(2026)).resolves.toEqual([]);
+  });
+});
+
+describe("getSavedComparisons", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("requests the comparisons endpoint and returns the rows", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const payload = [
+      {
+        id: 1, name: "打 THU 预案",
+        team_a_code: "UCSD-ZJU-UCB", lineup_a_id: 11,
+        team_b_code: "THU-MIT", lineup_b_id: 22,
+        line_notes: { D1: "我方略强" },
+        created_at: null, updated_at: null,
+      },
+    ];
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, json: () => Promise.resolve(payload),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const rows = await getSavedComparisons(2026, "gold");
+    expect(rows).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://backend.test/api/seasons/2026/divisions/gold/comparisons",
+      expect.objectContaining({ headers: { "X-Backend-Secret": "s3cr3t" } }),
+    );
+  });
+
+  it("degrades to an empty list when the endpoint is not ok", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(getSavedComparisons(2026, "gold")).resolves.toEqual([]);
+  });
+
+  it("degrades to an empty list when fetch rejects", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
+    await expect(getSavedComparisons(2026, "gold")).resolves.toEqual([]);
   });
 });

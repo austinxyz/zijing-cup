@@ -14,6 +14,7 @@ from app.models.daily_utr import PlayerDailyUtr
 from app.models.presets import LineupFilterPreset
 from app.models.roster import RosterEntry, Team
 from app.models.saved import SavedLineup
+from app.models.saved_comparison import SavedComparison
 from app.models.rules import (
     Division,
     DivisionBorrowedLimit,
@@ -40,6 +41,7 @@ __all__ = [
     "RosterEntry",
     "SEASON_UTR_SOURCES",
     "SEASON_UTR_STATUSES",
+    "SavedComparison",
     "SavedLineup",
     "Season",
     "SeasonLock",

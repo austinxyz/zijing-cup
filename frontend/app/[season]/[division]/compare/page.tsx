@@ -2,6 +2,7 @@ import {
   getDivisionRules,
   getDivisionTeams,
   getPlayerNotesBatch,
+  getSavedComparisons,
   getSavedLineups,
   getTeamLineups,
   type LineupPlayer,
@@ -13,7 +14,13 @@ import { EditModeToggle } from "@/app/[season]/[division]/lineup/[code]/EditMode
 import { PlayerNotesBadges } from "@/components/notes/PlayerNotesBadges";
 
 import { CompareControls } from "./CompareControls";
+import { CompareSaveBar } from "./CompareSaveBar";
+import { CompareSavedCards } from "./CompareSavedCards";
+import { SideLineupPreview } from "./SideLineupPreview";
 import { buildComparison, type CompareSide } from "./compareBuild";
+import { buildComparisonView, type ResolvedSide } from "./comparisonView";
+import { buildSidePreview, lineupSignature } from "./sidePreview";
+import { deleteComparison, saveComparison, setLineNote } from "./actions";
 
 interface PageProps {
   params: Promise<{ season: string; division: string }>;
@@ -105,7 +112,65 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
     ]);
     return { lineups, roster: teamLineups?.roster ?? null };
   }
-  const [sideAData, sideBData] = await Promise.all([loadSide(a), loadSide(b)]);
+  const comparisons = await getSavedComparisons(season, division);
+
+  // Every team we must resolve: the two picks + all teams referenced by saved
+  // comparisons. Load each team's saved lineups + key-bearing roster once.
+  const neededTeams = new Set<string>();
+  for (const t of [a, b]) if (t) neededTeams.add(t);
+  for (const c of comparisons) {
+    neededTeams.add(c.team_a_code);
+    neededTeams.add(c.team_b_code);
+  }
+  const teamData = new Map<
+    string,
+    { lineups: SavedLineup[]; roster: LineupPlayer[] | null }
+  >();
+  await Promise.all(
+    [...neededTeams].map(async (t) => {
+      teamData.set(t, await loadSide(t));
+    }),
+  );
+  const emptySide = {
+    lineups: [] as SavedLineup[],
+    roster: null as LineupPlayer[] | null,
+  };
+  const sideAData = teamData.get(a) ?? emptySide;
+  const sideBData = teamData.get(b) ?? emptySide;
+
+  // One view per saved comparison, recomputed from the referenced lineups'
+  // current state; a deleted side is marked rather than dropping the comparison.
+  const comparisonViews = comparisons.map((c) => {
+    const da = teamData.get(c.team_a_code);
+    const db = teamData.get(c.team_b_code);
+    const sa: ResolvedSide = {
+      teamCode: c.team_a_code,
+      lineup: da?.lineups.find((l) => l.id === c.lineup_a_id) ?? null,
+      roster: da?.roster ?? null,
+    };
+    const sb: ResolvedSide = {
+      teamCode: c.team_b_code,
+      lineup: db?.lineups.find((l) => l.id === c.lineup_b_id) ?? null,
+      roster: db?.roster ?? null,
+    };
+    return buildComparisonView(c, sa, sb, lineOrder);
+  });
+
+  function signaturesOf(data: {
+    lineups: SavedLineup[];
+    roster: LineupPlayer[] | null;
+  }): Record<number, string> {
+    const map: Record<number, string> = {};
+    if (data.roster) {
+      for (const l of data.lineups) {
+        map[l.id] = lineupSignature(l, data.roster, lineOrder);
+      }
+    }
+    return map;
+  }
+  const onSetNote = setLineNote.bind(null, season, division);
+  const onDelete = deleteComparison.bind(null, season, division);
+  const onSaveComparison = saveComparison.bind(null, season, division);
 
   // Confidential notes for both sides' players, one batch. Reaching here means
   // the viewer is unlocked (the gate above returned otherwise). Notes are shown
@@ -119,6 +184,17 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
 
   const lineupA = sideAData.lineups.find((l) => String(l.id) === al) ?? null;
   const lineupB = sideBData.lineups.find((l) => String(l.id) === bl) ?? null;
+
+  // On-court preview for a selected side — shown as soon as one side is chosen,
+  // without waiting for the other. Pure resolution, no fetch.
+  const previewA =
+    lineupA && sideAData.roster
+      ? buildSidePreview(lineupA, sideAData.roster, lineOrder)
+      : null;
+  const previewB =
+    lineupB && sideBData.roster
+      ? buildSidePreview(lineupB, sideBData.roster, lineOrder)
+      : null;
 
   function makeSide(
     lineup: SavedLineup | null,
@@ -144,12 +220,39 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
         </span>
       </div>
 
+      {comparisonViews.length > 0 ? (
+        <div className="flex-none border-b border-border bg-surface-muted px-5 py-3">
+          <div className="mb-2 text-[11px] text-muted">已存对比</div>
+          <CompareSavedCards
+            views={comparisonViews}
+            canEdit
+            onSetNote={onSetNote}
+            onDelete={onDelete}
+          />
+        </div>
+      ) : null}
+
       <CompareControls
         teams={teamList}
         lineupsA={sideAData.lineups}
         lineupsB={sideBData.lineups}
         sel={{ a, al, b, bl }}
+        signaturesA={signaturesOf(sideAData)}
+        signaturesB={signaturesOf(sideBData)}
       />
+
+      {previewA || previewB ? (
+        <div className="flex flex-none gap-3 border-b border-border bg-surface-muted px-5 pb-3">
+          <div className="min-w-0 flex-1">
+            {previewA ? <SideLineupPreview lines={previewA} /> : null}
+          </div>
+          <div className="min-w-0 flex-1">
+            {previewB ? <SideLineupPreview lines={previewB} /> : null}
+          </div>
+        </div>
+      ) : null}
+
+      <CompareSaveBar selection={{ a, al, b, bl }} onSave={onSaveComparison} />
 
       {comparison ? (
         <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
