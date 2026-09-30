@@ -221,6 +221,10 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
         </span>
       </div>
 
+      {/* One scroll container for everything below the fixed header: with many
+          saved comparisons the top region grows past the viewport, and the
+          shell is overflow-hidden — without this it gets clipped, no scrollbar. */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       {comparisonViews.length > 0 ? (
         <div className="flex-none border-b border-border bg-surface-muted px-5 py-3">
           <div className="mb-2 text-[11px] text-muted">已存对比</div>
@@ -256,7 +260,7 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
       <CompareSaveBar selection={{ a, al, b, bl }} onSave={onSaveComparison} />
 
       {comparison ? (
-        <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
+        <div className="overflow-x-auto px-5 py-4">
           <table className="w-full min-w-[560px] border-collapse text-[12.5px]">
             <thead>
               <tr>
@@ -295,10 +299,11 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
           </table>
         </div>
       ) : (
-        <div className="flex flex-1 items-center justify-center px-5 text-[13px] text-muted">
+        <div className="px-5 py-10 text-center text-[13px] text-muted">
           选好两侧的「队 + 已存阵容」后在这里逐线并排。
         </div>
       )}
+      </div>
     </main>
   );
 }
