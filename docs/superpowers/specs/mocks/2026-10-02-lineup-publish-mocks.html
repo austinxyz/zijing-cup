@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lineup-publish mocks</title>
+<style>
+  :root{
+    --bg:#f6f4f0; --surface:#ffffff; --surface-muted:#f2efe9; --border:#e4e0d8;
+    --fg:#1c1a17; --muted:#6b665d; --muted-fg:#706a61;
+    --primary:#9c3417; --primary-fg:#fff;
+    --warning:#8a6508; --warning-surface:#fbf5e6; --warning-border:#ecd9a4;
+    --success:#3a6b4d; --success-surface:#eef4f0; --success-border:#cfe2d6;
+    --danger:#b3261e; --male:#1f5fd0; --female:#ab237f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 -apple-system,"Segoe UI",system-ui,"Microsoft YaHei",sans-serif;padding:24px}
+  h2{font:600 15px/1.4 inherit;margin:28px 0 10px}
+  .cap{font:11px/1.4 ui-monospace,monospace;color:var(--muted-fg)}
+  .frame{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);max-width:760px;margin-bottom:8px}
+  .hd{border-bottom:1px solid var(--border);background:var(--surface);padding:11px 20px}
+  .hd h1{font:600 16px/1.2 inherit;margin:0}
+  .hd .sub{font:11px/1.4 ui-monospace,monospace;color:var(--muted-fg);margin-top:2px}
+  .body{padding:12px 20px}
+  .lbl{font:11px inherit;color:var(--muted);margin-bottom:7px}
+
+  /* saved lineup card */
+  .card{border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden;background:var(--surface)}
+  .card .row{display:flex;align-items:center;gap:10px;padding:9px 11px}
+  .card .nm{font-weight:600}
+  .card .meta{font:11px ui-monospace,monospace;color:var(--muted-fg);flex:1}
+  .badge{display:inline-block;border-radius:999px;padding:0 8px;font:10.5px inherit;border:1px solid;margin-left:4px}
+  .badge.pub{color:var(--success);background:var(--success-surface);border-color:var(--success-border)}
+  .badge.priv{color:var(--muted-fg);background:var(--surface-muted);border-color:var(--border)}
+  .ctrls{display:flex;gap:6px}
+  .ctrls button{font:11px inherit;border:1px solid var(--border);background:var(--surface);border-radius:6px;padding:3px 9px;cursor:pointer;color:var(--fg)}
+  /* toggle */
+  .tog{display:inline-flex;align-items:center;gap:6px;font:11px inherit;color:var(--muted-fg)}
+  .sw{width:30px;height:17px;border-radius:999px;background:var(--border);position:relative;flex:none}
+  .sw.on{background:var(--success)}
+  .sw i{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:left .1s}
+  .sw.on i{left:15px}
+  /* line blocks */
+  .lines{display:flex;flex-wrap:wrap;gap:6px;padding:4px 11px 10px}
+  .lb{flex:1;min-width:120px;border:1px solid var(--border);border-radius:6px;padding:5px 7px}
+  .lb .ln{font:600 10.5px ui-monospace,monospace;color:var(--muted-fg)}
+  .seat{font:12px inherit;white-space:nowrap}
+  .m{color:var(--male);font-weight:700}.f{color:var(--female);font-weight:700}
+  .utr{font:11px ui-monospace,monospace;color:var(--muted-fg)}
+  .note{font:11px/1.5 inherit;color:var(--muted-fg);max-width:760px;margin:6px 2px 0}
+  /* compare pickers */
+  .pick{display:flex;gap:14px;background:var(--surface-muted);padding:12px 20px;border-bottom:1px solid var(--border)}
+  .side{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .side select{height:30px;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:0 8px;font:12px inherit}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{background:var(--surface-muted);border-bottom:1px solid var(--border);padding:7px 10px;text-align:left;font:10.5px ui-monospace,monospace;color:var(--muted-fg)}
+  td{border-bottom:1px solid rgba(228,224,216,.6);padding:7px 10px}
+  td.diff{text-align:center;font:600 12px ui-monospace,monospace}
+  .pos{color:var(--success)}.neg{color:var(--danger)}
+  .banner{font:11.5px inherit;color:var(--muted);background:var(--surface-muted);border-bottom:1px solid var(--border);padding:8px 20px}
+  .phone{max-width:380px}.phone .pick{flex-direction:column}
+</style>
+</head>
+<body>
+
+<h2>管理员视图 · 已存阵容（带「公开」开关）</h2>
+<p class="cap">每套卡右侧一个公开开关（仅 canEdit 可改）+ 公开中/仅管理员 badge；全部控件在</p>
+<div class="frame">
+  <div class="hd"><h1>UCSD-ZJU-UCB · 已存阵容</h1></div>
+  <div class="body">
+    <div class="card">
+      <div class="row">
+        <span class="nm">主力</span><span class="badge pub">公开中</span>
+        <span class="meta">总和 62.50 · 仍合法</span>
+        <span class="tog"><span class="sw on"><i></i></span>公开</span>
+        <span class="ctrls"><button>编辑</button><button>克隆</button><button>改名</button><button>删除</button></span>
+      </div>
+      <div class="lines">
+        <div class="lb"><div class="ln">D1</div><div class="seat">陈嘉禾 <span class="m">♂</span> <span class="utr">7.10</span> · 吴普强 <span class="m">♂</span> <span class="utr">6.98</span></div></div>
+        <div class="lb"><div class="ln">MD</div><div class="seat">刘洋 <span class="m">♂</span> <span class="utr">6.30</span> · 王芳 <span class="f">♀</span> <span class="utr">5.10</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <span class="nm">缺主力备案</span><span class="badge priv">仅管理员</span>
+        <span class="meta">总和 58.10 · UTR 已变</span>
+        <span class="tog"><span class="sw"><i></i></span>公开</span>
+        <span class="ctrls"><button>编辑</button><button>克隆</button><button>改名</button><button>删除</button></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>免密队员视图 · 已存阵容（只读，仅公开）</h2>
+<p class="cap">只列公开的；无开关/编辑/克隆/改名/删除/评论；私密的「缺主力备案」不出现</p>
+<div class="frame">
+  <div class="hd"><h1>UCSD-ZJU-UCB · 已存阵容</h1><div class="sub">公开阵容 · 只读</div></div>
+  <div class="body">
+    <div class="card">
+      <div class="row"><span class="nm">主力</span><span class="badge pub">公开</span><span class="meta">总和 62.50</span></div>
+      <div class="lines">
+        <div class="lb"><div class="ln">D1</div><div class="seat">陈嘉禾 <span class="m">♂</span> <span class="utr">7.10</span> · 吴普强 <span class="m">♂</span> <span class="utr">6.98</span></div></div>
+        <div class="lb"><div class="ln">MD</div><div class="seat">刘洋 <span class="m">♂</span> <span class="utr">6.30</span> · 王芳 <span class="f">♀</span> <span class="utr">5.10</span></div></div>
+      </div>
+    </div>
+    <p class="note">其余阵容未公开，队员看不到。无编辑/评论入口。</p>
+  </div>
+</div>
+
+<h2>免密队员视图 · 对手对比（只公开阵容，即席对比）</h2>
+<p class="cap">compare 对非管理员开放；picker 只列公开阵容；无「已存对比」卡、无保存、无每线备注</p>
+<div class="frame">
+  <div class="hd"><h1>对手对比</h1><div class="sub">两侧各选一支队的公开阵容 · 逐线只摆 UTR 事实</div></div>
+  <div class="banner">你正在看公开阵容（只读）。保存对比、每线备注、评论是管理员功能。</div>
+  <div class="pick">
+    <div class="side"><span class="lbl">我方</span><select><option>UCSD-ZJU-UCB</option></select><select><option>主力（公开）</option></select></div>
+    <div class="side"><span class="lbl">对手</span><select><option>THU-MIT</option></select><select><option>强阵（公开）</option></select></div>
+  </div>
+  <div class="body" style="padding:0">
+    <table>
+      <thead><tr><th style="width:46px">线位</th><th>我方</th><th style="width:70px">差距</th><th>对手</th></tr></thead>
+      <tbody>
+        <tr><td style="font-family:ui-monospace">D1</td><td>陈嘉禾 <span class="m">♂</span> · 吴普强 <span class="m">♂</span><div class="utr">线和 14.08</div></td><td class="diff pos">+0.28</td><td>Chen Yilun <span class="m">♂</span> · Lu Xiang <span class="m">♂</span><div class="utr">线和 13.80</div></td></tr>
+        <tr><td style="font-family:ui-monospace">MD</td><td>刘洋 <span class="m">♂</span> · 王芳 <span class="f">♀</span><div class="utr">线和 11.40</div></td><td class="diff pos">+0.30</td><td>Ma Dongning <span class="m">♂</span> · Wu Yue <span class="f">♀</span><div class="utr">线和 11.10</div></td></tr>
+        <tr style="background:var(--surface-muted);font-family:ui-monospace;font-weight:600"><td>总和</td><td>59.45</td><td class="diff pos">+2.15</td><td>57.30</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h2>移动 · 免密队员对手对比</h2>
+<div class="frame phone">
+  <div class="hd"><h1>对手对比</h1><div class="sub">公开阵容 · 只读</div></div>
+  <div class="banner">保存/备注/评论是管理员功能。</div>
+  <div class="pick">
+    <div class="side"><span class="lbl">我方</span><select><option>UCSD-ZJU-UCB</option></select><select><option>主力（公开）</option></select></div>
+    <div class="side"><span class="lbl">对手</span><select><option>THU-MIT</option></select><select><option>强阵（公开）</option></select></div>
+  </div>
+  <div class="body" style="padding:0"><table>
+    <thead><tr><th>线</th><th>我方</th><th>差</th><th>对手</th></tr></thead>
+    <tbody><tr><td style="font-family:ui-monospace">D1</td><td>陈·吴</td><td class="diff pos">+.28</td><td>Chen·Lu</td></tr></tbody>
+  </table></div>
+</div>
+
+</body>
+</html>
