@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>match-results-tracking mocks</title>
+<style>
+  :root{
+    --bg:#f6f4f0; --surface:#ffffff; --surface-muted:#f2efe9; --border:#e4e0d8;
+    --fg:#1c1a17; --muted:#6b665d; --muted-fg:#706a61;
+    --primary:#9c3417; --primary-fg:#fff;
+    --warning:#8a6508; --warning-surface:#fbf5e6; --warning-border:#ecd9a4;
+    --success:#3a6b4d; --success-surface:#eef4f0; --success-border:#cfe2d6;
+    --danger:#b3261e; --danger-surface:#fbecea; --danger-border:#eecfcc;
+    --male:#1f5fd0; --female:#ab237f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 -apple-system,"Segoe UI",system-ui,"Microsoft YaHei",sans-serif;padding:24px}
+  h2{font:600 15px/1.4 inherit;margin:28px 0 10px}
+  .cap{font:11px/1.4 ui-monospace,monospace;color:var(--muted-fg);margin:0 0 8px}
+  .frame{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);max-width:820px;margin-bottom:8px}
+  .hd{border-bottom:1px solid var(--border);background:var(--surface);padding:11px 20px}
+  .hd h1{font:600 16px/1.2 inherit;margin:0}
+  .hd .sub{font:11px/1.4 ui-monospace,monospace;color:var(--muted-fg);margin-top:2px}
+  .body{padding:14px 20px}
+  .lbl{font:11px inherit;color:var(--muted);display:block;margin-bottom:4px}
+  .fld{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px}
+  .fld > div{flex:1;min-width:150px}
+  input,select{width:100%;height:30px;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:0 8px;font:12px inherit;color:var(--fg)}
+  .btn{font:12px inherit;border:1px solid var(--border);background:var(--surface);border-radius:6px;padding:5px 12px;cursor:pointer;color:var(--fg)}
+  .btn.pri{background:var(--primary);border-color:var(--primary);color:var(--primary-fg)}
+  .btn.sm{font:11px;padding:3px 9px}
+  .m{color:var(--male);font-weight:700}.f{color:var(--female);font-weight:700}
+  .utr{font:11px ui-monospace,monospace;color:var(--muted-fg)}
+  /* per-line entry grid */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{background:var(--surface-muted);border-bottom:1px solid var(--border);padding:7px 10px;text-align:left;font:10.5px ui-monospace,monospace;color:var(--muted-fg)}
+  td{border-bottom:1px solid rgba(228,224,216,.6);padding:7px 10px;vertical-align:top}
+  .ln{font:600 11px ui-monospace,monospace;color:var(--muted-fg)}
+  .wl{display:inline-flex;gap:4px}
+  .wl button{font:11px inherit;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:2px 10px;cursor:pointer;color:var(--muted-fg)}
+  .wl button.win{background:var(--success-surface);border-color:var(--success-border);color:var(--success);font-weight:600}
+  .wl button.loss{background:var(--danger-surface);border-color:var(--danger-border);color:var(--danger);font-weight:600}
+  .noteIn{height:26px;font-size:11px}
+  .tot{display:flex;align-items:center;gap:10px;background:var(--surface-muted);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:4px}
+  .tot b{font:600 15px ui-monospace,monospace}
+  .tot .win{color:var(--success)}.tot .loss{color:var(--danger)}
+  .empty{font:11px inherit;color:var(--muted-fg);font-style:italic}
+  /* history list */
+  .row{display:flex;align-items:center;gap:12px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:var(--surface);cursor:pointer}
+  .row .dt{font:11px ui-monospace,monospace;color:var(--muted-fg);width:84px;flex:none}
+  .row .vs{flex:1}
+  .row .vs b{font-weight:600}
+  .res{font:600 13px ui-monospace,monospace;flex:none}
+  .res.w{color:var(--success)}.res.l{color:var(--danger)}
+  .pill{display:inline-block;border-radius:999px;padding:0 8px;font:10.5px inherit;border:1px solid var(--border);background:var(--surface-muted);color:var(--muted-fg);margin-left:6px}
+  .note{font:11px/1.5 inherit;color:var(--muted-fg);margin:6px 2px 0}
+  .banner{font:11.5px inherit;color:var(--muted);background:var(--surface-muted);border-bottom:1px solid var(--border);padding:8px 20px}
+  .seat{white-space:nowrap}
+  .phone{max-width:380px}
+  .filterbar{display:flex;gap:10px;align-items:center;background:var(--surface-muted);padding:10px 20px;border-bottom:1px solid var(--border)}
+  .filterbar select{max-width:200px}
+  details{border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:var(--surface)}
+  summary{list-style:none;padding:9px 11px;cursor:pointer;display:flex;align-items:center;gap:12px}
+  summary::-webkit-details-marker{display:none}
+</style>
+</head>
+<body>
+
+<h2>① 管理员 · 录入比赛（新建/编辑）</h2>
+<p class="cap">日期必填 + 对手(同组) + 轮次可选自由文本 + 「复制自已存阵容」预填；逐线双方球员 + win/loss + 备注；整场自动算分</p>
+<div class="frame">
+  <div class="hd"><h1>录入比赛 · UCSD-ZJU-UCB</h1><div class="sub">银组 · match_count 计分</div></div>
+  <div class="body">
+    <div class="fld">
+      <div><label class="lbl">日期 *</label><input value="2026-09-28"></div>
+      <div><label class="lbl">对手队（同组）</label><select><option>THU-MIT</option><option>ZJU-USC</option></select></div>
+      <div><label class="lbl">轮次（可选）</label><input placeholder="如 小组赛第2轮"></div>
+      <div style="flex:none;align-self:flex-end"><button class="btn sm">复制自已存阵容 ▾</button></div>
+    </div>
+    <table>
+      <thead><tr><th style="width:42px">线</th><th>我方上场</th><th>对手上场</th><th style="width:118px">结果</th><th style="width:150px">备注</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="ln">D1</td>
+          <td><select><option>陈嘉禾 ♂ 7.10 · 吴普强 ♂ 6.98</option></select></td>
+          <td><select><option>Chen Yilun ♂ · Lu Xiang ♂</option></select></td>
+          <td><span class="wl"><button class="win">胜</button><button>负</button></span></td>
+          <td><input class="noteIn" placeholder="抢七险胜"></td>
+        </tr>
+        <tr>
+          <td class="ln">MD</td>
+          <td><select><option>刘洋 ♂ 6.30 · 王芳 ♀ 5.10</option></select></td>
+          <td><select><option>Ma Dongning ♂ · Wu Yue ♀</option></select></td>
+          <td><span class="wl"><button>胜</button><button class="loss">负</button></span></td>
+          <td><input class="noteIn" placeholder=""></td>
+        </tr>
+        <tr>
+          <td class="ln">D2</td>
+          <td><select><option>张三 ♂ 6.00 · 李四 ♂ 5.80</option></select></td>
+          <td><select><option class="empty">— 未记录（对手名单对不上）</option></select></td>
+          <td><span class="wl"><button class="win">胜</button><button>负</button></span></td>
+          <td><input class="noteIn"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="tot"><span>整场（自动）：</span><b class="win">3</b><span>–</span><b class="loss">2</b><span class="utr">按银组数赢线 · 只读，从逐线算</span></div>
+    <div style="margin-top:14px;display:flex;gap:8px"><button class="btn pri">保存比赛</button><button class="btn">取消</button></div>
+  </div>
+</div>
+
+<h2>② 对手对比页 · 挂「历史对局」区（选中对手后出现）</h2>
+<p class="cap">compare picker 下方多一折叠块：我方对所选对手队打过的场次；没打过则空、不报错；仅 canEdit 可见</p>
+<div class="frame">
+  <div class="hd"><h1>对手对比 · 我方 UCSD-ZJU-UCB vs THU-MIT</h1></div>
+  <div class="body" style="padding:0">
+    <details open>
+      <summary><b>历史对局</b><span class="pill">对 THU-MIT · 2 场</span><span class="utr" style="margin-left:auto">1 胜 1 负</span></summary>
+      <div style="padding:4px 11px 11px">
+        <div class="row"><span class="dt">2026-09-28</span><span class="vs"><b>主力阵</b> · 小组赛第2轮</span><span class="res w">胜 3–2</span></div>
+        <div class="row"><span class="dt">2026-08-15</span><span class="vs"><b>缺主力备案</b></span><span class="res l">负 2–3</span></div>
+      </div>
+    </details>
+  </div>
+</div>
+<p class="cap">未打过的对手：</p>
+<div class="frame">
+  <div class="body" style="padding:0">
+    <details open><summary><b>历史对局</b><span class="pill">对 ZJU-USC</span></summary>
+      <div style="padding:4px 11px 14px"><p class="empty">我方还没录过对这支队的比赛。</p></div></details>
+  </div>
+</div>
+
+<h2>③ 比赛历史列表页（可筛选）→ 点开逐线详情</h2>
+<p class="cap">侧栏一条入口；列全部录过的比赛，按队筛；点一行展开双方逐线 + win/loss + 备注</p>
+<div class="frame">
+  <div class="hd"><h1>比赛历史 · 银组</h1></div>
+  <div class="filterbar"><span class="lbl" style="margin:0">筛选</span><select><option>全部队伍</option><option>UCSD-ZJU-UCB</option></select><select><option>全部对手</option></select><button class="btn sm pri" style="margin-left:auto">+ 录入比赛</button></div>
+  <div class="body">
+    <details>
+      <summary><span class="dt">2026-09-28</span><span class="vs"><b>UCSD-ZJU-UCB</b> vs THU-MIT <span class="pill">小组赛第2轮</span></span><span class="res w">胜 3–2</span></summary>
+      <div style="padding:0 11px 11px">
+        <table>
+          <thead><tr><th style="width:42px">线</th><th>我方</th><th>对手</th><th style="width:60px">结果</th><th>备注</th></tr></thead>
+          <tbody>
+            <tr><td class="ln">D1</td><td class="seat">陈嘉禾 <span class="m">♂</span> · 吴普强 <span class="m">♂</span></td><td class="seat">Chen Yilun <span class="m">♂</span> · Lu Xiang <span class="m">♂</span></td><td><b class="res w">胜</b></td><td class="utr">抢七险胜</td></tr>
+            <tr><td class="ln">MD</td><td class="seat">刘洋 <span class="m">♂</span> · 王芳 <span class="f">♀</span></td><td class="seat">Ma Dongning <span class="m">♂</span> · Wu Yue <span class="f">♀</span></td><td><b class="res l">负</b></td><td></td></tr>
+            <tr><td class="ln">D2</td><td class="seat">张三 <span class="m">♂</span> · 李四 <span class="m">♂</span></td><td class="seat empty">未记录</td><td><b class="res w">胜</b></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+    <details>
+      <summary><span class="dt">2026-08-15</span><span class="vs"><b>UCSD-ZJU-UCB</b> vs THU-MIT</span><span class="res l">负 2–3</span></summary>
+      <div style="padding:0 11px 11px"><p class="note">（逐线详情同上结构）</p></div>
+    </details>
+  </div>
+</div>
+
+<h2>④ 移动 · 录入 + 历史</h2>
+<div class="frame phone">
+  <div class="hd"><h1>录入比赛</h1><div class="sub">银组 · 逐线竖排</div></div>
+  <div class="body">
+    <div class="fld" style="flex-direction:column;gap:10px">
+      <div><label class="lbl">日期 *</label><input value="2026-09-28"></div>
+      <div><label class="lbl">对手</label><select><option>THU-MIT</option></select></div>
+    </div>
+    <table><thead><tr><th>D1</th><th style="width:70px">结果</th></tr></thead>
+      <tbody>
+        <tr><td><div class="seat">陈·吴 <span class="utr">vs</span> Chen·Lu</div><input class="noteIn" style="margin-top:4px" placeholder="备注"></td><td><span class="wl"><button class="win">胜</button><button>负</button></span></td></tr>
+      </tbody></table>
+    <div class="tot"><b class="win">3</b>–<b class="loss">2</b></div>
+  </div>
+</div>
+<div class="frame phone">
+  <div class="hd"><h1>比赛历史</h1></div>
+  <div class="body">
+    <div class="row"><span class="vs"><b>vs THU-MIT</b><br><span class="dt">2026-09-28 · 主力阵</span></span><span class="res w">胜 3–2</span></div>
+  </div>
+</div>
+
+</body>
+</html>
