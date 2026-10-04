@@ -57,11 +57,11 @@ HTTP 侧只读：`GET /api/seasons`（赛季×组别索引，驱动切换器）�
 
 **覆盖需求**: docs/superpowers/specs/2026-09-06-opponent-compare-requirements.md（/compare 页、两侧队+已存阵容选择、逐线只摆事实、当前值+陈旧标注、canEdit gate）
 
-**后台**: 无（全只读复用现有端点）。无新表、无 migration。
+**后台**: 原 change 无新表；**增强（opponent-compare-enhance, 2026-10-04）加** `zijing_cup.saved_comparisons` 表（存一条对比的**引用** `name`/`team_a_code`/`lineup_a_id`/`team_b_code`/`lineup_b_id`/`line_notes` JSONB，`(season,division,name)` 唯一，`updated_at` 改时 `func.now()`；migration `20260928120000`，远程走 Dashboard 手工建表）+ `compare/saved.py`（list/save/set_line_note/delete，MAX_NAME 60/MAX_COMPARISONS 50/MAX_NOTE 500）+ `routers/compare.py`（GET/POST/line-note/DELETE under `/api/seasons/{year}/divisions/{code}/comparisons`）。另加 no-search `GET /teams/{code}/lineup-roster`（`query.team_roster` 只 load_roster 不跑引擎解），compare 换它避免每队一次 branch-and-bound。
 
-**前台**: `app/[season]/[division]/compare/`。`page.tsx`（server）读 searchParams（`a`/`al`/`b`/`bl`）→ 并发取 `getDivisionTeams`/`getDivisionRules` + 每已选队 `getSavedLineups` + `getTeamLineups`（后者 `.roster` 是带 `key` 的 `LineupPlayer[]`——已存阵容 `assignment` 用的是这个 key，`getTeamRoster` 的 `RosterPlayer` **没有** key）→ 纯函数 `buildComparison(lineOrder, sideA, sideB)` 逐线配对。`CompareControls`（client）两侧「队+阵容」select，状态全在 URL、软导航、改队清该侧阵容 id。逐线差 = 我方线和 − 对手线和，`Number()` 相减仅供显示（带符号两位小数），两侧该线都有值才算否则「—」；总和差同理。已存阵容是**管理员机密**，故整页按 `canEdit` gate——未解锁**就地渲染锁定态 + `EditModeToggle` 解锁入口**（不 redirect、不显示任何阵容、不发机密请求），解锁刷新即进对比。线位按规则线序对齐；某侧 `utr_moved`/`illegal`/`player_gone` 标状态、`player_gone` 不显示假总和。
+**前台**: `app/[season]/[division]/compare/`。`page.tsx`（server）读 searchParams（`a`/`al`/`b`/`bl`）→ 并发取 `getDivisionTeams`/`getDivisionRules` + 每已选队 `getSavedLineups` + `getTeamRosterKeys`（no-search 端点）→ 纯函数 `buildComparison(lineOrder, sideA, sideB)` 逐线配对。`CompareControls`（client）两侧「队+阵容」select，状态全在 URL、软导航、改队清该侧阵容 id。逐线差 = 我方线和 − 对手线和，`Number()` 相减仅供显示（带符号两位小数），两侧该线都有值才算否则「—」；总和差同理。已存阵容是**管理员机密**，故整页按 `canEdit` gate——未解锁**就地渲染锁定态 + `EditModeToggle` 解锁入口**（不 redirect、不显示任何阵容、不发机密请求），解锁刷新即进对比。线位按规则线序对齐；某侧 `utr_moved`/`illegal`/`player_gone` 标状态、`player_gone` 不显示假总和。**增强加**：选完一侧即在该侧就地渲染上场预览（`SideLineupPreview`/`sidePreview.ts`），阵容下拉选项带上场签名；顶部「已存对比」可折叠卡（`CompareSavedCards`，本地 state 展开，实时重算，删掉的阵容标「阵容已删」不崩）；`CompareSaveBar` 两侧选好可起名保存；逐线备注按需编辑/清空（try/catch + 回滚，`revalidatePath` layout scope）；内容列整列单一 `overflow-y-auto` 滚动，对比多时不被裁。`getSavedComparisons` 取数失败降级 `[]`（兜未建表的远程）。
 
-**验收标准**: 未解锁看到锁定态而非被弹走；选两侧后逐线并排（姓名+性别+线和 | 带符号差 | 对手）+ 底部总和差；名字经各队 roster 解析、线序按规则；陈旧/非法阵容标状态；条件在 URL 可分享。真实数据实测（2025 银组 BUAA vs HUST，各 seed 一套阵容）：逐线 + 差 + 已非法徽标正确。**不做**：名单实力对比（后续）、胜负预测、引擎解对手最优。
+**验收标准**: 未解锁看到锁定态而非被弹走；选两侧后逐线并排（姓名+性别+线和 | 带符号差 | 对手）+ 底部总和差；名字经各队 roster 解析、线序按规则；陈旧/非法阵容标状态；条件在 URL 可分享。真实数据实测（2025 银组 BUAA vs HUST，各 seed 一套阵容）：逐线 + 差 + 已非法徽标正确。**增强验收**：选一侧即见上场预览；保存一条对比后顶部出卡、展开实时重算；逐线备注可增删且失败回滚；对比多时整列可滚不裁。**不做**：名单实力对比（后续）、胜负预测、引擎解对手最优。
 
 ---
 
@@ -371,7 +371,7 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 |---|---|---|
 | `utr-export-ingest` | 直接吃 UTR 官网的导出文件，而不是走「我们导出 → 你填 → 导回」的往返。要一整屏「候选 / 重名消歧 / 跳过 / 新建」的匹配确认界面，且在拿到一份真实导出文件之前是凭空设计 —— 所以从 `current-utr-source` 里切出来单列 | 📋 规划中 |
 | `roster-import-rewrite` | 名单 CSV 导入器改写为直接写队员注册表，然后让 `roster_entries` 退休。拆掉现在的双写与 `--i-know-it-is-not-read` 绕行开关。属于清理：不改变任何人看到的东西 | 📋 规划中 |
-| `opponent-compare` | 侧栏那个「未开放」的入口：拿自己的阵容对着对手名单算胜负。开工前要先想清楚「怎么算胜负」——金银两组计分方式不同（`scoring_mode`），且要处理对手阵容未知时的假设 | 📋 规划中 |
+| `opponent-compare` | 两侧已存阵容逐线并排只摆事实（UTR 和），不判胜负；增强加上场预览/已存对比/逐线备注（`saved_comparisons` 表） | ✅ 已实现 · 🌐 已上线 |
 | `cold-start-loading` | 冷启动加载态。`mobile-shell` 已发（移动端版式，条目见上方四个能力的 mobile-shell 段），但加载态从中**切出去单列**：它自带一个地雷——路由级 `loading.tsx` 让 Next 在页面代码跑前 flush 响应头，`notFound()` 因此设不了 404，且实测 fallback 从未被替换——与版式无技术依赖，混在一起会让一次评审同时背两个风险 | 📋 规划中 |
 
 > `project-bootstrap` 已随 bootstrap 完成并部署，但未走 opsx change 流程，故无归档 spec。
