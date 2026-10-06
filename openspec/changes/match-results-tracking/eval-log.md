@@ -48,4 +48,24 @@
     - "spec: All contract SHALLs met — history list + team filter + detail expand (MatchHistory.tsx), sidebar entry with nav integration (nav.ts, ActiveSidebar.tsx), prefill from saved lineups (MatchEntryForm.tsx line 246), canEdit gate with in-place locked state for non-admin (page.tsx), degrade to [] / null on failure (lib/api.ts), 未记录 for unmatched opponent (playerName line 621). Each route has error.tsx. Server actions try/catch only reset on success."
     - "runtime: vitest 84 tests PASS across 6 files (MatchEntryForm.test.tsx, MatchHistory.test.tsx, actions.test.ts, api.test.ts, nav.test.ts, Sidebar.test.tsx). tsc --noEmit CLEAN. Comprehensive coverage: form prefill, live outcome, team filtering, detail expand, 未记录 rendering, canEdit visibility, sidebar links, admin marking, API degrade paths, revalidate scope."
     - "code: Form UX solid — playerName() handles null → 未记录, PlayerSelect allowBlank param distinguishes our/opp, prefill clears sourceId when ourTeam changes, state management clean. API reads degrade gracefully (try/catch + return defaults). Write actions scope-checked via adminWrite, revalidatePath uses layout scope (both paths refresh). Rosters/saved lineups prefetch with ?? [] / ?? fallback. No secrets, no console.log, cohesive file organization."
+- group: 3
+  attempt: 1
+  scores: null
+  total: null
+  status: BLOCK
+  findings:
+    - "HIGH: Spec violation — contract requires displaying '我方用的阵容名' (our lineup name used in each match), but component omits it. Spec: '列出我方对该对手队已录过的比赛（各场日期、我方用的阵容名、轮次、整场胜负）' (date, lineup name, round, result). Component only shows: date, round, result. Code comment acknowledges: 'Match records don't store a lineup name (only nullable source_lineup_id)'."
+    - "MEDIUM: Win calculation uses '>=' so ties (our == opponent) count as wins. Unclear if ties are possible in scoring_mode 'match_count'; if yes, this inflates win count."
+    - "MEDIUM: Test coverage insufficient — only 2 tests. Missing: (1) null round_label edge case (handled in code but untested), (2) single-match tally '1胜0负', (3) opponent code variants. Regression risk without test expansion."
+    - "MEDIUM: Color accessibility not explicitly audited — text-success/text-danger at 13px bold on bg-surface/bg-surface-muted. Tokens defined in design system (used elsewhere), but no explicit contrast verify for this context."
+  design_intent_note: "Design explicitly acknowledges match records store no lineup_name field (only source_lineup_id). Component intentionally omits lineup label per design decision D3 (stored references, no snapshots). However, this deviates from spec requirement which explicitly lists '我方用的阵容名' as a SHALL. Reconciliation needed: update spec to remove lineup_name requirement (design intent), or extend MatchRecord to store/display lineup name (spec compliance)."
+- group: 3
+  attempt: 2
+  scores: {spec: 100, runtime: 100, code: 85}
+  total: 95
+  status: PASS
+  findings:
+    - "spec: Lineup name requirement (previous BLOCK) now satisfied by read-time resolution from lineupNames map (page.tsx lines 213-216; component lines 121-134). Design D3 honored: store reference, resolve on read, degrade gracefully. Ad-hoc matches (no source) and deleted lineups show no name — intentional. All spec items: region visibility when opponent selected (b != null); date/round/outcome display; win/loss/tie logic (strict > for win, < for loss, == tie); tally shown '胜/负'; ties displayed as '平' not in tally; canEdit gate; empty state; degradation on missing table."
+    - "runtime: vitest 9 test files 40 tests all PASS; tsc --noEmit EXIT 0."
+    - "code: CompareHistory.tsx clean (~90 lines), proper TypeScript. Win logic correct (strict > comparison). Lineup resolution correct (lineupNames[id] → undefined → fallback to team code). Filtering preserves canEdit context. lineupNames built from already-loaded data (no new fetches, efficient). Minor: test suite incomplete — does not explicitly verify team code fallback when source_lineup_id is undefined/not in map (implementation code is correct, but regression coverage gap)."
 ```

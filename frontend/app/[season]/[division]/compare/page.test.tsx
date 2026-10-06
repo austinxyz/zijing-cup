@@ -18,6 +18,7 @@ vi.mock("@/lib/api", () => ({
   getTeamRosterKeys: vi.fn(),
   getPlayerNotesBatch: vi.fn(async () => ({})),
   getSavedComparisons: vi.fn(async () => []),
+  getMatchRecords: vi.fn(async () => []),
 }));
 vi.mock("./actions", () => ({
   setLineNote: vi.fn(),

@@ -1,6 +1,7 @@
 import {
   getDivisionRules,
   getDivisionTeams,
+  getMatchRecords,
   getPlayerNotesBatch,
   getSavedComparisons,
   getSavedLineups,
@@ -14,6 +15,7 @@ import { EditModeToggle } from "@/app/[season]/[division]/lineup/[code]/EditMode
 import { PlayerNotesBadges } from "@/components/notes/PlayerNotesBadges";
 
 import { CompareControls } from "./CompareControls";
+import { CompareHistory } from "./CompareHistory";
 import { CompareSaveBar } from "./CompareSaveBar";
 import { CompareSavedCards } from "./CompareSavedCards";
 import { SideLineupPreview } from "./SideLineupPreview";
@@ -115,6 +117,16 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
   }
   const comparisons = await getSavedComparisons(season, division);
 
+  // 历史对局: our side's recorded ties against the selected opponent (b). Fetched
+  // only when an opponent is chosen; filtered to our team (a) when one is set.
+  // Confidential + admin-only (reaching here means unlocked); degrades to [] when
+  // the match_records table is not yet built, so the region just shows empty.
+  const opponentMatches = b
+    ? (await getMatchRecords(season, division, { opponent: b })).filter(
+        (m) => !a || m.our_team_code === a,
+      )
+    : [];
+
   // Every team we must resolve: the two picks + all teams referenced by saved
   // comparisons. Load each team's saved lineups + key-bearing roster once.
   const neededTeams = new Set<string>();
@@ -169,6 +181,15 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
     }
     return map;
   }
+  // saved_lineup id -> name, from every team's lineups already loaded. The
+  // 历史对局 region resolves a match's source_lineup_id to its name through this
+  // (ids are unique across saved_lineups); an unloaded/deleted source stays
+  // unresolved and the region shows no name rather than inventing one.
+  const lineupNames: Record<number, string> = {};
+  for (const data of teamData.values()) {
+    for (const l of data.lineups) lineupNames[l.id] = l.name;
+  }
+
   const onSetNote = setLineNote.bind(null, season, division);
   const onDelete = deleteComparison.bind(null, season, division);
   const onSaveComparison = saveComparison.bind(null, season, division);
@@ -258,6 +279,14 @@ export default async function ComparePage({ params, searchParams }: PageProps) {
       ) : null}
 
       <CompareSaveBar selection={{ a, al, b, bl }} onSave={onSaveComparison} />
+
+      {b ? (
+        <CompareHistory
+          opponent={b}
+          matches={opponentMatches}
+          lineupNames={lineupNames}
+        />
+      ) : null}
 
       {comparison ? (
         <div className="overflow-x-auto px-5 py-4">

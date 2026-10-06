@@ -75,12 +75,13 @@
   - 复用 group-1 的 `getMatchRecords`（按对手 code 过滤 + 整场结果）。
 - **Threshold**: 70
 
-- [ ] 3.0 CONTRACT — write openspec/changes/match-results-tracking/contracts/group-3.md with the ### Contract block above
-- [ ] 3.1 MOCK — open docs/superpowers/specs/mocks/2026-10-03-match-results-tracking-mocks.html (对手对比历史区②); note 折叠块 tokens + verbatim strings（「历史对局」「X 胜 Y 负」「我方还没录过对这支队的比赛」）
-- [ ] 3.2 RED — write failing vitest: compare page shows 历史对局 region when opponent selected with records (date/lineup name/round/outcome + 总战绩); empty state when no records; region absent/empty for non-canEdit; degrades to empty on fetch error
-- [ ] 3.3 GREEN — add 历史对局 region to `compare/page.tsx` + component (server fetch behind canEdit, filter by opponent code, degrade `[]` on error)
-- [ ] 3.4 VISUAL DIFF — bring up dev stack; navigate to `/{season}/{division}/compare` select opponent; eyeball against mock ②; fix drift; verify empty state + non-admin no region
-- [ ] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.0 CONTRACT — write openspec/changes/match-results-tracking/contracts/group-3.md with the ### Contract block above
+- [x] 3.1 MOCK — open docs/superpowers/specs/mocks/2026-10-03-match-results-tracking-mocks.html (对手对比历史区②); note 折叠块 tokens + verbatim strings（「历史对局」「X 胜 Y 负」「我方还没录过对这支队的比赛」）
+- [x] 3.2 RED — write failing vitest: compare page shows 历史对局 region when opponent selected with records (date/lineup name/round/outcome + 总战绩); empty state when no records; region absent/empty for non-canEdit; degrades to empty on fetch error
+- [x] 3.3 GREEN — add 历史对局 region to `compare/page.tsx` + component (server fetch behind canEdit, filter by opponent code, degrade `[]` on error)
+- [x] 3.4 VISUAL DIFF — bring up dev stack; navigate to `/{season}/{division}/compare` select opponent; eyeball against mock ②; fix drift; verify empty state + non-admin no region
+- [x] 3.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-3.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 3.BLOCK RESOLVE — resolved: lineup name now resolved at read from already-loaded saved lineups (source_lineup_id -> name via lineupNames map); ad-hoc/deleted source degrades to team code. No new storage (honors design D3 + spec). Tally fixed to strict win/loss (ties shown 平).
 
 ## 4. 验证 + 交付
 
