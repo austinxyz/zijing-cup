@@ -5,6 +5,8 @@ import {
   getDivisionTeams,
   getHealth,
   getLineupCommentsBatch,
+  getMatchRecord,
+  getMatchRecords,
   getSavedComparisons,
   getTeamRosterKeys,
   getSeasonSampling,
@@ -541,5 +543,52 @@ describe("getTeamRosterKeys", () => {
     vi.stubEnv("BACKEND_URL", "http://backend.test");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 404 }));
     await expect(getTeamRosterKeys(2026, "gold", "GHOST")).resolves.toBeNull();
+  });
+});
+
+describe("getMatchRecords", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("requests the matches endpoint with team/opponent filters", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubEnv("BACKEND_SECRET", "s3cr3t");
+    const payload = [{ id: 1, our_team_code: "A", opponent_team_code: "B",
+      match_date: "2026-09-28", round_label: null, source_lineup_id: null,
+      lines: {}, outcome: { our: 0, opponent: 0, scoring_mode: "match_count" },
+      created_at: null, updated_at: null }];
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve(payload) });
+    vi.stubGlobal("fetch", fetchMock);
+    const rows = await getMatchRecords(2026, "silver", { opponent: "B" });
+    expect(rows).toEqual(payload);
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/seasons/2026/divisions/silver/matches");
+    expect(fetchMock.mock.calls[0][0]).toContain("opponent=B");
+  });
+
+  it("degrades to [] on non-ok", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(getMatchRecords(2026, "silver")).resolves.toEqual([]);
+  });
+
+  it("degrades to [] when fetch rejects", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("boom")));
+    await expect(getMatchRecords(2026, "silver")).resolves.toEqual([]);
+  });
+});
+
+describe("getMatchRecord", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("degrades to null on non-ok", async () => {
+    vi.stubEnv("BACKEND_URL", "http://backend.test");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 404 }));
+    await expect(getMatchRecord(2026, "silver", 9)).resolves.toBeNull();
   });
 });

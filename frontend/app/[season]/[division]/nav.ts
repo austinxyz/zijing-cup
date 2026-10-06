@@ -8,7 +8,13 @@
  */
 
 /** Which nav destination the current URL is under. */
-export type NavSection = "teams" | "lineup" | "rules" | "players" | "opponents";
+export type NavSection =
+  | "teams"
+  | "lineup"
+  | "rules"
+  | "players"
+  | "opponents"
+  | "matches";
 
 export interface NavItem {
   /** Stable id; also the section it highlights on. */
@@ -34,6 +40,7 @@ const SWAP_ICON =
 const DOC_ICON = "M4 2.4h8v11.2H4zM6.4 5.4h3.2M6.4 8h3.2M6.4 10.6h2";
 const PEOPLE_ICON =
   "M6 7.2a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM2.6 13.4c0-2 1.5-3.4 3.4-3.4s3.4 1.4 3.4 3.4M10.6 6.4a1.7 1.7 0 1 0 0-3.4M11.2 9.6c1.3.3 2.2 1.5 2.2 3";
+const FLAG_ICON = "M4 2.4v11.2M4 3h7l-1.4 2.4L11 7.8H4";
 
 /**
  * The nav destinations for a (season, division), with 阵容 already pointed at
@@ -87,6 +94,16 @@ export function navItems(
       label: "队员管理",
       icon: PEOPLE_ICON,
       href: `${base}/players`,
+      pending: false,
+      admin: true,
+    },
+    {
+      key: "matches",
+      label: "比赛历史",
+      icon: FLAG_ICON,
+      // Admin-only (match results are scouting intel): like 队员管理 it has no
+      // narrow layout, so the top bar drops it on the `admin` flag.
+      href: `${base}/matches`,
       pending: false,
       admin: true,
     },

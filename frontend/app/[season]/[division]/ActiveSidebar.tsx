@@ -44,7 +44,9 @@ export function ActiveSidebar({
           ? "players"
           : segment === "compare"
             ? "opponents"
-            : "rules";
+            : segment === "matches"
+              ? "matches"
+              : "rules";
 
   // The team stays in scope across the two sections that have one, so 阵容
   // opens the roster you are looking at rather than a picker asking you to

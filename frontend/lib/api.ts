@@ -691,6 +691,101 @@ export async function getSavedComparisons(
   }
 }
 
+/** A resolved on-court player (our or opponent side) in a match line. null in an
+ *  opp/our slot means the reference could not be resolved to a player — rendered
+ *  "未记录", never a zero or a fabricated name. */
+export interface MatchLinePlayer {
+  /** Present for our-side entries (the roster key "p{id}"); absent for opp. */
+  key?: string;
+  player_id: number;
+  last_name: string;
+  first_name: string;
+  gender: string | null;
+}
+
+export interface MatchLine {
+  /** Our roster keys ("p{id}"), exactly two. */
+  our: string[];
+  /** Opponent player ids, exactly two; null where unmatched. */
+  opp: (number | null)[];
+  outcome: "win" | "loss";
+  note: string;
+  /** Resolved our players, aligned with `our` (null if unresolved). */
+  our_players: (MatchLinePlayer | null)[];
+  /** Resolved opponent players, aligned with `opp` (null where unmatched). */
+  opp_players: (MatchLinePlayer | null)[];
+}
+
+/** Whole-tie result, derived server-side by the division's scoring_mode. */
+export interface MatchOutcome {
+  our: number;
+  opponent: number;
+  scoring_mode: string;
+}
+
+export interface MatchRecord {
+  id: number;
+  our_team_code: string;
+  opponent_team_code: string;
+  /** ISO date (YYYY-MM-DD). */
+  match_date: string;
+  round_label: string | null;
+  /** Provenance only (which saved lineup was prefilled from); may point at a
+   *  since-deleted lineup. */
+  source_lineup_id: number | null;
+  lines: Record<string, MatchLine>;
+  outcome: MatchOutcome;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+/** Match records for a (season, division), newest first. Optional team/opponent
+ *  filters. Degrades to `[]` on ANY failure: the match_records table is applied
+ *  to the shared database by hand after deploy, so between a deploy and that
+ *  migration the endpoint 500s — the history page / compare history region must
+ *  not crash. */
+export async function getMatchRecords(
+  year: number | string,
+  code: string,
+  opts?: { team?: string; opponent?: string },
+): Promise<MatchRecord[]> {
+  const params = new URLSearchParams();
+  if (opts?.team) params.set("team", opts.team);
+  if (opts?.opponent) params.set("opponent", opts.opponent);
+  const qs = params.toString();
+  try {
+    const res = await fetch(
+      backendUrl(
+        `/api/seasons/${year}/divisions/${code}/matches${qs ? `?${qs}` : ""}`,
+      ),
+      backendRequestInit(),
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+/** One match record with resolved players + derived outcome. Degrades to null on
+ *  ANY failure (same reason as getMatchRecords). */
+export async function getMatchRecord(
+  year: number | string,
+  code: string,
+  id: number,
+): Promise<MatchRecord | null> {
+  try {
+    const res = await fetch(
+      backendUrl(`/api/seasons/${year}/divisions/${code}/matches/${id}`),
+      backendRequestInit(),
+    );
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export interface PlayerSeasonUtr {
   season_year: number;
   /** What gets read. While a conflict is unresolved this is the LARGER of the

@@ -277,6 +277,31 @@ describe("Sidebar 队员管理 and the signed-in state", () => {
     expect(link.textContent).not.toContain("未开放");
   });
 
+  it("links 比赛历史 to the matches page", () => {
+    renderSidebar();
+
+    const link = screen.getByRole("link", { name: /比赛历史/ });
+    expect(link.getAttribute("href")).toBe("/2026/silver/matches");
+    expect(link.textContent).not.toContain("未开放");
+  });
+
+  it("marks 比赛历史 as current on its own pages", () => {
+    render(
+      <Sidebar
+        season="2026"
+        division="silver"
+        divisionName="银组"
+        seasons={SEASONS}
+        section="matches"
+      />,
+    );
+
+    expect(screen.getByText("比赛历史").closest("[aria-current]")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
   it("marks 队员管理 as current on its own pages", () => {
     render(
       <Sidebar

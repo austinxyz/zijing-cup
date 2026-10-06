@@ -5,15 +5,15 @@ import { navItems } from "./nav";
 describe("navItems", () => {
   it("lists every destination, admin included", () => {
     const keys = navItems("2025", "silver").map((item) => item.key);
-    expect(keys).toEqual(["teams", "lineup", "opponents", "rules", "players"]);
+    expect(keys).toEqual(["teams", "lineup", "opponents", "rules", "players", "matches"]);
   });
 
   it("marks 队员管理 as admin so the top bar can drop it", () => {
     const players = navItems("2025", "silver").find((i) => i.key === "players");
     expect(players?.admin).toBe(true);
-    // Nothing else is admin — the top bar filters on this one flag.
-    const admins = navItems("2025", "silver").filter((i) => i.admin);
-    expect(admins).toHaveLength(1);
+    // 队员管理 and 比赛历史 are the admin-only destinations the top bar drops.
+    const admins = navItems("2025", "silver").filter((i) => i.admin).map((i) => i.key);
+    expect(admins).toEqual(["players", "matches"]);
   });
 
   it("links 对手对比 to the division's compare page", () => {

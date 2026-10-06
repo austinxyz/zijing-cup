@@ -39,4 +39,13 @@
     - "spec: All 8 contract requirements implemented end-to-end. Player resolution now returns our_players/opp_players with full briefs (player_id, last_name, first_name, gender); unmatched opp slots degrade to null per design D3."
     - "runtime: 27/27 tests pass. Comprehensive coverage: roundtrip, create validation, outcome (both match_count & points), list/detail, line shape, player resolution, cross-division rejection, self-play rejection, note length, duplicate keys, opp count, round label overflow, gold scoring. No import errors."
     - "code: Backend routes fully protected by WRITE_METHODS middleware, scoped to (season, division). LineIn validators: outcome enum, our keys exact 2 + format p\\d+ + distinct, opp exact 2 + int|null, note ≤500, round_label ≤60. Batch-resolved players avoid N+1. Whole-tie outcome derived per scoring_mode, never stored (design D2). source_lineup_id nullable int, no FK (design D4). match_date DATE, no tz risk (design D5). Cascade delete intentional (design). Empty lines allowed (design). SQL injection prevented via SQLModel parametrization. Composite FK (season_year, division_code)→divisions with cascade. Self-play check in code + DB constraint. Migration set search_path, schema-qualified, composite FK, proper server_defaults. No hardcoded secrets, input sanitized at pydantic."
+- group: 2
+  attempt: 1
+  scores: {spec: 95, runtime: 100, code: 92}
+  total: 96
+  status: PASS
+  findings:
+    - "spec: All contract SHALLs met — history list + team filter + detail expand (MatchHistory.tsx), sidebar entry with nav integration (nav.ts, ActiveSidebar.tsx), prefill from saved lineups (MatchEntryForm.tsx line 246), canEdit gate with in-place locked state for non-admin (page.tsx), degrade to [] / null on failure (lib/api.ts), 未记录 for unmatched opponent (playerName line 621). Each route has error.tsx. Server actions try/catch only reset on success."
+    - "runtime: vitest 84 tests PASS across 6 files (MatchEntryForm.test.tsx, MatchHistory.test.tsx, actions.test.ts, api.test.ts, nav.test.ts, Sidebar.test.tsx). tsc --noEmit CLEAN. Comprehensive coverage: form prefill, live outcome, team filtering, detail expand, 未记录 rendering, canEdit visibility, sidebar links, admin marking, API degrade paths, revalidate scope."
+    - "code: Form UX solid — playerName() handles null → 未记录, PlayerSelect allowBlank param distinguishes our/opp, prefill clears sourceId when ourTeam changes, state management clean. API reads degrade gracefully (try/catch + return defaults). Write actions scope-checked via adminWrite, revalidatePath uses layout scope (both paths refresh). Rosters/saved lineups prefetch with ?? [] / ?? fallback. No secrets, no console.log, cohesive file organization."
 ```

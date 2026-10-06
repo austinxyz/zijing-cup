@@ -53,15 +53,15 @@
   - 侧栏入口照 participation-utr-sampling 先例加（canEdit 可见）。
 - **Threshold**: 70
 
-- [ ] 2.0 CONTRACT — write openspec/changes/match-results-tracking/contracts/group-2.md with the ### Contract block above
-- [ ] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-10-03-match-results-tracking-mocks.html (录入表单①、历史列表③、移动④); note design tokens (project.design_system=linear → 项目自带 token) and verbatim strings（「录入比赛」「整场（自动）」「未记录」「复制自已存阵容」「比赛历史」）
-- [ ] 2.2 RED — write failing vitest for `lib/api.ts` `getMatchRecords`/detail (degrade `[]`/null on non-ok) + match-results actions (create/prefill) trim + canEdit gate
-- [ ] 2.3 GREEN — `lib/api.ts` reads + `app/[season]/[division]/matches/actions.ts` (adminWrite + revalidate layout)
-- [ ] 2.4 RED — write failing vitest for 历史列表 (team filter, row shows date/opp/round/outcome, expand detail shows both-side players + win/loss + note, "未记录" for unresolved opp) + 录入表单 (prefill from saved lineup, win/loss toggle, auto outcome display)
-- [ ] 2.5 GREEN — implement 历史列表页 + 逐线详情 + 录入表单 components + route (each route自带 error.tsx; gated by canEdit; 录入入口仅 canEdit)
-- [ ] 2.6 GREEN — add Sidebar/nav entry「比赛历史」(canEdit visible; 照 participation-utr-sampling 先例) + update Sidebar/nav/TopNav tests together (一份 nav 数据多消费者)
-- [ ] 2.7 VISUAL DIFF — bring up dev stack; navigate to `/{season}/{division}/matches` + 录入; eyeball against mock ①③④; fix token/color/text drift; 核对最长名单与矮窗口不裁
-- [ ] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 2.0 CONTRACT — write openspec/changes/match-results-tracking/contracts/group-2.md with the ### Contract block above
+- [x] 2.1 MOCK — open docs/superpowers/specs/mocks/2026-10-03-match-results-tracking-mocks.html (录入表单①、历史列表③、移动④); note design tokens (project.design_system=linear → 项目自带 token) and verbatim strings（「录入比赛」「整场（自动）」「未记录」「复制自已存阵容」「比赛历史」）
+- [x] 2.2 RED — write failing vitest for `lib/api.ts` `getMatchRecords`/detail (degrade `[]`/null on non-ok) + match-results actions (create/prefill) trim + canEdit gate
+- [x] 2.3 GREEN — `lib/api.ts` reads + `app/[season]/[division]/matches/actions.ts` (adminWrite + revalidate layout)
+- [x] 2.4 RED — write failing vitest for 历史列表 (team filter, row shows date/opp/round/outcome, expand detail shows both-side players + win/loss + note, "未记录" for unresolved opp) + 录入表单 (prefill from saved lineup, win/loss toggle, auto outcome display)
+- [x] 2.5 GREEN — implement 历史列表页 + 逐线详情 + 录入表单 components + route (each route自带 error.tsx; gated by canEdit; 录入入口仅 canEdit)
+- [x] 2.6 GREEN — add Sidebar/nav entry「比赛历史」(canEdit visible; 照 participation-utr-sampling 先例) + update Sidebar/nav/TopNav tests together (一份 nav 数据多消费者)
+- [x] 2.7 VISUAL DIFF — bring up dev stack; navigate to `/{season}/{division}/matches` + 录入; eyeball against mock ①③④; fix token/color/text drift; 核对最长名单与矮窗口不裁
+- [x] 2.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-2.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 70 → PASS; < 70 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 3. 前端：对手对比页「历史对局」区
 
