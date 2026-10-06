@@ -85,7 +85,7 @@
 
 ## 4. 验证 + 交付
 
-- [ ] 4.1 Run backend test suite — `cd backend && uv run pytest`（本机 `.venv-std`）ensure no regressions
-- [ ] 4.2 Run frontend test suite — `cd frontend && npm run test` + `npx tsc --noEmit` ensure no regressions（vitest 不做类型检查）
-- [ ] 4.3 本地真机 e2e：补种后（顺序 测试→补种→视觉，中途不插 pytest）录 1-2 场（银/金各一，验整场算分）→ 历史页 + 对手对比历史区显示正确；免密看不到；缺表降级手验（BACKEND_URL 指空端口看侧栏还在）
-- [ ] 4.4 Run superpowers:verification-before-completion (run project.test_commands; grep -r console.log frontend/src; run project.custom_verification_checks from openspec/config.yaml incl `npx tsc --noEmit`)
+- [x] 4.1 Run backend test suite — `cd backend && uv run pytest`（本机 `.venv-std`）ensure no regressions
+- [x] 4.2 Run frontend test suite — `cd frontend && npm run test` + `npx tsc --noEmit` ensure no regressions（vitest 不做类型检查）
+- [x] 4.3 本地真机 e2e：补种后（顺序 测试→补种→视觉，中途不插 pytest）录 1-2 场（银/金各一，验整场算分）→ 历史页 + 对手对比历史区显示正确；免密看不到；缺表降级手验（BACKEND_URL 指空端口看侧栏还在）
+- [x] 4.4 Run superpowers:verification-before-completion (run project.test_commands; grep -r console.log frontend/src; run project.custom_verification_checks from openspec/config.yaml incl `npx tsc --noEmit`)

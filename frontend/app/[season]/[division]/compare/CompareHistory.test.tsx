@@ -36,6 +36,8 @@ describe("CompareHistory", () => {
       rec(2, 1, 4, null), // ad-hoc, no source lineup
     ]} />);
     expect(screen.getByText("主力")).toBeTruthy();
+    // The ad-hoc tie (null source) falls back to the team code, not a name.
+    expect(screen.getByText("UCSD-ZJU")).toBeTruthy();
   });
 
   it("does not count a tie as a win (strict our > opp)", () => {
