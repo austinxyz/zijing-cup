@@ -137,8 +137,39 @@ export function MatchEntryForm({
     };
   }
 
+  // Mirror of the backend's gender rule (app/matches/service.check_pair_genders),
+  // for immediate feedback. mixed needs a woman (two known men illegal); women's
+  // needs two women (any known man illegal); men's doubles is unrestricted. An
+  // unknown gender never blocks. Backend re-checks — this is UX, not the guard.
+  function genderError(): string | null {
+    const ourG = new Map(ourRoster.map((p) => [p.key, p.gender]));
+    const oppG = new Map(oppRoster.map((p) => [p.player_id, p.gender]));
+    for (const l of lineOrder) {
+      const st = lines[l.code];
+      if (st.outcome !== "win" && st.outcome !== "loss") continue;
+      const sides: [string, (string | null | undefined)[]][] = [
+        ["我方", st.our.map((k) => ourG.get(k))],
+        ["对手", st.opp.map((v) => (v === "" ? null : oppG.get(Number(v))))],
+      ];
+      for (const [side, gs] of sides) {
+        if (l.kind === "mixed_doubles" && gs.filter((g) => g === "M").length === 2) {
+          return `${l.code} ${side}：混双每方必须至少一名女生（不能两名男生）`;
+        }
+        if (l.kind === "womens_doubles" && gs.some((g) => g === "M")) {
+          return `${l.code} ${side}：女双每方必须两名女生`;
+        }
+      }
+    }
+    return null;
+  }
+
   async function submit() {
     setError(null);
+    const gErr = genderError();
+    if (gErr) {
+      setError(gErr);
+      return;
+    }
     setSaving(true);
     try {
       await createMatch(season, division, assemble());

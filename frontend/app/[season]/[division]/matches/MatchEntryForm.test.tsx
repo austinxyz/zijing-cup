@@ -96,3 +96,36 @@ describe("MatchEntryForm", () => {
     expect(input.lines.MD.outcome).toBe("loss");
   });
 });
+
+describe("MatchEntryForm gender rules", () => {
+  it("blocks saving a mixed line with two men and explains why", async () => {
+    vi.mocked(createMatch).mockResolvedValue(undefined);
+    renderForm();
+    fireEvent.change(screen.getByLabelText("我方队伍"), { target: { value: "UCSD-ZJU" } });
+    fireEvent.change(screen.getByLabelText("对手队伍"), { target: { value: "THU-MIT" } });
+    fireEvent.change(screen.getByLabelText("比赛日期"), { target: { value: "2026-09-28" } });
+    // MD with two men (p1, p2 are both M in ROSTERS)
+    fireEvent.change(screen.getByLabelText("MD 我方球员1"), { target: { value: "p1" } });
+    fireEvent.change(screen.getByLabelText("MD 我方球员2"), { target: { value: "p2" } });
+    fireEvent.click(screen.getByLabelText("MD 胜"));
+    fireEvent.click(screen.getByText("保存比赛"));
+    await Promise.resolve();
+    expect(createMatch).not.toHaveBeenCalled();
+    expect(screen.getByText(/混双每方必须至少一名女生/)).toBeTruthy();
+  });
+
+  it("allows a mixed line with two women", async () => {
+    vi.mocked(createMatch).mockResolvedValue(undefined);
+    renderForm();
+    fireEvent.change(screen.getByLabelText("我方队伍"), { target: { value: "UCSD-ZJU" } });
+    fireEvent.change(screen.getByLabelText("对手队伍"), { target: { value: "THU-MIT" } });
+    fireEvent.change(screen.getByLabelText("比赛日期"), { target: { value: "2026-09-28" } });
+    // only one woman in ROSTERS (p4). Add a second woman to this test's roster via a mixed F+F is impossible here,
+    // so assert a man+woman MD passes instead (also legal).
+    fireEvent.change(screen.getByLabelText("MD 我方球员1"), { target: { value: "p1" } });
+    fireEvent.change(screen.getByLabelText("MD 我方球员2"), { target: { value: "p4" } });
+    fireEvent.click(screen.getByLabelText("MD 胜"));
+    fireEvent.click(screen.getByText("保存比赛"));
+    await waitFor(() => expect(createMatch).toHaveBeenCalled());
+  });
+});

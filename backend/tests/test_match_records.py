@@ -61,6 +61,7 @@ def setup():
         for code, kind, order in (
             ("D1", "mens_doubles", 1),
             ("MD", "mixed_doubles", 4),
+            ("WD", "womens_doubles", 5),
         ):
             session.add(DivisionLine(
                 division_id=div.id, code=code, kind=kind, sort_order=order, points=1,
@@ -380,3 +381,64 @@ class TestGoldScoring:
                 sea = s.get(Season, YEAR)
                 if sea:
                     s.delete(sea); s.commit()
+
+
+class TestGenderRules:
+    def _seed(self):
+        """2 men + 2 women on our team, 2 men on opponent. Returns keys/ids."""
+        from app.models import Player, PlayerTeamMembership
+        with Session(engine) as s:
+            ids = {}
+            for tag, g in {"m1": "M", "m2": "M", "w1": "F", "w2": "F"}.items():
+                p = Player(last_name=tag.upper(), first_name="X", gender=g)
+                s.add(p); s.commit(); s.refresh(p); ids[tag] = p.id
+            for tag, g in {"om1": "M", "om2": "M"}.items():
+                p = Player(last_name=tag.upper(), first_name="X", gender=g)
+                s.add(p); s.commit(); s.refresh(p); ids[tag] = p.id
+            our = s.exec(select(Team).where(Team.code == "UCSD-ZJU")).one()
+            opp = s.exec(select(Team).where(Team.code == "THU-MIT")).one()
+            for tag in ("m1", "m2", "w1", "w2"):
+                s.add(PlayerTeamMembership(player_id=ids[tag], team_id=our.id))
+            for tag in ("om1", "om2"):
+                s.add(PlayerTeamMembership(player_id=ids[tag], team_id=opp.id))
+            s.commit()
+            return ids
+
+    def _line(self, a, b, outcome="win"):
+        return {"our": [f"p{a}", f"p{b}"], "opp": [None, None], "outcome": outcome, "note": ""}
+
+    def test_mixed_rejects_two_men(self, client):
+        i = self._seed()
+        p = _payload(lines={"MD": self._line(i["m1"], i["m2"])})
+        assert client.post(BASE, headers=WRITE, json=p).status_code == 422
+
+    def test_mixed_allows_two_women(self, client):
+        i = self._seed()
+        p = _payload(lines={"MD": self._line(i["w1"], i["w2"])})
+        assert client.post(BASE, headers=WRITE, json=p).status_code in (200, 201)
+
+    def test_mixed_allows_one_each(self, client):
+        i = self._seed()
+        p = _payload(lines={"MD": self._line(i["m1"], i["w1"])})
+        assert client.post(BASE, headers=WRITE, json=p).status_code in (200, 201)
+
+    def test_womens_rejects_a_man(self, client):
+        i = self._seed()
+        p = _payload(lines={"WD": self._line(i["m1"], i["w1"])})
+        assert client.post(BASE, headers=WRITE, json=p).status_code == 422
+
+    def test_womens_allows_two_women(self, client):
+        i = self._seed()
+        p = _payload(lines={"WD": self._line(i["w1"], i["w2"])})
+        assert client.post(BASE, headers=WRITE, json=p).status_code in (200, 201)
+
+    def test_mens_doubles_allows_a_woman(self, client):
+        i = self._seed()
+        p = _payload(lines={"D1": self._line(i["m1"], i["w1"])})
+        assert client.post(BASE, headers=WRITE, json=p).status_code in (200, 201)
+
+    def test_mixed_opponent_two_men_rejected_when_resolved(self, client):
+        i = self._seed()
+        line = {"our": [f"p{i['m1']}", f"p{i['w1']}"], "opp": [i["om1"], i["om2"]],
+                "outcome": "win", "note": ""}
+        assert client.post(BASE, headers=WRITE, json=_payload(lines={"MD": line})).status_code == 422

@@ -58,6 +58,29 @@ def resolve_players(session: Session, ids: set[int]) -> dict[int, Player]:
     return {p.id: p for p in rows}
 
 
+def check_pair_genders(kind: str, genders: list[Optional[str]]) -> Optional[str]:
+    """The gender rule for a line's doubles pair, by line kind. Returns an error
+    message when the (resolved) pair violates the rule, else None.
+
+    - mixed_doubles: at least one woman — two KNOWN men is the only illegal combo
+      (one-of-each or two women are both fine).
+    - womens_doubles: two women — any KNOWN man is illegal.
+    - mens_doubles (and anything else): no gender rule; a woman may play it.
+
+    Unknown gender (None) never triggers a rejection: it cannot prove a violation,
+    and failing closed on "not recorded" would block legitimate partial data (the
+    same reasoning the roster uses for an unmarked player)."""
+    if kind == "mixed_doubles":
+        # Only two KNOWN men is illegal; one female or an unknown (possibly
+        # female) slot keeps it legal.
+        if genders.count("M") == 2:
+            return "混双每方必须至少一名女生（不能两名男生）"
+    elif kind == "womens_doubles":
+        if "M" in genders:
+            return "女双每方必须两名女生"
+    return None
+
+
 class InvalidMatch(ValueError):
     """A create rejected before touching the row: bad team, self-match, or an
     unknown line code."""
@@ -95,9 +118,11 @@ def create_match(
     source_lineup_id: Optional[int],
     lines: dict[str, Any],
     allowed_lines: set[str],
+    line_kinds: dict[str, str],
 ) -> MatchRecord:
     """Store a played tie. Both teams must be in this (season, division) and
-    differ; every line code must be one of the division's lines."""
+    differ; every line code must be one of the division's lines; each line's pair
+    must satisfy its kind's gender rule (mixed needs a woman, women's needs two)."""
     if round_label is not None and len(round_label) > MAX_ROUND_LABEL:
         raise InvalidMatch(f"round label over {MAX_ROUND_LABEL} characters")
 
@@ -113,6 +138,29 @@ def create_match(
     unknown = set(lines) - allowed_lines
     if unknown:
         raise InvalidMatch(f"unknown line(s): {', '.join(sorted(unknown))}")
+
+    # Gender rules per line kind. Resolve both pairs' genders from the players the
+    # lines reference; an unresolved opponent slot is None (cannot prove a
+    # violation, so it never blocks — see check_pair_genders).
+    players = resolve_players(session, collect_player_ids(lines))
+
+    def gender_of_key(key: str) -> Optional[str]:
+        pid = _key_to_id(key) if isinstance(key, str) else None
+        p = players.get(pid) if pid is not None else None
+        return p.gender if p is not None else None
+
+    def gender_of_id(pid: Any) -> Optional[str]:
+        p = players.get(pid) if isinstance(pid, int) else None
+        return p.gender if p is not None else None
+
+    for line_code, line in lines.items():
+        kind = line_kinds.get(line_code, "")
+        our_g = [gender_of_key(k) for k in line.get("our", [])]
+        opp_g = [gender_of_id(i) for i in line.get("opp", [])]
+        for side, genders in (("我方", our_g), ("对手", opp_g)):
+            err = check_pair_genders(kind, genders)
+            if err is not None:
+                raise InvalidMatch(f"{line_code} {side}：{err}")
 
     row = MatchRecord(
         season_year=year,

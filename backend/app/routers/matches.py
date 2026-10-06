@@ -238,12 +238,18 @@ def create_division_match(
 ) -> MatchOut:
     division = _require_division(session, year, code)
     allowed = line_codes(session, division.id)
+    line_kinds = {
+        row.code: row.kind
+        for row in session.exec(
+            select(DivisionLine).where(DivisionLine.division_id == division.id)
+        ).all()
+    }
     lines = {lc: li.model_dump() for lc, li in body.lines.items()}
     try:
         row = create_match(
             session, year, code, body.our_team_code, body.opponent_team_code,
             body.match_date, body.round_label, body.source_lineup_id,
-            lines, allowed,
+            lines, allowed, line_kinds,
         )
     except InvalidMatch as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
