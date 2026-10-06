@@ -11,6 +11,7 @@ from app.models.players import (
 from app.models.player_notes import NOTE_CATEGORIES, PlayerNote
 from app.models.lineup_comments import LineupComment
 from app.models.daily_utr import PlayerDailyUtr
+from app.models.match_record import MatchRecord
 from app.models.presets import LineupFilterPreset
 from app.models.roster import RosterEntry, Team
 from app.models.saved import SavedLineup
@@ -32,6 +33,7 @@ __all__ = [
     "DivisionLine",
     "LineupComment",
     "LineupFilterPreset",
+    "MatchRecord",
     "NOTE_CATEGORIES",
     "Player",
     "PlayerDailyUtr",

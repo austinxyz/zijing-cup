@@ -8,6 +8,7 @@ from app.routers import (
     admin_credentials,
     compare,
     lineups,
+    matches,
     players,
     rosters,
     rules,
@@ -34,6 +35,7 @@ app.include_router(players.router)
 app.include_router(utr.router)
 app.include_router(utr_sampling.router)
 app.include_router(compare.router)
+app.include_router(matches.router)
 app.include_router(admin_credentials.router)
 
 

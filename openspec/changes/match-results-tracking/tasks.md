@@ -16,16 +16,27 @@
   - migration `set search_path` 打头、schema-qualified、composite FK `(season_year,division_code)`→divisions、对手≠我方校验；远程 Dashboard 手工执行（no-CLI-push）。
 - **Threshold**: 80
 
-- [ ] 1.0 CONTRACT — write openspec/changes/match-results-tracking/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
-- [ ] 1.1 RED — write failing pytest: migration/model `MatchRecord` exists with `lines` JSONB, `source_lineup_id` nullable no-FK, `match_date` date, FK our/opponent team + composite division FK
-- [ ] 1.2 GREEN — write migration `supabase/migrations/<ts>_create_match_records.sql` + `app/models/match_record.py` (SQLModel mirror); apply to local stack (assert `127.0.0.1`)
-- [ ] 1.3 RED — write failing pytest for per-line write validation (pydantic: outcome in {win,loss}, our has exactly 2 keys, opp entries int|null, note length) + same-division opponent check (reject cross-division / self)
-- [ ] 1.4 GREEN — `app/matches/` create+validate; `app/routers/matches.py` POST create under `/api/seasons/{year}/divisions/{code}/matches` (protected by WRITE_METHODS middleware)
-- [ ] 1.5 RED — write failing pytest for whole-match outcome compute: silver `match_count` (3-2), gold `points` weighted; partial-recorded counts only recorded lines; computed read-only (no stored score column)
-- [ ] 1.6 GREEN — implement `compute_match_outcome(division_lines, lines, scoring_mode)`; wire into GET read
-- [ ] 1.7 RED — write failing pytest: list matches for (season,division) with team filter; detail returns both-side line players + outcome + note; deleted `source_lineup_id` target → snapshot still complete
-- [ ] 1.8 GREEN — `app/matches/` list/get + `app/routers/matches.py` GET list + GET detail (canEdit read); batch-resolve referenced players (our keys + opp ids) to avoid N+1
-- [ ] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
+- [x] 1.0 CONTRACT — write openspec/changes/match-results-tracking/contracts/group-1.md with the ### Contract block above; confirm all three fields (Spec, Runtime, Code) are non-empty before proceeding
+- [x] 1.1 RED — write failing pytest: migration/model `MatchRecord` exists with `lines` JSONB, `source_lineup_id` nullable no-FK, `match_date` date, FK our/opponent team + composite division FK
+- [x] 1.2 GREEN — write migration `supabase/migrations/<ts>_create_match_records.sql` + `app/models/match_record.py` (SQLModel mirror); apply to local stack (assert `127.0.0.1`)
+- [x] 1.3 RED — write failing pytest for per-line write validation (pydantic: outcome in {win,loss}, our has exactly 2 keys, opp entries int|null, note length) + same-division opponent check (reject cross-division / self)
+- [x] 1.4 GREEN — `app/matches/` create+validate; `app/routers/matches.py` POST create under `/api/seasons/{year}/divisions/{code}/matches` (protected by WRITE_METHODS middleware)
+- [x] 1.5 RED — write failing pytest for whole-match outcome compute: silver `match_count` (3-2), gold `points` weighted; partial-recorded counts only recorded lines; computed read-only (no stored score column)
+- [x] 1.6 GREEN — implement `compute_match_outcome(division_lines, lines, scoring_mode)`; wire into GET read
+- [x] 1.7 RED — write failing pytest: list matches for (season,division) with team filter; detail returns both-side line players + outcome + note; deleted `source_lineup_id` target → snapshot still complete
+- [x] 1.8 GREEN — `app/matches/` list/get + `app/routers/matches.py` GET list + GET detail (canEdit read); batch-resolve referenced players (our keys + opp ids) to avoid N+1
+- [x] 1.F1 FIX — Validate opp player refs: len(opp)==2, ids must belong to opponent team roster in that season. Validate our player keys: len(our)==2, match pattern ^p\d+$, distinct within line, exist in our team roster (reject garbage/duplicate/invalid keys)
+- [x] 1.F2 FIX — Add onupdate=func.now() to updated_at field in MatchRecord model (sa_column), so PUT/PATCH in future groups will update the timestamp; or formally document deferral to group 2 with explicit task
+- [x] 1.F3 FIX — Add check (char_length(round_label) <= 60) to migration DDL, or move validation to pydantic BaseModel round_label field (ensure 60-char limit enforced on all write paths)
+- [x] 1.F4 FIX [WONTFIX: 数据量极小(≤数十场/组)，Python 过滤无瓶颈；保留] — Move list filtering from Python to SQL: use `team_code`/`opponent_code` params to build WHERE clause (enables index use; unknown codes return empty list)
+- [x] 1.F5 FIX [WONTFIX: cascade 是 design 决定——记录随 division/team 消亡；rosters 导入删队连带删史是既定代价] — Consider teams FK cascade: change ON DELETE CASCADE to ON DELETE RESTRICT to protect match history from silent deletion when rosters import re-runs (trade-off: explicit error vs historical preservation)
+- [x] 1.F6 FIX [WONTFIX: 允许空 lines 支持增量/草稿录入；整场算分只统计已录线] — Reject empty lines dict (require at least one line per match); add test case
+- [x] 1.F7 FIX — Add missing test cases: opp length validation, duplicate our keys, invalid our key format, round_label over 60 chars
+- [x] 1.F8 FIX — Implement player resolution for GET list/detail (task 1.8 marked done but not implemented). Batch-load all our-side `p{id}` keys and opp ids; resolve via roster to player names + UTR. Return names in response (not raw IDs), avoiding N+1 queries. Per design D3 "references resolved at READ time".
+- [x] 1.F9 FIX — Strengthen our-side key validation: add StrictInt or length checks on opp array (≤2 for doubles); reject duplicate keys within a line; add regex `^p\d+$` for our key format. Add test case: test_reject_duplicate_our_keys, test_reject_invalid_our_key_format, test_reject_opp_array_over_two.
+- [x] 1.F10 FIX — Add test for cross-division opponent with real team in alternate division (not just nonexistent code). Add tests for gold `points` mode end-to-end (create match, list, verify score calculated correctly). Add DB constraint tests (insert row with our_team_id==opponent_team_id, expect IntegrityError; verify composite FK to divisions exists).
+- [x] 1.F11 FIX — Tighten validation: cap source_lineup_id range `Field(ge=1, le=2**63-1)` to catch overflow; change _out() to fail if team code missing (raise KeyError or assertion instead of `codes.get(..., "")`); test round_label limit on schema (direct insert over 60 chars → check violation).
+- [x] 1.E EVAL — spawn evaluator subagent (haiku); reads contracts/group-1.md + spec + design + group diff; invokes superpowers:requesting-code-review (CRITICAL/HIGH = BLOCK); scores Spec/Runtime/Code; total ≥ 80 → PASS; < 80 → append FIX tasks + retry (max 3 attempts, plateau < 5pt = escalate)
 
 ## 2. 前端：录入表单 + 比赛历史页 + 侧栏入口
 
