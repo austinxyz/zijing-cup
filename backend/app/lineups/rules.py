@@ -154,15 +154,15 @@ def _check_budget(rules: RuleSet, spent: Decimal) -> list[Violation]:
 def slot_composition_error(rule: LineRule, pair: tuple[Candidate, Candidate]) -> Optional[str]:
     """Why this pair may not stand on this line, or None if it may.
 
-    Women's doubles is two women and mixed doubles is one of each — that is
-    what those lines are. Men's doubles has no rule of its own because women
-    are explicitly allowed to fill men's slots.
+    Women's doubles is two women. Mixed doubles needs at least one woman — one
+    of each OR two women; only two men is illegal. Men's doubles has no rule of
+    its own because women are explicitly allowed to fill men's slots.
     """
     a, b = pair
     if rule.kind == "womens_doubles" and not (a.gender == "F" and b.gender == "F"):
         return "女双必须是两名女队员"
-    if rule.kind == "mixed_doubles" and {a.gender, b.gender} != {"M", "F"}:
-        return "混双必须是一男一女"
+    if rule.kind == "mixed_doubles" and a.gender == "M" and b.gender == "M":
+        return "混双每方必须至少一名女生（不能两名男生）"
     return None
 
 

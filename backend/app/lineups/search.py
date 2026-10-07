@@ -293,13 +293,14 @@ def _over(rule: LineRule, pair: Pair) -> Decimal:
 def _gender_need(rule: LineRule) -> dict[Optional[str], int]:
     """How many of each gender this line's slots require.
 
-    Women's doubles is two women, mixed is one of each, men's doubles is any
-    two (women are allowed to fill men's slots), keyed by None.
+    Women's doubles is two women; mixed needs at least one woman plus two
+    players total (one-of-each or two women, never two men); men's doubles is
+    any two (women are allowed to fill men's slots), keyed by None.
     """
     if rule.kind == "womens_doubles":
         return {"F": 2}
     if rule.kind == "mixed_doubles":
-        return {"M": 1, "F": 1}
+        return {"F": 1, None: 2}
     return {None: 2}
 
 

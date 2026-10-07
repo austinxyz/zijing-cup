@@ -465,8 +465,8 @@ class TestViolationsAreNotDuplicated:
 class TestSlotComposition:
     """Who may stand on each line at all.
 
-    Women's doubles is two women and mixed doubles is one of each — that is
-    what the lines are. Without this the validator calls two men on women's
+    Women's doubles is two women; mixed needs at least one woman (two women
+    is fine, only two men is not). Without this the validator calls two men on women's
     doubles legal, and anything that hands it a lineup it did not itself
     build (a locked pair, a lineup typed in by hand) gets a false clearance.
     """
@@ -479,9 +479,17 @@ class TestSlotComposition:
         assert not report.is_legal
         assert "slot_composition" in codes(report)
 
-    def test_mixed_doubles_must_be_one_of_each(self):
+    def test_mixed_doubles_allows_two_women(self):
+        # Mixed needs at least one woman — two women is legal (only two men is not).
         report = check_lineup(
-            SILVER, lineup(MD=(player("g", "5.00"), player("h", "5.00")))
+            SILVER, lineup(MD=(player("g", "5.00", "F"), player("h", "5.00", "F")))
+        )
+
+        assert report.is_legal, report.violations
+
+    def test_mixed_doubles_rejects_two_men(self):
+        report = check_lineup(
+            SILVER, lineup(MD=(player("g", "5.00", "M"), player("h", "5.00", "M")))
         )
 
         assert not report.is_legal
