@@ -363,6 +363,15 @@ HTTP 侧只读：`GET /api/seasons/{year}/divisions/{code}/teams`（含 `player_
 
 ---
 
+### `match-results` ✅ 已实现 · 🌐 已上线
+**用户故事**: 作为负责排阵的人（已解锁本比赛），我想把打完的对局记下来（我方某队 vs 对手队、逐线双方上场的人、每线输赢），赛后能查「我方对某对手队以前怎么排的、哪条线赢过」，作为下次排阵的情报。
+**覆盖需求**: docs/superpowers/specs/2026-10-03-match-results-tracking-requirements.md（录一场比赛、我方阵容独立快照可溯源、对手逐线引用名单缺则留空、逐线 win/loss+备注、整场按 scoring_mode 自动算、历史列表+详情、对手对比历史区、逐线性别规则、全管理员机密+缺表降级）
+**后台**: `zijing_cup.match_records` 单表（`(season_year,division_code)` composite FK→divisions on delete cascade、`our_team_id`/`opponent_team_id` FK→teams、`check our<>opponent`、`match_date` date、`round_label` text check≤60、`source_lineup_id` bigint **无 FK**（仅溯源，删 saved_lineup 不级联）、`lines` jsonb `{line:{our:[keys],opp:[pid|null],outcome,note}}`、`created_at`/`updated_at` server_default、`updated_at` onupdate now()、scope+opponent 索引）。`matches/service.py`（create 校验同组对手≠自己+线位合法+逐线性别规则、`compute_outcome` 按 scoring_mode 从逐线推导、`resolve_players` 批量解析、`check_pair_genders`）+ `routers/matches.py`（GET list[?team/?opponent]、GET detail、POST create、DELETE，整场胜负只读推导、我方 key/对手 id→球员名解析、未解析=null「未记录」）。写 pydantic 逐线校验（outcome 枚举/our 恰两 `p\d+` key 且不重/opp 恰两 int|null/note≤500）。性别规则：男双无限、混双至少一女（禁两已知男）、女双两女（禁任何已知男）、未知不拦。写路由靠 `WRITE_METHODS` admin 中间件自动受保护。
+**前台**: `app/[season]/[division]/matches/`（canEdit 门——未解锁就地锁定态+解锁入口、不取数；各路由自带 `error.tsx`）：`MatchHistory`（client，按队客户端筛选+可展开逐线详情、双方球员名/性别、未记录降级、删除）；`matches/new`（非管理员 redirect；server 并发预取全组各队 roster+已存阵容）+ `MatchEntryForm`（client，我方/对手逐线选人、「复制自已存阵容」预填、win/loss 药丸、整场实时算、提交前性别校验拦截+说明）。`lib/api.ts` `getMatchRecords`/`getMatchRecord` 取数失败降级 `[]`/`null`；`matches/actions.ts` 经 `adminWrite` scope`{season,division}` + `revalidatePath(...,"layout")`。对手对比页加 `CompareHistory` 区（选中对手显示我方对该队历史战绩+逐线、阵容名从已加载 saved lineups 按 source_lineup_id 读时解析、平手记「平」不计入胜负、server 取数在 canEdit 后、失败降级空）。侧栏 `nav.ts` 加「比赛历史」（admin，顶栏 drop）。
+**验收标准**: 录一场（同组对手、逐线双方+win/loss、可预填）→落库+整场自动算（银数线/金加权）；对手对比选中对手出历史区+战绩；历史页按队筛+展开详情；免密看不到（录入入口/历史页/对比历史区全机密）；source_lineup 删后历史仍完整、对手对不上显「未记录」；缺表三处降级不崩；混双两男/女双带男被前后端双拦、女生可上男双、未知性别不拦。后端 677 pass、前端 matches/compare 全绿+tsc 0；本地真机 e2e（录真实 2 场→历史页+对比历史区正确、整场 3-2/0-1、保存链路落库）实测。**远程共享 Supabase 需 Dashboard SQL Editor 手动执行 `20261005120000_create_match_records.sql` 后功能才生效**（读降级为空，录入/历史/对比历史区在建表前会 500/空）。
+
+---
+
 ## 规划中的能力（路线图）
 
 `lineup-engine`、`lineup-ui` 与 `current-utr-source` 曾列在这里，现已实现，条目见上方。
